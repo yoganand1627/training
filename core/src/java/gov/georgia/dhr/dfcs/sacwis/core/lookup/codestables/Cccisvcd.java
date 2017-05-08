@@ -1,0 +1,68 @@
+package gov.georgia.dhr.dfcs.sacwis.core.lookup.codestables;
+
+public interface Cccisvcd {
+
+  public static final String CCCISVCD = "CCCISVCD";
+  public static final String CCCISVCD_25200 = "25200";
+  public static final String CCCISVCD_25201 = "25201";
+  public static final String CCCISVCD_25202 = "25202";
+  public static final String CCCISVCD_25205 = "25205";
+  public static final String CCCISVCD_25210 = "25210";
+  public static final String CCCISVCD_25217 = "25217";
+  public static final String CCCISVCD_25299 = "25299";
+  public static final String CCCISVCD_25300 = "25300";
+  public static final String CCCISVCD_45000 = "45000";
+  public static final String CCCISVCD_45001 = "45001";
+  public static final String CCCISVCD_45005 = "45005";
+  public static final String CCCISVCD_45010 = "45010";
+  public static final String CCCISVCD_45017 = "45017";
+  public static final String CCCISVCD_45090 = "45090";
+  public static final String CCCISVCD_45091 = "45091";
+  public static final String CCCISVCD_45092 = "45092";
+  public static final String CCCISVCD_45093 = "45093";
+  public static final String CCCISVCD_45094 = "45094";
+  public static final String CCCISVCD_45095 = "45095";
+  public static final String CCCISVCD_45096 = "45096";
+  public static final String CCCISVCD_45097 = "45097";
+  public static final String CCCISVCD_45098 = "45098";
+  public static final String CCCISVCD_45099 = "45099";
+  public static final String CCCISVCD_46000 = "46000";
+  public static final String CCCISVCD_46001 = "46001";
+  public static final String CCCISVCD_46005 = "46005";
+  public static final String CCCISVCD_46010 = "46010";
+  public static final String CCCISVCD_46017 = "46017";
+  public static final String CCCISVCD_46090 = "46090";
+  public static final String CCCISVCD_46091 = "46091";
+  public static final String CCCISVCD_46092 = "46092";
+  public static final String CCCISVCD_46093 = "46093";
+  public static final String CCCISVCD_46094 = "46094";
+  public static final String CCCISVCD_46095 = "46095";
+  public static final String CCCISVCD_46096 = "46096";
+  public static final String CCCISVCD_46097 = "46097";
+  public static final String CCCISVCD_46098 = "46098";
+  public static final String CCCISVCD_46099 = "46099";
+  public static final String CCCISVCD_54797 = "54797";
+  public static final String CCCISVCD_60400 = "60400";
+  public static final String CCCISVCD_60410A = "60410a";
+  public static final String CCCISVCD_60410B = "60410b";
+  public static final String CCCISVCD_60410C = "60410c";
+  public static final String CCCISVCD_60410D = "60410d";
+  public static final String CCCISVCD_60411 = "60411";
+  public static final String CCCISVCD_60499 = "60499";
+  public static final String CCCISVCD_60504 = "60504";
+  public static final String CCCISVCD_60599 = "60599";
+  public static final String CCCISVCD_60604 = "60604";
+  public static final String CCCISVCD_60699 = "60699";
+  public static final String CCCISVCD_60704 = "60704";
+  public static final String CCCISVCD_60799 = "60799";
+  public static final String CCCISVCD_60804 = "60804";
+  public static final String CCCISVCD_60899 = "60899";
+  public static final String CCCISVCD_61204 = "61204";
+  public static final String CCCISVCD_61210A = "61210a";
+  public static final String CCCISVCD_61210B = "61210b";
+  public static final String CCCISVCD_61210C = "61210c";
+  public static final String CCCISVCD_61210D = "61210d";
+  public static final String CCCISVCD_61299 = "61299";
+  public static final String CCCISVCD_61599 = "61599";
+
+}

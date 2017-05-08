@@ -1,0 +1,725 @@
+!*****************************************************************************  
+!  Prior Period Adjustments                                                  *
+!*****************************************************************************  
+!                                                                            *
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cfn10o01.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/heardtd/work/sqr                               *
+!                                                                            *
+!                                                                            *
+! DATE:                 01/22/96                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Tony Heard                                           *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The Prior Period Adjustment module was designed to   *
+!                       find and reverse Foster Care Invoice line items that *
+!                       were affected by changes to key data on existing     *
+!                       PLACEMENT, ELIGIBILITY, and Billing PERSON_LOC       *
+!                       records.                                             *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 01/22/96   Tony Heard   Initial Program                                    *
+! 04/09/96   B.McCleary   SIR 4184 - Added outer join to suffix code         *
+!                         condition.                                         *
+! 06/28/96   Kent Cys     SIR 21614 - Report output did not match design     *
+!                         specs. Added new select and print sections to      *
+!                         allow for distinction (Yes or No) of changes in    *
+!                         Placement, Eligibility, or Level of Care.          * 
+! 06/28/96   Kent Cys     SIR 21614 - Report output did not match design     *
+!                         specifications. Added new select and print sections*
+!                         to allow for distinction (Yes or No) of changes in *
+!                         Placement, Eligibility, or Level of Care.          *
+! 09/05/96   Kent Cys     SIR 22131 - Report was selecting wrong "Change In" *
+!                         info. for a given client.  Changed link to Change  *
+!                         In SQL Calls from #id_person to #old_id_person.    *
+!                         Logically, this makes more sense as Change In SQLs *
+!                         are not called until there has been a change in    *
+!                         person or invoice.                                 *
+! 09/12/96   Kent Cys     SIR 22108 - Changed code so that decodes for       *
+!                         Eligibility Type and BLOC are selected rather than *
+!                         the codes.                                         *
+!                                                                            *
+! 12/05/96  Gilma Saravia SIR#11781 - adding the county and region field to  *
+!                         the report and sorting the report based on a diff. *
+!                         criteria.                                          *
+! 12/22/97 Andrea Walker  SIR#14160 - adding the EA indicator field.         *
+!                         Included as another column between Med Group and   * 
+!                         BLOC, also included as another 'Change In: '       *
+!                         variables between 'Eligibility?' and 'BLOC?'       *
+!                         to reflect the EA changes during From/To period    *
+! 07/07/98 Andrea Walker  SIR #14586 - The Footer line (Change in PLOC, Elig,*
+!                         EA or BLOC) did not print if the report only listed*
+!                         a single client. To ensure that Footer prints for  *
+!                         reports with a single client, added flag setting   *
+!                         logic                                              *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive 
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup01a.sqc'            ! control codes for landscape   
+                       ! on demand reports             
+
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 6
+
+    move 'cfn10o01'                          to $ReportID
+    move 'PRIOR PERIOD ADJUSTMENT'           to $ReportTitle      
+                        
+    !**SIR #11781 adding the region to the subheading ***
+    print   'Legal Status Region:'          (+2,1) 
+    print   $old_reg                        (+0,24) edit 99 
+     
+    #INCLUDE 'header01.sqc'           
+     
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+
+   move '****END OF REPORT****' to $end_of_report   ! Initialize Working
+                            ! Storage constants
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-CLIENT-INFO                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do GET-CLIENT-INFO    
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-CLIENT-INFO                                                         *
+!             Retrieves all the information needed to                       *
+!             populate a client account invoice.                            *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : PRINT-CLIENT-TITLE, PRINT-CLIENT-INFO,                 *
+!                    GET-CHANGE-PLACEMENT, GET-CHANGE-ELIG, GET-CHANGE-LOC  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CLIENT-INFO 
+
+    move 0      to #count       !initialize a counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+PPA.ID_PPA_INVOICE
+    move &PPA.ID_PPA_INVOICE                     to #id_invoice
+
+PPA.ID_PPA_PERSON
+   move &PPA.ID_PPA_PERSON                       to #id_person  
+
+N.NM_NAME_FIRST||' '||N.NM_NAME_MIDDLE||' '||N.NM_NAME_LAST &person_name
+   move &person_name                             to $person_name
+
+CSUFFIX.DECODE
+    move &CSUFFIX.DECODE                         to $suff_dec
+
+PPA.YR_PPA_SVC_YEAR 
+   move &PPA.YR_PPA_SVC_YEAR                     to #svc_year 
+
+PPA.MO_PPA_SVC_MONTH
+    move &PPA.MO_PPA_SVC_MONTH                   to #svc_month
+
+PPA.NBR_PPA_FROM_DAY
+    move &PPA.NBR_PPA_FROM_DAY                   to #from
+
+PPA.NBR_PPA_TO_DAY
+    move &PPA.NBR_PPA_TO_DAY                     to #to
+
+PPA.ID_PPA_ORIG_INVOICE
+     move &PPA.ID_PPA_ORIG_INVOICE               to #orig_inv   
+
+PPA.ID_PPA_FACIL
+     move &PPA.ID_PPA_FACIL                      to #resource_id
+
+CELIGIBI.DECODE                                  !***SIR 22108***
+     move &CELIGIBI.DECODE                       to $elig_type
+
+PPA.CD_PPA_MED_ELIG_GROUP
+    move &PPA.CD_PPA_MED_ELIG_GROUP              to $elig_group
+
+CBILPLOC.DECODE                                  !***SIR 22108***
+   move &CBILPLOC.DECODE                         to $bill_loc
+
+PPA.DT_PPA_START
+    move &PPA.DT_PPA_START                       to $adjust_start
+
+PPA.DT_PPA_END
+    move &PPA.DT_PPA_END                         to $end 
+
+!**Sir #11781: adding the county and region field to the report **    
+NVL(LS.CD_LEGAL_STAT_CNTY, 'XXX') &LS.CD_LEGAL_STAT_CNTY 
+    move &LS.CD_LEGAL_STAT_CNTY                  to $legal_count
+                                                
+NVL(CCNTYREG.DECODE, 'XX') &CCNTYREG.DECODE
+    move &CCNTYREG.DECODE                        to $legal_reg
+
+!*****  End of Sir #11781 ******
+
+!**Sir #14160: adding the EA indicator field to the report **    
+PPA.IND_PPA_EA
+    move &PPA.IND_PPA_EA                         to $ind_ea
+    
+!*****  End of Sir #14160 ******
+
+
+    let #count = #count + 1
+    
+    if #count = 1
+!**Sir #14586 Added flag settings for #count_flag and $flag
+	move 1 to #count_flag   !***SIR 21614***
+        let $flag = 'Y' 
+        move $legal_reg           to $old_reg     !**SIR 11781 ***
+        do PRINT-CLIENT-TITLE
+        do PRINT-CLIENT-INFO
+    else 
+    if $old_reg <> $legal_reg   !***SIR 11781***
+        move 1 to #count_flag   !***SIR 21614***
+        let $flag = 'Y' 
+        do GET-CHANGE-PLACEMENT
+        do GET-CHANGE-ELIG
+        do GET-CHANGE-EA        !***SIR #14160***
+        do GET-CHANGE-LOC
+        NEW-PAGE
+        do PRINT-CLIENT-TITLE
+        do PRINT-CLIENT-INFO
+    else
+    if #old_id_person <> #id_person !**SIR 11781 ***
+        move 1 to #count_flag       !***SIR 21614***
+        let $flag = 'Y'
+        do GET-CHANGE-PLACEMENT
+        do GET-CHANGE-ELIG
+        do GET-CHANGE-EA            !***SIR #14160***
+        do GET-CHANGE-LOC
+        do PRINT-CLIENT-TITLE
+        do PRINT-CLIENT-INFO
+    else
+!**Sir #14586 Added flag settings for #count_flag and $flag
+        move 1 to #count_flag   !***SIR 21614***
+        let $flag = 'Y' 
+        do PRINT-CLIENT-INFO
+        
+    end-if 
+    end-if
+    end-if
+    
+FROM    CCNTYREG     CCNTYREG,   !** SIR 11781 **
+        CSUFFIX      CSUFFIX,
+        NAME         N,
+        LEGAL_STATUS LS,         !** SIR 11781 **
+        PPA_REPORT   PPA,
+        CELIGIBI     CELIGIBI,   !** SIR 22108 **
+        CBILPLOC     CBILPLOC    !** SIR 22108 **        
+
+        
+WHERE   N.ID_PERSON  = PPA.ID_PPA_PERSON
+AND     CSUFFIX.CODE(+) = N.CD_NAME_SUFFIX !***SIR 4184***
+AND     CELIGIBI.CODE(+) = PPA.CD_PPA_ELIG_SELECTED !***SIR 22108***
+AND     CBILPLOC.CODE(+) = PPA.CD_PPA_PLOC_CHILD
+AND     N.IND_NAME_PRIMARY = 'Y'
+AND     N.DT_NAME_END_DATE = '12/31/4712'
+AND     LS.ID_PERSON(+) = PPA.ID_PPA_PERSON   !***SIR 11781***   
+AND     CCNTYREG.CODE(+) = LS.CD_LEGAL_STAT_CNTY 
+AND     (  LS.DT_LEGAL_STAT_STATUS_DT =
+           (SELECT MAX(L2.DT_LEGAL_STAT_STATUS_DT) 
+            FROM   LEGAL_STATUS L2
+            WHERE  L2.ID_PERSON = PPA.ID_PPA_PERSON
+           )  
+           OR     LS.DT_LEGAL_STAT_STATUS_DT IS NULL
+        )
+AND     (  LS.ID_LEGAL_STAT_EVENT =    
+           (SELECT MAX(L3.ID_LEGAL_STAT_EVENT) 
+            FROM   LEGAL_STATUS L3
+            WHERE  L3.ID_PERSON = PPA.ID_PPA_PERSON 
+            AND    L3.DT_LEGAL_STAT_STATUS_DT =
+                   LS.DT_LEGAL_STAT_STATUS_DT
+           )
+           OR LS.ID_LEGAL_STAT_EVENT IS NULL
+        )
+
+ORDER BY  CCNTYREG.DECODE, LS.CD_LEGAL_STAT_CNTY, PPA.ID_PPA_INVOICE,
+          PPA.ID_PPA_PERSON, PPA.YR_PPA_SVC_YEAR, PPA.MO_PPA_SVC_MONTH,
+          PPA.DT_PPA_START
+END-SELECT
+
+    if #count_flag > 0   !***SIR 21614***
+        if $flag = 'Y'
+            do GET-CHANGE-PLACEMENT
+            do GET-CHANGE-ELIG
+            do GET-CHANGE-EA       !***SIR 14160***
+            do GET-CHANGE-LOC
+        end-if
+    end-if            
+
+    
+END-PROCEDURE GET-CLIENT-INFO 
+
+!****************************************************************************
+!                                                                           *
+!   GET-CHANGE-PLACEMENT                                                    *
+!       Determines if there is a Placement adjustment in client account     *
+!       information.                                                        * 
+!                                                                           * 
+!       CALLED BY  : GET-CLIENT-INFO                                        *
+!       CALLS      : PRINT-PLA-CHANGE                                       *
+!****************************************************************************
+ !***SIR 21614 -- The entire section was altered***
+
+BEGIN-PROCEDURE GET-CHANGE-PLACEMENT       
+
+    move 0      to #count2      !initialize a counter
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+E.CD_EVENT_TYPE
+    move &E.CD_EVENT_TYPE                  to $event_pla 
+      
+    let #count2 = #count2 + 1
+    
+    if #count2 > 0    !***SIR 21614***
+        if $event_pla = 'PLA'
+        let $pla_var = 'Y'
+            do PRINT-PLA-CHANGE
+        end-if
+    end-if
+        
+        
+FROM    EVENT E,
+        ADJUSTMENT_REQUEST A,
+        PPA_REPORT PPA
+
+WHERE   A.ID_ADJ_REQ_PERSON = #old_id_person !***SIR 21614***  !**SIR 22131**
+AND     E.ID_EVENT = A.ID_ADJ_REQ_EVENT
+AND     E.CD_EVENT_TYPE = 'PLA'
+AND     A.DT_ADJ_REQ_START <= PPA.DT_PPA_END
+AND     A.DT_ADJ_REQ_END   >= PPA.DT_PPA_START
+
+END-SELECT
+
+    if #count2 = 0  !***SIR 21614***
+        let $pla_var = 'N'
+        do PRINT-PLA-CHANGE
+    end-if
+
+END-PROCEDURE GET-CHANGE-PLACEMENT
+
+!****************************************************************************
+!                                                                           *
+!   GET-CHANGE-ELIG                                                         *
+!       Determines if there is an Eligibility adjustment in client account  *
+!       information.                                                        *
+!                                                                           * 
+!       CALLED BY  : GET-CLIENT-INFO                                        *
+!       CALLS      : PRINT-ELIG-CHANGE                                      *
+!****************************************************************************
+ !***SIR 21614 -- This is a new section***
+
+BEGIN-PROCEDURE GET-CHANGE-ELIG       
+
+    move 0      to #count3      !initialize a counter
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+F.CD_EVENT_TYPE
+    move &F.CD_EVENT_TYPE                  to $event_elig 
+      
+    let #count3 = #count3 + 1
+    
+    if #count3 > 0       !***SIR 21614***
+        if $event_elig = 'FCD'
+            let $elig_var = 'Y'
+            do PRINT-ELIG-CHANGE
+        end-if
+    end-if
+        
+FROM    EVENT F,
+        ADJUSTMENT_REQUEST A1,
+        PPA_REPORT PPA1
+
+WHERE   A1.ID_ADJ_REQ_PERSON = #old_id_person   !** SIR 22131 **
+AND     F.ID_EVENT = A1.ID_ADJ_REQ_EVENT
+AND     F.CD_EVENT_TYPE = 'FCD'
+AND     A1.DT_ADJ_REQ_START <= PPA1.DT_PPA_END
+AND     A1.DT_ADJ_REQ_END   >= PPA1.DT_PPA_START
+
+END-SELECT
+
+    if #count3 = 0   !***SIR 21614***
+        let $elig_var = 'N'
+        do PRINT-ELIG-CHANGE
+    end-if
+
+END-PROCEDURE GET-CHANGE-ELIG
+
+!****************************************************************************
+!                                                                           *
+!   GET-CHANGE-EA                                                           *
+!       Determines if there is EA Eligibility adjustment in client account  *
+!       information.                                                        *
+!                                                                           * 
+!       CALLED BY  : GET-CLIENT-INFO                                        *
+!       CALLS      : PRINT-EA-CHANGE                                        *
+!****************************************************************************
+ !***SIR 14160 -- This is a new section***
+
+BEGIN-PROCEDURE GET-CHANGE-EA       
+
+    move 0      to #count4      !initialize a counter
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+A1.ID_ADJ_REQ_PERSON
+    move &A1.ID_ADJ_REQ_PERSON                to $id_ea_person 
+      
+    let #count4 = #count4 + 1
+    
+    if #count4 > 0       
+        let $ea_var = 'Y'
+        do PRINT-EA-CHANGE
+    end-if
+        
+FROM    ADJUSTMENT_REQUEST A1,
+        PPA_REPORT PPA1
+
+WHERE   A1.ID_ADJ_REQ_PERSON = #old_id_person   !** SIR 22131 **
+AND     A1.ID_ADJ_REQ_EVENT IS NULL
+AND     A1.DT_ADJ_REQ_START <= PPA1.DT_PPA_END
+AND     A1.DT_ADJ_REQ_END   >= PPA1.DT_PPA_START
+
+END-SELECT
+
+    if #count4 = 0   
+        let $ea_var = 'N'
+        do PRINT-EA-CHANGE
+    end-if
+
+END-PROCEDURE GET-CHANGE-EA
+
+!****************************************************************************
+!                                                                           *
+!   GET-CHANGE-LOC                                                          *
+!       Determines if there is a BLOC adjustment in client account info.    *
+!                                                                           * 
+!       CALLED BY  : GET-CLIENT-INFO                                        *
+!       CALLS      : PRINT-LOC-CHANGE                                       *
+!****************************************************************************
+!***SIR 21614 -- This is a new section***
+!***SIR 14160 -- Changed the count4 to count5, 
+!***             due to added procedure GET-CHANGE-EA that preceds
+!                GET-CHANGE-BLOC and uses count4
+
+BEGIN-PROCEDURE GET-CHANGE-LOC       
+
+    move 0      to #count5      !initialize a counter
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+G.CD_EVENT_TYPE
+    move &G.CD_EVENT_TYPE                  to $event_loc 
+      
+    let #count5 = #count5 + 1
+    
+    if #count5 > 0  !***SIR 21614***
+        if $event_loc = 'LOC'
+            let $loc_var = 'Y'
+            do PRINT-LOC-CHANGE
+        end-if
+    end-if
+    
+        
+FROM    EVENT G,
+        ADJUSTMENT_REQUEST A2,
+        PPA_REPORT PPA2
+
+WHERE   A2.ID_ADJ_REQ_PERSON = #old_id_person !***SIR 21614** !**SIR 22131**
+AND     G.ID_EVENT = A2.ID_ADJ_REQ_EVENT
+AND     G.CD_EVENT_TYPE = 'LOC'
+AND     A2.DT_ADJ_REQ_START <= PPA2.DT_PPA_END
+AND     A2.DT_ADJ_REQ_END   >= PPA2.DT_PPA_START
+
+END-SELECT
+
+    if #count5 = 0  !***SIR 21614***
+        let $loc_var = 'N'
+        do PRINT-LOC-CHANGE
+    end-if
+
+END-PROCEDURE GET-CHANGE-LOC    
+    
+    
+!****************************************************************************
+!   PRINT-CLIENT-INFO                                                       *
+!                                                                           *
+!       Prints the client's invoice information.                            *
+!                                                                           * 
+!       CALLED BY  : GET-CLIENT-INFO                                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CLIENT-INFO
+
+
+print  $legal_count                     (+2,1)  edit 999   !**SIR 11781 *** 
+print  #id_invoice                      (+0,8)  edit 8888888888888888
+print  #svc_month                       (+0,22) edit 99 
+print  #svc_year                        (+0,32) edit 9999
+print  #from                            (+0,42) edit 99
+print  #to                              (+0,48) edit 99
+print  #orig_inv                        (+0,55) edit 99999999999999
+print  #resource_id                     (+0,71) edit 99999999999999
+print  $elig_type                       (+0,95)
+print  $elig_group                      (+0,111)
+print  $ind_ea                          (+0,124)
+print  $bill_loc                        (+0,129)
+print  $adjust_start                    (+0,140)  
+print  $end                             (+0,157)
+
+        move #id_person            to #old_id_person
+        !move #id_invoice          to #old_id_invoice
+        move $legal_reg            to $old_reg     !**SIR 11781 ***
+
+    
+
+END-PROCEDURE PRINT-CLIENT-INFO
+
+!****************************************************************************
+!   PRINT-CLIENT-TITLE                                                      *
+!                                                                           *
+!      Prints the invoice titles.                                           *
+!                                                                           * 
+!       CALLED BY  : GET-CLIENT-INFO                                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CLIENT-TITLE      
+
+print   'Client ID'                     (+1,1)
+print    #id_person                     (+0,13) edit 9999999999999999
+print   'Client Name'                   (+0,42)
+print    $person_name                   (+0,55)
+if $suff_dec <> ''
+  print    ', '                         ()
+  print    $suff_dec                    ()
+end-if   
+print   'Cnty'                          (+2,1)  !**SIR 11781 *** 
+print   'Adj.Inv.'                      (+0,8)
+print   'Svc Mo.'                       (+0,21)
+print   'Svc Year'                      (+0,31)
+print   'From'                          (+0,41)
+print   'To'                            (+0,48)
+print   'Original Invoice ID'           (+0,54)
+print   'Resource Id'                   (+0,78)
+print   'Elig. Type'                    (+0,95)
+print   'Medical Group'                 (+0,109)
+print   'EA'                            (+0,124)
+print   'BSL'                           (+0,128)
+print   'Date Start'                    (+0,140)
+print   'Date End'                      (+0,157)
+
+END-PROCEDURE PRINT-CLIENT-TITLE
+
+!****************************************************************************
+!   PRINT-PLA-CHANGE                                                        *
+!                                                                           *
+!       Prints 'Y' if adjustments where made to Placement for a clients     *
+!       invoice, 'N' if not                                                 *
+!                                                                           *
+!       CALLED BY  : GET-CHANGE-PLACEMENT                                   *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+ !***SIR 21614***
+BEGIN-PROCEDURE   PRINT-PLA-CHANGE
+
+print 'Change In:'      (+2,74)
+print 'Placement?'      (+0,85)
+print $pla_var          (+0,96)
+
+END-PROCEDURE PRINT-PLA-CHANGE
+ 
+
+!****************************************************************************
+!   PRINT-ELIG-CHANGE                                                       *
+!                                                                           *
+!       Prints 'Y' if adjustments where made to Eligibility for a clients   *
+!       invoice, 'N' if not.                                                *
+!                                                                           *
+!       CALLED BY  : GET-CHANGE-ELIG                                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+ !***SIR 21614***
+BEGIN-PROCEDURE   PRINT-ELIG-CHANGE
+
+print 'Eligibility?'    (+0,104)
+print $elig_var         (+0,117)
+
+
+END-PROCEDURE PRINT-ELIG-CHANGE
+
+!****************************************************************************
+!   PRINT-EA-CHANGE                                                         *
+!                                                                           *
+!       Prints 'Y' if adjustments where made to EA for a clients            *
+!       invoice, 'N' if not.                                                *
+!                                                                           *
+!       CALLED BY  : GET-CHANGE-EA                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+ !***SIR 14160***
+BEGIN-PROCEDURE   PRINT-EA-CHANGE
+
+print 'EA?'             (+0,122)
+print $ea_var           (+0,126)
+
+
+END-PROCEDURE PRINT-EA-CHANGE
+
+!****************************************************************************
+!   PRINT-LOC-CHANGE                                                        *
+!                                                                           *
+!      Prints 'Y' if there where any changes in BLOC to a client invoice,   *
+!      'N' if not.                                                          *           
+!                                                                           *
+!       CALLED BY  : GET-CHANGE-LOC                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+ !***SIR 21614***
+BEGIN-PROCEDURE   PRINT-LOC-CHANGE
+
+
+print 'BSL?'            (+0,135)
+print $loc_var          (+0,142)
+
+
+END-PROCEDURE PRINT-LOC-CHANGE
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+

@@ -1,0 +1,29 @@
+BEGIN-PROCEDURE GET-CFP-STAMP
+
+BEGIN-SELECT ON-ERROR=CFPSqlErrorHandle
+
+R.NBR_RPT_LST_CFP_STAMP
+	move &R.NBR_RPT_LST_CFP_STAMP         to #cfp_stamp
+
+FROM REPORT_LIST R
+
+WHERE R.TXT_RPT_GEN_NAME = SUBSTR($sqr-report, INSTR($sqr-report, '/', -1) + 1)
+
+END-SELECT
+
+END-PROCEDURE GET-CFP-STAMP
+
+
+BEGIN-PROCEDURE CFPSqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE CFPSqlErrorHandle

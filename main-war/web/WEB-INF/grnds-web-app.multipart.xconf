@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE grnds-web-app SYSTEM "grnds-web-app.dtd">
+
+<grnds-web-app>
+  <servlet mapping="multipart">
+    <conversations>
+      <conversation>
+        <conversation-name>ExternalDcmnttn</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.multipart.ExternalDcmnttnConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayExtDocList</command-name>
+            <activity type="method">displayExtDocList_xa</activity>
+            <presentation type="class" screen="EXTERNAL_DCMNTTN">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayExtDocDetail</command-name>
+            <activity type="method">displayExtDocDetail_xa</activity>
+            <presentation type="class" screen="EXTERNAL_DCMNTTN_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="list" type="class" screen="EXTERNAL_DCMNTTN">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+          <command-name>saveExtDocDetail</command-name>
+            <activity type="method">saveExtDocDetail_xa</activity>
+            <presentation type="class" screen="EXTERNAL_DCMNTTN">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="stay" type="url">
+              /multipart/ExternalDcmnttn/displayExtDocDetail
+            </presentation>
+            <presentation branch="listerror" type="class" screen="EXTERNAL_DCMNTTN">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="EXTERNAL_DCMNTTN_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>viewExtDoc</command-name>
+            <activity type="method">viewExtDoc_xa</activity>
+           <presentation type="url">
+              /multipart/ExternalDcmnttn/displayExtDocDetail
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+    </conversations>
+  </servlet>
+
+  <error-handling>
+    <domain>sacwis</domain>
+    <logger>grnds.syslog</logger>
+  </error-handling>
+
+
+</grnds-web-app>

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.EducationalHistory" table="EDUCATIONAL_HISTORY" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idEdhist" type="integer" unsaved-value="0">
+      <column name="ID_EDHIST" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_EDUCATIONAL_HISTORY</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="addrEdhistCity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_EDHIST_CITY" length="20"/>
+    </property>
+    <property name="addrEdhistCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_EDHIST_CNTY" length="20"/>
+    </property>
+    <property name="addrEdhistState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_EDHIST_STATE" length="2"/>
+    </property>
+    <property name="addrEdhistStreetLn1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_EDHIST_STREET_LN_1" length="30"/>
+    </property>
+    <property name="addrEdhistStreetLn2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_EDHIST_STREET_LN_2" length="30"/>
+    </property>
+    <property name="addrEdhistZip" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_EDHIST_ZIP" length="10"/>
+    </property>
+    <property name="cdEdhistEnrollGrade" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_EDHIST_ENROLL_GRADE" length="3"/>
+    </property>
+    <property name="cdEdhistNeeds1" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EDHIST_NEEDS_1" length="3"/>
+    </property>
+    <property name="cdEdhistNeeds2" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EDHIST_NEEDS_2" length="3"/>
+    </property>
+    <property name="cdEdhistNeeds3" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EDHIST_NEEDS_3" length="3"/>
+    </property>
+    <property name="cdEdhistNeeds4" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EDHIST_NEEDS_4" length="3"/>
+    </property>
+    <property name="cdEdhistNeeds5" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EDHIST_NEEDS_5" length="3"/>
+    </property>
+    <property name="cdEdhistNeeds6" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EDHIST_NEEDS_6" length="3"/>
+    </property>
+    <property name="cdEdhistNeeds7" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EDHIST_NEEDS_7" length="3"/>
+    </property>
+    <property name="cdEdhistNeeds8" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EDHIST_NEEDS_8" length="3"/>
+    </property>
+    <property name="cdEdhistWithdrawnGrade" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_EDHIST_WITHDRAWN_GRADE" length="3"/>
+    </property>
+    <property name="dtEdhistEnrollDate" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_EDHIST_ENROLL_DATE" length="7"/>
+    </property>
+    <property name="dtEdhistWithdrawnDate" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_EDHIST_WITHDRAWN_DATE" length="7"/>
+    </property>
+    <property name="indEdhistTeaSchool" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_EDHIST_TEA_SCHOOL" length="1"/>
+    </property>
+    <property name="nbrEdhistPhone" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_EDHIST_PHONE" length="10"/>
+    </property>
+    <property name="nbrEdhistPhoneExt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_EDHIST_PHONE_EXT" length="8"/>
+    </property>
+    <property name="nmEdhistSchool" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_EDHIST_SCHOOL" length="30"/>
+    </property>
+    <property name="nmEdhistSchDist" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_EDHIST_SCH_DIST" length="40"/>
+    </property>
+    <property name="txtEdhistAddrCmnt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_EDHIST_ADDR_CMNT" length="300"/>
+    </property>
+    <property name="indEdhistLicense" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_EDHIST_LICENSE" length="1"/>
+    </property>
+    <property name="cdEdhistType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EDHIST_TYPE" length="3"/>
+    </property>
+    <property name="txtEdhistCmnts" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_EDHIST_CMNTS" length="300"/>
+    </property>
+    <property name="cdCurrGrade" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CURR_GRADE" length="3"/>
+    </property>
+    <property name="indCurrGradeLevel" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CURR_GRADE_LEVEL" length="1"/>
+    </property>
+    <property name="cdAttendance" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ATTENDANCE" length="3"/>
+    </property>
+    <property name="cdEdhistNeeds9" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EDHIST_NEEDS_9" length="3"/>
+    </property>
+    <property name="cdEdhistNeeds10" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EDHIST_NEEDS_10" length="3"/>
+    </property>
+    <property name="indSchRec" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_SCH_REC" length="1"/>
+    </property>
+    <property name="indRecBoard" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_REC_BOARD" length="1"/>
+    </property>
+    <property name="indSchChg" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_SCH_CHG" length="1"/>
+    </property>
+    <property name="txtDscplComm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_DSCPL_COMM" length="300"/>
+    </property>
+    <property name="indSpcEduNeed" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_SPC_EDU_NEED" length="1"/>
+    </property>
+    <property name="indPrevEduNeed" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PREV_EDU_NEED" length="1"/>
+    </property>
+    <property name="txtSpcEdu" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_SPC_EDU" length="300"/>
+    </property>
+    <property name="dtSstRef" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SST_REF" length="7"/>
+    </property>
+    <property name="dtEduPlan" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_EDU_PLAN" length="7"/>
+    </property>
+    <property name="nmSurrPrnt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_SURR_PRNT" length="30"/>
+    </property>
+    <property name="indFstrPrnt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_FSTR_PRNT" length="1"/>
+    </property>
+    <property name="indLegalPrnt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_LEGAL_PRNT" length="1"/>
+    </property>
+    <property name="txtSst" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_SST" length="300"/>
+    </property>
+    <property name="indEis" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_EIS" length="1"/>
+    </property>
+    <property name="indPrevEis" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PREV_EIS" length="1"/>
+    </property>
+    <property name="txtEis" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_EIS" length="300"/>
+    </property>
+    <property name="txtSchCngCmnt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_SCH_CNG_CMNT" length="500"/>
+    </property>
+    <property name="txtSchRecOnFileCmnt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_SCH_REC_ON_FILE_CMNT" length="500"/>
+    </property>
+  </class>
+</hibernate-mapping>

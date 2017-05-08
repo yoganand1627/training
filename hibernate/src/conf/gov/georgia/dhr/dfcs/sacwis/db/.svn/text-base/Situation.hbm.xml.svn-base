@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Situation" table="SITUATION" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idSituation" type="integer" unsaved-value="0">
+      <column name="ID_SITUATION" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_SITUATION</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="dtSituationClosed" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SITUATION_CLOSED" length="7"/>
+    </property>
+    <property name="nbrSitOccurrence" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SIT_OCCURRENCE" precision="2" scale="0"/>
+    </property>
+    <property name="cdSitFunctionalArea" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_SIT_FUNCTIONAL_AREA" length="3"/>
+    </property>
+    <property name="cdSitCurrStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SIT_CURR_STATUS" length="3"/>
+    </property>
+    <property name="dtSituationOpened" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SITUATION_OPENED" length="7"/>
+    </property>
+    <bag name="caseMerges" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CASE_MERGE_SIT_FROM" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CaseMerge" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="stages" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_SITUATION" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Stage" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

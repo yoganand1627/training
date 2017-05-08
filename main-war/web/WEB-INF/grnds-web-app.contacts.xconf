@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE grnds-web-app SYSTEM "grnds-web-app.dtd">
+
+<grnds-web-app>
+
+  <servlet mapping="contacts">
+    <conversations>
+      <conversation>
+        <conversation-name>PortalContactDetail</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.contacts.PortalContactDetailConversation
+        </conversation-class>
+        <commands>
+          <command>
+            <command-name>addContact</command-name>
+            <activity type="method">addContact_xa</activity>
+            <presentation type="class" screen="CONTACT_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayContact</command-name>
+            <activity type="method">displayContact_xa</activity>
+            <presentation type="class" screen="CONTACT_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="url" branch="ADD_CONTACT">
+              /contacts/PortalContactDetail/addContact
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveContact</command-name>
+            <activity type="method">saveContact_xa</activity>
+            <presentation type="url">
+              /contacts/PortalContactDetail/displayContact
+            </presentation>
+            <presentation branch="error" type="class" screen="CONTACT_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+    </conversations>
+  </servlet>
+
+  <error-handling>
+    <domain>sacwis</domain>
+    <logger>grnds.syslog</logger>
+  </error-handling>
+</grnds-web-app>

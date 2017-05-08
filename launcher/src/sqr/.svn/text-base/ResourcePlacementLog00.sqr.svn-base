@@ -1,0 +1,389 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Sun Nov 06 15:30:10 2011 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2011\Resources\Placement\ResourcePlacementLog00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.200 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Text $AGE 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=228    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,11) Underline  Bold 
+ Print 'Display a (Y/N) to indicate if the child placed in the resource has a sibling in DFCS custody.' (148,101,146)
+ Print 'The report lists children that are currently placed in a resource.' (27,1,0)
+ Page-Number (229,667) '' ' of '
+ Last-Page (229,691) 
+ Print 'G: ' (58,1,0) Bold 
+ Print 'The gender of the child. ''F'' indicates female; ''M'' indicates Male' (58,101,96)
+ Print 'Plcmt Start:' (95,1,14) Bold 
+ Print 'DOB:' (76,1,0) Bold 
+ Print 'The child''s date of birth.' (76,101,98)
+ Print 'The date the child was placed.' (95,101,83)
+ Print 'Plcmt Type:' (111,1,18) Bold 
+ Print 'The name of the type of placement .' (112,101,108)
+ Print 'Sibling Plcmt:' (148,1,16) Bold 
+ Print 'Legal County:' (166,1,15) Bold 
+ Print 'The legal county of the child .' (166,101,70)
+ Print 'Plcmt Status:' (131,1,14) Bold 
+ Print 'The status of the placement. APRV - Approved; PEND - Pending; PROC- In Progress; COMP - Complete.' (131,102,152)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=108   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I101_ID_RESOURCE 'Enter a value for ID_RESOURCE' MaxLen=16  Type=Number
+If IsNull($_I101_ID_RESOURCE) or IsBlank($_I101_ID_RESOURCE)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Let $brb_tmp = 'ID_RESOURCE'
+Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_ID_RESOURCE
+End-Procedure
+!-----Calculates Current Placement Statistics --------------------
+BEGIN-PROCEDURE CHILD_STATS_GENDER(#RESOURCEID2,:#CNT_MALE_GENDER, :#CNT_FEMALE_GENDER)
+BEGIN-SELECT 
+count (person_enc.id_person) &MALE_GENDER 
+FROM CAPS.CAPS_RESOURCE,CAPS.CODES_TABLES PlcmtType_code,CAPS.PERSON_ENC,CAPS.PLACEMENT,CAPS.EVENT 
+WHERE    CAPS.PLACEMENT.ID_PLCMT_CHILD = CAPS.PERSON_ENC.ID_PERSON
+AND    CAPS.EVENT.ID_EVENT = CAPS.PLACEMENT.ID_PLCMT_EVENT
+AND    CAPS.PLACEMENT.ID_RSRC_FACIL = CAPS.CAPS_RESOURCE.ID_RESOURCE
+AND    CAPS.PLACEMENT.CD_PLCMT_TYPE = PlcmtType_code.CODE
+AND    PlcmtType_CODE.code_type = 'CPLMNTYP' 
+AND   (placement.dt_plcmt_end = to_date('12/31/4712','MM/DD/YYYY') 
+OR   placement.dt_plcmt_end  is null) 
+AND  event.cd_event_type = 'PLA' 
+AND  placement.CD_PLCMT_ACT_PLANNED = 'A'
+and caps_resource.id_resource = #RESOURCEID2
+and person_enc.cd_person_sex = 'M'
+END-SELECT
+ MOVE &MALE_GENDER TO #CNT_MALE_GENDER
+
+BEGIN-SELECT 
+count (person_enc.id_person) &FEMALE_GENDER 
+FROM CAPS.CAPS_RESOURCE,CAPS.CODES_TABLES PlcmtType_code,CAPS.PERSON_ENC,CAPS.PLACEMENT,CAPS.EVENT 
+WHERE    CAPS.PLACEMENT.ID_PLCMT_CHILD = CAPS.PERSON_ENC.ID_PERSON
+AND    CAPS.EVENT.ID_EVENT = CAPS.PLACEMENT.ID_PLCMT_EVENT
+AND    CAPS.PLACEMENT.ID_RSRC_FACIL = CAPS.CAPS_RESOURCE.ID_RESOURCE
+AND    CAPS.PLACEMENT.CD_PLCMT_TYPE = PlcmtType_code.CODE
+AND    PlcmtType_CODE.code_type = 'CPLMNTYP' 
+AND   (placement.dt_plcmt_end = to_date('12/31/4712','MM/DD/YYYY') 
+OR   placement.dt_plcmt_end  is null) 
+AND  event.cd_event_type = 'PLA' 
+AND  placement.CD_PLCMT_ACT_PLANNED = 'A'
+and caps_resource.id_resource = #RESOURCEID2
+and person_enc.cd_person_sex = 'F'
+END-SELECT
+ MOVE &FEMALE_GENDER TO #CNT_FEMALE_GENDER 
+ 
+END-PROCEDURE
+
+!------CHILD STATS - COUNT THE AGE OF CHILDREN UNDER 3 AND CHILDER OVER 16 -------
+BEGIN-PROCEDURE CHILD_STATS_AGE(#RESOURCEID2,:#AGE_UNDER3,:#AGE_OVER16)!----COUNT CHILDREN UNDER 3 YEARS OF AGE ----
+BEGIN-SELECT 
+count (person_enc.id_person) &AGE 
+from person_enc, placement, caps_resource
+where person_enc.id_person = placement.id_plcmt_child
+and placement.id_rsrc_facil = caps_resource.id_resource
+And (placement.dt_plcmt_end = to_date('12/31/4712','MM/DD/YYYY')
+Or placement.dt_plcmt_end  is null)
+and caps_resource.id_resource = #RESOURCEID2
+and (TRUNC((sysdate - PERSON_ENC.DT_PERSON_BIRTH)/365)) < 3
+END-SELECT
+ MOVE &AGE TO #AGE_UNDER3
+
+
+!----COUNT CHILDREN OVER 16 YEARS OF AGE----
+BEGIN-SELECT 
+count (person_enc.id_person) &AGE2 
+FROM CAPS.CAPS_RESOURCE,CAPS.CODES_TABLES PlcmtType_code,CAPS.PERSON_ENC,CAPS.PLACEMENT,CAPS.EVENT 
+WHERE    CAPS.PLACEMENT.ID_PLCMT_CHILD = CAPS.PERSON_ENC.ID_PERSON
+AND    CAPS.EVENT.ID_EVENT = CAPS.PLACEMENT.ID_PLCMT_EVENT
+AND    CAPS.PLACEMENT.ID_RSRC_FACIL = CAPS.CAPS_RESOURCE.ID_RESOURCE
+AND    CAPS.PLACEMENT.CD_PLCMT_TYPE = PlcmtType_code.CODE
+AND    PlcmtType_CODE.code_type = 'CPLMNTYP' 
+AND   (placement.dt_plcmt_end = to_date('12/31/4712','MM/DD/YYYY') 
+OR   placement.dt_plcmt_end  is null) 
+AND  event.cd_event_type = 'PLA' 
+AND  placement.CD_PLCMT_ACT_PLANNED = 'A'
+and caps_resource.id_resource = #RESOURCEID2
+and (TRUNC((sysdate - PERSON_ENC.DT_PERSON_BIRTH)/365)) > 16
+END-SELECT
+ MOVE &AGE2 TO #AGE_OVER16
+END-PROCEDURE
+
+!--------DETERMINE IF A SIBLING HAS BEEN PLACED--------
+BEGIN-PROCEDURE SIBLING_PLCMT(#CASEID2,#CHILDID22,:$SIB_CNT)
+BEGIN-SELECT 
+count(person_enc.id_person) &cnt_person
+from person_enc, legal_status_view
+where legal_status_view.id_person = person_enc.id_person
+and legal_status_view.in_dfcs_custody = 'Y'
+and legal_status_view.id_case = #CASEID2
+END-SELECT
+
+ MOVE &cnt_person TO #VAR_SIB_CNT
+
+
+IF (#VAR_SIB_CNT) > 1
+ LET $SIB_PLCMT = 'Y'
+else
+ LET $SIB_PLCMT = 'N'
+END-IF
+
+ MOVE $SIB_PLCMT TO $SIB_CNT
+END-PROCEDURE
+!--------------------------------------
+BEGIN-PROCEDURE LEGAL_COUNTY(#CHILDID22,:$COUNTY_DECODE)
+
+BEGIN-SELECT
+Distinct legal_status.cd_legal_stat_cnty &_var_legal_cnty_code
+from legal_status, person_enc
+where person_enc.id_person = #CHILDID22
+and  person_enc.id_person = legal_status.id_person(+)
+END-SELECT
+
+MOVE &_var_legal_cnty_code to $_legal_cnty_code
+
+IF IsNull ($_legal_cnty_code)
+LET $COUNTY_DECODE = $_legal_cnty_code
+else 
+!LET $COUNTY_DECODE = '2'
+Begin-Select 
+distinct decode &var_cnty_decode
+from legal_status, person_enc,codes_tables
+where person_enc.id_person = #CHILDID22
+and  person_enc.id_person = legal_status.id_person(+)
+and codes_tables.code = cd_legal_stat_cnty
+and codes_tables.code_type = 'CCOUNT'
+end-select
+
+move &var_cnty_decode to $COUNTY_DECODE
+end-if
+
+END-PROCEDURE
+ 
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select Distinct
+CAPS.CAPS_RESOURCE.ID_RESOURCE &RESOURCEID2
+PLACEMENT.ID_PLCMT_CHILD &CHILDID22
+PLACEMENT.ID_CASE &CASEID2
+
+ DO CHILD_STATS_GENDER(&RESOURCEID2,#CNT_MALE_GENDER,#CNT_FEMALE_GENDER)
+ DO CHILD_STATS_AGE(&RESOURCEID2,#AGE_UNDER3,#AGE_OVER16)
+ DO SIBLING_PLCMT(&CASEID2,&CHILDID22,$SIB_CNT)
+ Do LEGAL_COUNTY(&CHILDID22,$COUNTY_DECODE)
+(trunc((sysdate - PERSON_ENC.DT_PERSON_BIRTH)/365)) &Child_Age
+NM_RESOURCE &Master_Query_NM_RESOURCE
+DT_PLCMT_END &Master_Query_DT_PLCMT_END
+CD_PLCMT_TYPE &Master_Query_CD_PLCMT_TYPE
+CD_PLCMT_INFO_6 &Master_Query_CD_PLCMT_INFO_6
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+ID_RESOURCE &Master_Query_ID_RESOURCE () On-Break Set=1 Level=1 Print=Never Before=Master_QueryID_RESOURCE_BeforeProc101 After=Master_QueryID_RESOURCE_AfterProc101
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ID_PLCMT_CHILD &Master_Query_ID_PLCMT_CHILD (17,2) Edit 999999999na
+CAPS.PLACEMENT.ID_CASE &Master_Query_CAPS.PLACEMENT.ID_CASE (17,171) Edit 99999999na
+DT_PERSON_BIRTH &Master_Query_DT_PERSON_BIRTH (17,263) Edit MM/DD/YYYY
+DT_PLCMT_START &Master_Query_DT_PLCMT_START (17,350) Edit MM/DD/YYYY
+PlcmtType_code.DECODE &Master_Query_PlcmtType_code.DECODE (17,403,23)
+NM_PERSON_FULL &Master_Query_NM_PERSON_FULL (17,62,18)
+CD_PERSON_SEX &Master_Query_CD_PERSON_SEX (17,235,1)
+ Print &Child_Age (17,320,2)
+ Let $SIBPLCMT2=$SIB_CNT
+ Print $SIBPLCMT2 (17,583,3)
+ Let $Legal_County=$COUNTY_DECODE
+ Print $Legal_County (17,616,18)
+CD_EVENT_STATUS &Master_Query_CD_EVENT_STATUS (17,534,4)
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Next-Listing  Need=17
+From  CAPS.CAPS_RESOURCE, CAPS.CODES_TABLES PlcmtType_code
+,      CAPS.PERSON_ENC, CAPS.PLACEMENT, CAPS.EVENT
+      Where CAPS.PLACEMENT.ID_PLCMT_CHILD = CAPS.PERSON_ENC.ID_PERSON
+            And CAPS.EVENT.ID_EVENT = CAPS.PLACEMENT.ID_PLCMT_EVENT
+            And CAPS.PLACEMENT.ID_RSRC_FACIL = CAPS.CAPS_RESOURCE.ID_RESOURCE
+            And CAPS.PLACEMENT.CD_PLCMT_TYPE = PlcmtType_code.CODE
+ And PlcmtType_CODE.code_type = 'CPLMNTYP'
+ And (placement.dt_plcmt_end = to_date('12/31/4712','MM/DD/YYYY') Or placement.dt_plcmt_end  is null)
+ And [$where_clause101]
+ And event.cd_event_type = 'PLA'
+ And placement.CD_PLCMT_ACT_PLANNED = 'A'
+Order By NM_PERSON_FULL
+End-Select
+ Next-Listing
+ Next-Listing  Need=64
+ If #1ROW_COUNT > 0
+ Graphic (10,1,714) Box 18 10 8 
+ Graphic (10,1,714) Box 18 10 0 
+ Position (28,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Children Over Age 16:'  (42,179) Underline  Bold 
+  Print 'Children Under Age 3:'  (42,1) Underline  Bold 
+   Let #AGE_UNDER3=#AGE_UNDER3
+ Print #AGE_UNDER3 (42,126) Edit 9999
+   Let #AGE_OVER16=#AGE_OVER16
+ Print #AGE_OVER16 (42,306) Edit 9999
+  Print 'Current Placement Statistics'  (22,1) Bold 
+   Let #CNT_MALE_GENDER=#CNT_MALE_GENDER
+ Print #CNT_MALE_GENDER (64,126) Edit 9999
+  Print '# of Females in Home:'  (64,179) Underline  Bold 
+   Let #CNT_FEMALE_GENDER=#CNT_FEMALE_GENDER
+ Print #CNT_FEMALE_GENDER (64,306) Edit 9999
+  Print '# of Males in Home:'  (64,1) Underline  Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryID_RESOURCE_BeforeProc101
+ Next-Listing 
+ Graphic (1,2,715) Horz-Line 10 
+ Position (2,1)
+   Position (+0,)
+ Next-Listing  Need=17
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_RESOURCE_AfterProc101
+ Next-Listing  Need=22
+ Graphic (5,1,715) Horz-Line 15 
+ Position (6,1)
+ let #ReportTotal = #101ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #ReportTotal (22,68) Bold  Edit 99999999na
+ Print 'Report Total:'  (22,1) Bold 
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=17
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 108 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='C:\sacwis\launcher\src\images\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'Placement Log' (46,312,16) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (28,265,0)
+ Print $current-date (28,638) edit 'MM/DD/YYYY'
+ Let $ResourceID=$_I101_ID_RESOURCE
+ Alter-Printer Font=4 Point-Size=11    ! [SQR.INI] 4=Arial,proportional
+ Print $ResourceID (92,97,15)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (28,570,0)
+ Alter-Printer Font=4 Point-Size=11    ! [SQR.INI] 4=Arial,proportional
+ Print 'Resource ID:' (92,1,11) Bold 
+ Let $ResourceName=&Master_Query_NM_RESOURCE
+ Print $ResourceName (109,97,46)
+ Print 'Resource Name:' (109,1,15) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Person ID' (205,10,9) Underline  Bold 
+ Print 'Case ID' (205,171,0) Underline  Bold 
+ Print 'G' (205,235,1) Underline  Bold 
+ Print 'DOB' (205,263,0) Underline  Bold 
+ Print 'Age' (205,315,0) Underline  Bold 
+ Print 'Plcmt' (205,350,9) Underline  Bold 
+ Print 'Name' (205,62,9) Underline  Bold 
+ Print 'Start' (221,350,6) Underline  Bold 
+ Print 'Type' (221,403,0) Underline  Bold 
+ Print 'Sibling' (205,574,10) Underline  Bold 
+ Print 'Plcmt' (221,574,6) Underline  Bold 
+ Print 'Legal County' (205,616,0) Underline  Bold 
+ Print 'Plcmt' (205,403,9) Underline  Bold 
+ Print 'Plcmt' (205,528,5) Underline  Bold 
+ Print 'Status' (221,526,7) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Person ID' (82,10,9) Underline  Bold 
+ Print 'Case ID' (82,171,0) Underline  Bold 
+ Print 'G' (82,235,1) Underline  Bold 
+ Print 'DOB' (82,263,0) Underline  Bold 
+ Print 'Age' (82,315,0) Underline  Bold 
+ Print 'Plcmt' (82,350,9) Underline  Bold 
+ Print 'Name' (82,62,9) Underline  Bold 
+ Print 'Start' (98,350,6) Underline  Bold 
+ Print 'Type' (98,403,0) Underline  Bold 
+ Print 'Sibling' (82,574,10) Underline  Bold 
+ Print 'Plcmt' (98,574,6) Underline  Bold 
+ Print 'Legal County' (82,616,0) Underline  Bold 
+ Print 'Plcmt' (82,403,9) Underline  Bold 
+ Print 'Plcmt' (82,528,5) Underline  Bold 
+ Print 'Status' (98,526,7) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (16,667) '' ' of'
+ Last-Page (16,691) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

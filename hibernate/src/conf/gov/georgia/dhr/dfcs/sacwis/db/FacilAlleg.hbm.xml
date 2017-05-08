@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FacilAlleg" table="FACIL_ALLEG" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idAllegation" type="integer" unsaved-value="undefined">
+      <column name="ID_ALLEGATION" precision="16" scale="0"/>
+      <!-- Note: there is a series for ID_FACIL_ALLEG, but it is never actually used and should probably be deleted. -->
+      <generator class="foreign">
+        <param name="property">allegation</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="allegation" class="gov.georgia.dhr.dfcs.sacwis.db.Allegation" constrained="true"/>
+    <property name="indFacilAllegCancelHist" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_FACIL_ALLEG_CANCEL_HIST" length="1"/>
+    </property>
+    <property name="cdFacilAllegEventLoc" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FACIL_ALLEG_EVENT_LOC" length="3"/>
+    </property>
+    <property name="cdFacilAllegClss" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FACIL_ALLEG_CLSS" length="3"/>
+    </property>
+    <property name="cdFacilAllegClssSupr" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FACIL_ALLEG_CLSS_SUPR" length="3"/>
+    </property>
+    <property name="cdFacilAllegDispSupr" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FACIL_ALLEG_DISP_SUPR" length="3"/>
+    </property>
+    <property name="cdFacilAllegSrc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_FACIL_ALLEG_SRC" length="2"/>
+    </property>
+    <property name="cdFacilAllegSrcSupr" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FACIL_ALLEG_SRC_SUPR" length="2"/>
+    </property>
+    <property name="dtFacilAllegSuprReply" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_FACIL_ALLEG_SUPR_REPLY" length="7"/>
+    </property>
+    <property name="dtFacilAllegInvstgtr" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_FACIL_ALLEG_INVSTGTR" length="7"/>
+    </property>
+    <property name="cdFacilAllegInjSer" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FACIL_ALLEG_INJ_SER" length="4"/>
+    </property>
+    <property name="cdFacilAllegNeglType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FACIL_ALLEG_NEGL_TYPE" length="4"/>
+    </property>
+    <property name="dtFacilAllegIncident" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_FACIL_ALLEG_INCIDENT" length="7"/>
+    </property>
+    <property name="indFacilAllegAbOffGr" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_FACIL_ALLEG_AB_OFF_GR" length="1"/>
+    </property>
+    <property name="indFacilAllegSupvd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_FACIL_ALLEG_SUPVD" length="1"/>
+    </property>
+    <property name="txtFacilAllegCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_FACIL_ALLEG_CMNTS" length="300"/>
+    </property>
+    <property name="nbrFacilAllegMhmr" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_FACIL_ALLEG_MHMR" length="10"/>
+    </property>
+    <bag name="facilityInjuries" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ALLEGATION" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FacilityInjury" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

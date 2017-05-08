@@ -1,0 +1,730 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Fri Apr 20 15:02:10 2012 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\Children15outof22\April20\ToTrunk\FCChildrenWithoutTPR00.sqr
+! Format  : Tabular
+! Username: JPOTTAMMEL
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+  
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Date $MostRDate 
+ Date $nDate 
+ Date $MostrecDate 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=192    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (15,8,12) Underline  Bold 
+ Print 'The report is a list of all primary children, under 18 years of age, in a foster care or adoption stage who are in DFCS custody for the reporting time period without at least one Termination of Parental Rights (TPR) or Voluntary Surrender (VS). The reporting county is determined by the county of the stage, not the unit county of the primary case manager. ' (38,9,128) Wrap 128 3 line-height=12 Keep-Top on= 
+ Last-Page (497,691) 
+ Page-Number (497,665) '' ' of '
+ Print 'Key' (354,4,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=9    ! [SQR.INI] 4=Arial,proportional
+ Print 'Perm Plan : Permanency Plan' (371,6,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'GDS - Guardianship' (406,6,0)
+ Print 'FCO - Another Planned Permanent Living Arrangement Through Long Term Foster Care' (423,7,0)
+ Print 'LAE - Another Planned Permanent Living Arrangement through Emancipation' (441,7,0)
+ Print 'NOS - Non Selected' (476,7,0)
+ Print 'RUI - Reunification' (493,7,0)
+ Print 'ADA - Adoption' (388,7,0)
+ Print 'LLR - Live with fit and willing Relatives' (458,7,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Total Number of Episodes:' (189,9,0) Bold 
+ Print 'The earliest In DFCS Custody Legal Status Effective Date after a child''s first removal or, if there is a subsequent removal(s), the earliest In DFCS Custody Legal Status Effective Date following the latest Not In DFCS Custody Legal Status Effective Date.' (210,179,96) Wrap 96 3 line-height=12 Keep-Top
+ Print 'Last Exit/Discharge:' (254,9,0) Bold 
+ Print 'Petition Filed?:' (271,9,0) Bold 
+ Print 'Date Petition Filed:' (294,9,0) Bold 
+ Print 'Date DFCS filed petition to terminate parental rights.' (294,108,0)
+ Print 'Compelling Reason Documented?:' (316,9,0) Bold 
+ Print 'Most Recent Entry into Foster Care:' (210,9,0) Bold 
+ Print 'Total number of foster care episodes for the child as per the current date (regardless of the month/year parameter entered).' (189,140,0)
+ Print 'The most recent Not In DFCS Legal Status date.' (254,113,0)
+ Print 'Indicator displaying Yes or No depending on whether DFCS filed a petition to terminate parental rights with legal action as Petition Filed .' (271,93,0)
+ Print 'Indicator showing whether any one of the three checkboxes under ASFA Regs of Child Case Plan Topics section on the Foster Care Case Plan Child Detail page are checked as why DFCS did not file a petition to terminate parental rights is given. Displays ''Yes'' if any one of the three checkboxes is checked. Displays ''No'' otherwise.' (316,180,97) Wrap 97 4 line-height=12 Keep-Top on= 
+ Print 'Report will exclude children with a legal action outcome of ''Deceased Parents - Permanent Custody to DHR'' with legal action as ''Hearing'' or ''Received Court Order''.' (86,8,0)
+ Print 'The report accepts Month/Year (mm/yyyy) as a required parameter, and region, county, unit number and Staff ID as optional parameters.' (106,8,0)
+ Print 'Date From:' (151,9,0) Bold 
+ Print 'Date To:' (171,9,0) Bold 
+ Print 'The last day of the month from which the 22 months are counted.' (171,58,0)
+ Print 'The starting date of the 22 months period.' (151,70,0)
+ Print 'Data is sorted by region, county name, unit number, case manger name and child name in ascending order.' (129,8,0)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=72   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do GetMonthYearFrom
+ Do Get-Input
+ Do Get-Unit-Input
+ Do Get-Input-CaseWorker
+ Position (1,1)
+ Do Master_Query
+End-Program
+! -----------Get Start Date ------------------
+Begin-Procedure GetMonthYearFrom
+Input $_dt_report 'Enter Month/Year (MM/YYYY)' MaxLen=10 Type=Date Format='MM/YYYY'
+If IsNull($_dt_report) or IsBlank($_dt_report)
+ Show 'Input Error (7734): No value was enterred. A value is required.'
+ Let #return-status = 7734
+ Stop
+End-If
+ 
+ Let $_dt_report_to = datetostr(strtodate($_dt_report,'MM/YYYY'),'MM/DD/YYYY')
+
+ Let $subs = datetostr(strtodate($_dt_report_to,'MM/DD/YYYY'),'MM')
+! Let $years = datetostr(strtodate($_dt_report_to,'MM/DD/YYYY'),'YYYY')
+
+ 
+If $subs = '01' or $subs ='03'or $subs ='05'or $subs ='07'or $subs ='08'or $subs ='10'or $subs ='12'
+    Let $_lastdate =  datetostr(dateadd(strtodate($_dt_report_to,'MM/DD/YYYY'),'day',30),'MM/DD/YYYY')
+    Let $_firstdate =  datetostr(dateadd(strtodate($_lastdate,'MM/DD/YYYY'),'day',-22 * 30),'MM/DD/YYYY')   
+End-if
+
+If $subs = '04' or $subs ='06' or $subs ='09'or $subs = '11'
+    Let $_lastdate =  datetostr(dateadd(strtodate($_dt_report_to,'MM/DD/YYYY'),'day',29),'MM/DD/YYYY')
+    Let $_firstdate =  datetostr(dateadd(strtodate($_lastdate,'MM/DD/YYYY'),'day',-22 * 30),'MM/DD/YYYY')    
+End-if
+
+ If $subs = '02'  
+   Let $_lastdate =  datetostr(dateadd(strtodate($_dt_report_to,'MM/DD/YYYY'),'day',27),'MM/DD/YYYY')
+   Let $_firstdate =  datetostr(dateadd(strtodate($_lastdate,'MM/DD/YYYY'),'day',-22 * 30),'MM/DD/YYYY') 
+End-If
+
+Let $_subday = datetostr(strtodate($_firstdate,'MM/DD/YYYY'),'DD')
+Let $_submonth = datetostr(strtodate($_firstdate,'MM/DD/YYYY'),'MM')
+
+Let #_subdaynum = to_number($_subday)
+!   Let #submonthnum = to_number($submonth)
+
+if $_submonth = '01' or $_submonth ='03' or $_submonth ='05' or $_submonth ='07' or $_submonth ='08' or $_submonth ='10' or $_submonth ='12'
+
+  if #_subdaynum <= 31 and #_subdaynum > 0 
+    Let #_diff1 = 31 - #_subdaynum
+    Let $_newfirstd1 = datetostr(strtodate($_firstdate,'MM/DD/YYYY'),'MM/DD/YYYY')    
+   Let $_newfirstd2 = datetostr(dateadd(strtodate($_firstdate,'MM/DD/YYYY'),'day',#_diff1),'MM/DD/YYYY')
+  end-if
+end-if
+
+if $_submonth = '04' or $_submonth ='06' or $_submonth ='09'
+
+  if #_subdaynum <= 30 and #_subdaynum > 0 
+    Let #_diff2 = 30 - #_subdaynum
+    Let $_newfirstd1 = datetostr(strtodate($_firstdate,'MM/DD/YYYY'),'MM/DD/YYYY')
+   
+   Let $_newfirstd2 = datetostr(dateadd(strtodate($_firstdate,'MM/DD/YYYY'),'day',#_diff2),'MM/DD/YYYY')
+  end-if
+end-if
+
+if $_submonth = '02' 
+
+  if #_subdaynum <= 28 and #_subdaynum > 0 
+    Let #_diff3 = 28 - #_subdaynum
+    Let $_newfirstd1 = datetostr(strtodate($_firstdate,'MM/DD/YYYY'),'MM/DD/YYYY')
+   
+   Let $_newfirstd2 = datetostr(dateadd(strtodate($_firstdate,'MM/DD/YYYY'),'day',#_diff3),'MM/DD/YYYY')
+  end-if
+end-if
+
+
+ Let $RptEndPeriod= dateadd(strtodate($_dt_report, 'MM/YYYY'),'day',-22 * 30)
+End-Procedure
+
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I401_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I401_CD_STAGE_REGION) or IsBlank($_I401_CD_STAGE_REGION) or ($_I401_CD_STAGE_REGION) = '0'
+  Let $where_clause401 = 'CD_STAGE_REGION is not null'
+  Let $region_selected = 'N'
+Else
+  Let $_region = $_I401_CD_STAGE_REGION
+  Let $_I401_CD_STAGE_REGION = '''' || $_I401_CD_STAGE_REGION || ''''
+  Let $brb_tmp = 'CD_STAGE_REGION'
+  Let $where_clause401 = $brb_tmp  || ' = ' || $_I401_CD_STAGE_REGION
+  Let $region_selected = 'Y'
+End-if
+! -----------------------------
+Input $_I402_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_I402_CD_STAGE_CNTY) or IsBlank($_I402_CD_STAGE_CNTY) or ($_I402_CD_STAGE_CNTY) = '0'
+  Let $where_clause402 = 'CD_STAGE_CNTY is not null'
+  Let $county_selected = 'N'
+Else
+  Let $_I402_CD_STAGE_CNTY = '''' || $_I402_CD_STAGE_CNTY || ''''
+  Let $brb_tmp = 'CD_STAGE_CNTY'
+  Let $where_clause402 = $brb_tmp  || ' = ' || $_I402_CD_STAGE_CNTY
+  Let $county_selected = 'Y'
+End-If
+
+If $county_selected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From  CCOUNT
+Where CCOUNT.CODE = [$_I402_CD_STAGE_CNTY]
+End-Select
+  Move &_County_Decode to $_header_disp
+Else
+  If $region_selected = 'Y'
+    Let $_header_disp = 'Region ' || $_region
+  Else 
+    Let $_header_disp = 'Statewide'
+  End-If
+End-If
+End-Procedure
+
+Begin-Procedure Get-Unit-Input
+
+Input $_I102_NBR_UNIT 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If ($_I102_NBR_UNIT = '0')
+  Let $where_clause102 = 'NBR_UNIT is not null'
+  Let $unit_selected = 'N'
+Else
+  Let $unit_selected = 'Y'
+If SubStr($_I102_NBR_UNIT, 1, 1) != ''''
+  Let $_I102_NBR_UNIT = '''' || $_I102_NBR_UNIT || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I102_NBR_UNIT,'''',0) = 0 and instr($_I102_NBR_UNIT,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+      Let $where_clause102 =  '''' || $_I102_NBR_UNIT || ''''  || ' = ' || 'NBR_UNIT'
+ Else
+   If (instr($_I102_NBR_UNIT,'''',0) = 0 and instr($_I102_NBR_UNIT,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+          Let $where_clause102 = $_I102_NBR_UNIT || ' = ' || 'NBR_UNIT'
+   End-If
+ End-If
+End-If
+End-Procedure
+
+Begin-Procedure Get-Input-CaseWorker
+Input $_I102_STAGE_PERSON_LINK_ID_PERSON 'Enter a value for ID_PERSON' MaxLen=16  Type=Number
+If IsNull($_I102_STAGE_PERSON_LINK_ID_PERSON) or IsBlank($_I102_STAGE_PERSON_LINK_ID_PERSON) or ($_I102_STAGE_PERSON_LINK_ID_PERSON) = '0'
+  Let $_where_clause104 = 'STAGE_PERSON_LINK_CM.ID_PERSON is not null'
+  Let $cmSelected = 'N'
+  Else
+ Let $cmSelected = 'Y'
+Let $brb_tmp = 'STAGE_PERSON_LINK_CM.ID_PERSON'
+Let $_where_clause104 = $brb_tmp  || ' = ' || $_I102_STAGE_PERSON_LINK_ID_PERSON
+End-if
+End-Procedure
+
+Begin-Procedure PetitionTemp(#_P1_ID_CASE, #_P2_ID_PERSON,:$tcntDate1)
+Begin-Select 
+CAPS.LEGAL_ACTION.DT_CRT_ACT_DATE &cntDate
+From  CAPS.LEGAL_ACTION
+Where ID_CASE = #_P1_ID_CASE
+ And ID_PERSON = #_P2_ID_PERSON
+ And LEGAL_ACTION.CD_LEGAL_ACT_ACTION in ('PFD')
+ And LEGAL_ACTION.CD_HR_TYP_CRT_ORD in ('TFB','TFL','TFF','TPM','TPA','TFA','TPP')
+ And LEGAL_ACTION.ID_LEGAL_ACT_EVENT = (select min(la.id_legal_act_event) from legal_action la, event e,event_person_link epl where la.id_case
+     = LEGAL_ACTION.ID_CASE and la.id_person = LEGAL_ACTION.ID_PERSON and e.id_event = la.id_legal_act_event and epl.id_person = la.id_person
+     and e.id_case = la.id_case and e.id_event = epl.id_event and e.cd_event_status in ('APRV','COMP') and la.cd_legal_act_action in ('PFD') and la.cd_hr_typ_crt_ord
+     in ('TFB','TFL','TFF','TPM','TPA','TFA','TPP'))
+End-Select
+If &cntDate = '' 
+ Let $tcntDate = 'No'
+else
+ Let $tcntDate = 'Yes'
+End-If
+ Move $tcntDate to $tcntDate1
+End-Procedure
+
+Begin-Procedure CompellReasonQuery(#_P1_ID_CASE, #_P2_ID_PERSON,:$treason1)
+Begin-Select 
+CD_CBX &CompellingRsn
+From  CAPS.FCCP_CHILD, CAPS.FCCP_CHILD_CBX
+,      CAPS.EVENT, CAPS.EVENT_PERSON_LINK
+      Where CAPS.FCCP_CHILD.ID_EVENT = CAPS.EVENT.ID_EVENT
+            And CAPS.EVENT.ID_EVENT = CAPS.EVENT_PERSON_LINK.ID_EVENT
+            And CAPS.EVENT.ID_CASE = CAPS.EVENT_PERSON_LINK.ID_CASE
+            And CAPS.FCCP_CHILD.ID_EVENT = CAPS.FCCP_CHILD_CBX.ID_EVENT
+ And CAPS.EVENT.ID_CASE = #_P1_ID_CASE
+ And ID_PERSON = #_P2_ID_PERSON
+ And FCCP_CHILD_CBX.CD_CBX_CODE_TYPE = 'CCPTASF2'
+ And FCCP_CHILD.ID_EVENT = (select max(fc.id_event) from fccp_child fc, event e, event_person_link epl where fc.id_event = e.id_event and 
+     e.id_event = epl.id_event and e.id_case = epl.id_case and e.id_case =  EVENT.ID_CASE  and epl.id_person= EVENT_PERSON_LINK.ID_PERSON)
+ And FCCP_CHILD_CBX.CD_CBX in ('ERC','ECR','ENS')
+End-Select
+If &CompellingRsn = '' 
+ Let $Reason1 = 'No'
+else
+ Let $Reason1 = 'Yes'
+End-If
+Move $Reason1 to $treason1
+End-Procedure
+
+Begin-Procedure CalculateTotalFCEpisodes(#_P2_ID_PERSON,:#cnt1)
+Begin-Select
+count(LEGAL_STATUS_VIEW.id_person) &cntP
+From CAPS.LEGAL_STATUS_VIEW
+where LEGAL_STATUS_VIEW.id_person = #_P2_ID_PERSON
+and LEGAL_STATUS_VIEW.in_dfcs_custody = 'N'
+End-select
+Move &cntP to #cntt
+ Let #cnt = #cntt + 1
+Move #cnt to #cnt1
+End-Procedure
+
+
+Begin-Procedure MostRecentEntryYes(#_P1_ID_CASE,#_P2_ID_PERSON,:$Date1)
+Begin-Select
+min(lsv.dt_legal_stat_status_dt) &minDate1
+from legal_status_view lsv 
+where lsv.dt_legal_stat_status_dt > (
+ select max(lsv2.dt_legal_stat_status_dt) from legal_status_view lsv2
+ where lsv2.id_person =lsv.id_person and lsv2.id_case = lsv.id_case and lsv2.in_dfcs_custody = 'N')
+ and lsv.in_dfcs_custody = 'Y' and lsv.id_person =#_P2_ID_PERSON
+ and lsv.id_case = #_P1_ID_CASE 
+End-Select
+ 
+ Let $Date1 = datetostr(&minDate1,'mm/dd/yyyy')
+
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #4ROW_COUNT
+Begin-Select Distinct
+CAPS.STAGE.ID_CASE &_caseid
+CAPS.LEGAL_STATUS_VIEW.ID_PERSON &_personid
+ Do PetitionTemp(&_caseid,&_personid,$tcntDate1)
+ Do CompellReasonQuery(&_caseid,&_personid,$treason1)
+ Do CalculateTotalFCEpisodes(&_personid,#cnt1)
+ Do MostRecentEntryYes(&_caseid,&_personid,$Date1)
+NBR_UNIT &Master_Query_NBR_UNIT
+CAPS.UNIT.CD_COUNTY &Master_Query_CAPS.UNIT.CD_COUNTY
+PERSON_1.NM_PERSON_FULL &unitSupName
+CCOUNT_Stage.DECODE &Master_Query_CCOUNT_Stage.DECODE
+PERSON_CM.NM_PERSON_FULL &CMName
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_STAGE_REGION &Master_Query_CD_STAGE_REGION () On-Break Set=4 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc401 After=Master_QueryCD_STAGE_REGION_AfterProc401
+CD_STAGE_CNTY &Master_Query_CD_STAGE_CNTY () On-Break Set=4 Level=2 Print=Never Before=Master_QueryCD_STAGE_CNTY_BeforeProc402 After=Master_QueryCD_STAGE_CNTY_AfterProc402
+CAPS.UNIT.ID_UNIT &Master_Query_CAPS.UNIT.ID_UNIT () On-Break Set=4 Level=3 Print=Never Before=Master_QueryID_UNIT_BeforeProc403 After=Master_QueryID_UNIT_AfterProc403
+PERSON_CM.ID_PERSON &CMID () On-Break Set=4 Level=4 Print=Never Before=Master_QueryID_PERSON_BeforeProc404 After=Master_QueryID_PERSON_AfterProc404
+CAPS.PERSON.NM_PERSON_FULL &ChildName (15,5,22)
+CAPS.PERSON.DT_PERSON_BIRTH &DOB (15,128) Edit MM/DD/YYYY
+CAPS.PERSON.ID_PERSON &Master_Query_CAPS.PERSON.ID_PERSON
+ Do ExitDischa_Query(&Master_Query_CAPS.STAGE.ID_CASE, &Master_Query_CAPS.PERSON.ID_PERSON)
+ Print &ExitDischa_Query_DT_LEGAL_STAT_STATUS_DT (15,459) Edit MM/DD/YYYY
+CAPS.LEGAL_STATUS_VIEW.ID_PERSON &Master_Query_CAPS.LEGAL_STATUS_VIEW.ID_PERSON
+ Do PetitionDate_Q(&Master_Query_CAPS.STAGE.ID_CASE, &Master_Query_CAPS.LEGAL_STATUS_VIEW.ID_PERSON)
+ Print &PetitionFiledDate (15,596) Edit MM/DD/YYYY
+ Let $DateYN=$tcntDate1
+ Print $DateYN (15,533,9)
+ Let $varReason=$treason1
+ Print $varReason (15,672,8)
+CAPS.STAGE_PERSON_LINK.ID_PERSON &Master_Query_CAPS.STAGE_PERSON_LINK.ID_PERSON
+CAPS.STAGE_PERSON_LINK.ID_CASE &Master_Query_CAPS.STAGE_PERSON_LINK.ID_CASE
+ Do EFCNo_Query(&Master_Query_CAPS.STAGE_PERSON_LINK.ID_PERSON, &Master_Query_CAPS.STAGE_PERSON_LINK.ID_CASE)
+ Print &MinLS (15,371) Edit MM/DD/YYYY
+ Let #TotEpisodes=#cnt1
+ Print #TotEpisodes (15,318) Edit 9999
+ Do PermPlan(&Master_Query_CAPS.STAGE.ID_CASE, &Master_Query_CAPS.STAGE_PERSON_LINK.ID_PERSON)
+ Print &PermPlan (15,251,5)
+CAPS.STAGE.ID_CASE &Master_Query_CAPS.STAGE.ID_CASE (15,187) Edit 9999999999na
+ Let $MRecentdate=$Date1
+ Print $MRecentdate (15,371,10)
+ Add 1 To #4ROW_COUNT
+ Add 1 To #401ROW_COUNT
+ Add 1 To #402ROW_COUNT
+ Add 1 To #403ROW_COUNT
+ Add 1 To #404ROW_COUNT
+ Next-Listing  Need=15
+From  CAPS.STAGE, CAPS.PERSON
+,      CAPS.UNIT, CAPS.PERSON PERSON_1, CAPS.CCOUNT CCOUNT_Stage
+,      CAPS.LEGAL_ACTION, CAPS.LEGAL_STATUS_VIEW, CAPS.STAGE_PERSON_LINK
+,      CAPS.STAGE_PERSON_LINK STAGE_PERSON_LINK_CM, CAPS.PERSON PERSON_CM
+      Where CAPS.UNIT.ID_PERSON = PERSON_1.ID_PERSON
+            And CAPS.STAGE.CD_STAGE_CNTY = CCOUNT_Stage.CODE
+            And CAPS.STAGE.ID_STAGE = CAPS.STAGE_PERSON_LINK.ID_STAGE
+            And CAPS.STAGE.ID_CASE = CAPS.STAGE_PERSON_LINK.ID_CASE
+            And CAPS.STAGE.ID_CASE = CAPS.LEGAL_STATUS_VIEW.ID_CASE
+            And CAPS.STAGE_PERSON_LINK.ID_PERSON = CAPS.LEGAL_STATUS_VIEW.ID_PERSON
+            And CAPS.STAGE_PERSON_LINK.ID_PERSON = CAPS.LEGAL_ACTION.ID_PERSON
+            And CAPS.STAGE_PERSON_LINK.ID_CASE = CAPS.LEGAL_ACTION.ID_CASE
+            And CAPS.STAGE.ID_CASE = STAGE_PERSON_LINK_CM.ID_CASE
+            And CAPS.STAGE.ID_STAGE = STAGE_PERSON_LINK_CM.ID_STAGE
+            And CAPS.STAGE.ID_UNIT = CAPS.UNIT.ID_UNIT
+            And CAPS.STAGE_PERSON_LINK.ID_PERSON = CAPS.PERSON.ID_PERSON
+            And STAGE_PERSON_LINK_CM.ID_PERSON = PERSON_CM.ID_PERSON
+ And [$where_clause102]
+ And [$where_clause401]
+ And [$where_clause402]
+ And STAGE_PERSON_LINK.CD_STAGE_PERS_ROLE = 'PC'
+ And STAGE_PERSON_LINK_CM.CD_STAGE_PERS_ROLE = 'PR'
+ And STAGE.DT_STAGE_CLOSE is null
+ And STAGE_PERSON_LINK.ID_PERSON  not in  ( (Select la.id_person ID_CHILD from legal_action la, event e where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT
+     and e.CD_EVENT_STATUS in ('COMP','APRV') and la.CD_LEGAL_ACT_ACTION in ('VLM','VAF','VAM','VBF','VSF','VLS','VPF')) union (Select la.id_person
+     ID_CHILD from legal_action la, event e, legal_action_outcome lao where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT and la.ID_LEGAL_ACT_EVENT 
+    = lao.ID_LEGAL_ACT_EVENT and e.CD_EVENT_STATUS in ('COMP','APRV') and ( la.cd_legal_act_action in ('HRG','RCO') and la.CD_HR_TYP_CRT_ORD
+     in ('TFB','TFL','TFF','TPM','TPA','TFA','TPP') and lao.CD_OUTCOME in ('TPG') ) )  )
+ And STAGE_PERSON_LINK.ID_PERSON  not in (Select la.id_person ID_CHILD from legal_action la, event e, legal_action_outcome lao where la.ID_LEGAL_ACT_EVENT
+     = e.ID_EVENT and la.ID_LEGAL_ACT_EVENT = lao.ID_LEGAL_ACT_EVENT and e.CD_EVENT_STATUS in ('COMP','APRV') and ( la.cd_legal_act_action
+     in ('HRG','RCO') and lao.CD_OUTCOME in ('DPC') ) )
+ And LEGAL_STATUS_VIEW.IN_DFCS_CUSTODY  = 'Y'
+ And STAGE_PERSON_LINK.ID_PERSON  in (select distinct ls2.id_person from legal_status_view ls2 where ls2.id_case=  LEGAL_STATUS_VIEW.ID_CASE
+      and ls2.id_person =  LEGAL_STATUS_VIEW.ID_PERSON  and ls2.in_dfcs_custody = 'Y' and ls2.dt_legal_stat_status_dt = (select max(ls3.dt_legal_stat_status_dt)
+     from legal_status_view ls3  where ls3.id_case= ls2.id_case and ls3.id_person = ls2.id_person ))
+ And STAGE_PERSON_LINK.ID_PERSON in (select distinct spl.id_person from person p, legal_status_view ls,stage s,stage_person_link spl where
+     p.id_person = spl.id_person and s.id_case = spl.id_case and s.id_stage = spl.id_stage and spl.cd_stage_pers_role = 'PC' and s.cd_stage
+     in ('ADO','SUB') and s.dt_stage_close is null and s.id_case =  STAGE.ID_CASE and spl.id_person =  STAGE_PERSON_LINK.ID_PERSON and ls.id_case
+     = s.id_case and ls.id_person = spl.id_person and ((ls.dt_legal_stat_status_dt <= last_day(to_date($_dt_report,'mm/yyyy')) and ls.dt_legal_stat_status_dt
+    >=(last_day(to_date($_dt_report,'mm/yyyy'))  - 22*30)) Or ((last_day(to_date($_dt_report,'mm/yyyy')) - 22*30) >=  ls.dt_legal_stat_status_dt
+     and (last_day(to_date($_dt_report,'mm/yyyy')) - 22*30) <=  ls.dt_legal_stat_end)) and ls.in_dfcs_custody = 'Y' and spl.id_person in 
+    (select distinct ls2.id_person  from legal_status_view ls2 where ls2.id_case= ls.id_case and ls2.id_person = ls.id_person and ls2.in_dfcs_custody
+     = 'Y' and ls2.dt_legal_stat_status_dt = (select max(ls3.dt_legal_stat_status_dt) from legal_status_view ls3 where ls3.id_case= ls2.id_case
+     and ls3.id_person = ls2.id_person  )) having sum(( case when ((((last_day(to_date($_dt_report,'mm/yyyy')) + 1) - 22*30)  < ls.dt_legal_stat_end
+     and (((last_day(to_date($_dt_report,'mm/yyyy')) + 1) - 22*30) >ls.dt_legal_stat_status_dt) and  ls.dt_legal_stat_end < (last_day(to_date
+    ($_dt_report,'mm/yyyy')) + 1) )  or ((((last_day(to_date($_dt_report,'mm/yyyy')) + 1) - 22*30) < ls.dt_legal_stat_status_dt) and ((last_day
+    (to_date($_dt_report,'mm/yyyy')) + 1) - 22*30)  < ls.dt_legal_stat_end and  ls.dt_legal_stat_end < (last_day(to_date($_dt_report,'mm/yyyy'))
+     + 1) ) )  then (ls.dt_legal_stat_end-ls.dt_legal_stat_status_dt)/30 else ((last_day(to_date($_dt_report,'mm/yyyy')) + 1) -ls.dt_legal_stat_status_dt)
+    /30 end) ) >= 15 group by spl.id_person)
+ And STAGE.CD_STAGE in ('ADO','SUB')
+ And [$_where_clause104]
+ And (LEGAL_STATUS_VIEW.DT_LEGAL_STAT_STATUS_DT  <= last_day(to_date($_dt_report,'mm/yyyy'))  and  LEGAL_STATUS_VIEW.DT_LEGAL_STAT_STATUS_DT
+     >=((last_day(to_date($_dt_report,'mm/yyyy')) + 1) - 22*30) Or (((last_day(to_date($_dt_report,'mm/yyyy')) + 1) - 22*30) >=  LEGAL_STATUS_VIEW.DT_LEGAL_STAT_STATUS_DT  and ((last_day(to_date($_dt_report
+    ,'mm/yyyy')) + 1) - 22*30) <=  LEGAL_STATUS_VIEW.DT_LEGAL_STAT_CRT_ODR_EXP_DT ))
+ And (sysdate -  PERSON.DT_PERSON_BIRTH) / 365 <18
+Order By CD_STAGE_REGION
+,      CCOUNT_Stage.DECODE
+,      NBR_UNIT
+,      CAPS.UNIT.ID_UNIT
+,      PERSON_CM.NM_PERSON_FULL
+,      CAPS.PERSON.NM_PERSON_FULL
+End-Select
+ Next-Listing
+ Next-Listing  Need=17
+ If #4ROW_COUNT > 0
+ Graphic (3,1,716) Horz-Line 25 
+ Position (5,1)
+ let #GrandTotal = #4ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #GrandTotal (17,68) Bold  Edit 88888na
+  Print 'Total Cases:'  (17,2) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_BeforeProc403
+ Next-Listing  Need=17
+ Graphic (2,1,717) Horz-Line 15 
+ Position (3,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit # and Supervisor:'  (17,6) Bold 
+    Print &Master_Query_CAPS.UNIT.ID_UNIT (15,442) Edit 9999999999999999na Foreground=(255,255,255)
+  Print &Master_Query_NBR_UNIT (17,117,2) Bold 
+  Print &unitSupName (17,134,25) Bold 
+   Position (+12,)
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_AfterProc403
+ If $unit_selected = 'Y' or $cmSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=22
+ Graphic (4,1,719) Horz-Line 15 
+ Position (5,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit Total: '  (22,6) Bold 
+ let #unit_case_count = #403ROW_COUNT
+ If $unit_selected = 'Y' or $cmSelected = 'Y'
+    ! do nothing
+ Else
+ Print #unit_case_count (22,63) Bold  Edit 88888na
+ End-If
+   Position (+12,)
+ Move 0 To #403ROW_COUNT
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_BeforeProc402
+ If $county_selected = 'Y' or $cmSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=19
+ Graphic (4,1,716) Horz-Line 20 
+ Position (6,1)
+   Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CCOUNT_Stage.DECODE (19,3,34) Bold 
+   Position (+12,)
+ Next-Listing  Need=15
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_AfterProc402
+ If $county_selected = 'Y' or $cmSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=19
+ Graphic (6,1,717) Horz-Line 18 
+ Position (7,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'County Total:'  (19,4) Bold 
+ let #cntyTot = #402ROW_COUNT
+ If $county_selected = 'Y' or $cmSelected = 'Y'
+    ! do nothing
+ Else
+ Print #cntyTot (19,72) Bold  Edit 88888888na
+ End-If
+   Position (+12,)
+ Move 0 To #402ROW_COUNT
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc401
+ If $region_selected = 'Y' or $county_selected = 'Y' or ($region_selected = 'Y' and $county_selected ='Y') or $cmSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=17
+ Graphic (2,1,716) Horz-Line 25 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region:'  (17,1) Bold 
+   Print &Master_Query_CD_STAGE_REGION (17,41,2) Bold 
+   Position (+12,)
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc401
+ If $region_selected = 'Y' or $county_selected = 'Y' or ($region_selected = 'Y' and $county_selected ='Y') or $cmSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=20
+ Graphic (5,1,719) Horz-Line 25 
+ Position (7,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region Total:'  (20,3) Bold 
+ let #regTot = #401ROW_COUNT
+ If $region_selected = 'Y' or $county_selected = 'Y' or ($region_selected = 'Y' and $county_selected ='Y') or $cmSelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=902 Point-Size=10    ! [SQR.INI] 902=Arial Baltic,proportional
+ Print #regTot (20,74) Bold  Edit 88888888na
+ End-If
+   Position (+12,)
+ Move 0 To #401ROW_COUNT
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryID_PERSON_BeforeProc404
+ Next-Listing  Need=17
+ Graphic (1,1,717) Horz-Line 9 
+ Position (1,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &CMID (17,128) Edit 88888888888na Bold 
+  Print &CMName (17,191,25) Bold 
+ Print 'Case Manager ID/Name:'  (17,7) Bold 
+   Position (+12,)
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_PERSON_AfterProc404
+ If $cmSelected ='Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=18
+ Graphic (5,1,717) Horz-Line 8 
+ Position (5,1)
+ let #cmtotal = #404ROW_COUNT
+ If $cmSelected ='Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #cmtotal (18,44) Bold  Edit 88888888na
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Total:'  (18,8) Bold 
+   Position (+12,)
+ Move 0 To #404ROW_COUNT
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure ExitDischa_Query (#P1_ID_CASE, #P2_ID_PERSON)
+Begin-Select Loops=1
+DT_LEGAL_STAT_STATUS_DT &_ExitDischa_Query_DT_LEGAL_STAT_STATUS_DT
+From  CAPS.LEGAL_STATUS_VIEW, CAPS.PERSON
+      Where CAPS.LEGAL_STATUS_VIEW.ID_PERSON = CAPS.PERSON.ID_PERSON
+ And ID_CASE = #P1_ID_CASE
+ And CAPS.LEGAL_STATUS_VIEW.ID_PERSON = #P2_ID_PERSON
+ And LEGAL_STATUS_VIEW.DT_LEGAL_STAT_STATUS_DT= (select max(ls1.dt_legal_stat_status_dt) from legal_status_view ls1 where ls1.id_case=  LEGAL_STATUS_VIEW.ID_CASE
+      and ls1.id_person =  LEGAL_STATUS_VIEW.ID_PERSON and ls1.in_dfcs_custody = 'N')
+ And LEGAL_STATUS_VIEW.IN_DFCS_CUSTODY  = 'N'
+End-Select
+End-Procedure
+
+Begin-Procedure PermPlan (#P1_ID_CASE, #P2_ID_PERSON)
+Begin-Select Distinct Loops=1
+FCCP_FAMILY_Perm.CD_PRIM_PERM_PLAN &_PermPlan
+From  CAPS.EVENT_PERSON_LINK EVENT_PERSON_LINK_Perm, CAPS.FCCP_FAMILY FCCP_FAMILY_Perm
+,      CAPS.STAGE_PERSON_LINK STAGE_PERSON_LINK_Perm, CAPS.STAGE STAGE_Perm
+      Where EVENT_PERSON_LINK_Perm.ID_EVENT = FCCP_FAMILY_Perm.ID_EVENT
+            And EVENT_PERSON_LINK_Perm.ID_PERSON = STAGE_PERSON_LINK_Perm.ID_PERSON
+            And FCCP_FAMILY_Perm.ID_CASE = STAGE_PERSON_LINK_Perm.ID_CASE
+            And STAGE_PERSON_LINK_Perm.ID_CASE = STAGE_Perm.ID_CASE
+            And STAGE_PERSON_LINK_Perm.ID_STAGE = STAGE_Perm.ID_STAGE
+ And STAGE_Perm.ID_CASE = #P1_ID_CASE
+ And STAGE_PERSON_LINK_Perm.ID_PERSON = #P2_ID_PERSON
+ And FCCP_FAMILY_Perm.ID_EVENT = (SELECT  (max( FCCP_FAMILY_2.ID_EVENT ))  FROM  CAPS.EVENT EVENT_2,  CAPS.EVENT_PERSON_LINK EVENT_PERSON_LINK_2
+    ,  CAPS.FCCP_FAMILY FCCP_FAMILY_2 WHERE EVENT_2.ID_CASE = EVENT_PERSON_LINK_2.ID_CASE AND  EVENT_2.ID_EVENT = FCCP_FAMILY_2.ID_EVENT AND
+      EVENT_2.ID_CASE = FCCP_FAMILY_2.ID_CASE  AND  EVENT_PERSON_LINK_2.ID_CASE = FCCP_FAMILY_2.ID_CASE  AND  EVENT_2.ID_EVENT =  EVENT_PERSON_LINK_2.ID_EVENT
+      AND  EVENT_PERSON_LINK_2.ID_EVENT = FCCP_FAMILY_2.ID_EVENT AND  EVENT_2.CD_EVENT_STATUS = 'APRV' AND EVENT_PERSON_LINK_2.ID_CASE = 
+     EVENT_PERSON_LINK_Perm.ID_CASE  AND  EVENT_PERSON_LINK_2.ID_PERSON =  EVENT_PERSON_LINK_Perm.ID_PERSON )
+End-Select
+End-Procedure
+
+Begin-Procedure PetitionDate_Q (#P1_ID_CASE, #P2_ID_PERSON)
+Begin-Select Loops=1
+DT_CRT_ACT_DATE &_PetitionFiledDate
+From  CAPS.LEGAL_ACTION
+Where ID_CASE = #P1_ID_CASE
+ And ID_PERSON = #P2_ID_PERSON
+ And LEGAL_ACTION.CD_LEGAL_ACT_ACTION in ('PFD')
+ And LEGAL_ACTION.CD_HR_TYP_CRT_ORD in ('TFB','TFL','TFF','TPM','TPA','TFA','TPP')
+ And LEGAL_ACTION.ID_LEGAL_ACT_EVENT = (select min(la.id_legal_act_event) from legal_action la, event e,event_person_link epl where la.id_case
+     = LEGAL_ACTION.ID_CASE and la.id_person = LEGAL_ACTION.ID_PERSON and e.id_event = la.id_legal_act_event and epl.id_person = la.id_person
+     and e.id_case = la.id_case and e.id_event = epl.id_event and e.cd_event_status in ( 'APRV','COMP') and la.cd_legal_act_action in ('PFD')
+     and la.cd_hr_typ_crt_ord in ('TFB','TFL','TFF','TPM','TPA','TFA','TPP'))
+End-Select
+End-Procedure
+
+Begin-Procedure EFCNo_Query (#P1_ID_PERSON, #P2_ID_CASE)
+Begin-Select Loops=1
+(min( LEGAL_STATUS_VIEW.DT_LEGAL_STAT_STATUS_DT )) &_MinLS
+ID_PERSON &_EFCNo_Query_ID_PERSON
+From  CAPS.LEGAL_STATUS_VIEW
+Where ID_PERSON = #P1_ID_PERSON
+ And ID_CASE = #P2_ID_CASE
+ And LEGAL_STATUS_VIEW.ID_PERSON not in (select lsv.id_person from legal_status_view lsv where lsv.in_dfcs_custody = 'N' and lsv.id_case =
+      LEGAL_STATUS_VIEW.ID_CASE )
+Group By ID_PERSON
+End-Select
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 72 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Children and Family Services' (18,274,0)
+ Print 'Produced on:' (18,589,13)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Children In Care For 15 out of 22 Months Without a TPR or VS' (41,149,0) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (18,651) edit 'MM/DD/YYYY'
+ Let $headerDisp=$_header_disp
+ Print $headerDisp (58,322,15) Bold 
+ Let $LDate1=$_lastdate
+ Print $LDate1 (106,65,15) Bold 
+ Print 'Date From:' (88,5,0) Bold 
+ Print 'Date To:' (107,5,0) Bold 
+ Let $Newfirstdate=$_newfirstd2
+ Print $Newfirstdate (88,65,15) Bold 
+ Print 'Case ID' (147,187,0) Underline  Bold 
+ Print 'Child Name' (147,4,0) Underline  Bold 
+ Print 'DOB' (147,136,0) Underline  Bold 
+ Print 'Permanency Plan' (147,237,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on= 
+ Print 'Total Number of Episodes' (147,304,9) Underline  Bold  Wrap 9 3 line-height=12 Keep-Top on= 
+ Print 'Last Exit/Discharge' (146,452,8) Underline  Bold  Wrap 8 3 line-height=12 Keep-Top on= 
+ Print 'Petition Filed?' (147,529,9) Underline  Bold  Wrap 9 2 line-height=12 Keep-Top on= 
+ Print 'Date Petition Filed' (147,596,8) Underline  Bold  Wrap 8 3 line-height=12 Keep-Top on= 
+ Print 'Compelling Reason Documented?' (147,657,11) Underline  Bold  Wrap 11 3 line-height=12 Keep-Top on= 
+ Print 'Most Recent Entry into Foster Care' (147,367,13) Underline  Bold  Wrap 13 3 line-height=12 Keep-Top on= 
+ Else   ! put a non combined page header
+ Print 'Case ID' (24,187,0) Underline  Bold 
+ Print 'Child Name' (24,4,0) Underline  Bold 
+ Print 'DOB' (24,136,0) Underline  Bold 
+ Print 'Permanency Plan' (24,237,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on= 
+ Print 'Total Number of Episodes' (24,304,9) Underline  Bold  Wrap 9 3 line-height=12 Keep-Top on= 
+ Print 'Last Exit/Discharge' (23,452,8) Underline  Bold  Wrap 8 3 line-height=12 Keep-Top on= 
+ Print 'Petition Filed?' (24,529,9) Underline  Bold  Wrap 9 2 line-height=12 Keep-Top on= 
+ Print 'Date Petition Filed' (24,596,8) Underline  Bold  Wrap 8 3 line-height=12 Keep-Top on= 
+ Print 'Compelling Reason Documented?' (24,657,11) Underline  Bold  Wrap 11 3 line-height=12 Keep-Top on= 
+ Print 'Most Recent Entry into Foster Care' (24,367,13) Underline  Bold  Wrap 13 3 line-height=12 Keep-Top on= 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (20,664) '' ' of '
+ Last-Page (20,690) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

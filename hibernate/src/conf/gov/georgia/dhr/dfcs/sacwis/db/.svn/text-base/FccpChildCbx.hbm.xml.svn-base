@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FccpChildCbx" table="FCCP_CHILD_CBX" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idFccpChildCbx" type="integer" unsaved-value="0">
+      <column name="ID_FCCP_CHILD_CBX" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_FCCP_CHILD_CBX</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="fccpChild" class="gov.georgia.dhr.dfcs.sacwis.db.FccpChild" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdCbx" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CBX" length="3"/>
+    </property>
+    <property name="cdCbxCodeType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CBX_CODE_TYPE" length="8"/>
+    </property>
+  </class>
+</hibernate-mapping>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CodesTables" table="CODES_TABLES" mutable="false"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.CodesTablesId" mapped="false"
+                  unsaved-value="undefined">
+      <meta attribute="implement-equals">true</meta>
+      <key-property name="codeType" type="string">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="CODE_TYPE" length="8"/>
+      </key-property>
+      <key-property name="code" type="string">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="CODE" length="20"/>
+      </key-property>
+    </composite-id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="decode" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DECODE" length="370"/>
+    </property>
+    <property name="dtEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_END" length="7"/>
+    </property>
+  </class>
+</hibernate-mapping>

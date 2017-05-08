@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ProfessionalAssmt" table="PROFESSIONAL_ASSMT" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="personByIdPersonProfessional" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_PERSON_PROFESSIONAL" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdPersonPrincipal" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_PERSON_PRINCIPAL" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="dtProfAssmtAppt" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PROF_ASSMT_APPT" length="7"/>
+    </property>
+    <property name="cdProfAssmtApptRsn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PROF_ASSMT_APPT_RSN" length="3"/>
+    </property>
+    <property name="txtProfAssmtOther" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PROF_ASSMT_OTHER" length="40"/>
+    </property>
+    <property name="txtProfAssmtFindings" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PROF_ASSMT_FINDINGS" length="80"/>
+    </property>
+    <property name="nmProfAssmtName" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_PROF_ASSMT_NAME" length="25"/>
+    </property>
+    <property name="nmProfAssmtPrincipal" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_PROF_ASSMT_PRINCIPAL" length="25"/>
+    </property>
+    <property name="txtProfAssmtCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PROF_ASSMT_CMNTS" length="300"/>
+    </property>
+    <property name="nbrProfAssmtPhone" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PROF_ASSMT_PHONE" length="10"/>
+    </property>
+    <property name="nbrProfAssmtPhoneExt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PROF_ASSMT_PHONE_EXT" length="8"/>
+    </property>
+    <property name="addrProfAssmtStLn1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_PROF_ASSMT_ST_LN_1" length="30"/>
+    </property>
+    <property name="addrProfAssmtStLn2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_PROF_ASSMT_ST_LN_2" length="30"/>
+    </property>
+    <property name="addrProfAssmtCity" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_PROF_ASSMT_CITY" length="20"/>
+    </property>
+    <property name="addrProfAssmtZip" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_PROF_ASSMT_ZIP" length="10"/>
+    </property>
+    <property name="cdProfAssmtCounty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PROF_ASSMT_COUNTY" length="3"/>
+    </property>
+    <property name="cdProfAssmtState" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PROF_ASSMT_STATE" length="2"/>
+    </property>
+    <property name="indOutNetworkAuth" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_OUT_NETWORK_AUTH" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

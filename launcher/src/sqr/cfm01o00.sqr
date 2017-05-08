@@ -1,0 +1,5402 @@
+!*****************************************************************************
+!                                                                            *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cfm01o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/berryc/work/sqr                          *
+!                                                                            *
+!                                                                            *
+! DATE:                 06/10/1998                                           *
+!                                                                            *
+! PROGRAMMER NAME:      Christy Berry                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  A report of the number of families in family stages  *
+!			Family Preservation (FPR), Family Subcare (FSU),     *
+!			Family Reunification (FRE) that were open during the *
+!                       month counting by stage and stage type with totals   *
+!			by region and a state total.                         *
+!			                                                     *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------    -----------------------------------------------   *
+! 6/10/98    Christy Berry Initial Programming                               *
+! 9/10/98    Christy Berry Changes to include additional page for breakdown  *
+!                            of CRSRs (not in original design).              *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+DATE-TIME () HH:MI:SS &run_time
+SHOW &run_time
+date-time () MM/DD/YYYY &currentdt
+do HOUSEKEEPING
+
+do PROCESS-REPORT        
+
+do WRAP-UP
+
+DATE-TIME () HH:MI:SS &run_time
+SHOW &run_time
+
+END-REPORT
+
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+#ifdef ORACLE                           !compiler directive
+    ask dbname 'Database Name'
+    use {dbname}
+#endif
+#INCLUDE 'setup01a.sqc'                 ! control codes for Landscape Batch
+ASK INPUT_DATE
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. 8 lines are reserved to print the heading at the     *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called header01.sqc for landscape or portrait       *
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 7
+
+let $mo_yr = $month_name || ' ' || $year
+move 'cfm01o00'                                   to $ReportID
+move 'NUMBER OF FAMILY STAGES OPEN DURING THE MONTH'   to $ReportTitle 
+let  $ReportSubHeading = 'FOR THE MONTH OF' || ' ' || $mo_yr   
+
+#INCLUDE 'header01.sqc'     ! Include file with header information
+
+let $load = 'DATA AS OF ' || $load_date
+print $load (+1) center
+
+!Sub Headings
+
+print 'REGION'                (+2,18)
+print 'REGION'                (+0,31)
+print 'REGION'                (+0,44)
+print 'REGION'	              (+0,57)
+print 'REGION'                (+0,70)
+print 'REGION'		      (+0,83)
+print 'REGION'                (+0,96)
+print 'REGION'                (+0,109)
+print 'REGION'                (+0,122)
+print 'REGION'                (+0,135)
+print 'REGION'                (+0,148)
+print 'OTHER'                 (+0,158)
+print 'STATE'                 (+0,167)
+print '01'                    (+1,20)
+print '02'                    (+0,33)
+print '03'                    (+0,46)
+print '04'                    (+0,59)
+print '05'                    (+0,72)
+print '06'                    (+0,85)
+print '07'                    (+0,98)
+print '08'                    (+0,111)
+print '09'                    (+0,124)
+print '10'                    (+0,137)
+print '11'                    (+0,150)
+print 'TOTAL'                 (+0,167) 
+
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!  FOOTER                                                                   * 
+!                                                                           *
+!    This footer will appear every time SQR writes a page.                  *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-FOOTING 3
+
+print 'A family may be in more than one family stage each month.' (+0,1)
+print 'NOT FOR EXTERNAL DISTRIBUTION - THIS REPORT IS FOR PRS INTERNAL USE ONLY'
+                                                                  (+2) center
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS    : GET-PARSE                                                *
+!       CALLS    : GET-TIME-ID                                              *
+!       CALLS    : CONVERT-INPUT-DATE                                       *
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+#INCLUDE 'setenv.sqc'                    !Set printer environment
+
+  
+   move '{INPUT_DATE}'  TO $input_date
+   
+   do GET-PARSE 
+   do GET-TIME-ID
+   do GET-PROCESS-TIME
+
+move '****END OF REPORT****'            to $end_of_report 
+
+END-PROCEDURE HOUSEKEEPING
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-PARSE                                                               *
+!                                                                           *
+!       This procedure will parse the input month and convert it to the     *
+!       month name for the header.                                          *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PARSE
+
+   let $month = substr($input_date,1,2)
+   let $year = substr($input_date,7,4)
+   let $begin_date = ($month || '/01/' || $year)
+show $begin_date
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+TO_CHAR(TO_DATE($month, 'MM'), 'MONTH') &month_name
+   move &month_name                  to $month_name
+
+   let $month_name = rtrim($month_name, ' ')
+
+FROM    DUAL
+
+END-SELECT 
+
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+LAST_DAY ($month ||'/01/'|| $year) &last_day_dt
+   move &last_day_dt                  to $last_day_dt
+
+FROM    DUAL
+
+END-SELECT                
+
+show $last_day_dt
+
+END-PROCEDURE GET-PARSE
+!****************************************************************************
+!                                                                           *
+!   GET-TIME-ID                                                             *
+!                                                                           *
+!       This procedure will prompt for the month and year to get the ID-TIME*
+!       -LOAD from the time dimension table.                                *
+!                                                                           *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-TIME-ID
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+ID_TIME_LOAD 
+   move &ID_TIME_LOAD     to #id_time
+
+NBR_TIME_FISCAL_YEAR
+    move &NBR_TIME_FISCAL_YEAR   to #fiscalyr
+
+FROM    TIME_DIM
+
+WHERE NBR_TIME_CALENDAR_MONTH = $month
+AND   NBR_TIME_CALENDAR_YEAR  = $year
+
+END-SELECT
+
+END-PROCEDURE GET-TIME-ID    
+
+!****************************************************************************
+!                                                                           *
+!   GET-PROCESS-TIME                                                        *
+!                                                                           *
+!                                                                           *
+!                                                                           *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PROCESS-TIME
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+ 
+DT_LOAD_PROCESS
+   move &DT_LOAD_PROCESS   to  $load_date
+
+FROM  FAM_FACT 
+WHERE ID_TIME_LOAD = #id_time
+
+END-SELECT
+
+END-PROCEDURE GET-PROCESS-TIME   
+
+           
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-FAM-STAGES                                         *
+!                    PRINT-COUNTS                                           *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+do GET-FAM-STAGES
+do PRINT-COUNTS
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-FAM-STAGES                                                          *
+!                                                                           *
+!                                                                           *
+!									    *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-FAM-STAGES
+
+BEGIN-SELECT DISTINCT  ON-ERROR=SqlErrorHandle
+
+ID_FAM_STAGE
+
+CD_FAM_STAGE
+   move &CD_FAM_STAGE          to $stage
+ 
+CD_FAM_WORKLOAD_REGION
+   move &CD_FAM_WORKLOAD_REGION    to $region
+
+CD_FAM_STAGE_TYPE
+   move &CD_FAM_STAGE_TYPE     to $type
+
+   do GET-COUNTS
+
+FROM  	FAM_FACT 
+
+WHERE   ID_TIME_LOAD = #id_time
+
+AND     (DT_FAM_STAGE_CLOSED IS NULL  
+ 
+OR       DT_FAM_STAGE_CLOSED >= $begin_date)
+
+END-SELECT
+
+END-PROCEDURE GET-FAM-STAGES
+  
+
+!****************************************************************************
+!                                                                           *
+!   GET-COUNTS                                                              *
+!                                                                           *
+!       This procedure counts the number of families receiving family       * 
+!       services during the reporting month.                                *
+!       CALLED BY  : GET-FAM-STAGES                                         *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-COUNTS
+ 
+evaluate $stage
+  when = 'FPR'
+    evaluate $type
+      when = 'REG'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FPRREG01
+	    ADD 1 TO #FPR01
+	    ADD 1 TO #TOT01
+	    ADD 1 TO #FPRREGTOT
+	    ADD 1 TO #FPRTOT
+	    ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+    	    ADD 1 TO #FPRREG02
+	    ADD 1 TO #FPR02
+	    ADD 1 TO #TOT02
+            ADD 1 TO #FPRREGTOT
+	    ADD 1 TO #FPRTOT
+	    ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+   	    ADD 1 TO #FPRREG03
+	    ADD 1 TO #FPR03
+	    ADD 1 TO #TOT03
+            ADD 1 TO #FPRREGTOT
+            ADD 1 TO #FPRTOT
+	    ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+   	    ADD 1 TO #FPRREG04
+	    ADD 1 TO #FPR04
+	    ADD 1 TO #TOT04
+            ADD 1 TO #FPRREGTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FPRREG05
+	    ADD 1 TO #FPR05
+	    ADD 1 TO #TOT05
+            ADD 1 TO #FPRREGTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+    	    ADD 1 TO #FPRREG06
+	    ADD 1 TO #FPR06
+	    ADD 1 TO #TOT06
+            ADD 1 TO #FPRREGTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+   	    ADD 1 TO #FPRREG07
+	    ADD 1 TO #FPR07
+	    ADD 1 TO #TOT07
+            ADD 1 TO #FPRREGTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+   	    ADD 1 TO #FPRREG08
+	    ADD 1 TO #FPR08
+	    ADD 1 TO #TOT08
+            ADD 1 TO #FPRREGTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+    	    ADD 1 TO #FPRREG09
+	    ADD 1 TO #FPR09
+	    ADD 1 TO #TOT09
+            ADD 1 TO #FPRREGTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+    	    ADD 1 TO #FPRREG10
+	    ADD 1 TO #FPR10
+	    ADD 1 TO #TOT10
+            ADD 1 TO #FPRREGTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+   	    ADD 1 TO #FPRREG11
+	    ADD 1 TO #FPR11
+	    ADD 1 TO #TOT11
+            ADD 1 TO #FPRREGTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+	    ADD 1 TO #FPRREGOTHER
+	    ADD 1 TO #FPROTHER
+	    ADD 1 TO #TOTOTHER
+            ADD 1 TO #FPRREGTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+        end-evaluate
+       break
+       when = 'MOD'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FPRMOD01
+	    ADD 1 TO #FPR01
+	    ADD 1 TO #TOT01
+            ADD 1 TO #FPRMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+    	    ADD 1 TO #FPRMOD02
+	    ADD 1 TO #FPR02
+	    ADD 1 TO #TOT02
+            ADD 1 TO #FPRMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+   	    ADD 1 TO #FPRMOD03
+	    ADD 1 TO #FPR03
+	    ADD 1 TO #TOT03
+            ADD 1 TO #FPRMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+   	    ADD 1 TO #FPRMOD04
+	    ADD 1 TO #FPR04
+	    ADD 1 TO #TOT04
+            ADD 1 TO #FPRMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FPRMOD05
+	    ADD 1 TO #FPR05
+	    ADD 1 TO #TOT05
+            ADD 1 TO #FPRMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+    	    ADD 1 TO #FPRMOD06
+	    ADD 1 TO #FPR06
+	    ADD 1 TO #TOT06
+            ADD 1 TO #FPRMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+   	    ADD 1 TO #FPRMOD07
+	    ADD 1 TO #FPR07
+	    ADD 1 TO #TOT07
+            ADD 1 TO #FPRMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+   	    ADD 1 TO #FPRMOD08
+	    ADD 1 TO #FPR08
+	    ADD 1 TO #TOT08
+            ADD 1 TO #FPRMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+    	    ADD 1 TO #FPRMOD09
+	    ADD 1 TO #FPR09
+	    ADD 1 TO #TOT09
+            ADD 1 TO #FPRMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+    	    ADD 1 TO #FPRMOD10
+	    ADD 1 TO #FPR10
+	    ADD 1 TO #TOT10
+            ADD 1 TO #FPRMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+   	    ADD 1 TO #FPRMOD11
+	    ADD 1 TO #FPR11
+	    ADD 1 TO #TOT11
+            ADD 1 TO #FPRMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+	    ADD 1 TO #FPRMODOTHER
+	    ADD 1 TO #FPROTHER
+	    ADD 1 TO #TOTOTHER
+            ADD 1 TO #FPRMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'INT'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FPRINT01
+	    ADD 1 TO #FPR01
+	    ADD 1 TO #TOT01
+            ADD 1 TO #FPRINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+    	    ADD 1 TO #FPRINT02
+	    ADD 1 TO #FPR02
+	    ADD 1 TO #TOT02
+            ADD 1 TO #FPRINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+   	    ADD 1 TO #FPRINT03
+	    ADD 1 TO #FPR03
+	    ADD 1 TO #TOT03
+            ADD 1 TO #FPRINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+   	    ADD 1 TO #FPRINT04
+	    ADD 1 TO #FPR04
+	    ADD 1 TO #TOT04
+            ADD 1 TO #FPRINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FPRINT05
+	    ADD 1 TO #FPR05
+	    ADD 1 TO #TOT05
+            ADD 1 TO #FPRINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+    	    ADD 1 TO #FPRINT06
+	    ADD 1 TO #FPR06
+	    ADD 1 TO #TOT06
+            ADD 1 TO #FPRINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+   	    ADD 1 TO #FPRINT07
+	    ADD 1 TO #FPR07
+	    ADD 1 TO #TOT07
+            ADD 1 TO #FPRINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+   	    ADD 1 TO #FPRINT08
+	    ADD 1 TO #FPR08
+	    ADD 1 TO #TOT08
+            ADD 1 TO #FPRINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+    	    ADD 1 TO #FPRINT09
+	    ADD 1 TO #FPR09
+	    ADD 1 TO #TOT09
+            ADD 1 TO #FPRINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+    	    ADD 1 TO #FPRINT10
+	    ADD 1 TO #FPR10
+	    ADD 1 TO #TOT10
+            ADD 1 TO #FPRINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+   	    ADD 1 TO #FPRINT11
+	    ADD 1 TO #FPR11
+	    ADD 1 TO #TOT11
+            ADD 1 TO #FPRINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+	    ADD 1 TO #FPRINTOTHER
+	    ADD 1 TO #FPROTHER
+	    ADD 1 TO #TOTOTHER
+            ADD 1 TO #FPRINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'CON'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FPRCON01
+	    ADD 1 TO #FPR01
+	    ADD 1 TO #TOT01
+            ADD 1 TO #FPRCONTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+    	    ADD 1 TO #FPRCON02
+	    ADD 1 TO #FPR02
+	    ADD 1 TO #TOT02
+            ADD 1 TO #FPRCONTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+   	    ADD 1 TO #FPRCON03
+	    ADD 1 TO #FPR03
+	    ADD 1 TO #TOT03
+            ADD 1 TO #FPRCONTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+   	    ADD 1 TO #FPRCON04
+	    ADD 1 TO #FPR04
+	    ADD 1 TO #TOT04
+            ADD 1 TO #FPRCONTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FPRCON05
+	    ADD 1 TO #FPR05
+	    ADD 1 TO #TOT05
+            ADD 1 TO #FPRCONTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+    	    ADD 1 TO #FPRCON06
+	    ADD 1 TO #FPR06
+	    ADD 1 TO #TOT06
+            ADD 1 TO #FPRCONTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+   	    ADD 1 TO #FPRCON07
+	    ADD 1 TO #FPR07
+	    ADD 1 TO #TOT07
+            ADD 1 TO #FPRCONTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+   	    ADD 1 TO #FPRCON08
+	    ADD 1 TO #FPR08
+	    ADD 1 TO #TOT08
+            ADD 1 TO #FPRCONTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+    	    ADD 1 TO #FPRCON09
+	    ADD 1 TO #FPR09
+	    ADD 1 TO #TOT09
+            ADD 1 TO #FPRCONTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+    	    ADD 1 TO #FPRCON10
+	    ADD 1 TO #FPR10
+	    ADD 1 TO #TOT10
+            ADD 1 TO #FPRCONTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+   	    ADD 1 TO #FPRCON11
+	    ADD 1 TO #FPR11
+	    ADD 1 TO #TOT11
+            ADD 1 TO #FPRCONTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+	    ADD 1 TO #FPRCONOTHER
+	    ADD 1 TO #FPROTHER
+	    ADD 1 TO #TOTOTHER
+            ADD 1 TO #FPRCONTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'CMOD'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FPRCMOD01
+	    ADD 1 TO #FPR01
+	    ADD 1 TO #TOT01
+            ADD 1 TO #FPRCMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+    	    ADD 1 TO #FPRCMOD02
+	    ADD 1 TO #FPR02
+	    ADD 1 TO #TOT02
+            ADD 1 TO #FPRCMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+   	    ADD 1 TO #FPRCMOD03
+	    ADD 1 TO #FPR03
+	    ADD 1 TO #TOT03
+            ADD 1 TO #FPRCMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+   	    ADD 1 TO #FPRCMOD04
+	    ADD 1 TO #FPR04
+	    ADD 1 TO #TOT04
+            ADD 1 TO #FPRCMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FPRCMOD05
+	    ADD 1 TO #FPR05
+	    ADD 1 TO #TOT05
+            ADD 1 TO #FPRCMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+    	    ADD 1 TO #FPRCMOD06
+	    ADD 1 TO #FPR06
+	    ADD 1 TO #TOT06
+            ADD 1 TO #FPRCMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+   	    ADD 1 TO #FPRCMOD07
+	    ADD 1 TO #FPR07
+	    ADD 1 TO #TOT07
+            ADD 1 TO #FPRCMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+   	    ADD 1 TO #FPRCMOD08
+	    ADD 1 TO #FPR08
+	    ADD 1 TO #TOT08
+            ADD 1 TO #FPRCMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+    	    ADD 1 TO #FPRCMOD09
+	    ADD 1 TO #FPR09
+	    ADD 1 TO #TOT09
+            ADD 1 TO #FPRCMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+    	    ADD 1 TO #FPRCMOD10
+	    ADD 1 TO #FPR10
+	    ADD 1 TO #TOT10
+            ADD 1 TO #FPRCMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+   	    ADD 1 TO #FPRCMOD11
+	    ADD 1 TO #FPR11
+	    ADD 1 TO #TOT11
+            ADD 1 TO #FPRCMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+	    ADD 1 TO #FPRCMODOTHER
+	    ADD 1 TO #FPROTHER
+	    ADD 1 TO #TOTOTHER
+            ADD 1 TO #FPRCMODTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'CINT'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FPRCINT01
+	    ADD 1 TO #FPR01
+	    ADD 1 TO #TOT01
+            ADD 1 TO #FPRCINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+    	    ADD 1 TO #FPRCINT02
+	    ADD 1 TO #FPR02
+	    ADD 1 TO #TOT02
+            ADD 1 TO #FPRCINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+   	    ADD 1 TO #FPRCINT03
+	    ADD 1 TO #FPR03
+	    ADD 1 TO #TOT03
+            ADD 1 TO #FPRCINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+   	    ADD 1 TO #FPRCINT04
+	    ADD 1 TO #FPR04
+	    ADD 1 TO #TOT04
+            ADD 1 TO #FPRCINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FPRCINT05
+	    ADD 1 TO #FPR05
+	    ADD 1 TO #TOT05
+            ADD 1 TO #FPRCINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+    	    ADD 1 TO #FPRCINT06
+	    ADD 1 TO #FPR06
+	    ADD 1 TO #TOT06
+            ADD 1 TO #FPRCINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+   	    ADD 1 TO #FPRCINT07
+	    ADD 1 TO #FPR07
+	    ADD 1 TO #TOT07
+            ADD 1 TO #FPRCINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+   	    ADD 1 TO #FPRCINT08
+	    ADD 1 TO #FPR08
+	    ADD 1 TO #TOT08
+            ADD 1 TO #FPRCINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+    	    ADD 1 TO #FPRCINT09
+	    ADD 1 TO #FPR09
+	    ADD 1 TO #TOT09
+            ADD 1 TO #FPRCINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+    	    ADD 1 TO #FPRCINT10
+	    ADD 1 TO #FPR10
+	    ADD 1 TO #TOT10
+            ADD 1 TO #FPRCINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+   	    ADD 1 TO #FPRCINT11
+	    ADD 1 TO #FPR11
+	    ADD 1 TO #TOT11
+            ADD 1 TO #FPRCINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+	    ADD 1 TO #FPRCINTOTHER
+	    ADD 1 TO #FPROTHER
+	    ADD 1 TO #TOTOTHER
+            ADD 1 TO #FPRCINTTOT
+            ADD 1 TO #FPRTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'C-CO'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FPRCCO01
+	    ADD 1 TO #FPRCCOTOT
+	    ADD 1 TO #FPRSR01
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR01
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND01
+            ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+            ADD 1 TO #FPRCCO02
+	    ADD 1 TO #FPRCCOTOT
+	    ADD 1 TO #FPRSR02
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR02
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND02
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+            ADD 1 TO #FPRCCO03
+	    ADD 1 TO #FPRCCOTOT
+	    ADD 1 TO #FPRSR03
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR03
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND03
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+            ADD 1 TO #FPRCCO04
+	    ADD 1 TO #FPRCCOTOT
+	    ADD 1 TO #FPRSR04
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR04
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND04
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FPRCCO05
+	    ADD 1 TO #FPRCCOTOT
+	    ADD 1 TO #FPRSR05
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR05
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND05
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+            ADD 1 TO #FPRCCO06
+	    ADD 1 TO #FPRCCOTOT
+	    ADD 1 TO #FPRSR06
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR06
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND06
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+            ADD 1 TO #FPRCCO07
+	    ADD 1 TO #FPRCCOTOT
+	    ADD 1 TO #FPRSR07
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR07
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND07
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+            ADD 1 TO #FPRCCO08
+	    ADD 1 TO #FPRCCOTOT
+	    ADD 1 TO #FPRSR08
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR08
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND08
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+            ADD 1 TO #FPRCCO09
+	    ADD 1 TO #FPRCCOTOT
+	    ADD 1 TO #FPRSR09
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR09
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND09
+            ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+            ADD 1 TO #FPRCCO10
+	    ADD 1 TO #FPRCCOTOT
+	    ADD 1 TO #FPRSR10
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR10
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND10
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+            ADD 1 TO #FPRCCO11
+	    ADD 1 TO #FPRCCOTOT
+	    ADD 1 TO #FPRSR11
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR11
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND11
+            ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+            ADD 1 TO #FPRCCOOTHER
+	    ADD 1 TO #FPRCCOTOT
+	    ADD 1 TO #FPRSROTHER
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSROTHER
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRANDOTHER
+            ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'C-PB'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FPRCPB01
+	    ADD 1 TO #FPRCPBTOT
+	    ADD 1 TO #FPRSR01
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR01
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND01
+            ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+            ADD 1 TO #FPRCPB02
+	    ADD 1 TO #FPRCPBTOT
+	    ADD 1 TO #FPRSR02
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR02
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND02
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+            ADD 1 TO #FPRCPB03
+	    ADD 1 TO #FPRCPBTOT
+	    ADD 1 TO #FPRSR03
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR03
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND03
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+            ADD 1 TO #FPRCPB04
+	    ADD 1 TO #FPRCPBTOT
+	    ADD 1 TO #FPRSR04
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR04
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND04
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FPRCPB05
+	    ADD 1 TO #FPRCPBTOT
+	    ADD 1 TO #FPRSR05
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR05
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND05
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+            ADD 1 TO #FPRCPB06
+	    ADD 1 TO #FPRCPBTOT
+	    ADD 1 TO #FPRSR06
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR06
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND06
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+            ADD 1 TO #FPRCPB07
+	    ADD 1 TO #FPRCPBTOT
+	    ADD 1 TO #FPRSR07
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR07
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND07
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+            ADD 1 TO #FPRCPB08
+	    ADD 1 TO #FPRCPBTOT
+	    ADD 1 TO #FPRSR08
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR08
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND08
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+            ADD 1 TO #FPRCPB09
+	    ADD 1 TO #FPRCPBTOT
+	    ADD 1 TO #FPRSR09
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR09
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND09
+            ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+            ADD 1 TO #FPRCPB10
+	    ADD 1 TO #FPRCPBTOT
+	    ADD 1 TO #FPRSR10
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR10
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND10
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+            ADD 1 TO #FPRCPB11
+	    ADD 1 TO #FPRCPBTOT
+	    ADD 1 TO #FPRSR11
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR11
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND11
+            ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+            ADD 1 TO #FPRCPBOTHER
+	    ADD 1 TO #FPRCPBTOT
+	    ADD 1 TO #FPRSROTHER
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSROTHER
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRANDOTHER
+            ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'C-IC'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FPRCIC01
+	    ADD 1 TO #FPRCICTOT
+	    ADD 1 TO #FPRSR01
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR01
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND01
+            ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+            ADD 1 TO #FPRCIC02
+	    ADD 1 TO #FPRCICTOT
+	    ADD 1 TO #FPRSR02
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR02
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND02
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+            ADD 1 TO #FPRCIC03
+	    ADD 1 TO #FPRCICTOT
+	    ADD 1 TO #FPRSR03
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR03
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND03
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+            ADD 1 TO #FPRCIC04
+	    ADD 1 TO #FPRCICTOT
+	    ADD 1 TO #FPRSR04
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR04
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND04
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FPRCIC05
+	    ADD 1 TO #FPRCICTOT
+	    ADD 1 TO #FPRSR05
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR05
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND05
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+            ADD 1 TO #FPRCIC06
+	    ADD 1 TO #FPRCICTOT
+	    ADD 1 TO #FPRSR06
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR06
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND06
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+            ADD 1 TO #FPRCIC07
+	    ADD 1 TO #FPRCICTOT
+	    ADD 1 TO #FPRSR07
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR07
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND07
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+            ADD 1 TO #FPRCIC08
+	    ADD 1 TO #FPRCICTOT
+	    ADD 1 TO #FPRSR08
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR08
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND08
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+            ADD 1 TO #FPRCIC09
+	    ADD 1 TO #FPRCICTOT
+	    ADD 1 TO #FPRSR09
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR09
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND09
+            ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+            ADD 1 TO #FPRCIC10
+	    ADD 1 TO #FPRCICTOT
+	    ADD 1 TO #FPRSR10
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR10
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND10
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+            ADD 1 TO #FPRCIC11
+	    ADD 1 TO #FPRCICTOT
+	    ADD 1 TO #FPRSR11
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR11
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND11
+            ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+            ADD 1 TO #FPRCICOTHER
+	    ADD 1 TO #FPRCICTOT
+	    ADD 1 TO #FPRSROTHER
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSROTHER
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRANDOTHER
+            ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when-other
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FPROTH01
+	    ADD 1 TO #FPROTHTOT
+	    ADD 1 TO #FPRSR01
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR01
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+            ADD 1 TO #FPROTH02
+	    ADD 1 TO #FPROTHTOT
+	    ADD 1 TO #FPRSR02
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR02
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+            ADD 1 TO #FPROTH03
+	    ADD 1 TO #FPROTHTOT
+	    ADD 1 TO #FPRSR03
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR03
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+            ADD 1 TO #FPROTH04
+	    ADD 1 TO #FPROTHTOT
+	    ADD 1 TO #FPRSR04
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR04
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FPROTH05
+	    ADD 1 TO #FPROTHTOT
+	    ADD 1 TO #FPRSR05
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR05
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+            ADD 1 TO #FPROTH06
+	    ADD 1 TO #FPROTHTOT
+	    ADD 1 TO #FPRSR06
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR06
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+            ADD 1 TO #FPROTH07
+	    ADD 1 TO #FPROTHTOT
+	    ADD 1 TO #FPRSR07
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR07
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+            ADD 1 TO #FPROTH08
+	    ADD 1 TO #FPROTHTOT
+	    ADD 1 TO #FPRSR08
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR08
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+            ADD 1 TO #FPROTH09
+	    ADD 1 TO #FPROTHTOT
+	    ADD 1 TO #FPRSR09
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR09
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+            ADD 1 TO #FPROTH10
+	    ADD 1 TO #FPROTHTOT
+	    ADD 1 TO #FPRSR10
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR10
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+            ADD 1 TO #FPROTH11
+	    ADD 1 TO #FPROTHTOT
+	    ADD 1 TO #FPRSR11
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSR11
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+            ADD 1 TO #FPROTHOTHER
+	    ADD 1 TO #FPROTHTOT
+	    ADD 1 TO #FPRSROTHER
+            ADD 1 TO #FPRSRTOT
+            ADD 1 TO #CRSROTHER
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+   end-evaluate
+  break
+  when = 'FRE'
+    evaluate $type
+      when = 'REG'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FREREG01
+	    ADD 1 TO #FRE01
+	    ADD 1 TO #TOT01
+	    ADD 1 TO #FREREGTOT
+	    ADD 1 TO #FRETOT
+	    ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+    	    ADD 1 TO #FREREG02
+	    ADD 1 TO #FRE02
+	    ADD 1 TO #TOT02
+            ADD 1 TO #FREREGTOT
+	    ADD 1 TO #FRETOT
+	    ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+   	    ADD 1 TO #FREREG03
+	    ADD 1 TO #FRE03
+	    ADD 1 TO #TOT03
+            ADD 1 TO #FREREGTOT
+            ADD 1 TO #FRETOT
+	    ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+   	    ADD 1 TO #FREREG04
+	    ADD 1 TO #FRE04
+	    ADD 1 TO #TOT04
+            ADD 1 TO #FREREGTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FREREG05
+	    ADD 1 TO #FRE05
+	    ADD 1 TO #TOT05
+            ADD 1 TO #FREREGTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+    	    ADD 1 TO #FREREG06
+	    ADD 1 TO #FRE06
+	    ADD 1 TO #TOT06
+            ADD 1 TO #FREREGTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+   	    ADD 1 TO #FREREG07
+	    ADD 1 TO #FRE07
+	    ADD 1 TO #TOT07
+            ADD 1 TO #FREREGTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+   	    ADD 1 TO #FREREG08
+	    ADD 1 TO #FRE08
+	    ADD 1 TO #TOT08
+            ADD 1 TO #FREREGTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+    	    ADD 1 TO #FREREG09
+	    ADD 1 TO #FRE09
+	    ADD 1 TO #TOT09
+            ADD 1 TO #FREREGTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+    	    ADD 1 TO #FREREG10
+	    ADD 1 TO #FRE10
+	    ADD 1 TO #TOT10
+            ADD 1 TO #FREREGTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+   	    ADD 1 TO #FREREG11
+	    ADD 1 TO #FRE11
+	    ADD 1 TO #TOT11
+            ADD 1 TO #FREREGTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+	    ADD 1 TO #FREREGOTHER
+	    ADD 1 TO #FREOTHER
+	    ADD 1 TO #TOTOTHER
+            ADD 1 TO #FREREGTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+        end-evaluate
+       break
+       when = 'MOD'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FREMOD01
+	    ADD 1 TO #FRE01
+	    ADD 1 TO #TOT01
+            ADD 1 TO #FREMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+    	    ADD 1 TO #FREMOD02
+	    ADD 1 TO #FRE02
+	    ADD 1 TO #TOT02
+            ADD 1 TO #FREMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+   	    ADD 1 TO #FREMOD03
+	    ADD 1 TO #FRE03
+	    ADD 1 TO #TOT03
+            ADD 1 TO #FREMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+   	    ADD 1 TO #FREMOD04
+	    ADD 1 TO #FRE04
+	    ADD 1 TO #TOT04
+            ADD 1 TO #FREMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FREMOD05
+	    ADD 1 TO #FRE05
+	    ADD 1 TO #TOT05
+            ADD 1 TO #FREMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+    	    ADD 1 TO #FREMOD06
+	    ADD 1 TO #FRE06
+	    ADD 1 TO #TOT06
+            ADD 1 TO #FREMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+   	    ADD 1 TO #FREMOD07
+	    ADD 1 TO #FRE07
+	    ADD 1 TO #TOT07
+            ADD 1 TO #FREMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+   	    ADD 1 TO #FREMOD08
+	    ADD 1 TO #FRE08
+	    ADD 1 TO #TOT08
+            ADD 1 TO #FREMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+    	    ADD 1 TO #FREMOD09
+	    ADD 1 TO #FRE09
+	    ADD 1 TO #TOT09
+            ADD 1 TO #FREMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+    	    ADD 1 TO #FREMOD10
+	    ADD 1 TO #FRE10
+	    ADD 1 TO #TOT10
+            ADD 1 TO #FREMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+   	    ADD 1 TO #FREMOD11
+	    ADD 1 TO #FRE11
+	    ADD 1 TO #TOT11
+            ADD 1 TO #FREMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+	    ADD 1 TO #FREMODOTHER
+	    ADD 1 TO #FREOTHER
+	    ADD 1 TO #TOTOTHER
+            ADD 1 TO #FREMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'INT'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FREINT01
+	    ADD 1 TO #FRE01
+	    ADD 1 TO #TOT01
+            ADD 1 TO #FREINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+    	    ADD 1 TO #FREINT02
+	    ADD 1 TO #FRE02
+	    ADD 1 TO #TOT02
+            ADD 1 TO #FREINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+   	    ADD 1 TO #FREINT03
+	    ADD 1 TO #FRE03
+	    ADD 1 TO #TOT03
+            ADD 1 TO #FREINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+   	    ADD 1 TO #FREINT04
+	    ADD 1 TO #FRE04
+	    ADD 1 TO #TOT04
+            ADD 1 TO #FREINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FREINT05
+	    ADD 1 TO #FRE05
+	    ADD 1 TO #TOT05
+            ADD 1 TO #FREINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+    	    ADD 1 TO #FREINT06
+	    ADD 1 TO #FRE06
+	    ADD 1 TO #TOT06
+            ADD 1 TO #FREINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+   	    ADD 1 TO #FREINT07
+	    ADD 1 TO #FRE07
+	    ADD 1 TO #TOT07
+            ADD 1 TO #FREINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+   	    ADD 1 TO #FREINT08
+	    ADD 1 TO #FRE08
+	    ADD 1 TO #TOT08
+            ADD 1 TO #FREINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+    	    ADD 1 TO #FREINT09
+	    ADD 1 TO #FRE09
+	    ADD 1 TO #TOT09
+            ADD 1 TO #FREINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+    	    ADD 1 TO #FREINT10
+	    ADD 1 TO #FRE10
+	    ADD 1 TO #TOT10
+            ADD 1 TO #FREINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+   	    ADD 1 TO #FREINT11
+	    ADD 1 TO #FRE11
+	    ADD 1 TO #TOT11
+            ADD 1 TO #FREINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+	    ADD 1 TO #FREINTOTHER
+	    ADD 1 TO #FREOTHER
+	    ADD 1 TO #TOTOTHER
+            ADD 1 TO #FREINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'CON'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FRECON01
+	    ADD 1 TO #FRE01
+	    ADD 1 TO #TOT01
+            ADD 1 TO #FRECONTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+    	    ADD 1 TO #FRECON02
+	    ADD 1 TO #FRE02
+	    ADD 1 TO #TOT02
+            ADD 1 TO #FRECONTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+   	    ADD 1 TO #FRECON03
+	    ADD 1 TO #FRE03
+	    ADD 1 TO #TOT03
+            ADD 1 TO #FRECONTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+   	    ADD 1 TO #FRECON04
+	    ADD 1 TO #FRE04
+	    ADD 1 TO #TOT04
+            ADD 1 TO #FRECONTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FRECON05
+	    ADD 1 TO #FRE05
+	    ADD 1 TO #TOT05
+            ADD 1 TO #FRECONTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+    	    ADD 1 TO #FRECON06
+	    ADD 1 TO #FRE06
+	    ADD 1 TO #TOT06
+            ADD 1 TO #FRECONTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+   	    ADD 1 TO #FRECON07
+	    ADD 1 TO #FRE07
+	    ADD 1 TO #TOT07
+            ADD 1 TO #FRECONTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+   	    ADD 1 TO #FRECON08
+	    ADD 1 TO #FRE08
+	    ADD 1 TO #TOT08
+            ADD 1 TO #FRECONTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+    	    ADD 1 TO #FRECON09
+	    ADD 1 TO #FRE09
+	    ADD 1 TO #TOT09
+            ADD 1 TO #FRECONTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+    	    ADD 1 TO #FRECON10
+	    ADD 1 TO #FRE10
+	    ADD 1 TO #TOT10
+            ADD 1 TO #FRECONTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+   	    ADD 1 TO #FRECON11
+	    ADD 1 TO #FRE11
+	    ADD 1 TO #TOT11
+            ADD 1 TO #FRECONTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+	    ADD 1 TO #FRECONOTHER
+	    ADD 1 TO #FREOTHER
+	    ADD 1 TO #TOTOTHER
+            ADD 1 TO #FRECONTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'CMOD'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FRECMOD01
+	    ADD 1 TO #FRE01
+	    ADD 1 TO #TOT01
+            ADD 1 TO #FRECMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+    	    ADD 1 TO #FRECMOD02
+	    ADD 1 TO #FRE02
+	    ADD 1 TO #TOT02
+            ADD 1 TO #FRECMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+   	    ADD 1 TO #FRECMOD03
+	    ADD 1 TO #FRE03
+	    ADD 1 TO #TOT03
+            ADD 1 TO #FRECMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+   	    ADD 1 TO #FRECMOD04
+	    ADD 1 TO #FRE04
+	    ADD 1 TO #TOT04
+            ADD 1 TO #FRECMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FRECMOD05
+	    ADD 1 TO #FRE05
+	    ADD 1 TO #TOT05
+            ADD 1 TO #FRECMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+    	    ADD 1 TO #FRECMOD06
+	    ADD 1 TO #FRE06
+	    ADD 1 TO #TOT06
+            ADD 1 TO #FRECMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+   	    ADD 1 TO #FRECMOD07
+	    ADD 1 TO #FRE07
+	    ADD 1 TO #TOT07
+            ADD 1 TO #FRECMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+   	    ADD 1 TO #FRECMOD08
+	    ADD 1 TO #FRE08
+	    ADD 1 TO #TOT08
+            ADD 1 TO #FRECMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+    	    ADD 1 TO #FRECMOD09
+	    ADD 1 TO #FRE09
+	    ADD 1 TO #TOT09
+            ADD 1 TO #FRECMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+    	    ADD 1 TO #FRECMOD10
+	    ADD 1 TO #FRE10
+	    ADD 1 TO #TOT10
+            ADD 1 TO #FRECMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+   	    ADD 1 TO #FRECMOD11
+	    ADD 1 TO #FRE11
+	    ADD 1 TO #TOT11
+            ADD 1 TO #FRECMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+	    ADD 1 TO #FRECMODOTHER
+	    ADD 1 TO #FREOTHER
+	    ADD 1 TO #TOTOTHER
+            ADD 1 TO #FRECMODTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'CINT'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FRECINT01
+	    ADD 1 TO #FRE01
+	    ADD 1 TO #TOT01
+            ADD 1 TO #FRECINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+    	    ADD 1 TO #FRECINT02
+	    ADD 1 TO #FRE02
+	    ADD 1 TO #TOT02
+            ADD 1 TO #FRECINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+   	    ADD 1 TO #FRECINT03
+	    ADD 1 TO #FRE03
+	    ADD 1 TO #TOT03
+            ADD 1 TO #FRECINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+   	    ADD 1 TO #FRECINT04
+	    ADD 1 TO #FRE04
+	    ADD 1 TO #TOT04
+            ADD 1 TO #FRECINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FRECINT05
+	    ADD 1 TO #FRE05
+	    ADD 1 TO #TOT05
+            ADD 1 TO #FRECINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+    	    ADD 1 TO #FRECINT06
+	    ADD 1 TO #FRE06
+	    ADD 1 TO #TOT06
+            ADD 1 TO #FRECINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+   	    ADD 1 TO #FRECINT07
+	    ADD 1 TO #FRE07
+	    ADD 1 TO #TOT07
+            ADD 1 TO #FRECINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+   	    ADD 1 TO #FRECINT08
+	    ADD 1 TO #FRE08
+	    ADD 1 TO #TOT08
+            ADD 1 TO #FRECINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+    	    ADD 1 TO #FRECINT09
+	    ADD 1 TO #FRE09
+	    ADD 1 TO #TOT09
+            ADD 1 TO #FRECINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+    	    ADD 1 TO #FRECINT10
+	    ADD 1 TO #FRE10
+	    ADD 1 TO #TOT10
+            ADD 1 TO #FRECINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+   	    ADD 1 TO #FRECINT11
+	    ADD 1 TO #FRE11
+	    ADD 1 TO #TOT11
+            ADD 1 TO #FRECINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+	    ADD 1 TO #FRECINTOTHER
+	    ADD 1 TO #FREOTHER
+	    ADD 1 TO #TOTOTHER
+            ADD 1 TO #FRECINTTOT
+            ADD 1 TO #FRETOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'C-CO'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FRECCO01
+	    ADD 1 TO #FRECCOTOT
+	    ADD 1 TO #FRESR01
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR01
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND01
+            ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+            ADD 1 TO #FRECCO02
+	    ADD 1 TO #FRECCOTOT
+	    ADD 1 TO #FRESR02
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR02
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND02
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+            ADD 1 TO #FRECCO03
+	    ADD 1 TO #FRECCOTOT
+	    ADD 1 TO #FRESR03
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR03
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND03
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+            ADD 1 TO #FRECCO04
+	    ADD 1 TO #FRECCOTOT
+	    ADD 1 TO #FRESR04
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR04
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND04
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FRECCO05
+	    ADD 1 TO #FRECCOTOT
+	    ADD 1 TO #FRESR05
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR05
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND05
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+            ADD 1 TO #FRECCO06
+	    ADD 1 TO #FRECCOTOT
+	    ADD 1 TO #FRESR06
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR06
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND06
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+            ADD 1 TO #FRECCO07
+	    ADD 1 TO #FRECCOTOT
+	    ADD 1 TO #FRESR07
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR07
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND07
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+            ADD 1 TO #FRECCO08
+	    ADD 1 TO #FRECCOTOT
+	    ADD 1 TO #FRESR08
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR08
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND08
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+            ADD 1 TO #FRECCO09
+	    ADD 1 TO #FRECCOTOT
+	    ADD 1 TO #FRESR09
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR09
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND09
+            ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+            ADD 1 TO #FRECCO10
+	    ADD 1 TO #FRECCOTOT
+	    ADD 1 TO #FRESR10
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR10
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND10
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+            ADD 1 TO #FRECCO11
+	    ADD 1 TO #FRECCOTOT
+	    ADD 1 TO #FRESR11
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR11
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND11
+            ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+            ADD 1 TO #FRECCOOTHER
+	    ADD 1 TO #FRECCOTOT
+	    ADD 1 TO #FRESROTHER
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSROTHER
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRANDOTHER
+            ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'C-PB'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FRECPB01
+	    ADD 1 TO #FRECPBTOT
+	    ADD 1 TO #FRESR01
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR01
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND01
+            ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+            ADD 1 TO #FRECPB02
+	    ADD 1 TO #FRECPBTOT
+	    ADD 1 TO #FRESR02
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR02
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND02
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+            ADD 1 TO #FRECPB03
+	    ADD 1 TO #FRECPBTOT
+	    ADD 1 TO #FRESR03
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR03
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND03
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+            ADD 1 TO #FRECPB04
+	    ADD 1 TO #FRECPBTOT
+	    ADD 1 TO #FRESR04
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR04
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND04
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FRECPB05
+	    ADD 1 TO #FRECPBTOT
+	    ADD 1 TO #FRESR05
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR05
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND05
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+            ADD 1 TO #FRECPB06
+	    ADD 1 TO #FRECPBTOT
+	    ADD 1 TO #FRESR06
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR06
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND06
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+            ADD 1 TO #FRECPB07
+	    ADD 1 TO #FRECPBTOT
+	    ADD 1 TO #FRESR07
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR07
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND07
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+            ADD 1 TO #FRECPB08
+	    ADD 1 TO #FRECPBTOT
+	    ADD 1 TO #FRESR08
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR08
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND08
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+            ADD 1 TO #FRECPB09
+	    ADD 1 TO #FRECPBTOT
+	    ADD 1 TO #FRESR09
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR09
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND09
+            ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+            ADD 1 TO #FRECPB10
+	    ADD 1 TO #FRECPBTOT
+	    ADD 1 TO #FRESR10
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR10
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND10
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+            ADD 1 TO #FRECPB11
+	    ADD 1 TO #FRECPBTOT
+	    ADD 1 TO #FRESR11
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR11
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND11
+            ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+            ADD 1 TO #FRECPBOTHER
+	    ADD 1 TO #FRECPBTOT
+	    ADD 1 TO #FRESROTHER
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSROTHER
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRANDOTHER
+            ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'C-IC'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FRECIC01
+	    ADD 1 TO #FRECICTOT
+	    ADD 1 TO #FRESR01
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR01
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND01
+            ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+            ADD 1 TO #FRECIC02
+	    ADD 1 TO #FRECICTOT
+	    ADD 1 TO #FRESR02
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR02
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND02
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+            ADD 1 TO #FRECIC03
+	    ADD 1 TO #FRECICTOT
+	    ADD 1 TO #FRESR03
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR03
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND03
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+            ADD 1 TO #FRECIC04
+	    ADD 1 TO #FRECICTOT
+	    ADD 1 TO #FRESR04
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR04
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND04
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FRECIC05
+	    ADD 1 TO #FRECICTOT
+	    ADD 1 TO #FRESR05
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR05
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND05
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+            ADD 1 TO #FRECIC06
+	    ADD 1 TO #FRECICTOT
+	    ADD 1 TO #FRESR06
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR06
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND06
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+            ADD 1 TO #FRECIC07
+	    ADD 1 TO #FRECICTOT
+	    ADD 1 TO #FRESR07
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR07
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND07
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+            ADD 1 TO #FRECIC08
+	    ADD 1 TO #FRECICTOT
+	    ADD 1 TO #FRESR08
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR08
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND08
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+            ADD 1 TO #FRECIC09
+	    ADD 1 TO #FRECICTOT
+	    ADD 1 TO #FRESR09
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR09
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND09
+            ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+            ADD 1 TO #FRECIC10
+	    ADD 1 TO #FRECICTOT
+	    ADD 1 TO #FRESR10
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR10
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND10
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+            ADD 1 TO #FRECIC11
+	    ADD 1 TO #FRECICTOT
+	    ADD 1 TO #FRESR11
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR11
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND11
+            ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+            ADD 1 TO #FRECICOTHER
+	    ADD 1 TO #FRECICTOT
+	    ADD 1 TO #FRESROTHER
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSROTHER
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRANDOTHER
+            ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when-other
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FREOTH01
+	    ADD 1 TO #FREOTHTOT
+	    ADD 1 TO #FRESR01
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR01
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+            ADD 1 TO #FREOTH02
+	    ADD 1 TO #FREOTHTOT
+	    ADD 1 TO #FRESR02
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR02
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+            ADD 1 TO #FREOTH03
+	    ADD 1 TO #FREOTHTOT
+	    ADD 1 TO #FRESR03
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR03
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+            ADD 1 TO #FREOTH04
+	    ADD 1 TO #FREOTHTOT
+	    ADD 1 TO #FRESR04
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR04
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FREOTH05
+	    ADD 1 TO #FREOTHTOT
+	    ADD 1 TO #FRESR05
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR05
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+            ADD 1 TO #FREOTH06
+	    ADD 1 TO #FREOTHTOT
+	    ADD 1 TO #FRESR06
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR06
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+            ADD 1 TO #FREOTH07
+	    ADD 1 TO #FREOTHTOT
+	    ADD 1 TO #FRESR07
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR07
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+            ADD 1 TO #FREOTH08
+	    ADD 1 TO #FREOTHTOT
+	    ADD 1 TO #FRESR08
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR08
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+            ADD 1 TO #FREOTH09
+	    ADD 1 TO #FREOTHTOT
+	    ADD 1 TO #FRESR09
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR09
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+            ADD 1 TO #FREOTH10
+	    ADD 1 TO #FREOTHTOT
+	    ADD 1 TO #FRESR10
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR10
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+            ADD 1 TO #FREOTH11
+	    ADD 1 TO #FREOTHTOT
+	    ADD 1 TO #FRESR11
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSR11
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+            ADD 1 TO #FREOTHOTHER
+	    ADD 1 TO #FREOTHTOT
+	    ADD 1 TO #FRESROTHER
+            ADD 1 TO #FRESRTOT
+            ADD 1 TO #CRSROTHER
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+    end-evaluate
+  break
+  when = 'FSU'
+    evaluate $type
+      when = 'REG'
+        evaluate $region
+        when = '001'
+            ADD 1 TO #FSUREG01
+	    ADD 1 TO #FSU01
+	    ADD 1 TO #TOT01
+	    ADD 1 TO #FSUREGTOT
+	    ADD 1 TO #FSUTOT
+	    ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+    	    ADD 1 TO #FSUREG02
+	    ADD 1 TO #FSU02
+	    ADD 1 TO #TOT02
+            ADD 1 TO #FSUREGTOT
+	    ADD 1 TO #FSUTOT
+	    ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+   	    ADD 1 TO #FSUREG03
+	    ADD 1 TO #FSU03
+	    ADD 1 TO #TOT03
+            ADD 1 TO #FSUREGTOT
+            ADD 1 TO #FSUTOT
+	    ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+   	    ADD 1 TO #FSUREG04
+	    ADD 1 TO #FSU04
+	    ADD 1 TO #TOT04
+            ADD 1 TO #FSUREGTOT
+            ADD 1 TO #FSUTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FSUREG05
+	    ADD 1 TO #FSU05
+	    ADD 1 TO #TOT05
+            ADD 1 TO #FSUREGTOT
+            ADD 1 TO #FSUTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+    	    ADD 1 TO #FSUREG06
+	    ADD 1 TO #FSU06
+	    ADD 1 TO #TOT06
+            ADD 1 TO #FSUREGTOT
+            ADD 1 TO #FSUTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+   	    ADD 1 TO #FSUREG07
+	    ADD 1 TO #FSU07
+	    ADD 1 TO #TOT07
+            ADD 1 TO #FSUREGTOT
+            ADD 1 TO #FSUTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+   	    ADD 1 TO #FSUREG08
+	    ADD 1 TO #FSU08
+	    ADD 1 TO #TOT08
+            ADD 1 TO #FSUREGTOT
+            ADD 1 TO #FSUTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+    	    ADD 1 TO #FSUREG09
+	    ADD 1 TO #FSU09
+	    ADD 1 TO #TOT09
+            ADD 1 TO #FSUREGTOT
+            ADD 1 TO #FSUTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+    	    ADD 1 TO #FSUREG10
+	    ADD 1 TO #FSU10
+	    ADD 1 TO #TOT10
+            ADD 1 TO #FSUREGTOT
+            ADD 1 TO #FSUTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+   	    ADD 1 TO #FSUREG11
+	    ADD 1 TO #FSU11
+	    ADD 1 TO #TOT11
+            ADD 1 TO #FSUREGTOT
+            ADD 1 TO #FSUTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+	    ADD 1 TO #FSUREGOTHER
+	    ADD 1 TO #FSUOTHER
+	    ADD 1 TO #TOTOTHER
+            ADD 1 TO #FSUREGTOT
+            ADD 1 TO #FSUTOT
+            ADD 1 TO #TOTAL
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+          break
+        end-evaluate
+       break
+       when = 'C-CO'
+        evaluate $region
+        when = '001'
+            ADD 1 TO #FSUCCO01
+	    ADD 1 TO #FSUCCOTOT
+	    ADD 1 TO #FSUSR01
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR01
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND01
+            ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+            ADD 1 TO #FSUCCO02
+	    ADD 1 TO #FSUCCOTOT
+	    ADD 1 TO #FSUSR02
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR02
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND02
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+            ADD 1 TO #FSUCCO03
+	    ADD 1 TO #FSUCCOTOT
+	    ADD 1 TO #FSUSR03
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR03
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND03
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+            ADD 1 TO #FSUCCO04
+	    ADD 1 TO #FSUCCOTOT
+	    ADD 1 TO #FSUSR04
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR04
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND04
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FSUCCO05
+	    ADD 1 TO #FSUCCOTOT
+	    ADD 1 TO #FSUSR05
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR05
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND05
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+            ADD 1 TO #FSUCCO06
+	    ADD 1 TO #FSUCCOTOT
+	    ADD 1 TO #FSUSR06
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR06
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND06
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+            ADD 1 TO #FSUCCO07
+	    ADD 1 TO #FSUCCOTOT
+	    ADD 1 TO #FSUSR07
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR07
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND07
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+            ADD 1 TO #FSUCCO08
+	    ADD 1 TO #FSUCCOTOT
+	    ADD 1 TO #FSUSR08
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR08
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND08
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+            ADD 1 TO #FSUCCO09
+	    ADD 1 TO #FSUCCOTOT
+	    ADD 1 TO #FSUSR09
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR09
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND09
+            ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+            ADD 1 TO #FSUCCO10
+	    ADD 1 TO #FSUCCOTOT
+	    ADD 1 TO #FSUSR10
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR10
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND10
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+            ADD 1 TO #FSUCCO11
+	    ADD 1 TO #FSUCCOTOT
+	    ADD 1 TO #FSUSR11
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR11
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND11
+            ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+            ADD 1 TO #FSUCCOOTHER
+	    ADD 1 TO #FSUCCOTOT
+	    ADD 1 TO #FSUSROTHER
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSROTHER
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRANDOTHER
+            ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'C-PB'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FSUCPB01
+	    ADD 1 TO #FSUCPBTOT
+	    ADD 1 TO #FSUSR01
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR01
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND01
+            ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+            ADD 1 TO #FSUCPB02
+	    ADD 1 TO #FSUCPBTOT
+	    ADD 1 TO #FSUSR02
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR02
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND02
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+            ADD 1 TO #FSUCPB03
+	    ADD 1 TO #FSUCPBTOT
+	    ADD 1 TO #FSUSR03
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR03
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND03
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+            ADD 1 TO #FSUCPB04
+	    ADD 1 TO #FSUCPBTOT
+	    ADD 1 TO #FSUSR04
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR04
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND04
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FSUCPB05
+	    ADD 1 TO #FSUCPBTOT
+	    ADD 1 TO #FSUSR05
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR05
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND05
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+            ADD 1 TO #FSUCPB06
+	    ADD 1 TO #FSUCPBTOT
+	    ADD 1 TO #FSUSR06
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR06
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND06
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+            ADD 1 TO #FSUCPB07
+	    ADD 1 TO #FSUCPBTOT
+	    ADD 1 TO #FSUSR07
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR07
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND07
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+            ADD 1 TO #FSUCPB08
+	    ADD 1 TO #FSUCPBTOT
+	    ADD 1 TO #FSUSR08
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR08
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND08
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+            ADD 1 TO #FSUCPB09
+	    ADD 1 TO #FSUCPBTOT
+	    ADD 1 TO #FSUSR09
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR09
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND09
+            ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+            ADD 1 TO #FSUCPB10
+	    ADD 1 TO #FSUCPBTOT
+	    ADD 1 TO #FSUSR10
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR10
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND10
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+            ADD 1 TO #FSUCPB11
+	    ADD 1 TO #FSUCPBTOT
+	    ADD 1 TO #FSUSR11
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR11
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND11
+            ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+            ADD 1 TO #FSUCPBOTHER
+	    ADD 1 TO #FSUCPBTOT
+	    ADD 1 TO #FSUSROTHER
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSROTHER
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRANDOTHER
+            ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when = 'C-IC'
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FSUCIC01
+	    ADD 1 TO #FSUCICTOT
+	    ADD 1 TO #FSUSR01
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR01
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND01
+            ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+            ADD 1 TO #FSUCIC02
+	    ADD 1 TO #FSUCICTOT
+	    ADD 1 TO #FSUSR02
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR02
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND02
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+            ADD 1 TO #FSUCIC03
+	    ADD 1 TO #FSUCICTOT
+	    ADD 1 TO #FSUSR03
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR03
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND03
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+            ADD 1 TO #FSUCIC04
+	    ADD 1 TO #FSUCICTOT
+	    ADD 1 TO #FSUSR04
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR04
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND04
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FSUCIC05
+	    ADD 1 TO #FSUCICTOT
+	    ADD 1 TO #FSUSR05
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR05
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND05
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+            ADD 1 TO #FSUCIC06
+	    ADD 1 TO #FSUCICTOT
+	    ADD 1 TO #FSUSR06
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR06
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND06
+            ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+            ADD 1 TO #FSUCIC07
+	    ADD 1 TO #FSUCICTOT
+	    ADD 1 TO #FSUSR07
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR07
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND07
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+            ADD 1 TO #FSUCIC08
+	    ADD 1 TO #FSUCICTOT
+	    ADD 1 TO #FSUSR08
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR08
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND08
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+            ADD 1 TO #FSUCIC09
+	    ADD 1 TO #FSUCICTOT
+	    ADD 1 TO #FSUSR09
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR09
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND09
+            ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+            ADD 1 TO #FSUCIC10
+	    ADD 1 TO #FSUCICTOT
+	    ADD 1 TO #FSUSR10
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR10
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND10
+            ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+            ADD 1 TO #FSUCIC11
+	    ADD 1 TO #FSUCICTOT
+	    ADD 1 TO #FSUSR11
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR11
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND11
+            ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+            ADD 1 TO #FSUCICOTHER
+	    ADD 1 TO #FSUCICTOT
+	    ADD 1 TO #FSUSROTHER
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSROTHER
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRANDOTHER
+            ADD 1 TO #GRANDTOT
+	  break
+       	end-evaluate
+      break
+      when-other
+        evaluate $region
+          when = '001' 
+            ADD 1 TO #FSUOTH01
+	    ADD 1 TO #FSUOTHTOT
+	    ADD 1 TO #FSUSR01
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR01
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND01
+	    ADD 1 TO #GRANDTOT
+    	  break
+	  when = '002'
+            ADD 1 TO #FSUOTH02
+	    ADD 1 TO #FSUOTHTOT
+	    ADD 1 TO #FSUSR02
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR02
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND02
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '003'
+            ADD 1 TO #FSUOTH03
+	    ADD 1 TO #FSUOTHTOT
+	    ADD 1 TO #FSUSR03
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR03
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND03
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '004'
+            ADD 1 TO #FSUOTH04
+	    ADD 1 TO #FSUOTHTOT
+	    ADD 1 TO #FSUSR04
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR04
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND04
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '005'
+            ADD 1 TO #FSUOTH05
+	    ADD 1 TO #FSUOTHTOT
+	    ADD 1 TO #FSUSR05
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR05
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND05
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '006'
+            ADD 1 TO #FSUOTH06
+	    ADD 1 TO #FSUOTHTOT
+	    ADD 1 TO #FSUSR06
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR06
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND06
+	    ADD 1 TO #GRANDTOT
+  	  break
+	  when = '007'
+            ADD 1 TO #FSUOTH07
+	    ADD 1 TO #FSUOTHTOT
+	    ADD 1 TO #FSUSR07
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR07
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND07
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '008'
+            ADD 1 TO #FSUOTH08
+	    ADD 1 TO #FSUOTHTOT
+	    ADD 1 TO #FSUSR08
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR08
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND08
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '009'
+            ADD 1 TO #FSUOTH09
+	    ADD 1 TO #FSUOTHTOT
+	    ADD 1 TO #FSUSR09
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR09
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND09
+	    ADD 1 TO #GRANDTOT
+          break
+	  when = '010'
+            ADD 1 TO #FSUOTH10
+	    ADD 1 TO #FSUOTHTOT
+	    ADD 1 TO #FSUSR10
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR10
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND10
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when = '011'
+            ADD 1 TO #FSUOTH11
+	    ADD 1 TO #FSUOTHTOT
+	    ADD 1 TO #FSUSR11
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSR11
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRAND11
+	    ADD 1 TO #GRANDTOT
+	  break
+	  when-other
+            ADD 1 TO #FSUOTHOTHER
+	    ADD 1 TO #FSUOTHTOT
+	    ADD 1 TO #FSUSROTHER
+            ADD 1 TO #FSUSRTOT
+            ADD 1 TO #CRSROTHER
+            ADD 1 TO #CRSRTOT
+	    ADD 1 TO #GRANDOTHER
+	    ADD 1 TO #GRANDTOT
+          break
+        end-evaluate
+      break
+    end-evaluate
+break
+end-evaluate
+
+END-PROCEDURE GET-COUNTS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-COUNTS                                                            *
+!                                                                           *
+!       This procedure prints COUNTS of stages in each category.            *
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : ADD-TO-STATS                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-COUNTS
+
+print 'FAMILY PRESERVATION (FPR)'  (+2,1)   
+print 'Regular'                    (+2,3) 
+print #FPRREG01                    (+0,18)  edit 99,999
+print #FPRREG02                    (+0,31)  edit 99,999
+print #FPRREG03                    (+0,44)  edit 99,999
+print #FPRREG04                    (+0,57)  edit 99,999
+print #FPRREG05                    (+0,70)  edit 99,999
+print #FPRREG06                    (+0,83)  edit 99,999
+print #FPRREG07                    (+0,96)  edit 99,999 
+print #FPRREG08   		   (+0,109) edit 99,999
+print #FPRREG09                    (+0,122) edit 99,999
+print #FPRREG10                    (+0,135) edit 99,999
+print #FPRREG11                    (+0,148) edit 99,999
+print #FPRREGOTHER                 (+0,160) edit 999
+print #FPRREGTOT                   (+0,166) edit 999,999
+print 'Moderate'                   (+2,3)
+print #FPRMOD01                    (+0,18)  edit 99,999
+print #FPRMOD02                    (+0,31)  edit 99,999
+print #FPRMOD03                    (+0,44)  edit 99,999
+print #FPRMOD04                    (+0,57)  edit 99,999
+print #FPRMOD05                    (+0,70)  edit 99,999
+print #FPRMOD06                    (+0,83)  edit 99,999
+print #FPRMOD07                    (+0,96)  edit 99,999 
+print #FPRMOD08   		   (+0,109) edit 99,999
+print #FPRMOD09                    (+0,122) edit 99,999
+print #FPRMOD10                    (+0,135) edit 99,999
+print #FPRMOD11                    (+0,148) edit 99,999
+print #FPRMODOTHER                 (+0,160) edit 999
+print #FPRMODTOT                   (+0,166) edit 999,999
+print 'Intensive'                  (+2,3)
+print #FPRINT01                    (+0,18)  edit 99,999
+print #FPRINT02                    (+0,31)  edit 99,999
+print #FPRINT03                    (+0,44)  edit 99,999
+print #FPRINT04                    (+0,57)  edit 99,999
+print #FPRINT05                    (+0,70)  edit 99,999
+print #FPRINT06                    (+0,83)  edit 99,999
+print #FPRINT07                    (+0,96)  edit 99,999 
+print #FPRINT08   		   (+0,109) edit 99,999
+print #FPRINT09                    (+0,122) edit 99,999
+print #FPRINT10                    (+0,135) edit 99,999
+print #FPRINT11                    (+0,148) edit 99,999
+print #FPRINTOTHER                 (+0,160) edit 999
+print #FPRINTTOT                   (+0,166) edit 999,999
+print 'Reg Contracted'             (+2,3)
+print #FPRCON01                    (+0,18)  edit 99,999
+print #FPRCON02                    (+0,31)  edit 99,999
+print #FPRCON03                    (+0,44)  edit 99,999
+print #FPRCON04                    (+0,57)  edit 99,999
+print #FPRCON05                    (+0,70)  edit 99,999
+print #FPRCON06                    (+0,83)  edit 99,999
+print #FPRCON07                    (+0,96)  edit 99,999 
+print #FPRCON08   		   (+0,109) edit 99,999
+print #FPRCON09                    (+0,122) edit 99,999
+print #FPRCON10                    (+0,135) edit 99,999
+print #FPRCON11                    (+0,148) edit 99,999
+print #FPRCONOTHER                 (+0,160) edit 999
+print #FPRCONTOT                   (+0,166) edit 999,999
+print 'Mod Contracted'             (+2,3)
+print #FPRCMOD01                   (+0,18)  edit 99,999
+print #FPRCMOD02                   (+0,31)  edit 99,999
+print #FPRCMOD03                   (+0,44)  edit 99,999
+print #FPRCMOD04                   (+0,57)  edit 99,999
+print #FPRCMOD05                   (+0,70)  edit 99,999
+print #FPRCMOD06                   (+0,83)  edit 99,999
+print #FPRCMOD07                   (+0,96)  edit 99,999 
+print #FPRCMOD08   		   (+0,109) edit 99,999
+print #FPRCMOD09                   (+0,122) edit 99,999
+print #FPRCMOD10                   (+0,135) edit 99,999
+print #FPRCMOD11                   (+0,148) edit 99,999
+print #FPRCMODOTHER                (+0,160) edit 999
+print #FPRCMODTOT                  (+0,166) edit 999,999
+print 'Int Contracted'	           (+2,3)
+print #FPRCINT01                    (+0,18)  edit 99,999
+print #FPRCINT02                    (+0,31)  edit 99,999
+print #FPRCINT03                    (+0,44)  edit 99,999
+print #FPRCINT04                    (+0,57)  edit 99,999
+print #FPRCINT05                    (+0,70)  edit 99,999
+print #FPRCINT06                    (+0,83)  edit 99,999
+print #FPRCINT07                    (+0,96)  edit 99,999 
+print #FPRCINT08   		    (+0,109) edit 99,999
+print #FPRCINT09                    (+0,122) edit 99,999
+print #FPRCINT10                    (+0,135) edit 99,999
+print #FPRCINT11                    (+0,148) edit 99,999
+print #FPRCINTOTHER                 (+0,160) edit 999
+print #FPRCINTTOT                   (+0,166) edit 999,999
+print 'TOTAL FPR'                   (+2,1)
+print #FPR01                        (+0,18)  edit 99,999
+print #FPR02                        (+0,31)  edit 99,999
+print #FPR03                        (+0,44)  edit 99,999
+print #FPR04                        (+0,57)  edit 99,999
+print #FPR05                        (+0,70)  edit 99,999
+print #FPR06                        (+0,83)  edit 99,999
+print #FPR07                        (+0,96)  edit 99,999 
+print #FPR08   		            (+0,109) edit 99,999
+print #FPR09                        (+0,122) edit 99,999
+print #FPR10                        (+0,135) edit 99,999
+print #FPR11                        (+0,148) edit 99,999
+print #FPROTHER                     (+0,160) edit 999
+print #FPRTOT                       (+0,166) edit 999,999
+print 'FAMILY SUBCARE'              (+3,1)
+print #FSU01                        (+0,18)  edit 99,999
+print #FSU02                        (+0,31)  edit 99,999
+print #FSU03                        (+0,44)  edit 99,999
+print #FSU04                        (+0,57)  edit 99,999
+print #FSU05                        (+0,70)  edit 99,999
+print #FSU06                        (+0,83)  edit 99,999
+print #FSU07                        (+0,96)  edit 99,999 
+print #FSU08   		            (+0,109) edit 99,999
+print #FSU09                        (+0,122) edit 99,999
+print #FSU10                        (+0,135) edit 99,999
+print #FSU11                        (+0,148) edit 99,999
+print #FSUOTHER                     (+0,160) edit 999
+print #FSUTOT                       (+0,166) ediT 999,999
+print 'FAMILY REUNIFICATION (FRE)'  (+3,1)
+print 'Regular'                     (+2,3) 
+print #FREREG01                     (+0,18)  edit 99,999
+print #FREREG02                     (+0,31)  edit 99,999
+print #FREREG03                     (+0,44)  edit 99,999
+print #FREREG04                     (+0,57)  edit 99,999
+print #FREREG05                     (+0,70)  edit 99,999
+print #FREREG06                     (+0,83)  edit 99,999
+print #FREREG07                     (+0,96)  edit 99,999 
+print #FREREG08   	            (+0,109) edit 99,999
+print #FREREG09                     (+0,122) edit 99,999
+print #FREREG10                     (+0,135) edit 99,999
+print #FREREG11                     (+0,148) edit 99,999
+print #FREREGOTHER                  (+0,160) edit 999
+print #FREREGTOT                    (+0,166) edit 999,999
+print 'Moderate'                    (+2,3)
+print #FREMOD01                     (+0,18)  edit 99,999
+print #FREMOD02                     (+0,31)  edit 99,999
+print #FREMOD03                     (+0,44)  edit 99,999
+print #FREMOD04                     (+0,57)  edit 99,999
+print #FREMOD05                     (+0,70)  edit 99,999
+print #FREMOD06                     (+0,83)  edit 99,999
+print #FREMOD07                     (+0,96)  edit 99,999 
+print #FREMOD08   		    (+0,109) edit 99,999
+print #FREMOD09                     (+0,122) edit 99,999
+print #FREMOD10                     (+0,135) edit 99,999
+print #FREMOD11                     (+0,148) edit 99,999
+print #FREMODOTHER                  (+0,160) edit 999
+print #FREMODTOT                    (+0,166) edit 999,999
+print 'Intensive'                   (+2,3)
+print #FREINT01                     (+0,18)  edit 99,999
+print #FREINT02                     (+0,31)  edit 99,999
+print #FREINT03                     (+0,44)  edit 99,999
+print #FREINT04                     (+0,57)  edit 99,999
+print #FREINT05                     (+0,70)  edit 99,999
+print #FREINT06                     (+0,83)  edit 99,999
+print #FREINT07                     (+0,96)  edit 99,999 
+print #FREINT08   		    (+0,109) edit 99,999
+print #FREINT09                     (+0,122) edit 99,999
+print #FREINT10                     (+0,135) edit 99,999
+print #FREINT11                     (+0,148) edit 99,999
+print #FREINTOTHER                  (+0,160) edit 999
+print #FREINTTOT                    (+0,166) edit 999,999
+print 'Reg Contracted'              (+2,3)
+print #FRECON01                     (+0,18)  edit 99,999
+print #FRECON02                     (+0,31)  edit 99,999
+print #FRECON03                     (+0,44)  edit 99,999
+print #FRECON04                     (+0,57)  edit 99,999
+print #FRECON05                     (+0,70)  edit 99,999
+print #FRECON06                     (+0,83)  edit 99,999
+print #FRECON07                     (+0,96)  edit 99,999 
+print #FRECON08   	            (+0,109) edit 99,999
+print #FRECON09                     (+0,122) edit 99,999
+print #FRECON10                     (+0,135) edit 99,999
+print #FRECON11                     (+0,148) edit 99,999
+print #FRECONOTHER                  (+0,160) edit 999
+print #FRECONTOT                    (+0,166) edit 999,999
+print 'Mod Contracted'              (+2,3)
+print #FRECMOD01                    (+0,18)  edit 99,999
+print #FRECMOD02                    (+0,31)  edit 99,999
+print #FRECMOD03                    (+0,44)  edit 99,999
+print #FRECMOD04                    (+0,57)  edit 99,999
+print #FRECMOD05                    (+0,70)  edit 99,999
+print #FRECMOD06                    (+0,83)  edit 99,999
+print #FRECMOD07                    (+0,96)  edit 99,999 
+print #FRECMOD08   		    (+0,109) edit 99,999
+print #FRECMOD09                    (+0,122) edit 99,999
+print #FRECMOD10                    (+0,135) edit 99,999
+print #FRECMOD11                    (+0,148) edit 99,999
+print #FRECMODOTHER                 (+0,160) edit 999
+print #FRECMODTOT                   (+0,166) edit 999,999
+print 'Int Contracted'	            (+2,3)
+print #FRECINT01                    (+0,18)  edit 99,999
+print #FRECINT02                    (+0,31)  edit 99,999
+print #FRECINT03                    (+0,44)  edit 99,999
+print #FRECINT04                    (+0,57)  edit 99,999
+print #FRECINT05                    (+0,70)  edit 99,999
+print #FRECINT06                    (+0,83)  edit 99,999
+print #FRECINT07                    (+0,96)  edit 99,999 
+print #FRECINT08   		    (+0,109) edit 99,999
+print #FRECINT09                    (+0,122) edit 99,999
+print #FRECINT10                    (+0,135) edit 99,999
+print #FRECINT11                    (+0,148) edit 99,999
+print #FRECINTOTHER                 (+0,160) edit 999
+print #FRECINTTOT                   (+0,166) edit 999,999
+print 'TOTAL FRE'                   (+2,1)
+print #FRE01                        (+0,18)  edit 99,999
+print #FRE02                        (+0,31)  edit 99,999
+print #FRE03                        (+0,44)  edit 99,999
+print #FRE04                        (+0,57)  edit 99,999
+print #FRE05                        (+0,70)  edit 99,999
+print #FRE06                        (+0,83)  edit 99,999
+print #FRE07                        (+0,96)  edit 99,999 
+print #FRE08   		            (+0,109) edit 99,999
+print #FRE09                        (+0,122) edit 99,999
+print #FRE10                        (+0,135) edit 99,999
+print #FRE11                        (+0,148) edit 99,999
+print #FREOTHER                     (+0,160) edit 999
+print #FRETOT                       (+0,166) edit 999,999
+print 'REGION'                      (+3,1)
+print 'TOTAL'                       (+1,1)
+print #TOT01                        (+0,17)  edit 999,999
+print #TOT02                        (+0,30)  edit 999,999
+print #TOT03                        (+0,43)  edit 999,999
+print #TOT04                        (+0,56)  edit 999,999
+print #TOT05                        (+0,69)  edit 999,999
+print #TOT06                        (+0,82)  edit 999,999
+print #TOT07                        (+0,95)  edit 999,999 
+print #TOT08   		            (+0,108) edit 999,999
+print #TOT09                        (+0,121) edit 999,999
+print #TOT10                        (+0,134) edit 999,999
+print #TOT11                        (+0,147) edit 999,999
+print #TOTOTHER                     (+0,158) edit   9,999
+print #TOTAL                        (+0,166) edit 999,999
+
+NEW-PAGE
+
+print 'CASE-RELATED SPECIAL REQUESTS (CRSR)'  (+2,1) 
+print 'FPR CRSR'			   (+2,1)  
+print 'Court Ordered'              (+2,3) 
+print #FPRCCO01                    (+0,18)  edit 99,999
+print #FPRCCO02                    (+0,31)  edit 99,999
+print #FPRCCO03                    (+0,44)  edit 99,999
+print #FPRCCO04                    (+0,57)  edit 99,999
+print #FPRCCO05                    (+0,70)  edit 99,999
+print #FPRCCO06                    (+0,83)  edit 99,999
+print #FPRCCO07                    (+0,96)  edit 99,999 
+print #FPRCCO08   		   (+0,109) edit 99,999
+print #FPRCCO09                    (+0,122) edit 99,999
+print #FPRCCO10                    (+0,135) edit 99,999
+print #FPRCCO11                    (+0,148) edit 99,999
+print #FPRCCOOTHER                 (+0,160) edit 999
+print #FPRCCOTOT                   (+0,166) edit 999,999
+print 'Public Service'             (+2,3)
+print #FPRCPB01                    (+0,18)  edit 99,999
+print #FPRCPB02                    (+0,31)  edit 99,999
+print #FPRCPB03                    (+0,44)  edit 99,999
+print #FPRCPB04                    (+0,57)  edit 99,999
+print #FPRCPB05                    (+0,70)  edit 99,999
+print #FPRCPB06                    (+0,83)  edit 99,999
+print #FPRCPB07                    (+0,96)  edit 99,999 
+print #FPRCPB08   		   (+0,109) edit 99,999
+print #FPRCPB09                    (+0,122) edit 99,999
+print #FPRCPB10                    (+0,135) edit 99,999
+print #FPRCPB11                    (+0,148) edit 99,999
+print #FPRCPBOTHER                 (+0,160) edit 999
+print #FPRCPBTOT                   (+0,166) edit 999,999
+print 'Interstate Cmpct'           (+2,3)
+print #FPRCIC01                    (+0,19)  edit 9,999
+print #FPRCIC02                    (+0,31)  edit 99,999
+print #FPRCIC03                    (+0,44)  edit 99,999
+print #FPRCIC04                    (+0,57)  edit 99,999
+print #FPRCIC05                    (+0,70)  edit 99,999
+print #FPRCIC06                    (+0,83)  edit 99,999
+print #FPRCIC07                    (+0,96)  edit 99,999 
+print #FPRCIC08   		   (+0,109) edit 99,999
+print #FPRCIC09                    (+0,122) edit 99,999
+print #FPRCIC10                    (+0,135) edit 99,999
+print #FPRCIC11                    (+0,148) edit 99,999
+print #FPRCICOTHER                 (+0,160) edit 999
+print #FPRCICTOT                   (+0,166) edit 999,999
+print 'Other'                      (+2,3)
+print #FPROTH01                    (+0,18)  edit 99,999
+print #FPROTH02                    (+0,31)  edit 99,999
+print #FPROTH03                    (+0,44)  edit 99,999
+print #FPROTH04                    (+0,57)  edit 99,999
+print #FPROTH05                    (+0,70)  edit 99,999
+print #FPROTH06                    (+0,83)  edit 99,999
+print #FPROTH07                    (+0,96)  edit 99,999 
+print #FPROTH08   		   (+0,109) edit 99,999
+print #FPROTH09                    (+0,122) edit 99,999
+print #FPROTH10                    (+0,135) edit 99,999
+print #FPROTH11                    (+0,148) edit 99,999
+print #FPROTHOTHER                 (+0,160) edit 999
+print #FPROTHTOT                   (+0,166) edit 999,999
+print 'TOTAL FPR CRSR'             (+2,1)
+print #FPRSR01                   (+0,18)  edit 99,999
+print #FPRSR02                   (+0,31)  edit 99,999
+print #FPRSR03                   (+0,44)  edit 99,999
+print #FPRSR04                   (+0,57)  edit 99,999
+print #FPRSR05                   (+0,70)  edit 99,999
+print #FPRSR06                   (+0,83)  edit 99,999
+print #FPRSR07                   (+0,96)  edit 99,999 
+print #FPRSR08   		 (+0,109) edit 99,999
+print #FPRSR09                   (+0,122) edit 99,999
+print #FPRSR10                   (+0,135) edit 99,999
+print #FPRSR11                   (+0,148) edit 99,999
+print #FPRSROTHER                (+0,160) edit 999
+print #FPRSRTOT                  (+0,166) edit 999,999
+print 'FSU CRSR'                      (+3,1)
+print 'Court Ordered'              (+2,3) 
+print #FSUCCO01                    (+0,18)  edit 99,999
+print #FSUCCO02                    (+0,31)  edit 99,999
+print #FSUCCO03                    (+0,44)  edit 99,999
+print #FSUCCO04                    (+0,57)  edit 99,999
+print #FSUCCO05                    (+0,70)  edit 99,999
+print #FSUCCO06                    (+0,83)  edit 99,999
+print #FSUCCO07                    (+0,96)  edit 99,999 
+print #FSUCCO08   		   (+0,109) edit 99,999
+print #FSUCCO09                    (+0,122) edit 99,999
+print #FSUCCO10                    (+0,135) edit 99,999
+print #FSUCCO11                    (+0,148) edit 99,999
+print #FSUCCOOTHER                 (+0,160) edit 999
+print #FSUCCOTOT                   (+0,166) edit 999,999
+print 'Public Service'             (+2,3)
+print #FSUCPB01                    (+0,18)  edit 99,999
+print #FSUCPB02                    (+0,31)  edit 99,999
+print #FSUCPB03                    (+0,44)  edit 99,999
+print #FSUCPB04                    (+0,57)  edit 99,999
+print #FSUCPB05                    (+0,70)  edit 99,999
+print #FSUCPB06                    (+0,83)  edit 99,999
+print #FSUCPB07                    (+0,96)  edit 99,999 
+print #FSUCPB08   		   (+0,109) edit 99,999
+print #FSUCPB09                    (+0,122) edit 99,999
+print #FSUCPB10                    (+0,135) edit 99,999
+print #FSUCPB11                    (+0,148) edit 99,999
+print #FSUCPBOTHER                 (+0,160) edit 999
+print #FSUCPBTOT                   (+0,166) edit 999,999
+print 'Interstate Cmpct'           (+2,3)
+print #FSUCIC01                    (+0,19)  edit 9,999
+print #FSUCIC02                    (+0,31)  edit 99,999
+print #FSUCIC03                    (+0,44)  edit 99,999
+print #FSUCIC04                    (+0,57)  edit 99,999
+print #FSUCIC05                    (+0,70)  edit 99,999
+print #FSUCIC06                    (+0,83)  edit 99,999
+print #FSUCIC07                    (+0,96)  edit 99,999 
+print #FSUCIC08   		   (+0,109) edit 99,999
+print #FSUCIC09                    (+0,122) edit 99,999
+print #FSUCIC10                    (+0,135) edit 99,999
+print #FSUCIC11                    (+0,148) edit 99,999
+print #FSUCICOTHER                 (+0,160) edit 999
+print #FSUCICTOT                   (+0,166) edit 999,999
+print 'Other'                      (+2,3)
+print #FSUOTH01                    (+0,18)  edit 99,999
+print #FSUOTH02                    (+0,31)  edit 99,999
+print #FSUOTH03                    (+0,44)  edit 99,999
+print #FSUOTH04                    (+0,57)  edit 99,999
+print #FSUOTH05                    (+0,70)  edit 99,999
+print #FSUOTH06                    (+0,83)  edit 99,999
+print #FSUOTH07                    (+0,96)  edit 99,999 
+print #FSUOTH08   		   (+0,109) edit 99,999
+print #FSUOTH09                    (+0,122) edit 99,999
+print #FSUOTH10                    (+0,135) edit 99,999
+print #FSUOTH11                    (+0,148) edit 99,999
+print #FSUOTHOTHER                 (+0,160) edit 999
+print #FSUOTHTOT                   (+0,166) edit 999,999
+print 'TOTAL FSU CRSR'             (+2,1)
+print #FSUSR01                   (+0,18)  edit 99,999
+print #FSUSR02                   (+0,31)  edit 99,999
+print #FSUSR03                   (+0,44)  edit 99,999
+print #FSUSR04                   (+0,57)  edit 99,999
+print #FSUSR05                   (+0,70)  edit 99,999
+print #FSUSR06                   (+0,83)  edit 99,999
+print #FSUSR07                   (+0,96)  edit 99,999 
+print #FSUSR08   		 (+0,109) edit 99,999
+print #FSUSR09                   (+0,122) edit 99,999
+print #FSUSR10                   (+0,135) edit 99,999
+print #FSUSR11                   (+0,148) edit 99,999
+print #FSUSROTHER                (+0,160) edit 999
+print #FSUSRTOT                  (+0,166) edit 999,999
+print 'FRE CRSR'                      (+3,1)
+print 'Court Ordered'              (+2,3) 
+print #FRECCO01                    (+0,18)  edit 99,999
+print #FRECCO02                    (+0,31)  edit 99,999
+print #FRECCO03                    (+0,44)  edit 99,999
+print #FRECCO04                    (+0,57)  edit 99,999
+print #FRECCO05                    (+0,70)  edit 99,999
+print #FRECCO06                    (+0,83)  edit 99,999
+print #FRECCO07                    (+0,96)  edit 99,999 
+print #FRECCO08   		   (+0,109) edit 99,999
+print #FRECCO09                    (+0,122) edit 99,999
+print #FRECCO10                    (+0,135) edit 99,999
+print #FRECCO11                    (+0,148) edit 99,999
+print #FRECCOOTHER                 (+0,160) edit 999
+print #FRECCOTOT                   (+0,166) edit 999,999
+print 'Public Service'             (+2,3)
+print #FRECPB01                    (+0,18)  edit 99,999
+print #FRECPB02                    (+0,31)  edit 99,999
+print #FRECPB03                    (+0,44)  edit 99,999
+print #FRECPB04                    (+0,57)  edit 99,999
+print #FRECPB05                    (+0,70)  edit 99,999
+print #FRECPB06                    (+0,83)  edit 99,999
+print #FRECPB07                    (+0,96)  edit 99,999 
+print #FRECPB08   		   (+0,109) edit 99,999
+print #FRECPB09                    (+0,122) edit 99,999
+print #FRECPB10                    (+0,135) edit 99,999
+print #FRECPB11                    (+0,148) edit 99,999
+print #FRECPBOTHER                 (+0,160) edit 999
+print #FRECPBTOT                   (+0,166) edit 999,999
+print 'Interstate Cmpct'           (+2,3)
+print #FRECIC01                    (+0,19)  edit 9,999
+print #FRECIC02                    (+0,31)  edit 99,999
+print #FRECIC03                    (+0,44)  edit 99,999
+print #FRECIC04                    (+0,57)  edit 99,999
+print #FRECIC05                    (+0,70)  edit 99,999
+print #FRECIC06                    (+0,83)  edit 99,999
+print #FRECIC07                    (+0,96)  edit 99,999 
+print #FRECIC08   		   (+0,109) edit 99,999
+print #FRECIC09                    (+0,122) edit 99,999
+print #FRECIC10                    (+0,135) edit 99,999
+print #FRECIC11                    (+0,148) edit 99,999
+print #FRECICOTHER                 (+0,160) edit 999
+print #FRECICTOT                   (+0,166) edit 999,999
+print 'Other'                      (+2,3)
+print #FREOTH01                    (+0,18)  edit 99,999
+print #FREOTH02                    (+0,31)  edit 99,999
+print #FREOTH03                    (+0,44)  edit 99,999
+print #FREOTH04                    (+0,57)  edit 99,999
+print #FREOTH05                    (+0,70)  edit 99,999
+print #FREOTH06                    (+0,83)  edit 99,999
+print #FREOTH07                    (+0,96)  edit 99,999 
+print #FREOTH08   		   (+0,109) edit 99,999
+print #FREOTH09                    (+0,122) edit 99,999
+print #FREOTH10                    (+0,135) edit 99,999
+print #FREOTH11                    (+0,148) edit 99,999
+print #FREOTHOTHER                 (+0,160) edit 999
+print #FREOTHTOT                   (+0,166) edit 999,999
+print 'TOTAL FRE CRSR'             (+2,1)
+print #FRESR01                   (+0,18)  edit 99,999
+print #FRESR02                   (+0,31)  edit 99,999
+print #FRESR03                   (+0,44)  edit 99,999
+print #FRESR04                   (+0,57)  edit 99,999
+print #FRESR05                   (+0,70)  edit 99,999
+print #FRESR06                   (+0,83)  edit 99,999
+print #FRESR07                   (+0,96)  edit 99,999 
+print #FRESR08   		 (+0,109) edit 99,999
+print #FRESR09                   (+0,122) edit 99,999
+print #FRESR10                   (+0,135) edit 99,999
+print #FRESR11                   (+0,148) edit 99,999
+print #FRESROTHER                (+0,160) edit 999
+print #FRESRTOT                  (+0,166) edit 999,999
+print 'TOTAL CRSR'               (+3,1)
+print #CRSR01                   (+0,18)  edit 99,999
+print #CRSR02                   (+0,31)  edit 99,999
+print #CRSR03                   (+0,44)  edit 99,999
+print #CRSR04                   (+0,57)  edit 99,999
+print #CRSR05                   (+0,70)  edit 99,999
+print #CRSR06                   (+0,83)  edit 99,999
+print #CRSR07                   (+0,96)  edit 99,999 
+print #CRSR08   	        (+0,109) edit 99,999
+print #CRSR09                   (+0,122) edit 99,999
+print #CRSR10                   (+0,135) edit 99,999
+print #CRSR11                   (+0,148) edit 99,999
+print #CRSROTHER                (+0,160) edit 999
+print #CRSRTOT                  (+0,166) edit 999,999
+print 'REGION TOTAL'            (+3,1)
+print 'INCLUDING CRSR'          (+1,1)
+print #GRAND01                   (+0,18)  edit 99,999
+print #GRAND02                   (+0,31)  edit 99,999
+print #GRAND03                   (+0,44)  edit 99,999
+print #GRAND04                   (+0,57)  edit 99,999
+print #GRAND05                   (+0,70)  edit 99,999
+print #GRAND06                   (+0,83)  edit 99,999
+print #GRAND07                   (+0,96)  edit 99,999 
+print #GRAND08   	         (+0,109) edit 99,999
+print #GRAND09                   (+0,122) edit 99,999
+print #GRAND10                   (+0,135) edit 99,999
+print #GRAND11                   (+0,148) edit 99,999
+print #GRANDOTHER                (+0,160) edit 999
+print #GRANDTOT                  (+0,166) edit 999,999
+
+move 'FAM1'	to	$stat_code
+move 'CPS'      to      $stat_program
+move '001'       to      $stat_region
+move #FPRREG01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FPRREG02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FPRREG03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FPRREG04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FPRREG05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FPRREG06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FPRREG07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FPRREG08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FPRREG09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FPRREG10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FPRREG11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FPRREGOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FPRREGTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM2'	to	$stat_code
+move '001'       to      $stat_region
+move #FPRMOD01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FPRMOD02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FPRMOD03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FPRMOD04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FPRMOD05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FPRMOD06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FPRMOD07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FPRMOD08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FPRMOD09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FPRMOD10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FPRMOD11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FPRMODOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FPRMODTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM3'	to	$stat_code
+move '001'       to      $stat_region
+move #FPRINT01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FPRINT02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FPRINT03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FPRINT04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FPRINT05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FPRINT06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FPRINT07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FPRINT08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FPRINT09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FPRINT10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FPRINT11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FPRINTOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FPRINTTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM4'	to	$stat_code
+move '001'       to      $stat_region
+move #FPRCON01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FPRCON02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FPRCON03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FPRCON04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FPRCON05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FPRCON06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FPRCON07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FPRCON08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FPRCON09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FPRCON10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FPRCON11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FPRCONOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FPRCONTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM5'	to	$stat_code
+move '001'       to      $stat_region
+move #FPRCMOD01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FPRCMOD02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FPRCMOD03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FPRCMOD04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FPRCMOD05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FPRCMOD06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FPRCMOD07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FPRCMOD08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FPRCMOD09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FPRCMOD10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FPRCMOD11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FPRCMODOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FPRCMODTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM6'	to	$stat_code
+move '001'       to      $stat_region
+move #FPRCINT01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FPRCINT02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FPRCINT03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FPRCINT04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FPRCINT05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FPRCINT06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FPRCINT07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FPRCINT08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FPRCINT09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FPRCINT10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FPRCINT11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FPRCINTOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FPRCINTTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM7'	to	$stat_code
+move '001'       to      $stat_region
+move #FPR01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FPR02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FPR03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FPR04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FPR05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FPR06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FPR07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FPR08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FPR09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FPR10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FPR11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FPROTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FPRTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM8'	to	$stat_code
+move '001'       to      $stat_region
+move #FSU01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FSU02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FSU03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FSU04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FSU05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FSU06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FSU07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FSU08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FSU09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FSU10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FSU11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FSUOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FSUTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM9'	to	$stat_code
+move '001'       to      $stat_region
+move #FREREG01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FREREG02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FREREG03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FREREG04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FREREG05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FREREG06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FREREG07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FREREG08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FREREG09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FREREG10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FREREG11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FREREGOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FREREGTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM10'	to	$stat_code
+move '001'       to      $stat_region
+move #FREMOD01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FREMOD02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FREMOD03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FREMOD04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FREMOD05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FREMOD06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FREMOD07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FREMOD08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FREMOD09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FREMOD10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FREMOD11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FREMODOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FREMODTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM11'	to	$stat_code
+move '001'       to      $stat_region
+move #FREINT01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FREINT02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FREINT03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FREINT04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FREINT05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FREINT06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FREINT07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FREINT08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FREINT09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FREINT10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FREINT11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FREINTOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FREINTTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM12'	to	$stat_code
+move '001'       to      $stat_region
+move #FRECON01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FRECON02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FRECON03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FRECON04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FRECON05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FRECON06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FRECON07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FRECON08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FRECON09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FRECON10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FRECON11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FRECONOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FRECONTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM13'	to	$stat_code
+move '001'       to      $stat_region
+move #FRECMOD01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FRECMOD02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FRECMOD03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FRECMOD04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FRECMOD05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FRECMOD06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FRECMOD07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FRECMOD08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FRECMOD09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FRECMOD10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FRECMOD11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FRECMODOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FRECMODTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM14'	to	$stat_code
+move '001'       to      $stat_region
+move #FRECINT01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FRECINT02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FRECINT03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FRECINT04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FRECINT05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FRECINT06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FRECINT07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FRECINT08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FRECINT09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FRECINT10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FRECINT11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FRECINTOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FRECINTTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM15'	to	$stat_code
+move '001'       to      $stat_region
+move #FRE01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FRE02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FRE03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FRE04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FRE05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FRE06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FRE07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FRE08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FRE09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FRE10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FRE11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FREOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FRETOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM16'	to	$stat_code
+move '001'       to      $stat_region
+move #TOT01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #TOT02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #TOT03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #TOT04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #TOT05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #TOT06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #TOT07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #TOT08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #TOT09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #TOT10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #TOT11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #TOTOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #TOTAL	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM17'	to	$stat_code
+move '001'       to      $stat_region
+move #FPRCCO01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FPRCCO02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FPRCCO03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FPRCCO04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FPRCCO05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FPRCCO06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FPRCCO07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FPRCCO08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FPRCCO09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FPRCCO10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FPRCCO11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FPRCCOOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FPRCCOTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM18'	to	$stat_code
+move '001'       to      $stat_region
+move #FPRCPB01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FPRCPB02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FPRCPB03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FPRCPB04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FPRCPB05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FPRCPB06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FPRCPB07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FPRCPB08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FPRCPB09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FPRCPB10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FPRCPB11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FPRCPBOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FPRCPBTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM19'	to	$stat_code
+move '001'       to      $stat_region
+move #FPRCIC01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FPRCIC02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FPRCIC03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FPRCIC04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FPRCIC05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FPRCIC06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FPRCIC07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FPRCIC08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FPRCIC09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FPRCIC10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FPRCIC11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FPRCICOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FPRCICTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM20'	to	$stat_code
+move '001'       to      $stat_region
+move #FPROTH01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FPROTH02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FPROTH03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FPROTH04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FPROTH05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FPROTH06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FPROTH07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FPROTH08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FPROTH09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FPROTH10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FPROTH11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FPROTHOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FPROTHTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM21'	to	$stat_code
+move '001'       to      $stat_region
+move #FPRSR01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FPRSR02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FPRSR03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FPRSR04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FPRSR05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FPRSR06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FPRSR07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FPRSR08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FPRSR09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FPRSR10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FPRSR11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FPRSROTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FPRSRTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM22'	to	$stat_code
+move '001'       to      $stat_region
+move #FSUCCO01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FSUCCO02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FSUCCO03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FSUCCO04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FSUCCO05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FSUCCO06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FSUCCO07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FSUCCO08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FSUCCO09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FSUCCO10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FSUCCO11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FSUCCOOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FSUCCOTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM23'	to	$stat_code
+move '001'       to      $stat_region
+move #FSUCPB01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FSUCPB02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FSUCPB03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FSUCPB04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FSUCPB05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FSUCPB06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FSUCPB07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FSUCPB08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FSUCPB09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FSUCPB10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FSUCPB11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FSUCPBOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FSUCPBTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM24'	to	$stat_code
+move '001'       to      $stat_region
+move #FSUCIC01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FSUCIC02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FSUCIC03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FSUCIC04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FSUCIC05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FSUCIC06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FSUCIC07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FSUCIC08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FSUCIC09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FSUCIC10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FSUCIC11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FSUCICOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FSUCICTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM25'	to	$stat_code
+move '001'       to      $stat_region
+move #FSUOTH01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FSUOTH02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FSUOTH03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FSUOTH04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FSUOTH05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FSUOTH06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FSUOTH07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FSUOTH08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FSUOTH09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FSUOTH10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FSUOTH11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FSUOTHOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FSUOTHTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM26'	to	$stat_code
+move '001'       to      $stat_region
+move #FSUSR01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FSUSR02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FSUSR03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FSUSR04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FSUSR05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FSUSR06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FSUSR07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FSUSR08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FSUSR09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FSUSR10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FSUSR11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FSUSROTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FSUSRTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM27'	to	$stat_code
+move '001'       to      $stat_region
+move #FRECCO01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FRECCO02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FRECCO03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FRECCO04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FRECCO05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FRECCO06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FRECCO07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FRECCO08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FRECCO09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FRECCO10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FRECCO11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FRECCOOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FRECCOTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM28'	to	$stat_code
+move '001'       to      $stat_region
+move #FRECPB01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FRECPB02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FRECPB03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FRECPB04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FRECPB05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FRECPB06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FRECPB07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FRECPB08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FRECPB09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FRECPB10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FRECPB11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FRECPBOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FRECPBTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM29'	to	$stat_code
+move '001'       to      $stat_region
+move #FRECIC01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FRECIC02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FRECIC03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FRECIC04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FRECIC05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FRECIC06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FRECIC07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FRECIC08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FRECIC09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FRECIC10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FRECIC11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FRECICOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FRECICTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM30'	to	$stat_code
+move '001'       to      $stat_region
+move #FREOTH01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FREOTH02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FREOTH03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FREOTH04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FREOTH05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FREOTH06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FREOTH07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FREOTH08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FREOTH09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FREOTH10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FREOTH11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FREOTHOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FREOTHTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM31'	to	$stat_code
+move '001'       to      $stat_region
+move #FRESR01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #FRESR02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #FRESR03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #FRESR04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #FRESR05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #FRESR06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #FRESR07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #FRESR08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #FRESR09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #FRESR10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #FRESR11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #FRESROTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #FRESRTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM32'	to	$stat_code
+move '001'       to      $stat_region
+move #CRSR01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #CRSR02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #CRSR03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #CRSR04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #CRSR05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #CRSR06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #CRSR07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #CRSR08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #CRSR09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #CRSR10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #CRSR11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #CRSROTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #CRSRTOT	to	#stat_count
+do ADD-TO-STATS
+
+move 'FAM33'	to	$stat_code
+move '001'       to      $stat_region
+move #GRAND01	to	#stat_count
+do ADD-TO-STATS
+move '002'       to      $stat_region
+move #GRAND02	to	#stat_count
+do ADD-TO-STATS
+move '003'       to      $stat_region
+move #GRAND03	to	#stat_count
+do ADD-TO-STATS
+move '004'       to      $stat_region
+move #GRAND04	to	#stat_count
+do ADD-TO-STATS
+move '005'       to      $stat_region
+move #GRAND05	to	#stat_count
+do ADD-TO-STATS
+move '006'       to      $stat_region
+move #GRAND06	to	#stat_count
+do ADD-TO-STATS
+move '007'       to      $stat_region
+move #GRAND07	to	#stat_count
+do ADD-TO-STATS
+move '008'       to      $stat_region
+move #GRAND08	to	#stat_count
+do ADD-TO-STATS
+move '009'       to      $stat_region
+move #GRAND09	to	#stat_count
+do ADD-TO-STATS
+move '010'       to      $stat_region
+move #GRAND10	to	#stat_count
+do ADD-TO-STATS
+move '011'       to      $stat_region
+move #GRAND11	to	#stat_count
+do ADD-TO-STATS
+move 'OTH'      to      $stat_region
+move #GRANDOTHER to	#stat_count
+do ADD-TO-STATS
+move 'ALL'      to      $stat_region
+move #GRANDTOT	to	#stat_count
+do ADD-TO-STATS
+
+END-PROCEDURE PRINT-COUNTS
+
+!****************************************************************************
+!   ADD-TO-STATS                                                            *
+!                                                                           *
+!       This procedure inserts the information derived for report into      *
+!       STAT_FAM table which will be used to provide management with        *
+!       totals without providing detailed information.                      *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  :  PRINT-COUNTS                                                      *
+!       CALLS      :  NONE                                                  *
+!****************************************************************************
+
+BEGIN-PROCEDURE ADD-TO-STATS
+ 
+BEGIN-SQL ON-ERROR=SqlErrorHandle
+
+INSERT INTO STAT_FAM (ID_STAT_FAM,
+	              DT_LOAD_PROCESS,
+		      CD_STAT_FAM_CODE,
+		      CD_STAT_FAM_RPT_SRC,
+		      NBR_STAT_FAM_RPT_MTH,
+		      NBR_STAT_FAM_RPT_YR,
+ 		      NBR_STAT_FAM_RPT_FY,
+		      CD_STAT_FAM_PRG,
+	              CD_STAT_FAM_REG,
+                      NBR_STAT_FAM_COUNT)
+values               ('0',
+		      &currentdt,
+		      $stat_code,
+		      'cfm01o00',
+                      $month,
+		      $year,
+		      #fiscalyr,
+                      $stat_program,
+                      $stat_region,
+                      #stat_count)
+
+END-SQL
+
+END-PROCEDURE ADD-TO-STATS
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+print $end_of_report                (+2) center 
+
+!NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+print 'SQL error - Processing Terminated'               (+1,2)
+print $error                                            (+1,2)
+print 'ERROR: SQL error halted loader processing'       (+0)
+print $error                                            (+1,2)
+print 'SQL Error: '                                     (+0)
+print $sql-error                                        (+0)
+print $error                                            (+1,2)
+print 'SQL Status: '                                    (+0)
+print #sql-status                                       (+0)
+STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************

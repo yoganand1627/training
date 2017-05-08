@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.FacSrv" table="FACSRV" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+        <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.FacSrvId">
+            <meta attribute="implement-equals">true</meta>
+            <key-property name="facilityInternalId" type="java.lang.Integer">
+                <meta attribute="use-in-equals">true</meta>	
+                <column name="FACILITY_INTERNAL_ID" precision="10" scale="0" />
+            </key-property>
+            <key-property name="srvtype" type="java.lang.String">
+                <meta attribute="use-in-equals">true</meta>
+                <column name="SRVTYPE" length="2" />
+            </key-property>
+            <key-property name="srveffect" type="java.util.Date">
+                <meta attribute="use-in-equals">true</meta>
+                <column name="SRVEFFECT" length="7" />
+            </key-property>
+        </composite-id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="facility" class="gov.georgia.dhr.dfcs.sacwis.db.Facility" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+           <column name="FACILITY_INTERNAL_ID" precision="10" scale="0"/>
+        </many-to-one>
+        <property name="srvdesc" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+            <column name="SRVDESC" length="30" />
+        </property>
+        <property name="srvabbrev" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+            <column name="SRVABBREV" length="6" />
+        </property>
+        <property name="srvcnt" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+            <column name="SRVCNT" precision="4" scale="0" />
+        </property>
+        <property name="srvprov" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+            <column name="SRVPROV" length="2" />
+        </property>
+        <property name="srvprovdes" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+            <column name="SRVPROVDES" length="15" />
+        </property>
+        <property name="serviceid" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+            <column name="SERVICEID" precision="10" scale="0" />
+        </property>
+        <property name="srvenddt" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+            <column name="SRVENDDT" length="7" />
+        </property>
+    </class>
+</hibernate-mapping>

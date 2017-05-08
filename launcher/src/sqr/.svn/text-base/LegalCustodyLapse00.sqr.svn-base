@@ -1,0 +1,595 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Mon Mar 26 09:38:47 2012 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2012\Defects and Enhancements List\Removal Date\Completed\LegalCustodyLapse00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=180    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'This report displays a list of all children currently in foster care with a legal status of Temporary Court (TCT) or Joint Commitment with DJJ - Temporary Court (JCT) and the court order has either expired, about to expire within the next 60 days or court order expiration date has not been documented. ' (28,4,114) Wrap 114 3 line-height=12 Keep-Top
+ Last-Page (585,516) 
+ Page-Number (585,488) '' ' of '
+ Print 'Keys' (409,1,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Multi-County:' (424,1,0) Underline  Bold 
+ Print 'these are cases when the primary case manager assigned is in a non-county specific unit.' (424,60,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Days Expired(-) / :' (323,4,21) Bold  Wrap 21 2 line-height=12 Keep-Top
+ Print 'Due to Expire' (336,4,0) Bold 
+ Print 'Case ID:' (173,4,0) Bold 
+ Print 'Stage Name:' (190,4,0) Bold 
+ Print 'Custody Effective Date:' (224,4,0) Bold 
+ Print 'Court Order Expired Date:' (256,4,0) Bold 
+ Print 'The Case number.' (173,55,0)
+ Print 'Name of the Foster Care Child (FCC)  or Adoption (ADO) stage. It will be the most recent stage if both Foster Care Child and Adoption stages are open.' (190,71,99) Wrap 99 2 line-height=12 Keep-Top
+ Print 'The date on which the child comes into DFCS custody. This is the most recent status effective date documented on the Legal Status Detail page.' (224,120,95) Wrap 95 2 line-height=12 Keep-Top
+ Print 'The date on which the court order of custody will expire. Usually the court order expiration date will be one year from the in-custody effective date of the previous court order. This is the most recent court order expiration date documented on the Legal Status Detail page. Those cases where the court order expiration date is not documented, this field will be displayed as ''Missing Date''.' (256,135,92) Wrap 92 6 line-height=12 Keep-Top
+ Print 'The number of days from the system date that the court order has expired or the number of days remaining within 60 days for the court order to expire. Those cases where the court order expiration date is not documented, this field will be blank.' (323,96,100) Wrap 100 3 line-height=12 Keep-Top
+ Print 'The reporting county is determined by the county of the stage, not the unit county of the primary case manager. When the county of the primary case manager differs from the stage county, the unit county displays in parentheses to the right of the unit supervisor''s name. ' (68,4,114) Wrap 114 4 line-height=12 Keep-Top
+ Print 'The report displays in ascending order of the number of days expired or days to expiration. ' (107,4,0)
+ Print 'Case manager is the last case manager assigned on the most recent FosterCare (Foster Care Child (FCC) or Adoption (ADO)) stage.' (124,4,100) Wrap 100 3 line-height=12 Keep-Top
+ Print 'The totals at each group level display the total number of FCC or ADO stages.' (152,4,0)
+ Print 'Status:' (364,4,0) Bold 
+ Print 'An ''E'' will display to identifiy children with an expired court order date. ''M'' will display to identify children whose' (364,47,143)
+ Print 'court order date is missing. ''D'' will display to identify children whose court order date is coming due.' (377,47,142)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input-Region
+ Do Get-Input-County
+ Do Get-Input-Unit
+ Do Get-Input-CaseManager
+
+ Position (1,1)
+ Do Master_Query
+End-Program
+Begin-Procedure Get-Input-Region
+! -----------------------------
+Input $_I501_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I501_CD_STAGE_REGION) or IsBlank($_I501_CD_STAGE_REGION) or ($_I501_CD_STAGE_REGION) = '0'
+    Let $where_clause501 = 'STAGE00.CD_STAGE_REGION is not null'
+    Let $regVar = 'All'
+    Let $regSelected = 'N' 
+
+else
+ Let $regSelected = 'Y'
+  Let $regVar = $_I501_CD_STAGE_REGION
+  Let $_region = $_I501_CD_STAGE_REGION
+If SubStr($_I501_CD_STAGE_REGION, 1, 1) != ''''
+  Let $_I501_CD_STAGE_REGION = '''' || $_I501_CD_STAGE_REGION || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I501_CD_STAGE_REGION,'''',0) = 0 and instr($_I501_CD_STAGE_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'STAGE00.CD_STAGE_REGION'
+   Let $where_clause501 = $brb_tmp  || ' = ' ||  '''' || $_I501_CD_STAGE_REGION || '''' 
+ Else
+   If (instr($_I501_CD_STAGE_REGION,'''',0) = 0 and instr($_I501_CD_STAGE_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'STAGE00.CD_STAGE_REGION'
+     Let $where_clause501 = $brb_tmp  || ' = ' || $_I501_CD_STAGE_REGION
+   End-If
+ End-If
+End-If
+End-Procedure
+
+Begin-Procedure Get-Input-County
+! -----------------------------
+Input $_I501_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_I501_CD_STAGE_CNTY) or IsBlank($_I501_CD_STAGE_CNTY) or ($_I501_CD_STAGE_CNTY) = '0'
+   Let $where_clause503 = 'STAGE00.CD_STAGE_CNTY is not null'
+   Let $countyVar = 'All'
+   Let $cntySelected = 'N'
+
+Else
+ Let $cntySelected = 'Y'
+If SubStr($_I501_CD_STAGE_CNTY, 1, 1) != ''''
+  Let $_I501_CD_STAGE_CNTY = '''' || $_I501_CD_STAGE_CNTY || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I501_CD_STAGE_CNTY,'''',0) = 0 and instr($_I501_CD_STAGE_CNTY,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'STAGE00.CD_STAGE_CNTY'
+   Let $where_clause503 = $brb_tmp  || ' = ' ||  '''' || $_I501_CD_STAGE_CNTY || '''' 
+ Else
+   If (instr($_I501_CD_STAGE_CNTY,'''',0) = 0 and instr($_I501_CD_STAGE_CNTY,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'STAGE00.CD_STAGE_CNTY'
+     Let $where_clause503 = $brb_tmp  || ' = ' || $_I501_CD_STAGE_CNTY
+   End-If
+ End-If
+End-If
+If $cntySelected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From  CCOUNT
+Where CCOUNT.CODE = [$_I501_CD_STAGE_CNTY]
+End-Select
+  Move &_County_Decode to $_header_disp
+Else
+  If $regSelected = 'Y'
+    Let $_header_disp = 'Region ' || $_region
+  Else 
+    Let $_header_disp = 'Statewide'
+  End-If
+End-If
+
+End-Procedure
+
+Begin-Procedure Get-Input-Unit
+Input $_I502_NBR_UNIT 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If ($_I502_NBR_UNIT = '0')
+  Let $brb_tmp = 'NBR_UNIT'
+  Let $where_clause502 = $brb_tmp  || ' is not null '
+  Let $unitSelected = 'N'
+  Let $unitVar = 'All'
+
+Else
+  Let $unitSelected = 'Y'
+  Let $unitVar = $_I502_NBR_UNIT
+  If SubStr($_I502_NBR_UNIT, 1, 1) != ''''
+    Let $_I502_NBR_UNIT = '''' || $_I502_NBR_UNIT || ''''
+  End-If
+  ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+  ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+  Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+  If (instr($_I502_NBR_UNIT,'''',0) = 0 and instr($_I502_NBR_UNIT,',',0) = 0 and $BRBSkipThis = 'F')
+    ! no quotes, no commas - add quotes
+    Let $brb_tmp = 'NBR_UNIT'
+    Let $where_clause502 = $brb_tmp  || ' = ' ||  '''' || $_I502_NBR_UNIT || '''' 
+  Else
+    If (instr($_I502_NBR_UNIT,'''',0) = 0 and instr($_I502_NBR_UNIT,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+    Else
+      ! quotes, no commas - process variable as-is
+      Let $brb_tmp = 'NBR_UNIT'
+      Let $where_clause502 = $brb_tmp  || ' = ' || $_I502_NBR_UNIT
+    End-If
+  End-If
+End-If
+End-Procedure
+
+Begin-Procedure Get-Input-CaseManager
+! ----------------------------------
+Input $_I501_ID_WKLD_PERSON 'Enter a value for ID_WKLD_PERSON' MaxLen=16  Type=Number
+If IsNull($_I501_ID_WKLD_PERSON) or IsBlank($_I501_ID_WKLD_PERSON) or ($_I501_ID_WKLD_PERSON) = '0'
+ Let $where_clause505 = 'ID_WKLD_PERSON is not null'
+ Let $CWSelected = 'N'
+Else
+ Let $CWSelected = 'Y'
+Let $brb_tmp = 'ID_WKLD_PERSON'
+Let $where_clause505 = $brb_tmp  || ' = ' || $_I501_ID_WKLD_PERSON
+End-If
+End-Procedure
+
+!--------------GET TOTALS FOR REPORT SUMMARY AND IDENTIFIER FOR MISSING OR EXPIRED COURT ORDERS--------------
+BEGIN-PROCEDURE COURT_DATE_STATUS($COURTDATE2, #DAYSDUE2, :$STATUS, :#TOTAL_MISSING, :#TOTAL_DUE, :#TOTAL_EXPIRED)
+IF ISNULL($COURTDATE2) OR ISBLANK($COURTDATE2)
+ let $var_status = 'M'
+ add 1 to #VAR_TOTAL_MISSING
+ELSE 
+
+IF(#DAYSDUE2 > 0) OR (#DAYSDUE2 = 0)
+LET $var_status = 'D'
+ADD 1 TO #VAR_COMING_DUE
+
+ELSE 
+LET $var_status = 'E'
+ADD 1 TO #VAR_EXPIRED
+END-IF
+END-IF
+ 
+MOVE $var_status to $STATUS
+MOVE #VAR_TOTAL_MISSING TO #TOTAL_MISSING
+MOVE #VAR_COMING_DUE TO #TOTAL_DUE
+MOVE #VAR_EXPIRED TO #TOTAL_EXPIRED
+END-PROCEDURE
+
+
+
+
+Begin-Procedure Master_Query
+
+ Do CreateXML_ManifestFile
+ Move 0 To #5ROW_COUNT
+Begin-Select Distinct
+DT_LEGAL_STAT_CRT_ODR_EXP_DT &COURTDATE2
+(DT_LEGAL_STAT_CRT_ODR_EXP_DT - SYSDATE) &DAYSDUE2
+
+
+ Do COURT_DATE_STATUS (&COURTDATE2,&DAYSDUE2, $STATUS, #TOTAL_MISSING, #TOTAL_DUE, #TOTAL_EXPIRED)
+
+((LEGAL_STATUS.DT_LEGAL_STAT_CRT_ODR_EXP_DT - sysdate)) &daysdueLess
+(case when  LEGAL_STATUS.DT_LEGAL_STAT_CRT_ODR_EXP_DT is null then 'Missing Date '  end) &ExpDt2
+(case when  LEGAL_STATUS.DT_LEGAL_STAT_CRT_ODR_EXP_DT is null then ' '  end) &daysdue
+NM_CASE &CASE_NAME
+PERSON_SUP.NM_PERSON_FULL &SUPERVISOR_NAME
+NBR_UNIT &Master_Query_NBR_UNIT
+CD_COUNTY &Master_Query_CD_COUNTY
+(decode( CCOUNT_UNIT.DECODE, '-None-', 'Multi-County',  CCOUNT_UNIT.DECODE  )) &unit_county_decode_masked
+CCOUNT_Stage.DECODE &Master_Query_CCOUNT_Stage.DECODE
+(case when  LEGAL_STATUS.DT_LEGAL_STAT_CRT_ODR_EXP_DT >= sysdate then ( LEGAL_STATUS.DT_LEGAL_STAT_CRT_ODR_EXP_DT - sysdate) end) &daysdueGtr
+ID_WKLD_PERSON &CWID
+(PERSON_CASE_MGR.NM_PERSON_LAST || ', ' ||  PERSON_CASE_MGR.NM_PERSON_FIRST) &casemgrfirstlast
+(PERSON_SUP.NM_PERSON_LAST || ', ' ||  PERSON_SUP.NM_PERSON_FIRST) &SupName
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+STAGE00.CD_STAGE_REGION &Master_Query_STAGE00.CD_STAGE_REGION () On-Break Set=5 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc501 After=Master_QueryCD_STAGE_REGION_AfterProc501
+STAGE00.CD_STAGE_CNTY &Master_Query_STAGE00.CD_STAGE_CNTY () On-Break Set=5 Level=2 Print=Never Before=Master_QueryCD_STAGE_CNTY_BeforeProc502 After=Master_QueryCD_STAGE_CNTY_AfterProc502
+CAPS.UNIT.ID_UNIT &Master_Query_CAPS.UNIT.ID_UNIT () On-Break Set=5 Level=3 Print=Never Before=Master_QueryID_UNIT_BeforeProc503 After=Master_QueryID_UNIT_AfterProc503
+PERSON_CASE_MGR.NM_PERSON_FULL &CASE_MANAGER () On-Break Set=5 Level=4 Print=Never Before=Master_QueryNM_PERSON_FULL_BeforeProc504 After=Master_QueryNM_PERSON_FULL_AfterProc504
+CAPS.CAPS_CASE.ID_CASE &CASE_ID (19,25) Edit 99999999999999na
+STAGE00.NM_STAGE &Master_Query_STAGE00.NM_STAGE (19,107,20)
+DT_LEGAL_STAT_STATUS_DT &CUSTODY_EFFECTIVE_DATE (19,224) Edit MM/DD/YYYY
+DT_LEGAL_STAT_CRT_ODR_EXP_DT &Expdt (19,354) Edit MM/DD/YYYY
+ If &Expdt = ''
+    ! do nothing
+ Else
+ Print &daysdueLess (19,444) Edit 9999999na
+ End-If
+ Let $court_date_status=$STATUS
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $court_date_status (19,317,4)
+ Print &ExpDt2 (19,354,15)
+ If &Expdt <> ''
+    ! do nothing
+ Else
+ Print &daysdue (19,458,13)
+ End-If
+ Add 1 To #5ROW_COUNT
+ Add 1 To #501ROW_COUNT
+ Add 1 To #502ROW_COUNT
+ Add 1 To #503ROW_COUNT
+ Add 1 To #504ROW_COUNT
+ Next-Listing  Need=19
+From  CAPS.CAPS_CASE, CAPS.LEGAL_STATUS
+,      CAPS.PERSON PERSON_CASE_MGR, CAPS.STAGE STAGE00, CAPS.UNIT
+,      CAPS.UNIT_EMP_LINK, CAPS.WORKLOAD, CAPS.PERSON PERSON_SUP
+,      CAPS.STAGE_PERSON_LINK STAGE_PERSON_LINK_CHILD, CAPS.CCOUNT CCOUNT_UNIT, CAPS.CCOUNT CCOUNT_Stage
+      Where CAPS.CAPS_CASE.ID_CASE = STAGE00.ID_CASE
+            And CAPS.WORKLOAD.ID_WKLD_STAGE = STAGE00.ID_STAGE
+            And CAPS.WORKLOAD.ID_WKLD_PERSON = PERSON_CASE_MGR.ID_PERSON
+            And PERSON_CASE_MGR.ID_PERSON = CAPS.UNIT_EMP_LINK.ID_PERSON
+            And CAPS.UNIT_EMP_LINK.ID_UNIT = CAPS.UNIT.ID_UNIT
+            And STAGE00.ID_UNIT = CAPS.UNIT.ID_UNIT
+            And PERSON_SUP.ID_PERSON = CAPS.UNIT.ID_PERSON
+            And STAGE_PERSON_LINK_CHILD.ID_PERSON = CAPS.LEGAL_STATUS.ID_PERSON
+            And STAGE00.ID_STAGE = STAGE_PERSON_LINK_CHILD.ID_STAGE
+            And CAPS.UNIT.CD_COUNTY = CCOUNT_UNIT.CODE
+            And STAGE00.CD_STAGE_CNTY = CCOUNT_Stage.CODE
+ And CD_UNIT_MEMBER_IN_OUT = 'IN'
+ And CD_WKLD_STAGE_PERS_ROLE = 'PR'
+ And STAGE00.CD_STAGE IN ('SUB','ADO')
+ And (STAGE00.DT_STAGE_CLOSE IS NULL  Or STAGE00.DT_STAGE_CLOSE  =  TO_DATE('12/31/4712 00:00:00', 'MM/DD/YYYY HH24:MI:SS'))
+ And CD_LEGAL_STAT_STATUS IN ('TCT','JCT')
+ And (DT_LEGAL_STAT_CRT_ODR_EXP_DT IS NULL  Or DT_LEGAL_STAT_CRT_ODR_EXP_DT < SYSDATE Or (LEGAL_STATUS.DT_LEGAL_STAT_CRT_ODR_EXP_DT > sysdate
+ And ( LEGAL_STATUS.DT_LEGAL_STAT_CRT_ODR_EXP_DT - sysdate) <= 60))
+ And DT_LEGAL_STAT_STATUS_DT = (SELECT  (max( LEGAL_STATUS_MAX.DT_LEGAL_STAT_STATUS_DT ))  FROM  CAPS.LEGAL_STATUS LEGAL_STATUS_MAX WHERE LEGAL_STATUS_MAX.ID_PERSON
+     = STAGE_PERSON_LINK_CHILD.ID_PERSON AND  LEGAL_STATUS_MAX.ID_CASE = STAGE00.ID_CASE)
+ And [$where_clause502]
+ And STAGE_PERSON_LINK_CHILD.CD_STAGE_PERS_ROLE = 'PC'
+ And [$where_clause501]
+ And [$where_clause503]
+ And STAGE00.ID_STAGE = (SELECT MAX (stage2.ID_STAGE) FROM STAGE_PERSON_LINK stage_person_link2, STAGE stage2 WHERE stage_person_link2.CD_STAGE_PERS_ROLE
+      = 'PC' AND stage_person_link2.id_stage = stage2.id_stage AND stage2.CD_STAGE IN ('SUB','ADO') AND  STAGE_PERSON_LINK_CHILD.ID_CASE 
+     = stage_person_link2.ID_CASE  AND  STAGE_PERSON_LINK_CHILD.ID_PERSON  = stage_person_link2.ID_PERSON )
+ And [$where_clause505]
+Order By STAGE00.CD_STAGE_REGION
+,      CCOUNT_Stage.DECODE
+,      NBR_UNIT
+,      CAPS.UNIT.ID_UNIT
+,      PERSON_CASE_MGR.NM_PERSON_FULL
+,      ((LEGAL_STATUS.DT_LEGAL_STAT_CRT_ODR_EXP_DT - sysdate))
+End-Select
+ Next-Listing
+ Next-Listing  Need=130
+ If #5ROW_COUNT > 0
+ Graphic (4,1,538) Horz-Line 13 
+ Position (5,1)
+ let #num_stages_cnty = #5ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #num_stages_cnty (25,131) Bold  Edit 88888888na
+   Let $RptTotLbl='Total Lapse Count: '
+ Print $RptTotLbl (24,5,29) Bold 
+   Let #TOTAL_MISSING=#TOTAL_MISSING
+ Print #TOTAL_MISSING (95,263) Edit 9999999 Bold 
+  Print 'Total Children with Missing Court Order Date: '  (95,5) Bold 
+   Let #TOTAL_DUE=#TOTAL_DUE
+ Print #TOTAL_DUE (111,265) Edit 9999999 Bold 
+  Print 'Total Children with Court Orders Coming due: '  (112,5) Bold 
+  Print 'Total Children with Court Order Date Due to Expire: '  (129,5) Bold 
+   Let #TOTAL_EXPIRED=#TOTAL_EXPIRED
+ Print #TOTAL_EXPIRED (130,265) Edit 9999999 Bold 
+  Print 'Report Summary '  (74,5) Underline  Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryNM_PERSON_FULL_BeforeProc504
+ Next-Listing  Need=38
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Stage Count: '  (38,14) Bold 
+  let #num_stages_cm = #504ROW_COUNT
+ Print #brb_delay_0219A320 (38,94,10) Delay Bold  Edit 88888888na
+  Print 'Case Manager ID/Name:'  (22,14) Bold 
+  Print &CWID (22,132) Edit 8888888888888na Bold 
+  Print &casemgrfirstlast (22,211,31) Bold 
+   Position (+12,)
+ Move 0 To #504ROW_COUNT
+ Next-Listing  Need=19
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryNM_PERSON_FULL_AfterProc504
+ Next-Listing  Need=3
+ Graphic (4,13,525) Horz-Line 10 
+ Position (5,1)
+   Position (+0,)
+ let #num_stages_cm = #504ROW_COUNT
+ Set-Delay-Print #brb_delay_0219A320 With #num_stages_cm
+ Move 0 To #504ROW_COUNT
+ Next-Listing  Need=19
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_BeforeProc503
+If $unitSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=28
+ Graphic (5,1,538) Horz-Line 10 
+ Position (6,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit: '  (22,1) Bold 
+  Print 'Supervisor: '  (22,64) Bold 
+  If &Master_Query_STAGE00.CD_STAGE_CNTY=&Master_Query_CD_COUNTY
+    ! do nothing
+ Else
+ Let $unit_county_dsp='( ' ||  &unit_county_decode_masked || ' )'
+ Print $unit_county_dsp (22,271,20) Bold 
+ End-If
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CAPS.UNIT.ID_UNIT (28,416) Edit 9999999999999999na Foreground=(255,255,255)
+  Print &Master_Query_NBR_UNIT (22,28,4) Bold 
+  Print &SupName (22,123,25) Bold 
+   Position (+12,)
+ Next-Listing  Need=19
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_AfterProc503
+If $unitSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=18
+ let #num_stages_unit = #503ROW_COUNT
+ If $unitSelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #num_stages_unit (18,152) Bold  Edit 88888888na
+ End-If
+  If $unitSelected = 'Y'
+    ! do nothing
+ Else
+ Let $unitTotLbl='Total Lapse Count for Unit: '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $unitTotLbl (18,5,29) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #503ROW_COUNT
+ Next-Listing  Need=19
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc501
+If $cntySelected = 'Y' or $regSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=21
+ Graphic (4,1,538) Horz-Line 27 
+ Position (6,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_STAGE00.CD_STAGE_REGION (21,43,4) Bold 
+ Print 'Region:'  (21,1) Bold 
+   Position (+12,)
+ Next-Listing  Need=19
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc501
+If $cntySelected = 'Y' or $regSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=20
+ Graphic (2,1,540) Horz-Line 27 
+ Position (4,1)
+ let #num_stg_region = #501ROW_COUNT
+ If $cntySelected = 'Y' or $regSelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #num_stg_region (20,152) Bold  Edit 88888888na
+ End-If
+  If $cntySelected = 'Y' or $regSelected = 'Y'
+    ! do nothing
+ Else
+ Let $cntTotLblReg='Total Lapse Count for Region: '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $cntTotLblReg (20,5,29) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #501ROW_COUNT
+ Next-Listing  Need=19
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_BeforeProc502
+If $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=23
+ Graphic (6,1,540) Horz-Line 20 
+ Position (8,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'County:'  (23,1) Bold 
+  Print &Master_Query_CCOUNT_Stage.DECODE (23,44,26) Bold 
+   Position (+12,)
+ Next-Listing  Need=19
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_AfterProc502
+If $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=19
+ Graphic (1,1,540) Horz-Line 13 
+ Position (2,1)
+ let #num_stg_cnty = #502ROW_COUNT
+ If $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #num_stg_cnty (19,152) Bold  Edit 88888888na
+ End-If
+  If $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Let $cntyTotLbl='Total Lapse Count for County: '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $cntyTotLbl (18,4,29) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #502ROW_COUNT
+ Next-Listing  Need=19
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (14,473) edit 'MM/DD/YYYY'
+ Print 'Division of Family and Children Services' (13,184,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Children With Expired Or Missing Court Order Date' (94,94,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (14,409,0)
+ Let $headerDisplay=$_header_disp
+ Print $headerDisplay (112,241,15) Bold 
+ Print-Image (2,3)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Let $unitVar=$unitVar
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $unitVar (133,38,15) Bold 
+ Let $unitLbl='Unit: '
+ Print $unitLbl (133,1,9) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case ID' (168,58,7) Underline  Bold 
+ Print 'Stage Name' (168,107,0) Underline  Bold 
+ Print 'Custody Effective Date' (168,224,14) Underline  Bold  Wrap 14 3 line-height=12 Keep-Top
+ Print 'Days Expired (-) /' (167,439,0) Underline  Bold 
+ Print 'Due to Expire' (179,438,0) Underline  Bold 
+ Print 'Court Order Expired Date' (168,354,12) Underline  Bold  Wrap 12 3 line-height=12 Keep-Top
+ Print 'Status' (168,317,6) Underline  Bold  Wrap 6 7 line-height=12 Keep-Top
+ Else   ! put a non combined page header
+ Print 'Case ID' (21,58,7) Underline  Bold 
+ Print 'Stage Name' (21,107,0) Underline  Bold 
+ Print 'Custody Effective Date' (21,224,14) Underline  Bold  Wrap 14 3 line-height=12 Keep-Top
+ Print 'Days Expired (-) /' (20,439,0) Underline  Bold 
+ Print 'Due to Expire' (32,438,0) Underline  Bold 
+ Print 'Court Order Expired Date' (21,354,12) Underline  Bold  Wrap 12 3 line-height=12 Keep-Top
+ Print 'Status' (21,317,6) Underline  Bold  Wrap 6 7 line-height=12 Keep-Top
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (17,492) '' ' of '
+ Last-Page (17,519) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

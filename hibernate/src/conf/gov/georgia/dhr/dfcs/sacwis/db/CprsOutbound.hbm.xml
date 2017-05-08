@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.CprsOutbound" table="CPRS_OUTBOUND" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idCprsOutbound" type="integer" unsaved-value="0">
+            <column name="ID_CPRS_OUTBOUND" precision="16" scale="0"/>
+            <generator class="sequence">
+              <param name="sequence">SEQ_CPRS_OUTBOUND</param>
+            </generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <property name="dtProcess" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_PROCESS" length="7"/>
+        </property>
+        <property name="cdError" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_ERROR" length="10"/>
+        </property>
+        <property name="cdCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_COUNTY" length="3" not-null="true"/>
+        </property>
+        <property name="dtCreated" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_CREATED" length="7"/>
+        </property>
+        <property name="idCase" type="integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+        </property>
+        <property name="dtCaseUpdated" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_CASE_UPDATED" length="7"/>
+        </property>
+    </class>
+</hibernate-mapping>

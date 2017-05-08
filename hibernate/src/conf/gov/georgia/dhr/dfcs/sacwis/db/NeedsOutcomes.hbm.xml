@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.NeedsOutcomes" table="NEEDS_OUTCOMES" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="nmAgency" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_AGENCY" length="30"/>
+    </property>
+    <property name="nmAssessor" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_ASSESSOR" length="20"/>
+    </property>
+    <property name="txtAssessorTitle" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_ASSESSOR_TITLE" length="30"/>
+    </property>
+    <property name="dtReferral" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REFERRAL" length="7"/>
+    </property>
+    <property name="dtAsstCmplt" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ASST_CMPLT" length="7"/>
+    </property>
+    <property name="txtGenRec" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_GEN_REC" length="300"/>
+    </property>
+    <property name="txtPlcmtRec" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_PLCMT_REC" length="300"/>
+    </property>
+    <property name="txtCcfaRec" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CCFA_REC" length="300"/>
+    </property>
+    <property name="indCcfaAgency" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CCFA_AGENCY" length="1"/>
+    </property>
+    <property name="indCcfaEduAssmt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CCFA_EDU_ASSMT" length="1"/>
+    </property>
+    <property name="txtCcfaEduAssmt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CCFA_EDU_ASSMT" length="300"/>
+    </property>
+    <property name="dtCcfaEduAssmt" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CCFA_EDU_ASSMT" length="7"/>
+    </property>
+    <property name="txtUnder4NoDevSrcCmnt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_UNDER4_NO_DEV_SRC_CMNT" length="500"/>
+    </property>
+    <property name="txtUndSchoolageNoDevAss" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_UND_SCHOOLAGE_NO_DEV_ASS" length="500"/>
+    </property>
+    <bag name="needsOutcomesDetails" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.NeedsOutcomesDetail" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

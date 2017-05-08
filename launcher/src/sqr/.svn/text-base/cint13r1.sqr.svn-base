@@ -1,0 +1,508 @@
+!*****************************************************************************
+!  Medicaid Benefit Register                                                 *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cint13a.sqr                                          *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/levyhd/work/sqr                          *
+!                                                                            *
+!                                                                            *
+! DATE:                 01/23/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      H. Levy                                              *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This report will read a flat file and format it      *
+!                       into a pre-defined layout for the SAVERR Medicaid    *
+!                       update batch process. It will provide information    *
+!                       on PRS clients that should be registered for Medicaid*
+!                       eligibility on SAVERR.                               *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 01/23/95   H. Levy      Initial Programming                                *
+! 04/30/96   B. McCleary  SIR 20810 - Changed payee name to just be one field*
+!                         that is thirty characters long.                    *
+! 05/23/96   B. McCleary  SIR 21293 - Changed the length of the other fam rel*
+!                         field from 2 to 21.                                *
+! 06/03/96   K. Cys       SIR 21556 - Removed code that selected and printed *
+!                         page number in report detail.                      *
+! 06/12/96   B. McCleary  SIR 21627 - Changed template from misport to       *
+!                         ondport and altered the header accordingly.        *
+! 10/15/96   K. Cys       SIR 11347 - Changed the length of id_person from   *
+!                         16 to 9.                                           *
+! 10/12/98   C. Berry     SIR 14948 - Added region number to report.         *
+! 12/07/03   S. Miller    SIR 18561 Agency name change.                      *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+        if $continue_flag = 'Y'
+
+        do PROCESS-REPORT
+
+    end-if
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #INCLUDE 'setup02b.sqc'             ! control codes for Portrait
+                                        ! batch reports
+                                        !***SIR 21627***
+
+        ask INPUT_FILE                  ! name of the file to be inputed
+                                        ! if the SQR report does not reside
+                                        ! in the same directory as the file
+                                        ! to be read then the full path must be
+                                        ! given
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. 4  lines are reserved to print the heading at the    *
+!       top of each page. This includes blank lines.                         *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 5
+
+    move 'cint13a'                      to $ReportID
+    move 'MEDICAID BENEFIT REGISTER'    to $ReportTitle
+
+!***SIR 21627***
+
+  print 'DEPARTMENT OF FAMILY AND PROTECTIVE SERVICES' (+1) center
+  print 'REPORT ID: '       (+1,1)
+  uppercase $ReportTitle
+  print $ReportTitle        ()          center
+  print 'PAGE: '            (+0,59)
+  page-number               (+0,65)
+
+  uppercase $ReportId
+  print $ReportId           (+1,1)
+  print 'DATE: '            (+0,59)
+  date-time () 'MM/DD/YY'   &date
+  print &date               (+0,65)
+
+  print 'TIME: '            (+1,59)
+  date-time () 'HH12:MI AM'   &time
+  print &time               (+0,65)
+
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS      : OPEN-FILE                                              *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+   move '{INPUT_FILE}' to $input_file
+
+   DO OPEN-FILE
+
+if $continue_flag = 'Y'
+
+   read 1 into $tran_type:3
+           $client_number:15
+           $last_name:22
+           $suffix:2
+           $first_name:12
+           $middle_name:12
+           $birth_date:8
+           $ssn:9
+           $sex:1
+           $ethnic_group:3
+           $program:3
+           $medical_code:3
+           $tpr:1
+           $cert_date:8
+           $deny_date:8
+           $name_case:25
+           $other_fam_name:25
+           $other_fam_rel:21
+           $other_fam_dhs_nbr:15
+           $county_number:3
+           $payee_name:30
+           $facility_name:30
+           $addr_attn:30
+           $addr_st_1:30
+           $addr_st_2:30
+           $addr_city:20
+           $addr_state:2
+           $addr_zip:10
+           $addr_cnty:3     !***SIR 15351***
+           $rgn:2           !***SIR 15351***
+           $job_bjn:8
+           $worker_name:25
+           $agency:5
+           $process_date:8  !***SIR 21556***
+           $id_person:9 !***SIR 11347***
+
+   if #end-file
+    PRINT 'NO DETAIL LINES FOUND'       (+5) center
+    move 'N' to $continue_flag
+   else
+    !do GET-REGION - SIR 15351
+    do PRINT-PAGE
+   end-if
+
+end-if
+
+   move '****END OF REPORT****' to $end_of_report    ! Initialize Working
+                                                     ! Storage constants
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   OPEN-FILE                                                               *
+!                                                                           *
+!       This procedure will open the file to be read and if there is a      *
+!       problem it will print it in the report and finish the processing.   *
+!                                                                           *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE OPEN-FILE
+
+OPEN $input_file AS 1 FOR-READING
+    RECORD=448 status=#file_status
+
+if #file_status = 0
+    move 'Y' to $continue_flag
+else
+    PRINT 'ERROR OPENING FILE'      (+4) center
+    let $printout = 'FILE '||$input_file||' DOES NOT EXIST'
+    PRINT $printout                 (+1) center
+    let #return-status = 30
+    move 'N' to $continue_flag
+    move 'N' to $close_file
+end-if
+
+END-PROCEDURE OPEN-FILE
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!      This procedure wraps up the report.  It will close the file if open  *
+!      and print a final end of report message                              *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+if $close_file = 'N'
+else
+    CLOSE 1
+end-if
+
+print $end_of_report            (+4,) center
+
+  NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!       This procedure will call the meat of the report, calling for page   *
+!       and other necessary processes to be executed                        *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : PRINT-LINE                                             *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT
+
+
+    WHILE not #end-file
+
+       read 1 into $tran_type:3
+               $client_number:15
+               $last_name:22
+               $suffix:2
+               $first_name:12
+               $middle_name:12
+               $birth_date:8
+               $ssn:9
+               $sex:1
+               $ethnic_group:3
+               $program:3
+               $medical_code:3
+               $tpr:1
+               $cert_date:8
+               $deny_date:8
+               $name_case:25
+               $other_fam_name:25
+               $other_fam_rel:21
+               $other_fam_dhs_nbr:15
+               $county_number:3
+               $payee_name:30
+               $facility_name:30
+               $addr_attn:30
+               $addr_st_1:30
+               $addr_st_2:30
+               $addr_city:20
+               $addr_state:2
+               $addr_zip:10
+               $addr_cnty:3     !***SIR 15351***
+               $rgn:2           !***SIR 15351***
+               $job_bjn:8
+               $worker_name:25
+               $agency:5
+               $process_date:8 !***SIR 21556***
+               $id_person:9 !***SIR 11347***
+
+                if #end-file
+                          break
+                end-if
+
+       !do GET-REGION - SIR 15351
+
+                do PRINT-PAGE
+
+end-while
+
+END-PROCEDURE PROCESS-REPORT
+
+
+!****************************************************************************
+!                                                                           *
+!       GET-REGION          ***SIR 14948***                                 *
+!                                                                           *
+!       This procedure will get the corresponding region for the legal      *
+!       status county from the county/region table                          *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REGION
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+decode
+   move &decode     to $region_number
+
+from ccntyreg
+
+where code =  $county_number
+
+END-SELECT
+
+END-PROCEDURE GET-REGION
+
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PAGE                                                              *
+!                                                                           *
+!       This procedure will print one page of the report.                   *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PAGE
+
+print 'TRANSACTION TYPE: '                (+3,1)
+print $tran_type                          (+0,19)
+print 'DHS CLIENT NUMBER: '               (+0,27)
+print $client_number                      (+0,46)
+
+print 'CLIENT NAME: '                     (+1,1)
+
+if rtrim($suffix,'') = ''
+  let $client_name = $last_name||', '||$first_name||' '||$middle_name
+else
+  let $client_name = $last_name||' '||$suffix||', '||$first_name||' '||$middle_name
+end-if
+
+if rtrim($last_name,'') = ''
+  print ''                                ()
+else
+  print $client_name                      (+0,14)
+end-if
+
+print 'DOB:'                              (+1,1)
+
+if rtrim($birth_date,'') <> ''
+  let $birth_date_print = substr($birth_date,1,2)||'/'||substr($birth_date,3,2)||'/'||substr($birth_date,5,4)
+  print $birth_date_print                 (+0,6)
+else
+  print ''                                (+0,6)
+end-if
+
+print 'SSN:'                              (+0,19)
+print $ssn                                (+0,24)
+print 'SEX:'                              (+0,36)
+print $sex                                (+0,41)
+print 'RACE:'                             (+0,45)
+print $ethnic_group                       (+0,51)
+
+print 'TYPE PROGRAM:'                     (+3,1)
+print $program                            (+0,15)
+print 'MED STATUS CODE:'                  (+0,20)
+print $medical_code                       (+0,37)
+print 'TPR:'                              (+0,41)
+print $tpr                                (+0,46)
+print 'AGENCY:'                           (+0,50)
+print $agency                             (+0,58)
+
+print 'CERT DATE:'                        (+1,1)
+
+if rtrim($cert_date,'') <> ''
+  let $cert_date_print = substr($cert_date,1,2)||'/'||substr($cert_date,3,2)||'/'||substr($cert_date,5,4)
+  print $cert_date_print                  (+0,12)
+else
+  print ''                                (+0,12)
+end-if
+
+print 'DENY DATE:'                        (+0,25)
+
+if rtrim($deny_date,'') <> ''
+  let $deny_date_print = substr($deny_date,1,2)||'/'||substr($deny_date,3,2)||'/'||substr($deny_date,5,4)
+  print $deny_date_print                  (+0,36)
+else
+  print ''                                (+0,36)
+end-if
+
+print 'ADULT FAMILY MEMBER: '               (+3,1)
+print $name_case                            (+0,22)
+
+print 'OTHER FAMILY MEMBER NAME: '          (+1,1)
+print $other_fam_name                       (+0,27)
+
+print 'OTHER FAMILY MEMBER RELATIONSHIP: '  (+1,1)
+print $other_fam_rel                        (+0,35)
+
+print 'OTHER FAMILY MEMBER CLIENT NUMBER: ' (+1,1)
+print $other_fam_dhs_nbr                    (+0,36)
+
+print 'ADOPTION SUBSIDY PAYEE: '          (+3,1)
+print $payee_name                         (+0,25)
+
+print 'FACILITY NAME: '                   (+1,1)
+print $facility_name                      (+0,16)
+
+print 'ADDRESS: '                         (+1,1)
+if rtrim($addr_attn, ' ') = ''
+    print $addr_st_1                      (+0,10)
+else
+    print $addr_attn                      (+0,10)
+    print $addr_st_1                      (+1,10)
+end-if
+
+if rtrim($addr_st_2, ' ') = ''
+else
+    print $addr_st_2                      (+1,10)
+end-if
+
+let $final_line = $addr_city||' '||$addr_state||' '||$addr_zip
+print $final_line                         (+1,10)
+
+print 'COUNTY NUMBER:'                    (+3,1)
+print $addr_cnty                        (+0,16)
+
+
+print 'REGION NUMBER:'                    (+3,1)
+print $rgn                               (+0,16)
+
+print 'WORKER BJN:'                       (+3,1)
+print $job_bjn                            (+0,13)
+print 'WORKER NAME:'                      (+0,24)
+print $worker_name                        (+0,37)
+
+print 'PROCESS DATE:'                     (+1,1)
+
+if rtrim($process_date,'') <> ''
+  let $process_date_print = substr($process_date,1,2)||'/'||substr($process_date,3,2)||'/'||substr($process_date,5,4)
+  print $process_date_print               (+0,15)
+else
+  print ''                                (+0,15)
+end-if
+
+!***SIR 21556***
+
+print 'PERSON ID:'                        (+1,1)
+print $id_person                          (+0,12)
+
+ NEW-PAGE
+
+END-PROCEDURE PRINT-PAGE
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle

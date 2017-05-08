@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.IntakeAllegation" table="INTAKE_ALLEGATION" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idAllegation" type="integer" unsaved-value="0">
+      <column name="ID_ALLEGATION" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_INTAKE_ALLEGATION</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="personByIdAllegedPerpetrator" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_ALLEGED_PERPETRATOR" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_ALLEGATION_STAGE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdVictim" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_VICTIM" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdIntakeAllegType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INTAKE_ALLEG_TYPE" length="4"/>
+    </property>
+    <property name="txtIntakeAllegDuration" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_INTAKE_ALLEG_DURATION" length="12"/>
+    </property>
+    <property name="nmVictim" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_VICTIM" length="25"/>
+    </property>
+    <property name="nmPerpetrator" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_PERPETRATOR" length="25"/>
+    </property>
+    <property name="dtAllegedIncident" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ALLEGED_INCIDENT" length="7"/>
+    </property>
+    <property name="cdAllegedMalCode" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ALLEGED_MAL_CODE" length="4"/>
+    </property>
+    <property name="cdAllegedMalLocation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ALLEGED_MAL_LOCATION" length="4"/>
+    </property>
+    <property name="cdMaltreatorRel" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_MALTREATOR_REL" length="2"/>
+    </property>
+    <property name="indMaltreatInCare" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MALTREAT_IN_CARE" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

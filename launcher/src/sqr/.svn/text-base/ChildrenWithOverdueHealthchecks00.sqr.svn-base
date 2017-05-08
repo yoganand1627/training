@@ -1,0 +1,709 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Fri Mar 30 12:24:55 2012 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2012\Defects and Enhancements List\Removal Date\ChildrenWithOverdueHealthchecks00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Page-Number (503,659) '' ' of '
+ Last-Page (503,697) 
+ Print 'Upon entering care, all foster children in DFCS custody who are $    - under 18 years old are required to have initial EPSDT and Dental completed within 10 calendar days $    - under 4 years old are required to have initial Developmental completed within 30 calendar days $    - between the age of 4 years and 18 years are required to have initial Psychological completed within 30 calendar days.' (82,12,150) Wrap 150 5 line-height=12 Keep-Top on=$
+ Print 'This report displays all foster children currently in DFCS custody who do not have at least one initial health service, who have an overdue health service or who are due for an ongoing health service within the next 60 calendar days. Overdue records are displayed in the ascending order of Region, County, Unit, Casemanager''s name, Service Due, Days Until Due and Child Name. The most overdue records are displayed first.' (27,12,150) Wrap 150 4 line-height=12 Keep-Top
+ Print 'Initial health services include EPSDT, Dental, Psychological, and Developmental. Ongoing health services include EPSDT, Dental, and Psychological.' (65,12,146)
+ Print 'Date Entered Care:' (276,12,0) Bold 
+ Print 'Service Due:' (296,12,0) Bold 
+ Print 'Days Until Due:' (492,12,0) Bold 
+ Print 'Date Next Due:' (378,12,0) Bold 
+ Print 'Date Last Appt.:' (348,12,0) Bold 
+ Print 'The primary child''s most recent removal date or most recent foster care start date on the case.' (276,111,95)
+ Print 'The type of the health check that is past due or coming due in the next 60 days. The type of health check in this report can be mapped to more than one reason on the Health Detail page. EPSDT can be EPSDT/GA Health Check or Medical Screen. Dental can be Dental Screen or Dental 6 Mo. Exm/Cl. Psychological is Psychological health detail reason. Developmental can be Developmental Assessment or Developmental Screen.' (296,111,111) Wrap 111 4 line-height=12 Keep-Top
+ Print 'The date the most recent health service of a specific type was conducted. It displays blank if the service was not performed for the child or one was done before the child''s Date Entered Care.' (348,111,111) Wrap 111 2 line-height=12 Keep-Top
+ Print 'While in care, $1) All children between age 0 months and under 18 years old who are currently in DFCS custody are required to have periodic EPSDT follow-ups done:$    - Age group 1: 0 months < age <= 6 months (every 2 months or less)$    - Age group 2: 6 months < age <= 18 months (every 3 months or less)$    - Age group 3: 18 months < age < 6 yrs (every 6 months or less)$    - Age group 4: 6 yrs <= age < 18 yrs (every 12 months or less)$$2) All children between the age of 4 and under 18 years olds who are currently in DFCS custody are required to have periodic mental health screens (psychological health service) done every 2 years or less.$$3) All children between age 3 and under 18 years old who are currently in DFCS custody are required to have a dental screen done every year or less.' (133,14,150) Wrap 150 11 line-height=12 Keep-Top on=$
+ Print 'The date a specific health service is due next - calculated by adding the interval months required for the age group to the last health service date or the Date Entered Care where the initial health service was not done. If the child would be in the next age group at the estimated next due date, the next due date will be adjusted by the periodic rule of the next age group. For example, last EPSDT is 12/5/2009 and the child is 5 months at the time the EPSDT was done. The estimated next due date is 2/5/2010; however, since the child would be well into her 7th month at that time and belongs to the next age group, the correct next due date is adjusted by adding the next age group months'' required to the last EPSDT; it is now 3/5/2010. For initial health services, next due date is calculated by adding the number of days allowed for each type of service to the Date Entered Care. If the child would be 18 or older at the Next Due date, the child will not be displayed as a health check is no longer required.' (378,111,120) Wrap 120 9 line-height=12 Keep-Top
+ Print 'The number of days between the date next due and the system date.' (492,111,0)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+ Do Get-Input-Region
+ Do Get-Input-County
+ Do Get-CM-Unit-Input
+ Do House-Keeping
+ Do Master_Query
+! DO CALCULATE_DAYS_UNTIL_DUE(&_CASEID2,&_CHILDID2, &_SERVICEDUE2, #_DAYS_UNTIL_DUE2)
+End-Program
+Begin-Procedure Get-Input-Region
+Input $_I102_CD_REGION 'Enter a value for CD_REGION' MaxLen=2  Type=Char
+If IsNull($_I102_CD_REGION) or IsBlank($_I102_CD_REGION) or ($_I102_CD_REGION) = '0'
+   Let $_where_clause102 = 'KENNY_A_SERVICE_DUE_VIEW.CD_REGION is not null'
+   Let $regSelected = 'N'
+  Else
+ Let $_region = $_I102_CD_REGION
+ Let $regSelected = 'Y'
+If SubStr($_I102_CD_REGION, 1, 1) != ''''
+  Let $_I102_CD_REGION = '''' || $_I102_CD_REGION || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I102_CD_REGION,'''',0) = 0 and instr($_I102_CD_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'KENNY_A_SERVICE_DUE_VIEW.CD_REGION'
+   Let $_where_clause102 = $brb_tmp  || ' = ' ||  '''' || $_I102_CD_REGION || '''' 
+ Else
+   If (instr($_I102_CD_REGION,'''',0) = 0 and instr($_I102_CD_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'KENNY_A_SERVICE_DUE_VIEW.CD_REGION'
+     Let $_where_clause102 = $brb_tmp  || ' = ' || $_I102_CD_REGION
+   End-If
+ End-If
+End-If
+End-Procedure
+Begin-Procedure Get-Input-County
+! -----------------------------
+Input $_I101_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_I101_CD_STAGE_CNTY) or IsBlank($_I101_CD_STAGE_CNTY) or ($_I101_CD_STAGE_CNTY) = '0'
+   Let $_where_clause101 = 'KENNY_A_SERVICE_DUE_VIEW.CD_STAGE_CNTY is not null'
+   Let $cntySelected = 'N'
+Else
+  Let $cntySelected ='Y'
+
+If SubStr($_I101_CD_STAGE_CNTY, 1, 1) != ''''
+  Let $_I101_CD_STAGE_CNTY = '''' || $_I101_CD_STAGE_CNTY || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CD_STAGE_CNTY,'''',0) = 0 and instr($_I101_CD_STAGE_CNTY,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'KENNY_A_SERVICE_DUE_VIEW.CD_STAGE_CNTY'
+   Let $_where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I101_CD_STAGE_CNTY || '''' 
+ Else
+   If (instr($_I101_CD_STAGE_CNTY,'''',0) = 0 and instr($_I101_CD_STAGE_CNTY,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'KENNY_A_SERVICE_DUE_VIEW.CD_STAGE_CNTY'
+     Let $_where_clause101 = $brb_tmp  || ' = ' || $_I101_CD_STAGE_CNTY
+   End-If
+ End-If
+End-If
+
+If $cntySelected ='Y'
+Begin-Select
+decode &county_decode2
+from ccount c
+where c.code = [$_I101_CD_STAGE_CNTY]
+End-Select
+
+Move &county_decode2 to $county_decode2
+Else
+  If $regSelected = 'Y'
+    Let $county_decode2 = 'Region ' || $_region
+  Else 
+    If $unit_selected = 'N' and $CM_selected = 'N' and $cntySelected = 'N' and $regSelected = 'N' 
+    Let $county_decode2 = 'Statewide'
+    End-If
+  End-If
+End-If
+
+End-Procedure
+
+Begin-Procedure Get-CM-Unit-Input
+!
+Input $_Unit_Nbr 'Enter Unit Number' MaxLen=2 Type=Char
+
+If IsNull($_Unit_Nbr) or IsBlank($_Unit_Nbr) or ($_Unit_Nbr='0')
+  Let $where_clause_unit = 'KENNY_A_SERVICE_DUE_VIEW.NBR_UNIT is not null'
+  Let $unit_selected = 'N'
+Else
+  Let $where_clause_unit = 'KENNY_A_SERVICE_DUE_VIEW.NBR_UNIT = ' || '''' || $_Unit_Nbr || ''''
+  Let $unit_selected = 'Y'
+End-If
+!
+Input $_CM_ID 'Enter Casemanager ID' MaxLen=16 Type=Char
+If IsNull($_CM_ID) or IsBlank($_CM_ID) or ($_CM_ID='0')
+  Let $where_clause_CM = ' 2=2 '
+  Let $CM_selected = 'N'
+Else
+  Let $where_clause_CM = 'ID_CM = ' || $_CM_ID
+  Let $CM_selected = 'Y'
+End-If
+!
+Let $_where_clause_unit_CM = $where_clause_unit || ' and ' || $where_clause_CM
+ 
+ If $unit_selected = 'N' and $CM_selected = 'N' and $cntySelected = 'N' and $regSelected = 'N'
+       Let $county_decode2 = 'Statewide'
+ End-If
+
+End-Procedure
+
+Begin-Procedure House-Keeping
+ ! Fill spaces in front of the county name to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($county_decode2)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $county_decode = ' ' || $county_decode2 
+   Let #counter = #counter + 1
+ End-while
+
+If $unit_selected ='Y'
+  Let $unit_header = 'Unit Number: ' || $_Unit_Nbr|| '          '
+End-If
+
+If $CM_selected = 'Y'
+Begin-Select
+nm_employee_last || ', ' || nm_employee_first &CM_name
+from employee
+where id_person = [$_CM_ID]
+End-Select
+  Let $CM_header = 'Case Manager: ' || $_CM_ID || '  ' || &CM_name
+End-If
+End-Procedure
+
+!-------------------------------------
+BEGIN-PROCEDURE CALCULATE_DAYS_UNTIL_DUE(#_CASEID2, #_CHILDID2,$_SERVICEDUE2,:#_DAYS_UNTIL_DUE2)
+BEGIN-SELECT
+KENNY_A_SERVICE_DUE_VIEW.ID_PERSON_CHILD &_VAR_CHILDID, (ADD_MONTHS( KENNY_A_SERVICE_DUE_VIEW.DOB_CHILD ,12*4) +30 - trunc(sysdate)) &_VarDAYSDUE1
+FROM KENNY_A_SERVICE_DUE_VIEW
+WHERE  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'PSYCHOLOGICAL - Initial'
+AND ADD_MONTHS(KENNY_A_SERVICE_DUE_VIEW.DOB_CHILD, 12*4) > (SELECT (MAX(LEGAL_STATUS_MAX.DT_LEGAL_STAT_STATUS_DT)) FROM CAPS.LEGAL_STATUS LEGAL_STATUS_MAX WHERE LEGAL_STATUS_MAX.ID_PERSON = KENNY_A_SERVICE_DUE_VIEW.ID_PERSON_CHILD AND LEGAL_STATUS_MAX.ID_CASE = KENNY_A_SERVICE_DUE_view.id_case)
+AND KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE <= ADD_MONTHS( KENNY_A_SERVICE_DUE_VIEW.DOB_CHILD ,12*4) + 30
+AND KENNY_A_SERVICE_DUE_VIEW.ID_PERSON_CHILD = #_CASEID2
+AND  KENNY_A_SERVICE_DUE_VIEW.ID_CASE = #_CHILDID2
+END-SELECT
+ MOVE &_VAR_CHILDID TO $_VAR_CHILDID2
+ !move &_VarDAYSDUE1 TO #_DAYSDUE1
+ !Let $_VAR_SERVICE = ''''|| $_SERVICEDUE2 || ''''
+
+! MOVE $SERVICEDUE2 TO $_VAR_SERVICEDUE
+
+IF ISNULL($_VAR_CHILDID2) OR ISBLANK($_VAR_CHILDID2)
+ MOVE $_VAR_CHILDID2 TO #_DAYS_UNTIL_DUE
+ELSE 
+ LET #_DAYS_UNTIL_DUE = 2
+END-IF
+
+!BEGIN-SELECT
+!(TRUNC(KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE) - TRUNC(SYSDATE)) &_DAYSDUE2
+!FROM KENNY_A_SERVICE_DUE_VIEW
+!WHERE KENNY_A_SERVICE_DUE_VIEW.ID_PERSON_CHILD = #_CHILDID2
+!AND KENNY_A_SERVICE_DUE_VIEW.ID_CASE = #_CASEID2
+!!AND TO_DATE(KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE, 'MM/DD/YYYY') = TO_DATE($_MODIFIED_DATE2, 'MM/DD/YYYY')
+!AND KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = $_VAR_SERVICE!$_SERVICEDUE2
+!END-SELECT
+
+!IF ISNULL($_VAR_CHILDID) OR ISBLANK($_VAR_CHILDID)
+! MOVE &_DAYSDUE2 TO #_DAYS_UNTIL_DUE2
+!ELSE
+! MOVE #_DAYSDUE1 TO #_DAYS_UNTIL_DUE2
+!END-IF
+
+END-PROCEDURE
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+ Move 0 To #past_due_cnt
+ Move 0 To #due_in_30_cnt
+ Move 0 To #due_in_60_cnt
+ Move 0 To #pastdue1cnt
+ Move 0 To #dentalOng1cnt
+ Move 0 To #iscomingdue30DenInitial2
+ Move 0 To #isDue60DenInitial3
+ Move 0 To #EPSDTInt1Sum
+ Move 0 To #EPSDTInt2Sum
+ Move 0 To #EPSDTInt3Sum
+ Move 0 To #PsyInt1Sum
+ Move 0 To #PsyInt2Sum
+ Move 0 To #PsyInt3Sum
+ Move 0 To #DevInt1Sum
+ Move 0 To #DevInt2Sum
+ Move 0 To #DevInt3Sum
+ Move 0 To #DenOng2Sum
+ Move 0 To #DenOng3Sum
+ Move 0 To #EPSDTOng1Sum
+ Move 0 To #EPSDTOng2Sum
+ Move 0 To #EPSDTOng3Sum
+ Move 0 To #PsyOng1Sum
+ Move 0 To #PsyOng2
+ Move 0 To #PsyOng3Sum
+ Move 0 To #denIntTot1S
+ Move 0 To #EPSDTIntTot1S
+ Move 0 To #PsyIntTot1S
+ Move 0 To #DevIntTot1S
+ Move 0 To #DenOngTotG1S
+ Move 0 To #EPSDTOngTotG1S
+ Move 0 To #PsyOngTotG1S
+ Move 0 To #isDue60Sum
+Begin-Select Distinct
+KENNY_A_SERVICE_DUE_VIEW.ID_CASE &_CASEID2
+KENNY_A_SERVICE_DUE_VIEW.ID_PERSON_CHILD &_CHILDID2
+KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE &_MODIFIED_DATE2
+KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE &_SERVICEDUE2
+
+!(SELECT  (max( LEGAL_STATUS_MAX.DT_LEGAL_STAT_STATUS_DT )) FROM  CAPS.LEGAL_STATUS LEGAL_STATUS_MAX where LEGAL_STATUS_MAX.ID_PERSON = CAPS.KENNY_A_SERVICE_DUE_VIEW.ID_PERSON_CHILD AND  LEGAL_STATUS_MAX.ID_CASE = CAPS.KENNY_A_SERVICE_DUE_VIEW.ID_CASE) &REMOVALDATE2
+! DO REMOVALDATE(&CASEID2,&CHILDID2, $REMOVALDATE2)
+! DO CALCULATE_DAYS_UNTIL_DUE(&_CASEID2, &_CHILDID2, &_SERVICEDUE2, #_DAYS_UNTIL_DUE2)
+
+(case when  (KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'PSYCHOLOGICAL - Initial' ) and ADD_MONTHS( KENNY_A_SERVICE_DUE_VIEW.DOB_CHILD ,12*4) > KENNY_A_SERVICE_DUE_VIEW.DT_ENTERED_CARE and KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE <= ADD_MONTHS( KENNY_A_SERVICE_DUE_VIEW.DOB_CHILD ,12*4) + 30 then  ADD_MONTHS( KENNY_A_SERVICE_DUE_VIEW.DOB_CHILD ,12*4) +30 - trunc(sysdate) else trunc( KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE ) - trunc(sysdate) end) &Due3
+((SELECT  (max( LEGAL_STATUS_MAX.DT_LEGAL_STAT_STATUS_DT )) FROM  CAPS.LEGAL_STATUS LEGAL_STATUS_MAX where LEGAL_STATUS_MAX.ID_PERSON = CAPS.KENNY_A_SERVICE_DUE_VIEW.ID_PERSON_CHILD AND  LEGAL_STATUS_MAX.ID_CASE = CAPS.KENNY_A_SERVICE_DUE_VIEW.ID_CASE)) &RemovalDate
+(case when (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) < 0 then 1 else 0 end) &is_past_due
+DT_ENTERED_CARE &Master_Query_DT_ENTERED_CARE
+(trunc( KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE ) - trunc(sysdate)) &days_due
+NM_CM &Master_Query_NM_CM
+NM_SUP &Master_Query_NM_SUP
+(case when ((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <31 ) then 1 else 0 end) &is_coming_due_30
+(case when ((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 31 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) then 1 else 0 end) &is_coming_due_60
+(case when ((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) < 0 and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'DENTAL - Initial') then 1 else 0 end) &pastdue1
+(case when ((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) < 0 and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'DENTAL - Ongoing') then 1 else 0 end) &dentalOng1
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <31 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'DENTAL - Initial') then 1 else 0 end) &iscomingdue30DenInitial
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 31 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'DENTAL - Initial') then 1 else 0 end) &isDue60DenInitial
+(case when ((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) < 0 and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'EPSDT - Initial') then 1 else 0 end) &EPSDTInt1
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <31 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'EPSDT - Initial') then 1 else 0 end) &EPSDTInt2
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 31 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'EPSDT - Initial') then 1 else 0 end) &EPSDTInt3
+(case when ((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) < 0 and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'PSYCHOLOGICAL - Initial') then 1 else 0 end) &PsyInt1
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <31 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'PSYCHOLOGICAL - Initial') then 1 else 0 end) &PsyInt2
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 31 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'PSYCHOLOGICAL - Initial') then 1 else 0 end) &PsyInt3
+(case when ((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) < 0 and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'DEVELOPMENTAL - Initial') then 1 else 0 end) &DevInt1
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <31 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'DEVELOPMENTAL - Initial') then 1 else 0 end) &DevInt2
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 31 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'DEVELOPMENTAL - Initial') then 1 else 0 end) &DevInt3
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <31 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'DENTAL - Ongoing') then 1 else 0 end) &DenOng2
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 31 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'DENTAL - Ongoing') then 1 else 0 end) &DenOng3
+(case when ((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) < 0 and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'EPSDT - Ongoing') then 1 else 0 end) &EPSDTOng1
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <31 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'EPSDT - Ongoing') then 1 else 0 end) &EPSDTOng2
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 31 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'EPSDT - Ongoing') then 1 else 0 end) &ESPDTOng3
+(case when ((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) < 0 and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'PSYCHOLOGICAL - Ongoing') then 1 else 0 end) &PsyOng1
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <31 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'PSYCHOLOGICAL - Ongoing') then 1 else 0 end) &PsyOng2
+(case when (((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 31 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'PSYCHOLOGICAL - Ongoing') then 1 else 0 end) &PsyOng3
+CD_STAGE_CNTY &Master_Query_CD_STAGE_CNTY
+ID_SUP &SupervisorId
+CAPS.KENNY_A_SERVICE_DUE_VIEW.NBR_UNIT &Master_Query_CAPS.KENNY_A_SERVICE_DUE_VIEW.NBR_UNIT
+(case when (( (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) > 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'DENTAL - Initial') then 1 else 0 end) &denIntTot1
+(case when (( (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) > 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'EPSDT - Initial') then 1 else 0 end) &EPSDTIntTot1
+(case when (( (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) > 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'PSYCHOLOGICAL - Initial') then 1 else 0 end) &PsyIntTot1
+(case when (( (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) > 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'DEVELOPMENTAL - Initial') then 1 else 0 end) &DevIntTot1
+(case when (( (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) > 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'DENTAL - Ongoing') then 1 else 0 end) &DenOngTotG1
+(case when (( (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) > 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'EPSDT - Ongoing') then 1 else 0 end) &EPSDTOngTotG1
+(case when (( (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) > 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) and  KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'PSYCHOLOGICAL - Ongoing') then 1 else 0 end) &PsyOngTotG1
+(case when ((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) > 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 )  then 1 else 0 end) &isDue60Main
+(case when  (KENNY_A_SERVICE_DUE_VIEW.SERVICE_DUE = 'PSYCHOLOGICAL - Initial' ) and ADD_MONTHS( KENNY_A_SERVICE_DUE_VIEW.DOB_CHILD ,12*4) > KENNY_A_SERVICE_DUE_VIEW.DT_ENTERED_CARE and KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE <= ADD_MONTHS( KENNY_A_SERVICE_DUE_VIEW.DOB_CHILD ,12*4) then trunc(sysdate) - ADD_MONTHS( KENNY_A_SERVICE_DUE_VIEW.DOB_CHILD ,12*4) else trunc( KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE ) - trunc(sysdate) end) &daysDueNew1
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_REGION &Region () On-Break Set=1 Level=1 Print=Never Before=Master_QueryCD_REGION_BeforeProc101 After=Master_QueryCD_REGION_AfterProc101
+CCOUNT_CntyName.DECODE &CntyName () On-Break Set=1 Level=2 Print=Never Before=Master_QueryDECODE_BeforeProc102 After=Master_QueryDECODE_AfterProc102
+ID_UNIT &UnitId () On-Break Set=1 Level=3 Print=Never Before=Master_QueryID_UNIT_BeforeProc103 After=Master_QueryID_UNIT_AfterProc103
+ID_CM &CaseMngrId () On-Break Set=1 Level=4 Print=Never Before=Master_QueryID_CM_BeforeProc104 After=Master_QueryID_CM_AfterProc104
+NM_CHILD &Master_Query_NM_CHILD (12,9,23) Wrap 23 2 line-height=12 Keep-Top
+ID_PERSON_CHILD &Master_Query_ID_PERSON_CHILD (12,142) Edit 9999999999na
+ID_CASE &Master_Query_ID_CASE (12,206) Edit 9999999999na
+DOB_CHILD &Master_Query_DOB_CHILD (12,351) Edit MM/DD/YYYY
+DT_LAST_APPT &Master_Query_DT_LAST_APPT (12,410) Edit MM/DD/YYYY
+MODIFIED_NEXT_DUE &Master_Query_MODIFIED_NEXT_DUE (12,475) Edit MM/DD/YYYY
+SERVICE_DUE &Master_Query_SERVICE_DUE (12,585,24)
+ If &Due3 < 0
+ Print &Due3 (12,532) Edit 88888888na Bold 
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Due3 (12,532) Edit 88888888na
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &RemovalDate (12,269) Edit MM/DD/YYYY
+ Next-Listing   ! Close up the wrapped columns
+ Add &is_past_due To #past_due_cnt
+ Add &is_coming_due_30 To #due_in_30_cnt
+ Add &is_coming_due_60 To #due_in_60_cnt
+ Add &pastdue1 To #pastdue1cnt
+ Add &dentalOng1 To #dentalOng1cnt
+ Add &iscomingdue30DenInitial To #iscomingdue30DenInitial2
+ Add &isDue60DenInitial To #isDue60DenInitial3
+ Add &EPSDTInt1 To #EPSDTInt1Sum
+ Add &EPSDTInt2 To #EPSDTInt2Sum
+ Add &EPSDTInt3 To #EPSDTInt3Sum
+ Add &PsyInt1 To #PsyInt1Sum
+ Add &PsyInt2 To #PsyInt2Sum
+ Add &PsyInt3 To #PsyInt3Sum
+ Add &DevInt1 To #DevInt1Sum
+ Add &DevInt2 To #DevInt2Sum
+ Add &DevInt3 To #DevInt3Sum
+ Add &DenOng2 To #DenOng2Sum
+ Add &DenOng3 To #DenOng3Sum
+ Add &EPSDTOng1 To #EPSDTOng1Sum
+ Add &EPSDTOng2 To #EPSDTOng2Sum
+ Add &ESPDTOng3 To #EPSDTOng3Sum
+ Add &PsyOng1 To #PsyOng1Sum
+ Add &PsyOng2 To #PsyOng2
+ Add &PsyOng3 To #PsyOng3Sum
+ Add &denIntTot1 To #denIntTot1S
+ Add &EPSDTIntTot1 To #EPSDTIntTot1S
+ Add &PsyIntTot1 To #PsyIntTot1S
+ Add &DevIntTot1 To #DevIntTot1S
+ Add &DenOngTotG1 To #DenOngTotG1S
+ Add &EPSDTOngTotG1 To #EPSDTOngTotG1S
+ Add &PsyOngTotG1 To #PsyOngTotG1S
+ Add &isDue60Main To #isDue60Sum
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Add 1 To #103ROW_COUNT
+ Add 1 To #104ROW_COUNT
+ Next-Listing  Need=12
+From  CAPS.KENNY_A_SERVICE_DUE_VIEW, CAPS.CCOUNT CCOUNT_CntyName
+,      CAPS.UNIT
+      Where CAPS.KENNY_A_SERVICE_DUE_VIEW.CD_STAGE_CNTY = CCOUNT_CntyName.CODE
+            And CAPS.KENNY_A_SERVICE_DUE_VIEW.ID_SUP = CAPS.UNIT.ID_PERSON
+ And SERVICE_DUE IS NOT NULL 
+ And (trunc( KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE ) - trunc(sysdate)) <= 60
+ And [$_where_clause_unit_CM]
+ And [$_where_clause101]
+ And [$_where_clause102]
+Order By CD_REGION
+,      CCOUNT_CntyName.DECODE
+,      CAPS.KENNY_A_SERVICE_DUE_VIEW.NBR_UNIT
+,      ID_UNIT
+,      NM_CM
+,      (trunc( KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE ) - trunc(sysdate))
+,      NM_CHILD
+End-Select
+ Next-Listing
+ Next-Listing  Need=290
+ If #1ROW_COUNT > 0
+ Graphic (2,1,720) Horz-Line 15 
+ Position (3,1)
+ Graphic (291,1,716) Horz-Line 15 
+ Position (292,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Number of Health Checks coming due within the next 60 calendar days:'  (52,5) Bold 
+  Print #past_due_cnt (32,400) Bold  Edit 999999999na
+  Print #due_in_30_cnt (71,400) Bold  Edit 999999999na
+  Print #due_in_60_cnt (90,400) Bold  Edit 999999999na
+  Print 'Number of Health Checks past due:'  (32,5) Bold 
+  Print 'Number of Health Checks coming due between 0 and 30 next calendar days:'  (71,5) Bold 
+  Print 'Number of Health Checks coming due between 31 and 60 next calendar days:'  (90,5) Bold 
+  Print #pastdue1cnt (137,376) Edit 999999999na
+  Print #dentalOng1cnt (235,376) Edit 999999999na
+  Print 'Initial'  (118,5) Underline  Bold 
+  Print 'Ongoing'  (217,5) Underline  Bold 
+  Print 'Number of Health Checks past due:'  (137,7)
+  Print 'Number of Health Checks past due:'  (235,7)
+  Print 'Number of Health Checks coming due between 0 and 30 next calendar days:'  (167,7)
+  Print 'Number of Health Checks coming due between 0 and 30 next calendar days:'  (267,7)
+  Print 'Number of Health Checks coming due between 31 and 60 next calendar days:'  (183,7)
+  Print 'Number of Health Checks coming due between 31 and 60 next calendar days:'  (283,7)
+  Print 'Dental'  (120,402) Underline  Bold 
+  Print 'EPSDT'  (120,467) Underline  Bold 
+  Print 'Developmental'  (119,617) Underline  Bold 
+  Print #iscomingdue30DenInitial2 (167,376) Edit 999999999na
+  Print #isDue60DenInitial3 (183,376) Edit 999999999na
+  Print #EPSDTInt1Sum (137,442) Edit 999999999na
+  Print #EPSDTInt2Sum (167,442) Edit 999999999na
+  Print #EPSDTInt3Sum (183,442) Edit 999999999na
+  Print #PsyInt1Sum (137,526) Edit 999999999na
+  Print #PsyInt2Sum (167,526) Edit 999999999na
+  Print #PsyInt3Sum (183,526) Edit 999999999na
+  Print #DevInt1Sum (137,624) Edit 999999999na
+  Print #DevInt2Sum (167,624) Edit 999999999na
+  Print #DevInt3Sum (183,624) Edit 999999999na
+  Print 'EPSDT'  (218,467) Underline  Bold 
+  Print 'Psychological'  (216,532) Underline  Bold 
+  Print 'Dental'  (218,402) Underline  Bold 
+  Print #DenOng2Sum (267,376) Edit 999999999na
+  Print #DenOng3Sum (283,376) Edit 999999999na
+  Print #EPSDTOng1Sum (235,445) Edit 999999999na
+  Print #EPSDTOng2Sum (267,445) Edit 999999999na
+  Print #EPSDTOng3Sum (283,445) Edit 999999999na
+  Print #PsyOng1Sum (235,525) Edit 999999999na
+  Print #PsyOng2 (267,525) Edit 999999999na
+  Print #PsyOng3Sum (283,525) Edit 999999999na
+  Print 'Total'  (19,3) Underline  Bold 
+  Print 'Psychological'  (120,532) Underline  Bold 
+  Print 'Number of Health Checks coming due within the next 60 calendar days:'  (152,7)
+  Print 'Number of Health Checks coming due within the next 60 calendar days:'  (251,7)
+  Print #denIntTot1S (152,375) Edit 999999999na
+  Print #EPSDTIntTot1S (152,442) Edit 999999999na
+  Print #PsyIntTot1S (152,526) Edit 999999999na
+  Print #DevIntTot1S (152,625) Edit 999999999na
+  Print #DenOngTotG1S (251,375) Edit 999999999na
+  Print #EPSDTOngTotG1S (251,445) Edit 999999999na
+  Print #PsyOngTotG1S (251,525) Edit 999999999na
+  Print #isDue60Sum (52,400) Bold  Edit 999999999na
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryCD_REGION_BeforeProc101
+If $regSelected = 'Y' or $cntySelected = 'Y' or ($unit_selected = 'Y'  and $regSelected = 'Y') or $CM_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=19
+ Graphic (1,1,719) Horz-Line 35 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region:'  (19,1) Bold 
+     Print &Region (19,43,4) Bold 
+   Position (+12,)
+ Next-Listing  Need=12
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_REGION_AfterProc101
+If $regSelected = 'Y' or $cntySelected = 'Y' or ($unit_selected = 'Y'  and $regSelected = 'Y') or $CM_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=17
+ Graphic (2,1,718) Horz-Line 25 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region Total:'  (17,1) Bold 
+ let #regTot = #101ROW_COUNT
+ If $regSelected = 'Y' or $cntySelected = 'Y' or ($unit_selected = 'Y'  and $regSelected = 'Y') or $CM_selected = 'Y'
+    ! do nothing
+ Else
+ Print #regTot (17,69) Bold  Edit 888888888na
+ End-If
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_BeforeProc102
+If ($cntySelected = 'Y' and $unit_selected = 'Y' ) or $CM_selected = 'Y' or $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=21
+ Graphic (3,1,717) Horz-Line 28 
+ Position (5,1)
+      Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &CntyName (21,4,28) Bold 
+   Position (+12,)
+ Next-Listing  Need=12
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc102
+If ($cntySelected = 'Y' and $unit_selected = 'Y' ) or $CM_selected = 'Y' or $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=17
+ Graphic (2,1,717) Horz-Line 20 
+ Position (4,1)
+ let #cntyTot = #102ROW_COUNT
+ If ($cntySelected = 'Y' and $unit_selected = 'Y' ) or $CM_selected = 'Y' or $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #cntyTot (17,69) Bold  Edit 888888888na
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'County Total:'  (17,1) Bold 
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_BeforeProc103
+If $unit_selected = 'Y' or $CM_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=22
+ Graphic (6,1,717) Horz-Line 20 
+ Position (8,1)
+   Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit # / Supervisor:'  (22,3) Bold 
+   Print &Master_Query_NM_SUP (22,131,25) Bold 
+  Print &Master_Query_CAPS.KENNY_A_SERVICE_DUE_VIEW.NBR_UNIT (22,101,4) Bold 
+   Position (+12,)
+ Next-Listing  Need=12
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_AfterProc103
+If $unit_selected = 'Y' or $CM_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=21
+ Graphic (2,1,717) Horz-Line 20 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit Total:'  (21,3) Bold 
+ let #unitTot = #103ROW_COUNT
+ If $unit_selected = 'Y' or $CM_selected = 'Y'
+    ! do nothing
+ Else
+ Print #unitTot (21,56) Bold  Edit 888888888na
+ End-If
+   Position (+12,)
+ Move 0 To #103ROW_COUNT
+ Next-Listing  Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryID_CM_BeforeProc104
+ If $CM_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=21
+ Graphic (4,1,717) Horz-Line 15 
+ Position (5,1)
+   Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Casemanager ID / Name:'  (21,7) Bold 
+  Print &Master_Query_NM_CM (21,198,25) Bold 
+  Print &CaseMngrId (21,132) Edit 8888888888na Bold 
+   Position (+12,)
+ Next-Listing  Need=12
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_CM_AfterProc104
+If $CM_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=17
+ Graphic (1,1,717) Horz-Line 15 
+ Position (2,1)
+ let #totalNoforCM = #104ROW_COUNT
+ If $CM_selected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #totalNoforCM (17,106) Bold  Edit 888888888na
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Casemanager Total:'  (17,7) Bold 
+   Position (+12,)
+ Move 0 To #104ROW_COUNT
+ Next-Listing  Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Children and Family Services' (22,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Children with Overdue Health Checks' (49,231,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (22,654) edit 'MM/DD/YYYY'
+ Print 'Produced On: ' (22,589,0)
+ Let $county_header=$county_decode2
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $county_header (73,314,15) Bold 
+ Let $unit_CM_header=$unit_header || $CM_header
+ Alter-Printer Font=4 Point-Size=11    ! [SQR.INI] 4=Arial,proportional
+ Print $unit_CM_header (100,1,74) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Child Name' (121,9,0) Underline  Bold 
+ Print 'Child ID' (121,161,0) Underline  Bold 
+ Print 'Case ID' (121,226,0) Underline  Bold 
+ Print 'DOB' (121,351,0) Underline  Bold 
+ Print 'Date$Last Appt.' (121,410,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Date$Next Due' (121,475,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Days$Until Due' (121,534,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Service Due' (121,585,0) Underline  Bold 
+ Print 'Date' (121,269,0) Underline  Bold 
+ Print 'Entered Care' (138,269,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Child Name' (10,9,0) Underline  Bold 
+ Print 'Child ID' (10,161,0) Underline  Bold 
+ Print 'Case ID' (10,226,0) Underline  Bold 
+ Print 'DOB' (10,351,0) Underline  Bold 
+ Print 'Date$Last Appt.' (10,410,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Date$Next Due' (10,475,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Days$Until Due' (10,534,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Service Due' (10,585,0) Underline  Bold 
+ Print 'Date' (10,269,0) Underline  Bold 
+ Print 'Entered Care' (27,269,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (14,659) '' ' of '
+ Last-Page (14,696) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

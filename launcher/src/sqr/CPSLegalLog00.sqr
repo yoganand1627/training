@@ -1,0 +1,289 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Fri Jun 20 15:43:51 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\sacwis\launcher\src\sqr\CPSLegalLog00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 1.000 
+  Bottom-Margin = 1.000 
+  Left-Margin   = 0.600 
+  Right-Margin  = 0.600 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=120    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'This report displays the Legal Status followed by the Legal Action details documented on the Case.  Legal Status records are sorted first by person id then by the status effective date in descending order.  Legal Actions are sorted first by person id then by the court/action date in descending order.  This approach allows the most recent information to display at the top of the list for each person.' (34,5,99) Wrap 99 5 line-height=12 Keep-Top on=    
+ Page-Number (443,647) '' ' of '
+ Last-Page (443,678) 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+Do Get-Input
+Do Get-Input-Person
+Do GetCaseName
+ Position (1,1)
+ Do Master_Query
+ Do Master_Query_2
+End-Program
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I101_CAPS_CASE_ID_CASE 'Enter a value for ID_CASE' MaxLen=16  Type=Number
+If IsNull($_I101_CAPS_CASE_ID_CASE) or IsBlank($_I101_CAPS_CASE_ID_CASE)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Let $brb_tmp = 'CAPS_CASE.ID_CASE'
+Let $caseidvar = $_I101_CAPS_CASE_ID_CASE
+Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_CAPS_CASE_ID_CASE
+End-Procedure
+! -----------------------------
+Begin-Procedure Get-Input-Person
+Input $_I102_PERSON_ID_PERSON 'Enter a value for ID_PERSON' MaxLen=16  Type=Number
+If ($_I102_PERSON_ID_PERSON) = '0'
+  Let $where_clause102 = 'PERSON.ID_PERSON is not null' 
+ Else
+Let $brb_tmp = 'PERSON.ID_PERSON'
+Let $where_clause102 = $brb_tmp  || ' = ' || $_I102_PERSON_ID_PERSON
+End-If
+End-Procedure
+
+Begin-Procedure GetCaseName
+Begin-Select
+CAPS_CASE.NM_CASE &prCaseName 
+from CAPS_CASE 
+where CAPS_CASE.ID_CASE = [$_I101_CAPS_CASE_ID_CASE]
+End-Select 
+ Let $casenamevar = &prCaseName
+End-Procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select
+(case when  LEGAL_STATUS.IND_LEGAL_STAT_RISK = 'N' then 'No' when  LEGAL_STATUS.IND_LEGAL_STAT_RISK  = 'Y' then 'Yes' end) &LegalRisk
+NM_CASE &Case_Name
+CAPS_CASE.ID_CASE &Case_Id
+NM_PERSON_FULL &Person_Name
+CCOUNT.DECODE &Master_Query_CCOUNT.DECODE
+LEGAL_STATUS.ID_CASE &Master_Query_LEGAL_STATUS.ID_CASE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+('Legal Status') &LegalStatusHeading () On-Break Set=1 Level=1 Print=Never Before=Master_QueryLegalStatusHeading_BeforeProc101
+PERSON.ID_PERSON &Person_Id () On-Break Set=1 Level=2 Print=Never Before=Master_QueryID_PERSON_BeforeProc102
+DT_LEGAL_STAT_CRT_ODR_EXP_DT &Court_Ordered_Date (17,174) Edit MM/DD/YYYY
+DT_LEGAL_STAT_P_M_DUE_DT &Master_Query_DT_LEGAL_STAT_P_M_DUE_DT (17,490) Edit MM/DD/YYYY
+ Print 'Court Ordered Date:' (17,34,21)
+ Print 'Dt Legal Stat P M Due Dt:' (17,339,26)
+DT_LEGAL_STAT_STATUS_DT &Status_Effective_Date (34,490) Edit MM/DD/YYYY
+ Print 'Status Effective Date:' (34,339,22)
+DT_LEGAL_STAT_CUS_EXP_DT &Custody_Expiration_Date (35,174) Edit MM/DD/YYYY
+ Print 'Custody Expiration Date:' (35,34,24)
+ Print &LegalRisk (51,490,3)
+ Print 'Legal Risk:' (52,339,13)
+CLEGSTAT.DECODE &Legal_Status (53,174,20)
+ Print 'Legal Status:' (53,34,13)
+ Graphic (66,25,576) Horz-Line 10 
+ If #page-count > #pageNum
+  Let #pageNum = #page-count
+  Let $Case_IdFirst = &Case_Id
+  Let $Case_NameFirst = &Case_Name
+ End-If
+ Next-Listing  SkipLines=12 Need=65
+From  CAPS_CASE, LEGAL_STATUS
+,      CLEGSTAT, PERSON, CCOUNT
+      Where CAPS_CASE.ID_CASE = LEGAL_STATUS.ID_CASE
+            And LEGAL_STATUS.CD_LEGAL_STAT_STATUS = CLEGSTAT.CODE
+            And LEGAL_STATUS.ID_PERSON = PERSON.ID_PERSON
+            And LEGAL_STATUS.CD_LEGAL_STAT_CNTY = CCOUNT.CODE
+ And [$where_clause101]
+ And [$where_clause102]
+Order By PERSON.ID_PERSON
+,      DT_LEGAL_STAT_STATUS_DT Desc
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryID_PERSON_BeforeProc102
+ Next-Listing  Need=16
+   Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Person Id/Name:'  (16,25) Bold 
+  Print &Person_Id (16,109) Edit 88888888888888na
+  Print &Person_Name (16,190,28)
+   Position (+12,)
+ Next-Listing  Need=65
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+!
+End-Procedure
+
+Begin-Procedure Master_QueryLegalStatusHeading_BeforeProc101
+ Next-Listing  Need=37
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &LegalStatusHeading (16,309,16) Underline  Bold 
+  Let $CaseIDvar=$caseidvar
+ Print $CaseIDvar (37,83,12) Bold 
+  Let $CaseNamevar=$casenamevar
+ Print $CaseNamevar (37,161,27) Bold 
+ Print 'Case ID/Name:'  (37,5) Bold 
+   Position (+12,)
+ Next-Listing  Need=65
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Query_2
+Begin-Select
+(case when  LEGAL_ACTION.IND_CRT_ORD_SIGNED = 'N' then 'No' when  LEGAL_ACTION.IND_CRT_ORD_SIGNED = 'Y' then 'Yes' end) &CourtOrderSigned
+(case when  LEGAL_ACTION.IND_AMMENDMENT = 'N' then 'No' when  LEGAL_ACTION.IND_AMMENDMENT = 'Y' then 'Yes'  end) &AmndmtCrtOrdr
+(case when  LEGAL_ACTION.IND_LEGAL_ACT_DOCS_N_CASE ='N' then 'No' when  LEGAL_ACTION.IND_LEGAL_ACT_DOCS_N_CASE ='Y' then 'Yes'  end) &DocCaseFile
+(case when  LEGAL_ACTION.IND_UP_PREV_ACT='N' then 'No' when  LEGAL_ACTION.IND_UP_PREV_ACT = 'Y' then 'Yes' end) &UpdtPrevAction
+CAPS_CASE.ID_CASE &Master_Query_2_CAPS_CASE.ID_CASE
+NM_PERSON_FULL &PersonName2
+LEGAL_ACTION.ID_CASE &Master_Query_2_LEGAL_ACTION.ID_CASE
+NM_CASE &Master_Query_2_NM_CASE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+('Legal Action') &LegalActionHeading () On-Break Set=2 Level=1 Print=Never Before=Master_Query_2LegalActionHeading_BeforeProc201
+PERSON.ID_PERSON &Master_Query_2_PERSON.ID_PERSON () On-Break Set=2 Level=2 Print=Never Before=Master_Query_2ID_PERSON_BeforeProc202
+DT_LEGAL_ACT_DATE_FILED &Date_Filed (18,174) Edit MM/DD/YYYY
+ Print &CourtOrderSigned (18,490,3)
+ Print 'Date Filed:' (18,34,0)
+ Print 'Court Order Signed:' (18,340,0)
+DT_CRT_ACT_DATE &Court_Action_Date (34,174) Edit MM/DD/YYYY
+ Print &AmndmtCrtOrdr (34,490,3)
+ Print 'Court/Action Date:' (34,34,0)
+ Print 'Amendment to Court Order:' (34,340,0)
+CLEGCPS.DECODE &Action (51,174,20)
+ Print &DocCaseFile (51,490,3)
+ Print 'Action:' (51,34,0)
+ Print 'Document in Case File:' (51,340,0)
+CODES_TABLES.DECODE &Hearing_Type_Court_Order (66,174,27)
+ Print &UpdtPrevAction (66,490,3)
+ Print 'Hearing Type/Court Order:' (66,34,0)
+ Print 'Update to Previous Action:' (66,340,0)
+DT_CRT_ORD_DATE &Court_Order_Date (82,174) Edit MM/DD/YYYY
+CLEGLOUT.DECODE &Outcomes (82,490,36) Wrap 36 2 line-height=12 Keep-Top on= 
+ Print 'Court Order Date:' (82,34,0)
+ Print 'Outcomes:' (82,340,11)
+ Next-Listing   ! Close up the wrapped columns
+ Graphic (12,25,661) Horz-Line 10 
+ Next-Listing  SkipLines=12 Need=94
+From  LEGAL_ACTION, LEGAL_ACTION_OUTCOME
+,      CAPS_CASE, CLEGCPS, CLEGLOUT
+,      CODES_TABLES, EVENT, PERSON
+      Where LEGAL_ACTION.ID_PERSON = PERSON.ID_PERSON
+            And LEGAL_ACTION.CD_LEGAL_ACT_ACTION = CLEGCPS.CODE
+            And LEGAL_ACTION.ID_CASE = CAPS_CASE.ID_CASE
+            And LEGAL_ACTION.ID_LEGAL_ACT_EVENT = EVENT.ID_EVENT
+ And CD_EVENT_STATUS IN ('COMP','APRV')
+ And LEGAL_ACTION.ID_LEGAL_ACT_EVENT =  LEGAL_ACTION_OUTCOME.ID_LEGAL_ACT_EVENT(+)
+ And CODE_TYPE = 'CLHECOT'
+ And LEGAL_ACTION.CD_HR_TYP_CRT_ORD =  CODES_TABLES.CODE(+)
+ And LEGAL_ACTION_OUTCOME.CD_OUTCOME =  CLEGLOUT.CODE(+)
+ And [$where_clause102]
+ And [$where_clause101]
+Order By PERSON.ID_PERSON
+,      DT_CRT_ACT_DATE Desc
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Query_2ID_PERSON_BeforeProc202
+ Next-Listing  Need=18
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Person Id/Name:'  (18,24) Bold 
+   Print &Master_Query_2_PERSON.ID_PERSON (18,113) Edit 8888888888888na
+  Print &PersonName2 (18,190,30)
+   Position (+12,)
+ Next-Listing  Need=94
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Query_2LegalActionHeading_BeforeProc201
+ Next-Listing  Need=36
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &LegalActionHeading (16,316,19) Underline  Bold 
+  Let $_CaseIDvar=$caseidvar
+ Print $_CaseIDvar (36,84,15) Bold 
+  Let $_CaseNamevar=$casenamevar
+ Print $_CaseNamevar (36,171,21) Bold 
+ Print 'Case ID/Name:'  (36,5) Bold 
+   Position (+12,)
+ Next-Listing  Need=94
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(96,75)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'CPS Legal Log' (51,300,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (13,267,0)
+ Print 'Produced on: ' (14,565,0)
+ Print $current-date (14,631) edit 'MM/DD/YYYY'
+ Print 'uuu' (110,1,0) Underline  Bold  Foreground=(255,255,255)
+ Else   ! put a non combined page header
+ Print 'uuu' (11,1,0) Underline  Bold  Foreground=(255,255,255)
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (19,649) '' ' of '
+ Last-Page (19,679) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE grnds-web-app SYSTEM "grnds-web-app.dtd">
+
+<grnds-web-app>
+
+  <servlet mapping="contacts">
+    <conversations>
+      <conversation>
+        <conversation-name>ContactSearchListDetail</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.contacts.ContactSearchListDetailConversation
+        </conversation-class>
+        <commands>
+          <command>
+            <command-name>addContact</command-name>
+            <activity type="method">addContact_xa</activity>
+            <presentation type="class" screen="INITIAL_CONTACT">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="INITIAL_CONTACT">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>continueType</command-name>
+            <activity type="method">continueType_xa</activity>
+            <presentation type="class" screen="CONTACT_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>deleteContact</command-name>
+            <activity type="method">deleteContact_xa</activity>
+            <presentation type="url">
+              /contacts/ContactSearchListDetail/displayContactSearchList
+            </presentation>
+            <presentation branch="error" type="class" screen="CONTACT_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayContact</command-name>
+            <activity type="method">displayContact_xa</activity>
+            <presentation type="class" screen="CONTACT_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="url" branch="ADD_CONTACT">
+              /contacts/ContactSearchListDetail/addContact
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayContactSearchList</command-name>
+            <activity type="method">displayContactSearchList_xa</activity>
+            <presentation type="class" screen="CONTACT_SEARCH_LIST">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="CONTACT_SEARCH_LIST">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveContact</command-name>
+            <activity type="method">saveContact_xa</activity>
+            <presentation type="url">
+              /contacts/ContactSearchListDetail/displayContact
+            </presentation>
+            <presentation branch="error" type="class" screen="CONTACT_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveSubmitContact</command-name>
+            <activity type="method">saveSubmit_xa</activity>
+            <presentation type="url">
+              /workload/ToDo/newApprovalToDo
+            </presentation>
+            <presentation branch="error" type="class" screen="CONTACT_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+
+      <conversation>
+        <conversation-name>ProtectiveServiceAlert</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.contacts.ProtectiveServiceAlertConversation
+        </conversation-class>
+        <commands>
+          <command>
+            <command-name>displayProtectiveServiceAlert</command-name>
+            <activity type="method">displayProtectiveServiceAlert_xa</activity>
+            <presentation type="class" screen="PROTECTIVE_SERVICE_ALERT">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="PROTECTIVE_SERVICE_ALERT">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveProtectiveServiceAlert</command-name>
+            <activity type="method">saveProtectiveServiceAlert_xa</activity>
+            <presentation type="class" screen="PROTECTIVE_SERVICE_ALERT">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="PROTECTIVE_SERVICE_ALERT">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayPersonDetail</command-name>
+            <activity type="method">displayPersonDetail_xa</activity>
+            <presentation type="class" screen="PERSON_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>      
+    </conversations>
+  </servlet>
+
+  <error-handling>
+    <domain>sacwis</domain>
+    <logger>grnds.syslog</logger>
+  </error-handling>
+</grnds-web-app>

@@ -1,0 +1,190 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed May 21 12:12:50 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\sacwis\launcher\src\sqr\CaseHistoryOfInvestigations00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=132    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=48   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I101_STAGE_ID_CASE 'Enter a value for ID_CASE' MaxLen=16  Type=Number
+If IsNull($_I101_STAGE_ID_CASE) or IsBlank($_I101_STAGE_ID_CASE)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Let $brb_tmp = 'STAGE.ID_CASE'
+Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_STAGE_ID_CASE
+End-Procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select
+NM_CASE &Master_Query_NM_CASE
+ Graphic (8,1,714) Horz-Line 10 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Stage ID:' (31,1,9) Bold 
+ID_STAGE &id_stage (31,55) Edit 8888888888888888na
+ Print 'Date Investigation Assigned:' (51,33,0)
+DT_CPS_INVST_DTL_ASSIGNED &dt_assigned (52,210) Edit MM/DD/YYYY
+ Print 'Responsed Date:' (68,33,0)
+DT_CPS_INVST_DTL_BEGUN &dt_begun (69,210) Edit MM/DD/YYYY
+ Print 'Investigation Completion Date:' (85,33,0)
+DT_CPS_INVST_DTL_COMPLT &dt_completion (86,210) Edit MM/DD/YYYY
+TXT_STAGE_CLOSURE_CMNTS &txt_clsr_cmnt (103,210,37)
+ Print 'Stage Closure Comment:' (103,33,0)
+ Print 'Merge Date:' (103,421,0)
+ Do Case_Merge(&id_stage)
+ Print &dt_merge (103,481) Edit MM/DD/YYYY
+CDISPSTN.DECODE &txt_ovrl_disptsn_decode (120,210,58)
+ Print 'Overall Disposition:' (120,33,0)
+ Print 'Risk Finding:' (137,33,0)
+CCRSKFND.DECODE &txt_rsk_find_decode (138,210,59)
+ Print 'Allegation' (155,33,10)
+ Print 'Victim' (155,193,6)
+ Print 'Alleged Maltreator' (155,320,18)
+ Print 'Disposition' (155,450,11)
+ Print 'Severity' (155,590,8)
+ Graphic (159,33,683) Horz-Line 10 
+ If #page-count > #pageNum
+  Let #pageNum = #page-count
+  Let $Master_Query_NM_CASEFirst = &Master_Query_NM_CASE
+ End-If
+ Next-Listing  SkipLines=3 Need=158
+ Do Allegation(&id_stage)
+From  CPS_INVST_DETAIL, CDISPSTN
+,      STAGE, CCRSKFND, CAPS_CASE
+      Where STAGE.ID_STAGE = CPS_INVST_DETAIL.ID_CPS_INVST_STAGE(+)
+            And CPS_INVST_DETAIL.CD_CPS_INVST_DTL_OVRLL_DISPTN = CDISPSTN.CODE(+)
+            And CPS_INVST_DETAIL.CD_CNCLSN_RISK_FND = CCRSKFND.CODE(+)
+            And STAGE.ID_CASE = CAPS_CASE.ID_CASE
+ And CD_STAGE = 'INV'
+ And [$where_clause101]
+Order By DT_CPS_INVST_DTL_ASSIGNED
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Allegation (#P1_ID_ALLEGATION_STAGE)
+Begin-Select
+ID_ALLEGATION_STAGE &_Allegation_ID_ALLEGATION_STAGE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+VICTIM.NM_PERSON_FULL &_nm_victim_full (18,193,25)
+CDISPSTN.DECODE &_txt_disposition_decode (18,450,22)
+CSEVERTY.DECODE &_txt_severity_decode (18,575,25)
+CODES_TABLES_ALLEGATION.DECODE &_txt_allegation_decode (18,32,38) Wrap 38 2 line-height=12 Keep-Top
+MALTREATOR.NM_PERSON_FULL &_nm_ap_full (18,319,25)
+ Next-Listing  Need=22
+From  ALLEGATION, CDISPSTN
+,      CSEVERTY, PERSON VICTIM, PERSON MALTREATOR
+,      CODES_TABLES CODES_TABLES_ALLEGATION
+      Where ALLEGATION.CD_ALLEG_SEVERITY = CSEVERTY.CODE(+)
+            And ALLEGATION.CD_ALLEG_DISPOSITION = CDISPSTN.CODE(+)
+            And VICTIM.ID_PERSON = ALLEGATION.ID_VICTIM
+            And ALLEGATION.ID_ALLEGED_PERPETRATOR = MALTREATOR.ID_PERSON(+)
+            And ALLEGATION.CD_ALLEG_TYPE = CODES_TABLES_ALLEGATION.CODE
+ And ID_ALLEGATION_STAGE = #P1_ID_ALLEGATION_STAGE
+ And CODES_TABLES_ALLEGATION.CODE_TYPE = 'CMALCODE'
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Case_Merge (#P1_ID_CASE_MERGE_STAGE_FROM)
+Begin-Select Loops=1
+DT_CASE_MERGE &_dt_merge
+From  CASE_MERGE
+Where ID_CASE_MERGE_STAGE_FROM = #P1_ID_CASE_MERGE_STAGE_FROM
+ And CASE_MERGE.ID_CASE_MERGE_TO = $__I101_STAGE_ID_CASE
+End-Select
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 48 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (11,652) edit 'MM/DD/YYYY'
+ Print 'Department of Family and Children Services' (11,266,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case History of Investigations' (47,263,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On: ' (11,586,0)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='My Documents\Reports Layout\SHINES.bmp'
+	Image-size=(102,73)
+ Print 'Case ID:   ' (124,1,0) Bold 
+ Let $id_case=$_I101_STAGE_ID_CASE
+ Print $id_case (124,63,15)
+ Print 'Case Name:' (109,1,10) Bold 
+ Print $Master_Query_NM_CASEFirst (109,63,25)
+ Else   ! put a non combined page header
+ Print 'Case ID:   ' (37,1,0) Bold 
+ Print $id_case (37,63,15)
+ Print 'Case Name:' (22,1,10) Bold 
+ Print $Master_Query_NM_CASEFirst (22,63,25)
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 36 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (24,673) '' ' of '
+ Last-Page (24,695) 
+ Alter-Printer Font=901 Point-Size=10
+ Alter-Printer Font=4 Point-Size=10
+
+End-Footing
+

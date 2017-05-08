@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+       default-dependency-check="none">
+  <import resource="classpath:org/codehaus/xfire/spring/xfire.xml"/>
+
+  <!--
+  Web Service Notes:
+  o The bean ID is the name of the service; the web service itself will appear at /ws/[beanname] - e.g. /ws/retrieveStaffTodo
+  o The bean class is always org.codehaus.xfire.spring.ServiceBean.
+  o The property "serviceBean" must take the actual implementation of the service.
+  o The property "serviceClass" must take the name of the service interface.
+  -->
+
+  <!-- Test web service; just about the simplest possible web service. -->
+  <bean id="testWS" class="org.codehaus.xfire.spring.ServiceBean">
+    <property name="serviceBean">
+      <bean class="gov.georgia.dhr.dfcs.sacwis.web.ws.impl.TestWSImpl">
+        <property name="WS" ref="ws"/>
+      </bean>
+    </property>
+    <property name="serviceClass" value="gov.georgia.dhr.dfcs.sacwis.web.ws.TestWS"/>
+  </bean>
+ 
+  <bean id="incomeResourceWS" class="org.codehaus.xfire.spring.ServiceBean">
+    <property name="serviceBean">
+      <bean class="gov.georgia.dhr.dfcs.sacwis.web.ws.impl.IncomeResourceWSImpl">
+        <property name="WS" ref="ws"/> 
+      </bean>
+    </property>
+    <property name="serviceClass" value="gov.georgia.dhr.dfcs.sacwis.web.ws.IncomeResourceWS"/>
+  </bean>
+  <bean id="smileInvoiceWS" class="org.codehaus.xfire.spring.ServiceBean">
+    <property name="serviceBean">
+      <bean class="gov.georgia.dhr.dfcs.sacwis.web.ws.impl.SmileInvoiceWSImpl">
+        <property name="WS" ref="ws"/> 
+      </bean>
+    </property>
+    <property name="serviceClass" value="gov.georgia.dhr.dfcs.sacwis.web.ws.SmileInvoiceWS"/>
+  </bean>
+  <bean id="medicaidCoareqWS" class="org.codehaus.xfire.spring.ServiceBean">
+    <property name="serviceBean">
+      <bean class="gov.georgia.dhr.dfcs.sacwis.web.ws.impl.MedicaidCoareqWSImpl">
+        <property name="WS" ref="ws"/> 
+      </bean>
+    </property>
+    <property name="serviceClass" value="gov.georgia.dhr.dfcs.sacwis.web.ws.MedicaidCoareqWS"/>
+  </bean>
+  <bean id="saveResourceUpdateResponseWS" class="org.codehaus.xfire.spring.ServiceBean">
+    <property name="serviceBean">
+      <bean class="gov.georgia.dhr.dfcs.sacwis.web.ws.impl.SaveResourceUpdateResponseWSImpl">
+        <property name="resource" ref="resource"/>
+      </bean>
+    </property>
+    <property name="serviceClass" value="gov.georgia.dhr.dfcs.sacwis.web.ws.SaveResourceUpdateResponseWS"/>
+  </bean>
+
+  <!-- A slightly more complex example that demonstrates how to call existing services-->
+  <bean id="retrieveSTaffTodoWS" class="org.codehaus.xfire.spring.ServiceBean">
+    <property name="serviceBean">
+      <bean class="gov.georgia.dhr.dfcs.sacwis.web.ws.impl.RetrieveStaffTodoWSImpl">
+        <property name="admin" ref="admin"/>
+      </bean>
+    </property>
+    <property name="serviceClass" value="gov.georgia.dhr.dfcs.sacwis.web.ws.RetrieveStaffTodoWS"/>
+  </bean>
+  
+  <bean id="saveClientWS" class="org.codehaus.xfire.spring.ServiceBean">
+    <property name="serviceBean">
+      <bean class="gov.georgia.dhr.dfcs.sacwis.web.ws.impl.SaveClientWSImpl">
+        <property name="WS" ref="ws"/> 
+      </bean>
+    </property>
+    <property name="serviceClass" value="gov.georgia.dhr.dfcs.sacwis.web.ws.SaveClientWS"/>
+  </bean>
+  
+  <bean id="updateTcmClaimInfoWS" class="org.codehaus.xfire.spring.ServiceBean">
+    <property name="serviceBean">
+      <bean class="gov.georgia.dhr.dfcs.sacwis.web.ws.impl.UpdateTcmClaimInfoWSImpl">
+        <property name="WS" ref="ws"/>
+      </bean>
+    </property>
+    <property name="serviceClass" value="gov.georgia.dhr.dfcs.sacwis.web.ws.UpdateTcmClaimInfoWS"/>
+  </bean>
+  <bean id="saveReceiveChildSupportPaymentInfoWS" class="org.codehaus.xfire.spring.ServiceBean">
+    <property name="serviceBean">
+      <bean class="gov.georgia.dhr.dfcs.sacwis.web.ws.impl.SaveReceiveChildSupportPaymentInfoWSImpl">
+        <property name="WS" ref="ws"/>
+      </bean>
+    </property>
+    <property name="serviceClass" value="gov.georgia.dhr.dfcs.sacwis.web.ws.SaveReceiveChildSupportPaymentInfoWS"/>
+  </bean>
+  <bean id="cprsQueryWS" class="org.codehaus.xfire.spring.ServiceBean">
+    <property name="serviceBean">
+      <bean class="gov.georgia.dhr.dfcs.sacwis.web.ws.cprsquery.impl.CprsQueryWSImpl">
+        <property name="WS" ref="ws"/>
+      </bean>
+    </property>
+    <property name="serviceClass" value="gov.georgia.dhr.dfcs.sacwis.web.ws.cprsquery.CprsQueryWS"/>
+  </bean>
+  <bean id="cprsCaseDataQueryWS" class="org.codehaus.xfire.spring.ServiceBean">
+    <property name="serviceBean">
+      <bean class="gov.georgia.dhr.dfcs.sacwis.web.ws.cprscasedataquery.impl.CprsCaseDataQueryWSImpl">
+        <property name="WS" ref="ws"/>
+      </bean>
+    </property>
+    <property name="serviceClass" value="gov.georgia.dhr.dfcs.sacwis.web.ws.cprscasedataquery.CprsCaseDataQueryWS"/>
+  </bean>
+  <bean id="cprsCaseIdQueryWS" class="org.codehaus.xfire.spring.ServiceBean">
+    <property name="serviceBean">
+      <bean class="gov.georgia.dhr.dfcs.sacwis.web.ws.cprscaseid.impl.CprsCaseIdQueryWSImpl">
+        <property name="WS" ref="ws"/>
+      </bean>
+    </property>
+    <property name="serviceClass" value="gov.georgia.dhr.dfcs.sacwis.web.ws.cprscaseid.CprsCaseIdQueryWS"/>
+  </bean>
+</beans>

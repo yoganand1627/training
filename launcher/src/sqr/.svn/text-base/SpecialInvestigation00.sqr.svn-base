@@ -1,0 +1,846 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Feb 02 08:54:30 2011 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\SpInv\fromTrunk\ToTrunk\SpecialInvestigation00.sqr
+! Format  : Tabular
+! Username: JPOTTAMMEL
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Text $DateFrom 
+ Text $inDate 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=192    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Page-Number (467,654) '' ' of '
+ Last-Page (467,691) 
+ Print 'Report displays all the cases which had or undergoing special investigation in the time period specified. Details of the cases include Case Name, Case ID, Case Type, Resource ID, Date Assigned, Date Closed, Days Open and Disposition. ' (33,1,124) Wrap 124 2 line-height=12 Keep-Top on= 
+ Print 'Report runs for Region, County, Unit, Case Manager and the Special Investigation Type parameters. ' (67,1,0)
+ Print 'Region and County will be the region and county of the investigation stage. ' (165,1,0)
+ Print 'The case manager on the stage will be Primary (PR) or Historical (HP) case manager on the stage.' (147,1,0)
+ Print 'The types of special investigations considered are  Serious Injury-Not in Care (SINC), Near Fatality-Not in Care (NFNC), Child Death-Not in Care (CDNC), Child Death-In Care (CDIC), Baby Doe (BD), Near Fatality-In Care (NFIC), Maltreatment in Care (Not CD/NF/SI)  (MIC),  Maltreatment-Not in Care (Facility/Granny House/ Military Base/School-Not CD/NF/SI)  (MNIC), and Serious Injury-In Care (SIIC).' (86,1,128) Wrap 128 4 line-height=12 Keep-Top on= 
+ Print 'Date Assigned:' (269,1,0) Bold 
+ Print 'The date the special investigation is assigned to the case manager. ' (269,77,0)
+ Print 'Date Closed: ' (288,1,0) Bold 
+ Print 'The date the investigation is approved by the supervisor.' (288,77,0)
+ Print 'Days Open: ' (308,1,0) Bold 
+ Print 'The number of days between the intake incoming call date and the investigation stage close date. If the investigation stage is still open, it will be the number of days between the intake incoming call date and the system date.' (308,77,124) Wrap 124 2 line-height=12 Keep-Top on= 
+ Print 'Disposition:' (338,1,0) Bold 
+ Print 'The overall disposition on the case pulled from the Investigation Conclusion page.' (338,77,0)
+ Print 'Start Date:' (235,1,0) Bold 
+ Print 'The date on or after which the intake incoming call received.' (235,77,0)
+ Print 'End Date:' (252,1,0) Bold 
+ Print 'The date on or before which the intake incoming call received.' (252,77,0)
+ Print 'The totals at each group level displays the total number of special investigations in the group.' (184,1,0)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=48   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do LoadLookupTables
+ Position (1,1)
+ Do GetMonthYearFrom
+ Do GetMonthYearTo
+ Do Get-Input-Region
+ Do Get-Input-County
+ Do Get-Input-Unit
+ Do Get-Input-CaseWorker
+ Do Get-Input-InvType 
+
+ Do Master_Query
+ Do DisplayResult
+ Do Master_Query_2
+End-Program
+! -----------------------------
+Begin-Procedure GetMonthYearFrom
+Input $_dt_report 'Enter Start Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+If IsNull($_dt_report) or IsBlank($_dt_report)
+ Show 'Input Error (7734): No value was enterred. A value is required.'
+ Let #return-status = 7734
+ Stop
+End-If
+End-Procedure
+
+
+Begin-Procedure GetMonthYearTo
+Input $_dt_report_to 'Enter End Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+If IsNull($_dt_report_to) or IsBlank($_dt_report_to)
+ Show 'Input Error (7734): No value was enterred. A value is required.'
+ Let #return-status = 7734
+ Stop
+End-If
+End-Procedure
+
+Begin-Procedure Get-Input-Region
+Input $_I102_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I102_CD_STAGE_REGION) or IsBlank($_I102_CD_STAGE_REGION) or ($_I102_CD_STAGE_REGION) = '0'
+    Let $_where_clause102 = 'STAGE00.CD_STAGE_REGION is not null'
+    Let $regSelected = 'N'   
+   
+Else
+ Let $regSelected = 'Y'
+ Let $_region2 = $_I102_CD_STAGE_REGION 
+If SubStr($_I102_CD_STAGE_REGION, 1, 1) != ''''
+  Let $_I102_CD_STAGE_REGION = '''' || $_I102_CD_STAGE_REGION || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I102_CD_STAGE_REGION,'''',0) = 0 and instr($_I102_CD_STAGE_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'STAGE00.CD_STAGE_REGION'
+   Let $_where_clause102 = $brb_tmp  || ' = ' ||  '''' || $_I102_CD_STAGE_REGION || '''' 
+ Else
+   If (instr($_I102_CD_STAGE_REGION,'''',0) = 0 and instr($_I102_CD_STAGE_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'STAGE00.CD_STAGE_REGION'
+     Let $_where_clause102 = $brb_tmp  || ' = ' || $_I102_CD_STAGE_REGION
+   End-If
+ End-If
+!Let $where_clause103 = ' CODE = ''' || $_I101_CD_COUNTY || ''''
+End-If
+End-Procedure
+
+Begin-Procedure Get-Input-County
+! -----------------------------
+Input $_I101_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_I101_CD_STAGE_CNTY) or IsBlank($_I101_CD_STAGE_CNTY) or ($_I101_CD_STAGE_CNTY) = '0'
+   Let $_where_clause101 = 'STAGE00.CD_STAGE_CNTY is not null'  
+   Let $cntySelected = 'N'
+
+Else
+ Let $brb_tmp3 = 'STAGE00.CD_STAGE_CNTY' 
+
+ Let $cntySelected = 'Y'
+If SubStr($_I101_CD_STAGE_CNTY, 1, 1) != ''''
+  Let $_I101_CD_STAGE_CNTY = '''' || $_I101_CD_STAGE_CNTY || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CD_STAGE_CNTY,'''',0) = 0 and instr($_I101_CD_STAGE_CNTY,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'STAGE00.CD_STAGE_CNTY'
+   Let $_where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I101_CD_STAGE_CNTY || '''' 
+ Else
+   If (instr($_I101_CD_STAGE_CNTY,'''',0) = 0 and instr($_I101_CD_STAGE_CNTY,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'STAGE00.CD_STAGE_CNTY'
+     Let $_where_clause101 = $brb_tmp  || ' = ' || $_I101_CD_STAGE_CNTY
+   End-If
+ End-If
+End-if
+
+If $cntySelected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From  CCOUNT
+Where CCOUNT.CODE = [$_I101_CD_STAGE_CNTY]
+End-Select
+  Move &_County_Decode to $_headerDisp
+Else
+  If $regSelected = 'Y'
+    Let $_headerDisp = 'Region ' || $_region2
+  Else 
+    Let $_headerDisp = 'Statewide'
+  End-If
+End-If
+
+End-Procedure
+Begin-Procedure Get-Input-Unit
+! -----------------------------
+Input $_I101_NBR_UNIT 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If IsNull($_I101_NBR_UNIT) or IsBlank($_I101_NBR_UNIT) or ($_I101_NBR_UNIT) = '0'
+  Let $_where_clause103 = 'NBR_UNIT is not null'
+  Let $unitSelected = 'N'
+ Else
+ Let $unitSelected = 'Y'
+If SubStr($_I101_NBR_UNIT, 1, 1) != ''''
+  Let $_I101_NBR_UNIT = '''' || $_I101_NBR_UNIT || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_NBR_UNIT,'''',0) = 0 and instr($_I101_NBR_UNIT,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'NBR_UNIT'
+   Let $_where_clause103 = $brb_tmp  || ' = ' ||  '''' || $_I101_NBR_UNIT || '''' 
+ Else
+   If (instr($_I101_NBR_UNIT,'''',0) = 0 and instr($_I101_NBR_UNIT,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'NBR_UNIT'
+     Let $_where_clause103 = $brb_tmp  || ' = ' || $_I101_NBR_UNIT
+   End-If
+ End-If
+End-If
+End-Procedure
+! -----------------------------
+
+Begin-Procedure Get-Input-CaseWorker
+Input $_I102_STAGE_PERSON_LINK_ID_PERSON 'Enter a value for ID_PERSON' MaxLen=16  Type=Number
+If IsNull($_I102_STAGE_PERSON_LINK_ID_PERSON) or IsBlank($_I102_STAGE_PERSON_LINK_ID_PERSON) or ($_I102_STAGE_PERSON_LINK_ID_PERSON) = '0'
+  Let $_where_clause104 = 'STAGE_PERSON_LINK.ID_PERSON is not null'
+  Let $cmSelected = 'N'
+  Else
+ Let $cmSelected = 'Y'
+Let $brb_tmp = 'STAGE_PERSON_LINK.ID_PERSON'
+Let $_where_clause104 = $brb_tmp  || ' = ' || $_I102_STAGE_PERSON_LINK_ID_PERSON
+End-if
+End-Procedure
+
+! -----------------------------
+
+Begin-Procedure Get-Input-InvType
+Input $_I103_CD_SPCL_INVSTGTN 'Enter a value for CD_SPCL_INVSTGTN' MaxLen=6  Type=Char
+If IsNull($_I103_CD_SPCL_INVSTGTN) or IsBlank($_I103_CD_SPCL_INVSTGTN) or ($_I103_CD_SPCL_INVSTGTN) = '0'
+ Let $_where_clause105 = 'CD_SPCL_INVSTGTN is not null'
+ Let $invstgnSelected  = 'N'
+ Let $Invvar = 'All'
+  Else
+ Let $invstgnSelected = 'Y'
+ 
+If SubStr($_I103_CD_SPCL_INVSTGTN, 1, 1) != ''''
+  Let $_I103_CD_SPCL_INVSTGTN = '''' || $_I103_CD_SPCL_INVSTGTN || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I103_CD_SPCL_INVSTGTN,'''',0) = 0 and instr($_I103_CD_SPCL_INVSTGTN,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_SPCL_INVSTGTN'
+   Let $_where_clause105 = $brb_tmp  || ' = ' ||  '''' || $_I103_CD_SPCL_INVSTGTN || '''' 
+ Else
+   If (instr($_I103_CD_SPCL_INVSTGTN,'''',0) = 0 and instr($_I103_CD_SPCL_INVSTGTN,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_SPCL_INVSTGTN'
+     Let $_where_clause105 = $brb_tmp  || ' = ' || $_I103_CD_SPCL_INVSTGTN
+   End-If
+ End-If
+If $invstgnSelected = 'Y'
+Begin-Select Loops=1
+DECODE &_SpInv_Decode
+From  CSPECREQ
+Where CSPECREQ.CODE = [$_I103_CD_SPCL_INVSTGTN]
+End-Select
+  Move &_SpInv_Decode to $Invvar
+End-If
+
+End-If
+End-Procedure
+
+!This is for the 2 characters investigation type
+
+Begin-Procedure CountForInvsttype($InvstType,$dt_report,$dt_report_to,$where_clause101,$where_clause102,$where_clause103,$where_clause104,:#invsttypecount)
+Begin-Select 
+count(distinct STAGE00.id_case) &invsttypecount
+From  STAGE STAGE00, UNIT, CCOUNT, INCOMING_DETAIL, CPS_INVST_DETAIL,STAGE_PERSON_LINK, STAGE_LINK, 
+      CSPECREQ,PERSON PERSON_CM, PERSON PERSON_Sup, STAGE STAGE_PriorStg
+Where STAGE00.ID_UNIT = UNIT.ID_UNIT
+            And STAGE00.CD_STAGE_CNTY = CCOUNT.CODE
+            And CSPECREQ.CODE = INCOMING_DETAIL.CD_SPCL_INVSTGTN
+            And STAGE_PERSON_LINK.ID_PERSON = PERSON_CM.ID_PERSON
+            And UNIT.ID_PERSON = PERSON_Sup.ID_PERSON
+            And STAGE00.ID_STAGE = CPS_INVST_DETAIL.ID_CPS_INVST_STAGE
+            And CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK.ID_STAGE
+            And STAGE_LINK.ID_PRIOR_STAGE = STAGE_PriorStg.ID_STAGE
+            And STAGE00.ID_STAGE = STAGE_PERSON_LINK.ID_STAGE
+   And STAGE00.CD_STAGE  IN ('INV')
+   And INCOMING_DETAIL.CD_SPCL_INVSTGTN = $InvstType
+   And [$where_clause101]
+   And [$where_clause102]
+   And STAGE_PERSON_LINK.CD_STAGE_PERS_ROLE in ('PR','HP')
+   And [$where_clause103]
+   And [$where_clause104]
+    And (to_date( to_char(INCOMING_DETAIL.DT_INCOMING_CALL ,'MM/DD/YYYY'),'MM/DD/YYYY') >= to_date($dt_report,'MM/DD/YYYY')) And (to_date( to_char
+    (INCOMING_DETAIL.DT_INCOMING_CALL ,'MM/DD/YYYY'),'MM/DD/YYYY') < last_day(to_date($dt_report_to,'MM/DD/YYYY')) +1)
+   And STAGE_PriorStg.ID_STAGE =  INCOMING_DETAIL.ID_STAGE(+)
+   And CPS_INVST_DETAIL.CD_CNCLSN_RISK_FND not in ('06','97')
+End-select
+Move &invsttypecount to #invsttypecount
+End-Procedure
+
+!This is for the 4 characters investigation type
+
+Begin-Procedure ProcForInvsttype($InType,$dt_report,$dt_report_to,$where_clause101,$where_clause102,$where_clause103,$where_clause104,:#intypecount)
+Begin-Select 
+count(distinct STAGE00.id_case) &intypecount
+From  STAGE STAGE00, UNIT, CCOUNT, INCOMING_DETAIL, CPS_INVST_DETAIL,STAGE_PERSON_LINK, STAGE_LINK, 
+      CSPECREQ,PERSON PERSON_CM, PERSON PERSON_Sup, STAGE STAGE_PriorStg
+Where STAGE00.ID_UNIT = UNIT.ID_UNIT
+            And STAGE00.CD_STAGE_CNTY = CCOUNT.CODE
+            And CSPECREQ.CODE = INCOMING_DETAIL.CD_SPCL_INVSTGTN
+            And STAGE_PERSON_LINK.ID_PERSON = PERSON_CM.ID_PERSON
+            And UNIT.ID_PERSON = PERSON_Sup.ID_PERSON
+            And STAGE00.ID_STAGE = CPS_INVST_DETAIL.ID_CPS_INVST_STAGE
+            And CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK.ID_STAGE
+            And STAGE_LINK.ID_PRIOR_STAGE = STAGE_PriorStg.ID_STAGE
+            And STAGE00.ID_STAGE = STAGE_PERSON_LINK.ID_STAGE
+   And STAGE00.CD_STAGE  IN ('INV')
+   And INCOMING_DETAIL.CD_SPCL_INVSTGTN = $InType
+   And [$where_clause101]
+   And [$where_clause102]
+   And STAGE_PERSON_LINK.CD_STAGE_PERS_ROLE in ('PR','HP')
+   And [$where_clause103]
+   And [$where_clause104]
+    And (to_date( to_char(INCOMING_DETAIL.DT_INCOMING_CALL ,'MM/DD/YYYY'),'MM/DD/YYYY') >= to_date($dt_report,'MM/DD/YYYY')) And (to_date( to_char
+    (INCOMING_DETAIL.DT_INCOMING_CALL ,'MM/DD/YYYY'),'MM/DD/YYYY') < last_day(to_date($dt_report_to,'MM/DD/YYYY')) +1)
+   And STAGE_PriorStg.ID_STAGE =  INCOMING_DETAIL.ID_STAGE(+)
+   And CPS_INVST_DETAIL.CD_CNCLSN_RISK_FND not in ('06','97')
+End-select
+Move &intypecount to #intypecount
+End-Procedure
+
+!This is for the 3 characters investigation type
+
+Begin-Procedure ProcedureInvsttype($spInvType,$dt_report,$dt_report_to,$where_clause101,$where_clause102,$where_clause103,$where_clause104,:#spintypecount)
+Begin-Select 
+count(distinct STAGE00.id_case) &spintypecount
+From  STAGE STAGE00, UNIT, CCOUNT, INCOMING_DETAIL, CPS_INVST_DETAIL,STAGE_PERSON_LINK, STAGE_LINK, 
+      CSPECREQ,PERSON PERSON_CM, PERSON PERSON_Sup, STAGE STAGE_PriorStg
+Where STAGE00.ID_UNIT = UNIT.ID_UNIT
+            And STAGE00.CD_STAGE_CNTY = CCOUNT.CODE
+            And CSPECREQ.CODE = INCOMING_DETAIL.CD_SPCL_INVSTGTN
+            And STAGE_PERSON_LINK.ID_PERSON = PERSON_CM.ID_PERSON
+            And UNIT.ID_PERSON = PERSON_Sup.ID_PERSON
+            And STAGE00.ID_STAGE = CPS_INVST_DETAIL.ID_CPS_INVST_STAGE
+            And CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK.ID_STAGE
+            And STAGE_LINK.ID_PRIOR_STAGE = STAGE_PriorStg.ID_STAGE
+            And STAGE00.ID_STAGE = STAGE_PERSON_LINK.ID_STAGE
+   And STAGE00.CD_STAGE  IN ('INV')
+   And INCOMING_DETAIL.CD_SPCL_INVSTGTN = $spInvType
+   And [$where_clause101]
+   And [$where_clause102]
+   And STAGE_PERSON_LINK.CD_STAGE_PERS_ROLE in ('PR','HP')
+   And [$where_clause103]
+   And [$where_clause104]
+    And (to_date( to_char(INCOMING_DETAIL.DT_INCOMING_CALL ,'MM/DD/YYYY'),'MM/DD/YYYY') >= to_date($dt_report,'MM/DD/YYYY')) And (to_date( to_char
+    (INCOMING_DETAIL.DT_INCOMING_CALL ,'MM/DD/YYYY'),'MM/DD/YYYY') < last_day(to_date($dt_report_to,'MM/DD/YYYY')) +1)
+   And STAGE_PriorStg.ID_STAGE =  INCOMING_DETAIL.ID_STAGE(+)
+   And CPS_INVST_DETAIL.CD_CNCLSN_RISK_FND not in ('06','97')
+End-select
+Move &spintypecount to #spintypecount
+End-Procedure
+
+!-------------------AllTypeProc -----------------
+Begin-Procedure AllTypeProc
+Begin-Select 
+CSPECREQ.CODE &_spinvcode
+CSPECREQ.DECODE &_spinvdecode
+count(distinct STAGE00.id_case) &_allproccnt
+ From STAGE STAGE00, UNIT
+,      CCOUNT, INCOMING_DETAIL, CPS_INVST_DETAIL
+,      STAGE_PERSON_LINK, STAGE_LINK, CSPECREQ
+,      PERSON PERSON_CM, PERSON PERSON_Sup, STAGE STAGE_PriorStg
+Where STAGE00.ID_UNIT = UNIT.ID_UNIT
+            And STAGE00.CD_STAGE_CNTY = CCOUNT.CODE
+            And CSPECREQ.CODE = INCOMING_DETAIL.CD_SPCL_INVSTGTN
+            And STAGE_PERSON_LINK.ID_PERSON = PERSON_CM.ID_PERSON
+            And UNIT.ID_PERSON = PERSON_Sup.ID_PERSON
+            And STAGE00.ID_STAGE = CPS_INVST_DETAIL.ID_CPS_INVST_STAGE
+            And CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK.ID_STAGE
+            And STAGE_LINK.ID_PRIOR_STAGE = STAGE_PriorStg.ID_STAGE
+            And STAGE00.ID_STAGE = STAGE_PERSON_LINK.ID_STAGE
+  and STAGE00.CD_STAGE  IN ('INV') 
+ And [$_where_clause101]
+ And [$_where_clause102]
+ And [$_where_clause103]
+ And [$_where_clause104]
+ And [$_where_clause105]
+ And (to_date( to_char(INCOMING_DETAIL.DT_INCOMING_CALL ,'MM/DD/YYYY'),'MM/DD/YYYY') >= to_date($_dt_report,'MM/DD/YYYY')) And (to_date( to_char
+    (INCOMING_DETAIL.DT_INCOMING_CALL ,'MM/DD/YYYY'),'MM/DD/YYYY') < last_day(to_date($_dt_report_to,'MM/DD/YYYY')) +1)
+ And STAGE_PriorStg.ID_STAGE =  INCOMING_DETAIL.ID_STAGE(+)
+   And STAGE_PERSON_LINK.CD_STAGE_PERS_ROLE in ('PR','HP')   
+ And STAGE_PriorStg.ID_STAGE =  INCOMING_DETAIL.ID_STAGE(+)
+ And CPS_INVST_DETAIL.CD_CNCLSN_RISK_FND not in ('06','97') 
+ and CSPECREQ.dt_end is null
+group by CSPECREQ.CODE
+,  CSPECREQ.DECODE
+End-Select
+ Move &_allproccnt to #_allproccnt
+! Move $spinvcode to $spinvcode
+
+End-Procedure
+!Begin-Procedure CalcDays(#CaseId2,$IncmgCallDt2,$stageClose2,:$varDays)
+!If isnull($stageClose2)
+ !Let  $noDays =   $stageClose2
+!Else
+ !Let $noDays = strtodate($stageClose2,'MM/DD/YYYY') - strtodate($IncmgCallDt2,'MM/DD/YYYY') 
+!End-If
+
+!Move $noDays to $varDays
+!End-Procedure
+
+
+
+
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select Distinct
+!STAGE00.ID_CASE &CaseId2
+!STAGE00.ID_STAGE &Master_Query_STAGE00.ID_STAGE2
+!DT_INCOMING_CALL &IncmgCallDt2 
+!STAGE00.DT_STAGE_CLOSE &stageClose2 
+
+!Do CalcDays(#CaseId2,&IncmgCallDt2,&stageClose2,$varDays)
+!(to_date(&stageClose2,'DD/MM/YYYY') - to_date(&IncmgCallDt2,'DD/MM/YYYY')) &tempday
+
+
+((case when STAGE00.dt_stage_close is null then (sysdate-  INCOMING_DETAIL.DT_INCOMING_CALL ) end)) &noofDays
+CD_COUNTY &Master_Query_CD_COUNTY
+STAGE00.CD_STAGE_CNTY &Master_Query_STAGE00.CD_STAGE_CNTY
+CAPS.CCOUNT.CODE &ccountcode
+CAPS.CSPECREQ.CODE &specInvCode
+DT_CPS_INVST_DTL_BEGUN &Begun
+DT_CPS_INVST_DTL_COMPLT &Complete
+DT_INCOMING_CALL &IncmgCallDt
+STAGE00.DT_STAGE_START &stageStart
+NBR_UNIT &Master_Query_NBR_UNIT
+PERSON_Sup.NM_PERSON_FULL &SupervisorNm
+PERSON_CM.NM_PERSON_FULL &CMName
+STAGE00.ID_STAGE &Master_Query_STAGE00.ID_STAGE
+(INCOMING_DETAIL.DT_INCOMING_CALL) &tempD2
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+STAGE00.CD_STAGE_REGION &Master_Query_STAGE00.CD_STAGE_REGION () On-Break Set=1 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc101 After=Master_QueryCD_STAGE_REGION_AfterProc101
+CAPS.CCOUNT.DECODE &Master_Query_CAPS.CCOUNT.DECODE () On-Break Set=1 Level=2 Print=Never Before=Master_QueryDECODE_BeforeProc102 After=Master_QueryDECODE_AfterProc102
+CAPS.UNIT.ID_UNIT &Master_Query_CAPS.UNIT.ID_UNIT () On-Break Set=1 Level=3 Print=Never Before=Master_QueryID_UNIT_BeforeProc103 After=Master_QueryID_UNIT_AfterProc103
+CAPS.STAGE_PERSON_LINK.ID_PERSON &Master_Query_CAPS.STAGE_PERSON_LINK.ID_PERSON () On-Break Set=1 Level=4 Print=Never Before=Master_QueryID_PERSON_BeforeProc104 After=Master_QueryID_PERSON_AfterProc104
+STAGE00.NM_STAGE &Master_Query_STAGE00.NM_STAGE (25,13,20)
+CAPS.CSPECREQ.DECODE &specInvDecode (25,207,36) Wrap 36 4 line-height=12 Keep-Top on= 
+CD_CPS_INVST_DTL_OVRLL_DISPTN &OvrAllDisp (25,642,12)
+STAGE00.DT_STAGE_CLOSE &stageClose (25,490) Edit MM/DD/YYYY
+STAGE00.ID_CASE &CaseId (25,133) Edit 99999999999na
+DT_CPS_INVST_DTL_ASSIGNED &Assgned (25,416) Edit MM/DD/YYYY
+ If &stageClose <>''
+    ! do nothing
+ Else
+ Print &noofDays (25,553) Edit 9999999999na
+ End-If
+ If &stageClose = ''
+    ! do nothing
+ Else
+ Let #datec=datediff(strtodate(datetostr( &stageClose ,'MM/DD/YYYY') ,'MM/DD/YYYY'),strtodate(datetostr( &IncmgCallDt,'MM/DD/YYYY') ,'MM/DD/YYYY'),'day')
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #datec (25,553) Edit 9999999999
+ End-If
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Add 1 To #103ROW_COUNT
+ Add 1 To #104ROW_COUNT
+ Next-Listing  Need=25
+From  CAPS.STAGE STAGE00, CAPS.UNIT
+,      CAPS.CCOUNT, CAPS.INCOMING_DETAIL, CAPS.CPS_INVST_DETAIL
+,      CAPS.STAGE_PERSON_LINK, CAPS.STAGE_LINK, CAPS.CSPECREQ
+,      CAPS.PERSON PERSON_CM, CAPS.PERSON PERSON_Sup, CAPS.STAGE STAGE_PriorStg
+      Where STAGE00.ID_UNIT = CAPS.UNIT.ID_UNIT
+            And STAGE00.CD_STAGE_CNTY = CAPS.CCOUNT.CODE
+            And CAPS.CSPECREQ.CODE = CAPS.INCOMING_DETAIL.CD_SPCL_INVSTGTN
+            And CAPS.STAGE_PERSON_LINK.ID_PERSON = PERSON_CM.ID_PERSON
+            And CAPS.UNIT.ID_PERSON = PERSON_Sup.ID_PERSON
+            And STAGE00.ID_STAGE = CAPS.CPS_INVST_DETAIL.ID_CPS_INVST_STAGE
+            And CAPS.CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = CAPS.STAGE_LINK.ID_STAGE
+            And CAPS.STAGE_LINK.ID_PRIOR_STAGE = STAGE_PriorStg.ID_STAGE
+            And STAGE00.ID_STAGE = CAPS.STAGE_PERSON_LINK.ID_STAGE
+ And STAGE00.CD_STAGE  IN ('INV')
+ And [$_where_clause101]
+ And [$_where_clause102]
+ And STAGE_PERSON_LINK.CD_STAGE_PERS_ROLE in ('PR','HP')
+ And [$_where_clause103]
+ And [$_where_clause104]
+ And [$_where_clause105]
+ And (to_date( to_char(INCOMING_DETAIL.DT_INCOMING_CALL ,'MM/DD/YYYY'),'MM/DD/YYYY') >= to_date($_dt_report,'MM/DD/YYYY')) And (to_date( to_char
+    (INCOMING_DETAIL.DT_INCOMING_CALL ,'MM/DD/YYYY'),'MM/DD/YYYY') <= to_date($_dt_report_to,'MM/DD/YYYY'))
+ And STAGE_PriorStg.ID_STAGE =  INCOMING_DETAIL.ID_STAGE(+)
+ And CPS_INVST_DETAIL.CD_CNCLSN_RISK_FND not in ('06','97')
+Order By STAGE00.CD_STAGE_REGION
+,      CAPS.CCOUNT.DECODE
+,      NBR_UNIT
+,      CAPS.UNIT.ID_UNIT
+,      CAPS.STAGE_PERSON_LINK.ID_PERSON
+,      STAGE00.NM_STAGE
+End-Select
+ Next-Listing
+ Next-Listing  Need=76
+ If #1ROW_COUNT > 0
+ Graphic (5,1,717) Horz-Line 17 
+ Position (6,1)
+ Graphic (47,1,718) Horz-Line 20 
+ Position (49,1)
+ let #stgcnt = #1ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #stgcnt (20,71) Bold  Edit 99999999na
+  Print 'Report Total:'  (19,2) Bold 
+  Print 'Special Investigation Type'  (76,63) Underline  Bold 
+  Print 'Total'  (76,317) Underline  Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+begin-procedure DisplayResult
+If #1ROW_COUNT= 0 
+ Let $textdisp='No results matching the report parameters are available'
+end-if
+Move $textdisp to $outText
+end-procedure
+
+
+Begin-Procedure Master_QueryDECODE_BeforeProc102
+If ($cntySelected = 'Y' and $unit_selected = 'Y' ) or $cm_selected = 'Y' or $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=23
+ Graphic (4,1,717) Horz-Line 20 
+ Position (6,1)
+     Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CAPS.CCOUNT.DECODE (23,1,40) Bold 
+   Position (+12,)
+ Next-Listing  Need=25
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc102
+If ($cntySelected = 'Y' and $unit_selected = 'Y' ) or $cm_selected = 'Y' or $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=20
+ Graphic (2,1,717) Horz-Line 15 
+ Position (3,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'County Total:'  (20,2) Bold 
+ let #cntyTot = #102ROW_COUNT
+ If ($cntySelected = 'Y' and $unit_selected = 'Y' ) or $cm_selected = 'Y' or $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Print #cntyTot (20,69) Bold  Edit 99999999na
+ End-If
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  Need=25
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc101
+If $regSelected = 'Y' or $cntySelected = 'Y' or ($unit_selected = 'Y'  and $regSelected = 'Y') or $cm_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=23
+ Graphic (3,1,717) Horz-Line 28 
+ Position (5,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region:'  (23,1) Bold 
+    Print &Master_Query_STAGE00.CD_STAGE_REGION (23,43,2) Bold 
+   Position (+12,)
+ Next-Listing  Need=25
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc101
+If $regSelected = 'Y' or $cntySelected = 'Y' or ($unit_selected = 'Y'  and $regSelected = 'Y') or $cm_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=22
+ Graphic (3,1,719) Horz-Line 15 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region Total:'  (22,1) Bold 
+ let #regTot = #101ROW_COUNT
+ If $regSelected = 'Y' or $cntySelected = 'Y' or ($unit_selected = 'Y'  and $regSelected = 'Y') or $cm_selected = 'Y'
+    ! do nothing
+ Else
+ Print #regTot (22,69) Bold  Edit 99999999na
+ End-If
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=25
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryID_PERSON_BeforeProc104
+If $cm_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=23
+ Graphic (7,7,710) Horz-Line 9 
+ Position (7,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CAPS.STAGE_PERSON_LINK.ID_PERSON (23,132) Edit 888888888888na Bold 
+ Print 'Casemanager ID / Name:'  (23,6) Bold 
+  Print &CMName (23,206,25) Bold 
+   Position (+12,)
+ Next-Listing  Need=25
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_PERSON_AfterProc104
+If $cm_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=18
+ Graphic (3,7,709) Horz-Line 9 
+ Position (3,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Casemanager Total:'  (18,7) Bold 
+ let #cmTot = #104ROW_COUNT
+ If $cm_selected = 'Y'
+    ! do nothing
+ Else
+ Print #cmTot (18,109) Bold  Edit 99999999na
+ End-If
+   Position (+12,)
+ Move 0 To #104ROW_COUNT
+ Next-Listing  Need=25
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_BeforeProc103
+If $unit_selected = 'Y' or $cm_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=29
+ Graphic (8,1,715) Horz-Line 12 
+ Position (9,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CAPS.UNIT.ID_UNIT (29,319) Edit 9999999999999999na Foreground=(255,255,255)
+  Print &Master_Query_NBR_UNIT (29,118,4) Bold 
+ Print 'Unit # and Supervisor:'  (29,3) Bold 
+  Print &SupervisorNm (29,150,25) Bold 
+   Position (+12,)
+ Next-Listing  Need=25
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_AfterProc103
+If $unit_selected = 'Y' or $cm_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=20
+ Graphic (3,1,716) Horz-Line 12 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit Total:'  (20,3) Bold 
+ let #unitTot = #103ROW_COUNT
+ If $unit_selected = 'Y' or $cm_selected = 'Y'
+    ! do nothing
+ Else
+ Print #unitTot (20,58) Bold  Edit 99999999na
+ End-If
+   Position (+12,)
+ Move 0 To #103ROW_COUNT
+ Next-Listing  Need=25
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_Query_2
+ Move 0 To #2ROW_COUNT
+ Move 0 To #totCasesM2
+Begin-Select
+(count(distinct   STAGE00.ID_STAGE  )) &cntcases
+CAPS.CSPECREQ.CODE &Master_Query_2_CAPS.CSPECREQ.CODE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &cntcases (28,282) Edit 99999999999na
+CAPS.CSPECREQ.DECODE &Master_Query_2_CAPS.CSPECREQ.DECODE (28,60,39) Wrap 39 3 line-height=12 Keep-Top on= 
+ Add &cntcases To #totCasesM2
+ Add 1 To #2ROW_COUNT
+ Next-Listing  Need=28
+From  CAPS.STAGE STAGE00, CAPS.PERSON PERSON_CM
+,      CAPS.PERSON PERSON_Sup, CAPS.STAGE STAGE_PriorStg, CAPS.STAGE_LINK
+,      CAPS.STAGE_PERSON_LINK, CAPS.UNIT, CAPS.CPS_INVST_DETAIL
+,      CAPS.INCOMING_DETAIL, CAPS.CSPECREQ, CAPS.CCOUNT
+      Where STAGE00.ID_UNIT = CAPS.UNIT.ID_UNIT
+            And CAPS.UNIT.ID_PERSON = PERSON_Sup.ID_PERSON
+            And STAGE00.CD_STAGE_CNTY = CAPS.CCOUNT.CODE
+            And STAGE00.ID_STAGE = CAPS.STAGE_PERSON_LINK.ID_STAGE
+            And CAPS.STAGE_PERSON_LINK.ID_PERSON = PERSON_CM.ID_PERSON
+            And CAPS.INCOMING_DETAIL.CD_SPCL_INVSTGTN = CAPS.CSPECREQ.CODE
+            And STAGE00.ID_STAGE = CAPS.CPS_INVST_DETAIL.ID_CPS_INVST_STAGE
+            And CAPS.CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = CAPS.STAGE_LINK.ID_STAGE
+            And STAGE_PriorStg.ID_STAGE = CAPS.STAGE_LINK.ID_PRIOR_STAGE
+ And STAGE_PERSON_LINK.CD_STAGE_PERS_ROLE in ('PR','HP')
+ And STAGE00.CD_STAGE  IN ('INV')
+ And CPS_INVST_DETAIL.CD_CNCLSN_RISK_FND  not in ('06','97')
+ And STAGE_PriorStg.ID_STAGE =  INCOMING_DETAIL.ID_STAGE(+)
+ And [$_where_clause101]
+ And [$_where_clause102]
+ And [$_where_clause103]
+ And [$_where_clause104]
+ And [$_where_clause105]
+ And (to_date( to_char(INCOMING_DETAIL.DT_INCOMING_CALL ,'MM/DD/YYYY'),'MM/DD/YYYY') >= to_date($_dt_report,'MM/DD/YYYY')) And (to_date( to_char
+    (INCOMING_DETAIL.DT_INCOMING_CALL ,'MM/DD/YYYY'),'MM/DD/YYYY') < to_date($_dt_report_to,'MM/DD/YYYY'))
+Group By CAPS.CSPECREQ.CODE
+,      CAPS.CSPECREQ.DECODE
+Order By CAPS.CSPECREQ.DECODE
+End-Select
+ Next-Listing
+ Next-Listing  Need=25
+ If #2ROW_COUNT > 0
+ Graphic (8,54,294) Horz-Line 20 
+ Position (10,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Total number of Special Investigations:'  (25,60) Bold 
+  Print #totCasesM2 (25,282) Bold  Edit 99999999999na
+ End-If
+ Next-Listing
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=CountyLP
+      Table=CAPS.CCOUNT
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SC
+      Quiet
+
+   Load-Lookup
+      Name=SpecInvLK
+      Table=CAPS.CSPECREQ
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SC
+      Quiet
+
+End-Procedure
+
+Begin-Heading 48 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (13,650) edit 'MM/DD/YYYY'
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Special Investigations' (56,284,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (13,585,0)
+ Print 'Division of Family and Children Services' (16,274,0)
+ Let $outText=$outText
+ Print $outText (118,253,55)
+ Let $headerDisp=$_headerDisp
+ Print $headerDisp (76,324,12) Bold 
+ Print 'Start Date:' (103,1,0) Bold 
+ Print 'End Date:' (120,1,0) Bold 
+ Let $DateFrom=$_dt_report
+ Print $DateFrom (103,59,15) Bold 
+ Let $DateTo=$_dt_report_to
+ Print $DateTo (119,59,15) Bold 
+ Print 'Special Investigation Type:' (136,1,0) Bold 
+ Let $InvDisp=$Invvar
+ Print $InvDisp (136,137,98) Bold 
+ Print 'wwwww' (166,1,5) Underline  Bold  Foreground=(255,255,255)
+ Print 'Case Name' (166,13,0) Underline  Bold 
+ Print 'Inv Type' (166,207,0) Underline  Bold 
+ Print 'Date Assigned' (166,416,0) Underline  Bold 
+ Print 'Date Closed' (166,490,0) Underline  Bold 
+ Print 'Days Open' (166,565,0) Underline  Bold 
+ Print 'Disposition' (166,632,0) Underline  Bold 
+ Print 'Case ID' (166,156,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'wwwww' (19,1,5) Underline  Bold  Foreground=(255,255,255)
+ Print 'Case Name' (19,13,0) Underline  Bold 
+ Print 'Inv Type' (19,207,0) Underline  Bold 
+ Print 'Date Assigned' (19,416,0) Underline  Bold 
+ Print 'Date Closed' (19,490,0) Underline  Bold 
+ Print 'Days Open' (19,565,0) Underline  Bold 
+ Print 'Disposition' (19,632,0) Underline  Bold 
+ Print 'Case ID' (19,156,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 36 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (19,652) '' ' of '
+ Last-Page (19,681) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

@@ -1,0 +1,433 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Mon Oct 19 14:39:03 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Reports\ParentInvolvementInCasePlanningStatusONG00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=168    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'This report provides a statistical view of cases without parent involvement in case planning in Ongoing (ONG) stage. The report can be run for unit, county, region, and/or statewide for a specific month. The report displays the number of assigned cases per case manager, the number of cases eligible for parent involvement, and the percentage of eligible cases where not all parents have participated in a family team meeting or been contacted for case planning purpose in the past six months as of the reporting month, reporting month included.' (30,12,111) Wrap 111 5 line-height=12 Keep-Top
+ Page-Number (679,489) '' ' of '
+ Last-Page (679,516) 
+ Print 'Qualifying family team meetings should be recorded in the ONG stage in the Family Team Meeting/Reviews page. Meeting date should be within the past 6 months as of the last day of the reporting month. Parent should be included as participant in the meeting with participation date recorded.' (242,12,111) Wrap 111 3 line-height=12 Keep-Top
+ Print 'Qualifying contacts are actual contacts recorded in the ONG stage. Contact purpose is Case Planning. Contact date should be within the past 6 months from the last day of the reporting month. Contact method needs not be face to face for this measure since the a contact may be used in lieu of family team meeting for parents that did participate in case planning but was unable to be present at the family team meeting.' (289,12,111) Wrap 111 4 line-height=12 Keep-Top
+ Print 'Region, county, and unit are stage region, county, and unit. Unit supervisor is the supervisor of the unit recorded on the stage, which should be the unit of the last case manager assigned on the ONG stage. When the supervisor''s unit county differs from the stage county, supervisor''s unit county is displayed in parentheses to the right of the supervisor''s name.' (346,12,111) Wrap 111 4 line-height=12 Keep-Top
+ Print 'Case manager displayed is the last case manager assigned to the ONG stage.' (405,12,0)
+ Print 'Assigned Cases:' (433,12,0) Bold 
+ Print 'Eligible Cases:' (452,12,0) Bold 
+ Print 'Not Involved Cases:' (497,12,0) Bold 
+ Print '% Not Involved: ' (529,11,0) Bold 
+ Print 'The number of ONG cases active at any point in the reporting month.' (433,112,0)
+ Print 'The number of Assigned Cases where parent(s) and child(ren) are identified and the stage has been open for 2 months or longer as of the last day of the reporting month. Parent and child(ren) are defined in the paragraphs above.' (452,112,90) Wrap 90 5 line-height=12 Keep-Top
+ Print 'The number of Eligible Cases where not all parent(s) participated in at least one family team meeting or were contacted for case planning purpose in the past 6 months. ' (497,112,90) Wrap 90 3 line-height=12 Keep-Top
+ Print 'The percentage of eligible cases without parent involvement in case planning. It is the count of Not Involved Cases divided by the count of Eligible Cases, multiplied by one hundred.' (529,112,90) Wrap 90 3 line-height=12 Keep-Top
+ Print 'The parent is defined by (1) the relationship of Primary Caretaker on the Person List page on the ONG stage, and/or (2) individual relationship of Secondary Caregiver, Putative Father, Legal Father, Biological Father, Legal Mother, or Biological Mother to the child, as recorded on the child''s Person Detail page, under Caretaker/Parental Relationship Information for Child section. If a parent was deceased prior to the last day of the reporting month, this parent would be excluded from the calculation of parent involvement.' (100,12,111) Wrap 111 7 line-height=12 Keep-Top
+ Print 'The child is defined as a principal on the ONG stage that is under 18 years old as of the first day of the reporting month, who was a designated victim in the Investigation (INV) in the case (had at least one substantiated allegation). Note, if the child turns 18 on the first day of the reporting month, the case is still being considered in capturing parent involvement. Child should be alive as of the last day of the reporting month.' (170,12,111) Wrap 111 5 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+ Do Get_Region_County_Unit
+ Do Master_Query
+ Do Rollback_Inserts
+End-Program
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+ Move 0 To #report_opn_cnt
+ Move 0 To #report_elig_cnt
+ Move 0 To #report_exception_cnt
+Begin-Select
+CD_STAGE_COUNTY &Master_Query_CD_STAGE_COUNTY
+NBR_UNIT &Master_Query_NBR_UNIT
+NM_SUPERVISOR &Master_Query_NM_SUPERVISOR
+(SQR_PIP18_PARENT_ONG_COUNTS.EXCEPTION_ONG_CNT * 100 / NULLIF( SQR_PIP18_PARENT_ONG_COUNTS.ELIG_ONG_CNT , 0)) &percent_completion
+('( ' ||   CCOUNT_UNIT.DECODE  || ' )') &nm_cm_county
+CD_UNIT_COUNTY &Master_Query_CD_UNIT_COUNTY
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_STAGE_REGION &Master_Query_CD_STAGE_REGION () On-Break Set=1 Level=1 Save=$prev_region Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc101 After=Master_QueryCD_STAGE_REGION_AfterProc101
+(CCOUNT.DECODE) &nm_county () On-Break Set=1 Level=2 Save=$prev_cnty Print=Never Before=Master_Querynm_county_BeforeProc102 After=Master_Querynm_county_AfterProc102
+ID_UNIT &Master_Query_ID_UNIT () On-Break Set=1 Level=3 Print=Never Before=Master_QueryID_UNIT_BeforeProc103 After=Master_QueryID_UNIT_AfterProc103
+NM_CASEMANAGER &Master_Query_NM_CASEMANAGER (10,33,25)
+OPN_ONG_CNT &Master_Query_OPN_ONG_CNT (10,211) Edit 99999na
+ELIG_ONG_CNT &Master_Query_ELIG_ONG_CNT (10,296) Edit 99999na
+EXCEPTION_ONG_CNT &Master_Query_EXCEPTION_ONG_CNT (10,392) Edit 99999na
+ Let $cm_percent_complete=cond( &Master_Query_ELIG_ONG_CNT  !=0, EDIT( &Master_Query_EXCEPTION_ONG_CNT  / cond( &Master_Query_ELIG_ONG_CNT  != 0,  &Master_Query_ELIG_ONG_CNT , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $cm_percent_complete (10,472,8)
+ Add &Master_Query_OPN_ONG_CNT To #report_opn_cnt
+ Add &Master_Query_ELIG_ONG_CNT To #report_elig_cnt
+ Add &Master_Query_EXCEPTION_ONG_CNT To #report_exception_cnt
+ Add 1 To #1ROW_COUNT
+ Add &Master_Query_OPN_ONG_CNT To #region_opn_cnt
+ Add &Master_Query_ELIG_ONG_CNT To #region_elig_cnt
+ Add &Master_Query_EXCEPTION_ONG_CNT To #region_exception_cnt
+ Add &Master_Query_OPN_ONG_CNT To #cnty_opn_cnt
+ Add &Master_Query_ELIG_ONG_CNT To #cnty_elig_cnt
+ Add &Master_Query_EXCEPTION_ONG_CNT To #cnty_exception_cnt
+ Add &Master_Query_OPN_ONG_CNT To #unit_opn_cnt
+ Add &Master_Query_ELIG_ONG_CNT To #unit_elig_cnt
+ Add &Master_Query_EXCEPTION_ONG_CNT To #unit_exception_cnt
+ Next-Listing  SkipLines=2 Need=24
+From  SQR_PIP18_PARENT_ONG_COUNTS, CCOUNT
+,      CCOUNT CCOUNT_UNIT
+      Where SQR_PIP18_PARENT_ONG_COUNTS.CD_STAGE_COUNTY = CCOUNT.CODE
+            And SQR_PIP18_PARENT_ONG_COUNTS.CD_UNIT_COUNTY = CCOUNT_UNIT.CODE
+ And OPN_ONG_CNT > 0
+Order By CD_STAGE_REGION
+,      (CCOUNT.DECODE)
+,      NBR_UNIT
+,      ID_UNIT
+,      NM_CASEMANAGER
+End-Select
+ Next-Listing
+ Next-Listing  Need=32
+ If #1ROW_COUNT > 0
+ Graphic (2,2,538) Horz-Line 20 
+ Position (4,1)
+ Graphic (34,2,538) Horz-Line 20 
+ Position (36,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #report_opn_cnt (22,210) Bold  Edit 99999na
+  Print #report_elig_cnt (22,296) Bold  Edit 99999na
+  Print #report_exception_cnt (22,392) Bold  Edit 99999na
+   Let $report_percent_complete=cond(#report_elig_cnt !=0, edit(#report_exception_cnt / cond(#report_elig_cnt != 0, #report_elig_cnt, 1)  * 100,'999.99') || ' %',  '     n/a')
+ Print $report_percent_complete (22,472,8) Bold 
+  Print 'Report Summary: '  (22,1) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+Begin-Procedure Get_Region_County_Unit
+! -----------------------------
+! Get month and year- this is required parameter,; validation is done in the launch page
+Input $dt_report 'Month/Year (MM/YYYY)' MaxLen=10 Type=Date Format='MM/YYYY'
+! -----------------------------
+! Get region optional input
+Input $cd_stage_region 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($cd_stage_region) or IsBlank($cd_stage_region) or ($cd_stage_region='0')
+  Let $regionSelected = 'N'
+  Let $cd_stage_region=''
+Else 
+  Let $regionSelected = 'Y'
+End-If
+
+! Get county optional input
+Input $cd_stage_county 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($cd_stage_county) or IsBlank($cd_stage_county) or ($cd_stage_county='0')
+  Let $countySelected = 'N'
+  Let $cd_stage_county = ''
+Else 
+  Let $countySelected = 'Y'
+End-If
+
+! Get unit optional input
+Input $nbr_unit 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If IsNull($nbr_unit) or IsBlank($nbr_unit) or ($nbr_unit='0')
+  Let $unitSelected = 'N'
+  Let $nbr_unit=''
+Else 
+  Let $unitSelected = 'Y'
+End-If
+
+Do Make_Header
+
+!------------------
+begin-sql
+ delete from report_work
+end-sql
+!------------------
+begin-sql
+ insert into report_work (key, TextParm) values ('dt_report', $dt_report)
+end-sql
+!------------------
+if $regionSelected = 'Y'
+begin-sql
+ insert into report_work (key, TextParm) values ('cd_region', $cd_stage_region)
+end-sql
+else 
+begin-sql
+ insert into report_work (key) values ('cd_region')
+end-sql
+end-if
+!------------------
+if $countySelected = 'Y'
+begin-sql
+ insert into report_work (key, TextParm) values ('cd_county', $cd_stage_county)
+end-sql
+else 
+begin-sql
+ insert into report_work (key) values ('cd_county')
+end-sql
+end-if
+!----------------
+if $unitSelected = 'Y'
+begin-sql
+ insert into report_work (key, TextParm) values ('nbr_unit', $nbr_unit)
+end-sql
+else
+begin-sql
+ insert into report_work (key) values ('nbr_unit')
+end-sql
+end-if
+End-Procedure
+
+Begin-Procedure Rollback_Inserts
+begin-sql
+ rollback
+end-sql
+End-Procedure
+
+Begin-Procedure Make_Header
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $cd_stage_county || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $cd_stage_county = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $cd_stage_region
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $cd_stage_region
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc101
+If $regionSelected = 'N' and $countySelected = 'N'
+ Next-Listing  Need=21
+ Graphic (2,1,538) Horz-Line 20 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region'  (21,1) Bold 
+  Print &Master_Query_CD_STAGE_REGION (21,45,2) Bold 
+   Position (+12,)
+ Next-Listing  SkipLines=2 Need=24
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc101
+If $regionSelected = 'N' and $countySelected = 'N'
+ Next-Listing  Need=18
+ Graphic (1,1,538) Horz-Line 15 
+ Position (2,1)
+  Let $region_total_label='Region  ' || $prev_region || '  Summary: '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $region_total_label (18,1,25) Bold 
+ Print #region_opn_cnt (18,210) Bold  Edit 99999na
+ Print #region_elig_cnt (18,296) Bold  Edit 99999na
+ Print #region_exception_cnt (18,392) Bold  Edit 99999na
+  Let $region_percent_complete=cond(#region_elig_cnt !=0, EDIT(#region_exception_cnt / cond(#region_elig_cnt != 0, #region_elig_cnt, 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $region_percent_complete (18,472,8) Bold 
+   Position (+12,)
+ Move 0 To #region_opn_cnt
+ Move 0 To #region_elig_cnt
+ Move 0 To #region_exception_cnt
+ Next-Listing  SkipLines=2 Need=24
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_Querynm_county_BeforeProc102
+If $countySelected = 'N'
+ Next-Listing  Need=17
+ Graphic (1,1,538) Horz-Line 15 
+ Position (2,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &nm_county (17,1,18) Bold 
+   Position (+12,)
+ Next-Listing  SkipLines=2 Need=24
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querynm_county_AfterProc102
+If $countySelected = 'N'
+ Next-Listing  Need=18
+ Graphic (1,1,538) Horz-Line 10 
+ Position (2,1)
+  Let $cnty_total_label=$prev_cnty || ' Summary: '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $cnty_total_label (18,1,25) Bold 
+ Print #cnty_opn_cnt (18,210) Bold  Edit 99999na
+ Print #cnty_elig_cnt (18,296) Bold  Edit 99999na
+ Print #cnty_exception_cnt (18,392) Bold  Edit 99999na
+  Let $cnty_percent_complete=cond(#cnty_elig_cnt !=0, EDIT(#cnty_exception_cnt / cond(#cnty_elig_cnt != 0, #cnty_elig_cnt, 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $cnty_percent_complete (18,472,8) Bold 
+   Position (+12,)
+ Move 0 To #cnty_opn_cnt
+ Move 0 To #cnty_elig_cnt
+ Move 0 To #cnty_exception_cnt
+ Next-Listing  SkipLines=2 Need=24
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_BeforeProc103
+ Next-Listing  Need=18
+ Graphic (1,2,538) Horz-Line 10 
+ Position (2,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit: '  (18,1) Bold 
+  Print 'Supervisor: '  (18,61) Bold 
+   Print &Master_Query_NBR_UNIT (18,33,2) Bold 
+  Print &Master_Query_NM_SUPERVISOR (18,125,25) Bold 
+  If &Master_Query_CD_STAGE_COUNTY=&Master_Query_CD_UNIT_COUNTY
+    ! do nothing
+ Else
+ Print &nm_cm_county (18,270,18)
+ End-If
+   Position (+12,)
+ Next-Listing  SkipLines=2 Need=24
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_AfterProc103
+If $unitSelected = 'N'
+ Next-Listing  Need=18
+ Graphic (3,33,507) Horz-Line 5 
+ Position (3,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit Summary:'  (18,33) Bold 
+ Print #unit_opn_cnt (18,210) Bold  Edit 99999na
+ Print #unit_elig_cnt (18,296) Bold  Edit 99999na
+ Print #unit_exception_cnt (18,392) Bold  Edit 99999na
+  Let $unit_percent_complete=cond(#unit_elig_cnt !=0, EDIT(#unit_exception_cnt / cond(#unit_elig_cnt != 0, #unit_elig_cnt, 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $unit_percent_complete (18,472,8) Bold 
+   Position (+12,)
+ Move 0 To #unit_opn_cnt
+ Move 0 To #unit_elig_cnt
+ Move 0 To #unit_exception_cnt
+ Next-Listing  SkipLines=2 Need=24
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (18,184,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Parent Without Involvement in Case Planning Status' (48,118,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On: ' (18,412,0)
+ Print $current-date (18,475) edit 'MM/DD/YYYY'
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'ONG' (66,254,0) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='_PIPs\18\Month Parameter\Status\View\SHINES.bmp'
+	Image-size=(102,73)
+ Let $dt_report_header=datetostr ( strtodate($dt_report , 'mm/yyyy' ) , 'mm/yyyy' )
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $dt_report_header (84,245,7) Bold 
+ Let $region_county_header=$region_county_header
+ Print $region_county_header (105,223,13) Bold 
+ Let $region_header=$region_header
+ Print $region_header (126,238,9) Bold 
+ If $unitSelected = 'N'
+    ! do nothing
+ Else
+ Let $nbr_unit_header='Unit: ' || $nbr_unit
+ Print $nbr_unit_header (141,1,15) Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Eligible Cases' (157,256,0) Underline  Bold 
+ Print '% Not Involved' (157,460,0) Underline  Bold 
+ Print 'Case Manager' (157,36,14) Underline  Bold 
+ Print 'Assigned Cases' (157,165,0) Underline  Bold 
+ Print 'Not Involved Cases' (157,341,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Eligible Cases' (10,256,0) Underline  Bold 
+ Print '% Not Involved' (10,460,0) Underline  Bold 
+ Print 'Case Manager' (10,36,14) Underline  Bold 
+ Print 'Assigned Cases' (10,165,0) Underline  Bold 
+ Print 'Not Involved Cases' (10,341,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (19,490) '' ' of '
+ Last-Page (19,516) 
+ Print 'Lower Percentage is Preferable' (19,194,0) Bold 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ServiceAuthorization" table="SERVICE_AUTHORIZATION" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idSvcAuth" type="integer" unsaved-value="0">
+      <column name="ID_SVC_AUTH" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_SERVICE_AUTHORIZATION</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="personByIdPrimaryClient" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_PRIMARY_CLIENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="contract" class="gov.georgia.dhr.dfcs.sacwis.db.Contract" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CONTRACT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdPerson" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdSvcAuthCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SVC_AUTH_COUNTY" length="3" not-null="true"/>
+    </property>
+    <property name="cdSvcAuthAbilToRespond" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_SVC_AUTH_ABIL_TO_RESPOND" length="3"/>
+    </property>
+    <property name="cdSvcAuthCategory" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_SVC_AUTH_CATEGORY" length="3"/>
+    </property>
+    <property name="cdSvcAuthRegion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SVC_AUTH_REGION" length="3"/>
+    </property>
+    <property name="cdSvcAuthService" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_SVC_AUTH_SERVICE" length="6"/>
+    </property>
+    <property name="dtSvcAuthVerbalReferl" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_SVC_AUTH_VERBAL_REFERL" length="7"/>
+    </property>
+    <property name="dtSvcAuthEff" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SVC_AUTH_EFF" length="7"/>
+    </property>
+    <property name="indSvcAuthComplete" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_SVC_AUTH_COMPLETE" length="1"/>
+    </property>
+    <property name="txtSvcAuthComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_SVC_AUTH_COMMENTS" length="1000"/>
+    </property>
+    <property name="txtSvcAuthDirToHome" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_SVC_AUTH_DIR_TO_HOME" length="300"/>
+    </property>
+    <property name="txtSvcAuthHomeEnviron" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_SVC_AUTH_HOME_ENVIRON" length="300"/>
+    </property>
+    <property name="txtSvcAuthMedCond" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_SVC_AUTH_MED_COND" length="300"/>
+    </property>
+    <property name="txtSvcAuthSecProvdr" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_SVC_AUTH_SEC_PROVDR" length="50"/>
+    </property>
+    <property name="indDontdComntySvc" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_DONTD_COMNTY_SVC" length="1"/>
+    </property>
+    <property name="amtEstValue" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_EST_VALUE" precision="8"/>
+    </property>
+    <property name="cdPayCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PAY_CNTY" length="3" not-null="true"/>
+    </property>
+    <property name="indWaiverReqd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_WAIVER_REQD" length="1"/>
+    </property>
+    <property name="idWaiver" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ID_WAIVER" precision="16" scale="0"/>
+    </property>
+    <property name="dtRefSent" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REF_SENT" length="7"/>
+    </property>
+    <property name="cdErlyCaseTyp" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ERLY_CASE_TYP" length="3"/>
+    </property>
+    <property name="cdPupTyp" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PUP_TYP" length="3"/>
+    </property>
+    <property name="cdPupOtcme" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PUP_OTCME" length="3"/>
+    </property>
+    <bag name="svcAuthEventLinks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_SVC_AUTH" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.SvcAuthEventLink" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="svcAuthDetails" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_SVC_AUTH" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.SvcAuthDetail" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

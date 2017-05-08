@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.UnitEmpLink" table="UNIT_EMP_LINK" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idUnitEmpLink" type="integer" unsaved-value="0">
+      <column name="ID_UNIT_EMP_LINK" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_UNIT_EMP_LINK</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="unit" class="gov.georgia.dhr.dfcs.sacwis.db.Unit" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_UNIT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="employee" class="gov.georgia.dhr.dfcs.sacwis.db.Employee" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdUnitMemberRole" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_UNIT_MEMBER_ROLE" length="2" not-null="true"/>
+    </property>
+    <property name="cdUnitMemberInOut" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_UNIT_MEMBER_IN_OUT" length="3" not-null="true"/>
+    </property>
+    <property name="nbrInt" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INT" precision="3" scale="0"/>
+    </property>
+    <property name="nbrInv" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INV" precision="3" scale="0"/>
+    </property>
+    <property name="nbrDiv" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_DIV" precision="3" scale="0"/>
+    </property>
+    <property name="nbrOng" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_ONG" precision="3" scale="0"/>
+    </property>
+    <property name="nbrFc" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_FC" precision="3" scale="0"/>
+    </property>
+    <property name="nbrAdo" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_ADO" precision="3" scale="0"/>
+    </property>
+    <property name="nbrPad" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PAD" precision="3" scale="0"/>
+    </property>
+    <property name="nbrFad" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_FAD" precision="3" scale="0"/>
+    </property>
+    <property name="nbrPfc" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PFC" precision="3" scale="0"/>
+    </property>
+    <property name="nbrTotal" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_TOTAL" precision="3" scale="0"/>
+    </property>
+    <property name="nbrStaffId" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_STAFF_ID" precision="3" scale="0"/>
+    </property>
+    <property name="nbrErrors" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_ERRORS" precision="5" scale="0"/>
+    </property>
+    <property name="nbrWarnings" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_WARNINGS" precision="5" scale="0"/>
+    </property>
+  </class>
+</hibernate-mapping>

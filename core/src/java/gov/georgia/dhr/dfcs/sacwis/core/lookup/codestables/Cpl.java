@@ -1,0 +1,66 @@
+package gov.georgia.dhr.dfcs.sacwis.core.lookup.codestables;
+
+public interface Cpl {
+
+  public static final String CPL = "CPL";
+  public static final String CPL_02 = "02";
+  public static final String CPL_03 = "03";
+  public static final String CPL_06 = "06";
+  public static final String CPL_07 = "07";
+  public static final String CPL_08 = "08";
+  public static final String CPL_10 = "10";
+  public static final String CPL_103 = "103";
+  public static final String CPL_11 = "11";
+  public static final String CPL_123 = "123";
+  public static final String CPL_13 = "13";
+  public static final String CPL_14 = "14";
+  public static final String CPL_16 = "16";
+  public static final String CPL_17 = "17";
+  public static final String CPL_18 = "18";
+  public static final String CPL_20 = "20";
+  public static final String CPL_21 = "21";
+  public static final String CPL_22 = "22";
+  public static final String CPL_24 = "24";
+  public static final String CPL_26 = "26";
+  public static final String CPL_30 = "30";
+  public static final String CPL_300 = "300";
+  public static final String CPL_301 = "301";
+  public static final String CPL_302 = "302";
+  public static final String CPL_303 = "303";
+  public static final String CPL_32 = "32";
+  public static final String CPL_34 = "34";
+  public static final String CPL_36 = "36";
+  public static final String CPL_38 = "38";
+  public static final String CPL_39 = "39";
+  public static final String CPL_40 = "40";
+  public static final String CPL_42 = "42";
+  public static final String CPL_44 = "44";
+  public static final String CPL_46 = "46";
+  public static final String CPL_48 = "48";
+  public static final String CPL_49 = "49";
+  public static final String CPL_51 = "51";
+  public static final String CPL_52 = "52";
+  public static final String CPL_53 = "53";
+  public static final String CPL_54 = "54";
+  public static final String CPL_58 = "58";
+  public static final String CPL_59 = "59";
+  public static final String CPL_60 = "60";
+  public static final String CPL_62 = "62";
+  public static final String CPL_63 = "63";
+  public static final String CPL_64 = "64";
+  public static final String CPL_66 = "66";
+  public static final String CPL_68 = "68";
+  public static final String CPL_70 = "70";
+  public static final String CPL_72 = "72";
+  public static final String CPL_73 = "73";
+  public static final String CPL_74 = "74";
+  public static final String CPL_75 = "75";
+  public static final String CPL_78 = "78";
+  public static final String CPL_80 = "80";
+  public static final String CPL_81 = "81";
+  public static final String CPL_82 = "82";
+  public static final String CPL_84 = "84";
+  public static final String CPL_86 = "86";
+  public static final String CPL_95 = "95";
+
+}

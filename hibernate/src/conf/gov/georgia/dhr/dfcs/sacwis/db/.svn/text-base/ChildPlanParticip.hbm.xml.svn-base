@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ChildPlanParticip" table="CHILD_PLAN_PARTICIP" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idChildPlanPart" type="integer" unsaved-value="0">
+      <column name="ID_CHILD_PLAN_PART" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_CHILD_PLAN_PARTICIP</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CHILD_PLAN_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdCspPartNotifType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CSP_PART_NOTIF_TYPE" length="3"/>
+    </property>
+    <property name="cdCspPartType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CSP_PART_TYPE" length="3"/>
+    </property>
+    <property name="dtCspDateNotified" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CSP_DATE_NOTIFIED" length="7"/>
+    </property>
+    <property name="dtCspPartCopyGiven" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CSP_PART_COPY_GIVEN" length="7"/>
+    </property>
+    <property name="dtCspPartParticipate" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CSP_PART_PARTICIPATE" length="7"/>
+    </property>
+    <property name="nmCspPartFull" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_CSP_PART_FULL" length="25"/>
+    </property>
+    <property name="sdsCspPartRelationship" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="SDS_CSP_PART_RELATIONSHIP" length="20"/>
+    </property>
+  </class>
+</hibernate-mapping>

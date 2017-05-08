@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.PaymentOfCare" table="PAYMENT_OF_CARE" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idPocEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_POC_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="personByIdSpvPacketAprv" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_SPV_PACKET_APRV" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdRbwoRevAprv" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_RBWO_REV_APRV" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdCmPacketComp" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_CM_PACKET_COMP" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsResourceByIdResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdSoAprv" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_SO_APRV" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdPocType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_POC_TYPE" length="3"/>
+    </property>
+    <property name="dtStart" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_START" length="7" not-null="true"/>
+    </property>
+    <property name="dtEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_END" length="7"/>
+    </property>
+    <property name="dtTerminate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_TERMINATE" length="7"/>
+    </property>
+    <property name="nbrSpecPerDiem" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SPEC_PER_DIEM" precision="4" scale="0"/>
+    </property>
+    <property name="indConcurrent" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CONCURRENT" length="1"/>
+    </property>
+    <property name="txtConcurPDiem" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CONCUR_P_DIEM" length="300"/>
+    </property>
+    <property name="txtSpecPerDiem" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_SPEC_PER_DIEM" length="300"/>
+    </property>
+    <property name="indRbwoType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_RBWO_TYPE" length="1"/>
+    </property>
+    <property name="dtPacketComp" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PACKET_COMP" length="7"/>
+    </property>
+    <property name="dtPacketAprv" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PACKET_APRV" length="7"/>
+    </property>
+    <property name="dtPacketSent" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PACKET_SENT" length="7"/>
+    </property>
+    <property name="dtStaffCompl" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_STAFF_COMPL" length="7"/>
+    </property>
+    <property name="dtSoResp" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SO_RESP" length="7"/>
+    </property>
+    <property name="dtRbwoAprv" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RBWO_APRV" length="7"/>
+    </property>
+    <property name="indRcsType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_RCS_TYPE" length="1"/>
+    </property>
+    <property name="dtAgreement" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_AGREEMENT" length="7"/>
+    </property>
+    <property name="dtAnnReview" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ANN_REVIEW" length="7"/>
+    </property>
+    <property name="dtCourt" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_COURT" length="7"/>
+    </property>
+    <property name="indIncome" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_INCOME" length="1"/>
+    </property>
+    <property name="indTerminate" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_TERMINATE" length="1"/>
+    </property>
+    <property name="indSuspend" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_SUSPEND" length="1"/>
+    </property>
+    <property name="ind80PerDiem" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_80_PER_DIEM" length="1"/>
+    </property>
+    <property name="ind100PerDiem" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_100_PER_DIEM" length="1"/>
+    </property>
+    <property name="indCustomWaiver" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CUSTOM_WAIVER" length="1"/>
+    </property>
+    <property name="txtTerminate" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_TERMINATE" length="300"/>
+    </property>
+    <property name="amtSpecFcRbwoWaiver" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SPEC_FC_RBWO_WAIVER" precision="7" scale="0"/>
+    </property>
+    <property name="amtWaiver" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_WAIVER" precision="7" scale="0"/>
+    </property>
+        <property name="txtReasonSpecWaiver" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_REASON_SPEC_WAIVER" length="300"/>
+    </property>
+         <property name="txtWaiverReason" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_WAIVER_REASON" length="300"/>
+    </property>
+        <property name="indCCI" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CCI" length="1"/>
+    </property>
+    <property name="cdRbwoProgram" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RBWO_PROGRAM" length="1"/>
+    </property>
+    <property name="ind18ByNextCrtRvw" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_18_BY_NEXT_CRT_RVW" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

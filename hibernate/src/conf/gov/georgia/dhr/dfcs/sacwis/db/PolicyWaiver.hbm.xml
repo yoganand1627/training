@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.PolicyWaiver" table="POLICY_WAIVER" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idWvrEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_WVR_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_WVR_CASE_MGR" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdWvrPrnUnableCnct" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_WVR_PRN_UNABLE_CNCT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdWvrPryCust" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_WVR_PRY_CUST" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_WVR_RSRC" precision="16" scale="0" not-null="false"/>
+    </many-to-one>
+    <property name="dtWvrRequest" type="timestamp" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_WVR_REQUEST" length="7"/>
+    </property>
+    <property name="cdWvrType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_WVR_TYPE" length="3"/>
+    </property>
+    <property name="cdWvrReason" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_WVR_REASON" length="3"/>
+    </property>
+    <property name="dtWvrExprtn" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_WVR_EXPRTN" length="7"/>
+    </property>
+    <property name="txtWvrComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_WVR_COMMENTS" length="300"/>
+    </property>
+    <property name="mnthWvrCtct" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="MNTH_WVR_CTCT" precision="2" scale="0"/>
+    </property>
+    <property name="yrWvrCtct" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="YR_WVR_CTCT" precision="4" scale="0"/>
+    </property>
+    <property name="txtWvrOther" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_WVR_OTHER" length="30"/>
+    </property>
+    <property name="cdWvrAuthCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_WVR_AUTH_COUNTY" length="3"/>
+    </property>
+    <property name="cdWvrPmtCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_WVR_PMT_COUNTY" length="3"/>
+    </property>
+    <property name="cdWvrUasCd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_WVR_UAS_CD" length="3"/>
+    </property>
+    <property name="cdWvrEntCd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_WVR_ENT_CD" length="3"/>
+    </property>
+    <property name="dtWvrBegin" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_WVR_BEGIN" length="7"/>
+    </property>
+    <property name="dtWvrEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_WVR_END" length="7"/>
+    </property>
+    <property name="cdWvrSvcDesc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_WVR_SVC_DESC" length="6"/>
+    </property>
+    <property name="amtWvr" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_WVR" precision="13"/>
+    </property>
+    <property name="nbrWvrUnit" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_WVR_UNIT" precision="4" scale="0"/>
+    </property>
+    <property name="cdWvrJustification" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_WVR_JUSTIFICATION" length="3"/>
+    </property>
+    <property name="txtWvrCapacity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_WVR_CAPACITY" length="2"/>
+    </property>
+    <property name="txtSlpArngmts" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_SLP_ARNGMTS" length="300"/>
+    </property>
+    <property name="amtAppPrdm" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_APP_PRDM" precision="13"/>
+    </property>
+  </class>
+</hibernate-mapping>

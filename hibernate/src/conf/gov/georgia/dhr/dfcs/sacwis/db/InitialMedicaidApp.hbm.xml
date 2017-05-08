@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.InitialMedicaidApp" table="INITIAL_MEDICAID_APP" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+        <column name="ID_CM_SIGNED" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="indChildPregnancy" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CHILD_PREGNANCY" length="1"/>
+    </property>
+    <property name="indChildSupportOrder" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CHILD_SUPPORT_ORDER" length="1"/>
+    </property>
+    <property name="indMedicalAsstChild" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MEDICAL_ASST_CHILD" length="1"/>
+    </property>
+    <property name="txtMonths" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_MONTHS" length="50"/>
+    </property>
+    <property name="dtEstDeliveryDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_EST_DELIVERY_DATE" length="7"/>
+    </property>
+    <property name="indCaseManagerApply" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CASE_MANAGER_APPLY" length="1"/>
+    </property>
+    <property name="dtProcessed" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PROCESSED" length="7"/>
+    </property>
+    <property name="txtComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_COMMENTS" length="300"/>
+    </property>
+    <property name="indHealthInsuranceCard" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_HEALTH_INSURANCE_CARD" length="1"/>
+    </property>
+    <property name="cdSuccessClassAssistance" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SUCCESS_CLASS_ASSISTANCE" length="3"/>
+    </property>
+    <property name="dtSuccClassAssistance" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SUCC_CLASS_ASSISTANCE" length="7"/>
+    </property> 
+    <property name="cdType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_TYPE" length="3"/>
+    </property>
+    <property name="nmCompany" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_COMPANY" length="50"/>
+    </property>
+    <property name="nbrPolicy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_POLICY" length="20"/>
+    </property>
+    <property name="nbrGroup" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_GROUP" length="20"/>
+    </property>
+    <property name="addrStreetLn1" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_STREET_LN1" length="30"/>
+    </property>
+    <property name="addrStreetLn2" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_STREET_LN2" length="30"/>
+    </property>
+    <property name="addrCity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_CITY" length="20"/>
+    </property>
+    <property name="addrState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_STATE" length="2"/>
+    </property>
+    <property name="addrZip" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_ZIP" length="10"/>
+    </property>
+    <property name="nbrPhone" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_PHONE" length="10"/>
+    </property>
+    <property name="nbrPhoneExt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_PHONE_EXT" length="8"/>
+    </property>
+    <property name="nmEmployer" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_EMPLOYER" length="50"/>
+    </property>
+    <property name="dtBegin" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_BEGIN" length="7"/>
+    </property>
+    <property name="dtEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_END" length="7"/>
+    </property>    
+    <property name="indChildCoverage" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CHILD_COVERAGE" length="1"/>
+    </property>    
+    <property name="indParent" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PARENT" length="1"/>
+    </property>
+    <property name="nmPolicyHolder" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_POLICY_HOLDER" length="50"/>
+    </property>
+    <property name="nmEmployeeName" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_EMPLOYEE_NAME" length="50"/>
+    </property>
+    <property name="dtCmSigned" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CM_SIGNED" length="7"/>
+    </property>
+	<property name="indIcamaIcpc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+		<column name="IND_ICAMA_ICPC" length="1" />
+	</property>
+	<property name="cdIcamaAssistanceType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+		<column name="CD_ICAMA_ASSISTANCE_TYPE" length="3" />
+	</property>
+	<property name="cdAdoptionType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+		<column name="CD_ADOPTION_TYPE" length="3" />
+	</property>
+	<property name="cdIcamaState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+		<column name="CD_ICAMA_STATE" length="3" />
+	</property>
+	<property name="txtIcamaComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_ICAMA_COMMENTS" length="300"/>
+    </property>
+  </class>
+</hibernate-mapping>

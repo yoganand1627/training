@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.RemovalCharAdult" table="REMOVAL_CHAR_ADULT" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.RemovalCharAdultId" mapped="false"
+                  unsaved-value="undefined">
+      <meta attribute="implement-equals">true</meta>
+      <key-property name="idRemovalEvent" type="int">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="ID_REMOVAL_EVENT" precision="16" scale="0"/>
+      </key-property>
+      <key-property name="cdRemovAdultChar" type="string">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="CD_REMOV_ADULT_CHAR" length="3"/>
+      </key-property>
+    </composite-id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" update="false" insert="false" fetch="select"
+                 unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_REMOVAL_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+  </class>
+</hibernate-mapping>

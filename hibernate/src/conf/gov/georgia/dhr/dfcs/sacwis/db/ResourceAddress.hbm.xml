@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ResourceAddress" table="RESOURCE_ADDRESS" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idRsrcAddress" type="integer" unsaved-value="0">
+      <column name="ID_RSRC_ADDRESS" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_RESOURCE_ADDRESS</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="addrRsrcAddrZip" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSRC_ADDR_ZIP" length="10"/>
+    </property>
+    <property name="cdRsrcAddrCounty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_ADDR_COUNTY" length="3"/>
+    </property>
+    <property name="addrRsrcAddrAttn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_RSRC_ADDR_ATTN" length="30"/>
+    </property>
+    <property name="cdRsrcAddrState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_ADDR_STATE" length="2"/>
+    </property>
+    <property name="addrRsrcAddrStLn1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_RSRC_ADDR_ST_LN_1" length="30"/>
+    </property>
+    <property name="addrRsrcAddrStLn2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_RSRC_ADDR_ST_LN_2" length="30"/>
+    </property>
+    <property name="cdRsrcAddrSchDist" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_ADDR_SCH_DIST" length="6"/>
+    </property>
+    <property name="cdRsrcAddrType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_ADDR_TYPE" length="2"/>
+    </property>
+    <property name="txtRsrcAddrComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_RSRC_ADDR_COMMENTS" length="300"/>
+    </property>
+    <property name="nbrRsrcAddrVid" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_RSRC_ADDR_VID" length="14"/>
+    </property>
+    <property name="addrRsrcAddrCity" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_RSRC_ADDR_CITY" length="20"/>
+    </property>
+    <property name="nbrRsrcAddrLat" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_RSRC_ADDR_LAT" length="13"/>
+    </property>
+    <property name="nbrRsrcAddrLong" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_RSRC_ADDR_LONG" length="13"/>
+    </property>
+    <property name="cdRsrcAddrSmileupdSt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_ADDR_SMILEUPD_ST" length="8"/>
+    </property>
+    <property name="result" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="RESULT" length="13"/>
+    </property>
+    <property name="confcode" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CONFCODE" length="1"/>
+    </property>
+    <bag name="contracts" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RSRC_ADDRESS" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Contract" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

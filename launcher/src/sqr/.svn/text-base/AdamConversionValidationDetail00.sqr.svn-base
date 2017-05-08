@@ -1,0 +1,716 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Tue Jun 23 17:03:53 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\_ADAM Conversion\DETAIL UNIT\AdamConversionValidationDetail00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+! ID range is left and right inclusive: [LOWER BOUND, UPPPER BOUND]
+! ADAM conversion new stage ID range
+#define ADAM_LOWER_BOUND '16600000'
+#define ADAM_UPPER_BOUND '16615959'
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=168    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Last-Page (707,517) 
+ Page-Number (707,485) '' ' of '
+ Print 'Keys' (105,1,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Stage Type' (123,1,11) Underline  Bold 
+ Print 'ADO - Adoption' (137,3,0)
+ Print 'FAD - Foster/Adoptive Home' (152,3,0)
+ Print 'PAD - Post Adoption' (166,3,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'This report displays converted stages and existing stages modified due to conversion process where validation has not been done per region, county, unit, and/or case manager. For open stages, case manger is the current case manager on the stage. For closed stages, case manger is the last case manager on the stage. Region and county are unit region and county of the primary case manager.' (32,12,111) Wrap 111 4 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do LoadLookupTables
+ dO Get_Region_County_Unit
+ Do Make_Header
+ Position (1,1)
+ Do Master_Query
+ Do Master_Query_2
+End-Program
+!--------------------------------------
+Begin-Procedure Get_Region_County_Unit
+! -----------------------------
+! Get region optional input
+Input $_cd_unit_region 'Enter a value for CD_UNIT_REGION' MaxLen=2  Type=Char
+If IsNull($_cd_unit_region) or IsBlank($_cd_unit_region) or ($_cd_unit_region='0')
+  Let $where_clause_region = 'CD_UNIT_REGION IS NOT NULL'
+  Let $regionSelected = 'N'
+Else 
+  Let $where_clause_region = 'CD_UNIT_REGION = ' || '''' || '0' || $_cd_unit_region || ''''
+  Let $regionSelected = 'Y'
+End-If
+
+! Get county optional input
+Input $_cd_county 'Enter a value for CD_COUNTY' MaxLen=3  Type=Char
+If IsNull($_cd_county) or IsBlank($_cd_county) or ($_cd_county='0')
+  Let $where_clause_county = 'CD_COUNTY IS NOT NULL'
+  Let $countySelected = 'N'
+Else 
+  Let $where_clause_county = 'CD_COUNTY = ' || '''' || $_cd_county || ''''
+  Let $countySelected = 'Y'
+End-If
+
+! Get unit optional input
+Input $_nbr_unit 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If IsNull($_nbr_unit) or IsBlank($_nbr_unit) or ($_nbr_unit='0')
+  Let $where_clause_unit = 'NBR_UNIT IS NOT NULL'
+  Let $unitSelected = 'N'
+Else 
+  Let $where_clause_unit = 'NBR_UNIT = ' || '''' || $_nbr_unit || ''''
+  Let $unitSelected = 'Y'
+End-If
+
+! Get employee id optional input
+Input $_id_employee 'Enter a value for CASE_WORKER.ID_PERSON' MaxLen=16  Type=Char
+If IsNull($_id_employee) or IsBlank($_id_employee) or ($_id_employee='0')
+  Let $where_clause_employee = 'EMPLOYEE.ID_PERSON IS NOT NULL'
+  Let $employeeSelected = 'N'
+Else 
+  Let $where_clause_employee = 'EMPLOYEE.ID_PERSON = ' || $_id_employee 
+  Let $employeeSelected = 'Y'
+End-If
+
+! Create where clause for region, county, unit and employee input
+Let $where_clause_region_county = $where_clause_region || ' and ' || $where_clause_county || ' and ' || $where_clause_unit || ' and ' || $where_clause_employee
+
+End-Procedure
+Begin-Procedure Make_Header
+! -----------------------------
+
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_cd_county || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_cd_county = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_cd_unit_region
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_cd_unit_region
+ Else
+  If $unitSelected = 'N' and $employeeSelected = 'N'
+    Let $region_county_header = 'Statewide' 
+  End-If
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select Distinct
+(decode(cd_stage, 'SUB', 'FCC','FSU','FCF','FPR','ONG',cd_stage)) &cd_stage_masked
+UNIT.ID_PERSON &approver_id
+NM_STAGE &Master_Query_NM_STAGE
+CODES_TABLES.DECODE &unit_spec
+('Region ' || UNIT.CD_UNIT_REGION) &region_dsp
+((decode( CCOUNT.DECODE , '-None-', '-Multi-County-',  CCOUNT.DECODE ))) &cnty_decode_masked
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+('OPEN STAGES NOT VALIDATED') &open_not_validated_heading () On-Break Set=1 Level=1 Print=Never Before=Master_Queryopen_not_validated_heading_BeforeProc101 After=Master_Queryopen_not_validated_heading_AfterProc101
+CD_UNIT_REGION &Master_Query_CD_UNIT_REGION () On-Break Set=1 Level=2 Print=Never Before=Master_QueryCD_UNIT_REGION_BeforeProc102 After=Master_QueryCD_UNIT_REGION_AfterProc102
+CCOUNT.DECODE &cnty_decode () On-Break Set=1 Level=3 Print=Never Before=Master_QueryDECODE_BeforeProc103 After=Master_QueryDECODE_AfterProc103
+NBR_UNIT &Master_Query_NBR_UNIT () On-Break Set=1 Level=4 Save=$prev_unit_nbr Print=Never Before=Master_QueryNBR_UNIT_BeforeProc104 After=Master_QueryNBR_UNIT_AfterProc104
+(EMPLOYEE.NM_EMPLOYEE_LAST || ', ' ||  EMPLOYEE.NM_EMPLOYEE_FIRST) &cw_nm_full () On-Break Set=1 Level=5 Print=Never Before=Master_Querycw_nm_full_BeforeProc105 After=Master_Querycw_nm_full_AfterProc105
+STAGE.ID_CASE &Master_Query_STAGE.ID_CASE (10,179) Edit 999999999999na
+STAGE.ID_STAGE &Master_Query_STAGE.ID_STAGE (10,253) Edit 999999999999na
+ Print &cd_stage_masked (10,376,3)
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Add 1 To #103ROW_COUNT
+ Add 1 To #104ROW_COUNT
+ Add 1 To #105ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+From  EMPLOYEE, STAGE
+,      STAGE_PERSON_LINK, UNIT, CODES_TABLES
+,      CCOUNT
+      Where STAGE.ID_STAGE = STAGE_PERSON_LINK.ID_STAGE
+            And EMPLOYEE.ID_PERSON = STAGE_PERSON_LINK.ID_PERSON
+            And EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+            And UNIT.CD_UNIT_SPECIALIZATION = CODES_TABLES.CODE
+            And UNIT.CD_COUNTY = CCOUNT.CODE
+ And DT_STAGE_CLOSE IS NULL 
+ And (IND_ECS_VER IS NULL  Or IND_ECS_VER = 'N')
+ And CD_STAGE_PERS_ROLE = 'PR'
+ And CODE_TYPE = 'CSPCUNTS'
+ And ((STAGE.ID_STAGE >= {ADAM_LOWER_BOUND}
+ And STAGE.ID_STAGE <= {ADAM_UPPER_BOUND}) Or EXISTS (SELECT 1 FROM adoptions_modified_stage WHERE STAGE.ID_STAGE = id_modified_stage))
+ And [$where_clause_region_county]
+Order By ('OPEN STAGES NOT VALIDATED')
+,      CD_UNIT_REGION
+,      CCOUNT.DECODE
+,      NBR_UNIT
+,      (EMPLOYEE.NM_EMPLOYEE_LAST || ', ' ||  EMPLOYEE.NM_EMPLOYEE_FIRST)
+,      STAGE.ID_CASE
+,      STAGE.ID_STAGE
+End-Select
+ Next-Listing
+ Next-Listing  Need=11
+ If #1ROW_COUNT > 0
+ Graphic (13,1,537) Horz-Line 20 
+ Position (15,1)
+ End-If
+ Next-Listing
+ Next-Listing Need=23
+ Alter-Printer Font=4 Point-Size=10
+ If #1ROW_COUNT = 0
+   Print 'OPEN STAGES NOT VALIDATED - No Results' (12,1) Bold
+   Graphic (23,1,537) Horz-Line 20 
+   Position (25,1)
+ End-If
+
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_Queryopen_not_validated_heading_BeforeProc101
+ Next-Listing  Need=12
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &open_not_validated_heading (12,1,26) Bold 
+ let #open_not_validated_cnt = #101ROW_COUNT
+ Print #brb_delay_02774370 (12,163,8) Delay Bold  Edit 999999na
+  Let $stageLabel='stages'
+ Print $stageLabel (12,201,15) Bold 
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Queryopen_not_validated_heading_AfterProc101
+ Next-Listing 
+ let #open_not_validated_cnt = #101ROW_COUNT
+ Set-Delay-Print #brb_delay_02774370 With #open_not_validated_cnt
+ Move 0 To #101ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryNBR_UNIT_BeforeProc104
+ Next-Listing  Need=25
+ Graphic (1,19,519) Horz-Line 5 
+ Position (1,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit'  (20,38) Bold 
+  Lookup EMPLOYEE_FULL_NAME &approver_id $approver_nm_full
+ Print $approver_nm_full (20,158,25) Bold 
+ Print 'Supervisor:'  (20,95) Bold 
+   Print '-'  (19,84) Bold 
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+ Print '        '  (23,409)
+    Print '      '  (25,414)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_NBR_UNIT (20,65,2) Bold 
+ let #unit_open_not_val_cnt = #104ROW_COUNT
+ If $employeeSelected='Y'
+    ! do nothing
+ Else
+ Print #brb_delay_0277B1F8 (20,304,7) Delay Bold  Edit 88888na
+ End-If
+  If $employeeSelected='Y'
+    ! do nothing
+ Else
+ Let $unitStageLabel='stages'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $unitStageLabel (20,335,15) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #104ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryNBR_UNIT_AfterProc104
+ Next-Listing 
+ let #unit_open_not_val_cnt = #104ROW_COUNT
+ If $employeeSelected='Y'
+    ! do nothing
+ Else
+ Set-Delay-Print #brb_delay_0277B1F8 With #unit_open_not_val_cnt
+ End-If
+ Move 0 To #104ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querycw_nm_full_BeforeProc105
+ Next-Listing  Need=13
+ Graphic (1,19,519) Horz-Line 5 
+ Position (1,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &cw_nm_full (13,168,25)
+ Print 'Case Manager: '  (13,83) Bold 
+ let #cm_open_not_val_cnt = #105ROW_COUNT
+ Print #brb_delay_027554F8 (13,305,7) Delay Edit 88888na
+ Print 'stages'  (13,336)
+   Position (+12,)
+ Move 0 To #105ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querycw_nm_full_AfterProc105
+ Next-Listing 
+ let #cm_open_not_val_cnt = #105ROW_COUNT
+ Set-Delay-Print #brb_delay_027554F8 With #cm_open_not_val_cnt
+ Move 0 To #105ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_UNIT_REGION_BeforeProc102
+ Next-Listing  Need=21
+ Graphic (2,1,537) Horz-Line 15 
+ Position (3,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region'  (21,21) Bold 
+  Print &Master_Query_CD_UNIT_REGION (21,63,3) Bold 
+ let #reg_open_not_val_cnt = #102ROW_COUNT
+ If $countySelected='Y' or $unitSelected='Y' or $employeeSelected='Y'
+    ! do nothing
+ Else
+ Print #brb_delay_02774228 (21,102,7) Delay Bold  Edit 99999na
+ End-If
+  If $countySelected='Y' or $unitSelected='Y' or $employeeSelected='Y'
+    ! do nothing
+ Else
+ Let $regStageLabel='stages'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $regStageLabel (21,134,15) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_UNIT_REGION_AfterProc102
+ Next-Listing 
+ let #reg_open_not_val_cnt = #102ROW_COUNT
+ If $countySelected='Y' or $unitSelected='Y' or $employeeSelected='Y'
+    ! do nothing
+ Else
+ Set-Delay-Print #brb_delay_02774228 With #reg_open_not_val_cnt
+ End-If
+ Move 0 To #102ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_BeforeProc103
+ Next-Listing  Need=16
+ Graphic (1,19,519) Horz-Line 10 
+ Position (2,1)
+ let #cnty_open_not_val_cnt = #103ROW_COUNT
+ If $unitSelected='Y' or $employeeSelected='Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #brb_delay_027A2698 (16,102,7) Delay Bold  Edit 99999na
+ End-If
+  If $unitSelected='Y' or $employeeSelected='Y'
+    ! do nothing
+ Else
+ Let $cntyStageLabel='stages'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $cntyStageLabel (16,134,15) Bold 
+ End-If
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &cnty_decode_masked (16,21,15) Bold 
+   Position (+12,)
+ Move 0 To #103ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc103
+ Next-Listing 
+ let #cnty_open_not_val_cnt = #103ROW_COUNT
+ If $unitSelected='Y' or $employeeSelected='Y'
+    ! do nothing
+ Else
+ Set-Delay-Print #brb_delay_027A2698 With #cnty_open_not_val_cnt
+ End-If
+ Move 0 To #103ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Query_2
+ Move 0 To #7ROW_COUNT
+Begin-Select
+(decode(cd_stage, 'SUB', 'FCC','FSU','FCF','FPR','ONG',cd_stage)) &cd_stage_masked_2
+NM_STAGE &Master_Query_2_NM_STAGE
+UNIT.ID_PERSON &approver_id_2
+CODES_TABLES.DECODE &unit_spec2
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+('CLOSED STAGES NOT VALIDATED') &not_validated_heading () On-Break Set=7 Level=1 Print=Never Before=Master_Query_2not_validated_heading_BeforeProc701 After=Master_Query_2not_validated_heading_AfterProc701
+CD_UNIT_REGION &Master_Query_2_CD_UNIT_REGION () On-Break Set=7 Level=2 Print=Never Before=Master_Query_2CD_UNIT_REGION_BeforeProc702 After=Master_Query_2CD_UNIT_REGION_AfterProc702
+CCOUNT.DECODE &cnty_decode2 () On-Break Set=7 Level=3 Print=Never Before=Master_Query_2DECODE_BeforeProc703 After=Master_Query_2DECODE_AfterProc703
+NBR_UNIT &Master_Query_2_NBR_UNIT () On-Break Set=7 Level=4 Print=Never Before=Master_Query_2NBR_UNIT_BeforeProc704 After=Master_Query_2NBR_UNIT_AfterProc704
+(EMPLOYEE.NM_EMPLOYEE_LAST || ', ' ||  EMPLOYEE.NM_EMPLOYEE_FIRST) &cw_nm_full_2 () On-Break Set=7 Level=5 Print=Never Before=Master_Query_2cw_nm_full_2_BeforeProc705 After=Master_Query_2cw_nm_full_2_AfterProc705
+STAGE.ID_STAGE &Master_Query_2_STAGE.ID_STAGE (10,253) Edit 999999999999na
+STAGE.ID_CASE &Master_Query_2_STAGE.ID_CASE (10,178) Edit 999999999999na
+ Print &cd_stage_masked_2 (10,376,3)
+ Add 1 To #7ROW_COUNT
+ Add 1 To #701ROW_COUNT
+ Add 1 To #702ROW_COUNT
+ Add 1 To #703ROW_COUNT
+ Add 1 To #704ROW_COUNT
+ Add 1 To #705ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+From  EMPLOYEE, STAGE
+,      STAGE_PERSON_LINK, UNIT, CODES_TABLES
+,      CCOUNT
+      Where STAGE.ID_STAGE = STAGE_PERSON_LINK.ID_STAGE
+            And EMPLOYEE.ID_PERSON = STAGE_PERSON_LINK.ID_PERSON
+            And EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+            And UNIT.CD_UNIT_SPECIALIZATION = CODES_TABLES.CODE
+            And UNIT.CD_COUNTY = CCOUNT.CODE
+ And DT_STAGE_CLOSE IS NOT NULL 
+ And CD_STAGE_PERS_ROLE IN ('HP')
+ And CODE_TYPE = 'CSPCUNTS'
+ And ((STAGE.ID_STAGE >= {ADAM_LOWER_BOUND}
+ And STAGE.ID_STAGE <= {ADAM_UPPER_BOUND}) Or EXISTS (SELECT 1 FROM adoptions_modified_stage WHERE STAGE.ID_STAGE = id_modified_stage))
+ And [$where_clause_region_county]
+ And (IND_ECS_VER IS NULL  Or IND_ECS_VER = 'N')
+Order By ('CLOSED STAGES NOT VALIDATED')
+,      CD_UNIT_REGION
+,      CCOUNT.DECODE
+,      NBR_UNIT
+,      (EMPLOYEE.NM_EMPLOYEE_LAST || ', ' ||  EMPLOYEE.NM_EMPLOYEE_FIRST)
+,      STAGE.ID_CASE
+,      STAGE.ID_STAGE
+End-Select
+ Next-Listing
+ Next-Listing  Need=25
+ If #7ROW_COUNT > 0
+ Graphic (7,2,537) Horz-Line 20 
+ Position (9,1)
+   Let #_report_total_cnt=#open_not_validated_cnt + #cld_not_validated_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #_report_total_cnt (25,108) Edit 999999 Bold 
+  Print 'Report Total Count'  (25,2) Bold 
+ End-If
+ Next-Listing
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Next-Listing  SkipLines=5 Need=50
+
+ If #7ROW_COUNT = 0
+  Print 'CLOSED STAGES NOT VALIDATED - No Results' (15, 1) Bold
+  Graphic (25,2,537) Horz-Line 20 
+  Let #_report_total_cnt=#open_not_validated_cnt + #cld_not_validated_cnt
+  Print #_report_total_cnt (48,108) Edit 999999 Bold 
+  Print 'Report Total Count'  (48,2) Bold 
+ End-If
+
+End-Procedure
+
+Begin-Procedure Master_Query_2not_validated_heading_BeforeProc701
+ Next-Listing  Need=15
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &not_validated_heading (15,1,28) Bold 
+ let #cld_not_validated_cnt = #701ROW_COUNT
+ Print #brb_delay_028752D0 (15,171,8) Delay Bold  Edit 999999na
+  Let $_stageLabel2='stages'
+ Print $_stageLabel2 (15,209,15) Bold 
+   Position (+12,)
+ Move 0 To #701ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Query_2not_validated_heading_AfterProc701
+ Next-Listing 
+ let #cld_not_validated_cnt = #701ROW_COUNT
+ Set-Delay-Print #brb_delay_028752D0 With #cld_not_validated_cnt
+ Move 0 To #701ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Query_2cw_nm_full_2_BeforeProc705
+ Next-Listing  Need=19
+ Graphic (4,22,516) Horz-Line 5 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &cw_nm_full_2 (19,168,25)
+ let #cm_cld_not_val_cnt = #705ROW_COUNT
+ Print #brb_delay_028029D0 (19,305,7) Delay Edit 88888na
+ Print 'Case Manager: '  (19,89) Bold 
+ Print 'stages'  (19,336)
+   Position (+12,)
+ Move 0 To #705ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Query_2cw_nm_full_2_AfterProc705
+ Next-Listing 
+ let #cm_cld_not_val_cnt = #705ROW_COUNT
+ Set-Delay-Print #brb_delay_028029D0 With #cm_cld_not_val_cnt
+ Move 0 To #705ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Query_2CD_UNIT_REGION_BeforeProc702
+ Next-Listing  Need=19
+ Graphic (2,2,537) Horz-Line 15 
+ Position (3,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region'  (19,22) Bold 
+   Print &Master_Query_2_CD_UNIT_REGION (19,65,3) Bold 
+ let #reg_cld_not_val_cnt = #702ROW_COUNT
+ If $countySelected='Y' or $unitSelected='Y' or $employeeSelected='Y'
+    ! do nothing
+ Else
+ Print #brb_delay_028E5E20 (19,101,7) Delay Bold  Edit 99999na
+ End-If
+  If $countySelected='Y' or $unitSelected='Y' or $employeeSelected='Y'
+    ! do nothing
+ Else
+ Let $_regStageLabel2='stages'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $_regStageLabel2 (19,134,15) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #702ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Query_2CD_UNIT_REGION_AfterProc702
+ Next-Listing 
+ let #reg_cld_not_val_cnt = #702ROW_COUNT
+ If $countySelected='Y' or $unitSelected='Y' or $employeeSelected='Y'
+    ! do nothing
+ Else
+ Set-Delay-Print #brb_delay_028E5E20 With #reg_cld_not_val_cnt
+ End-If
+ Move 0 To #702ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Query_2NBR_UNIT_BeforeProc704
+ Next-Listing  Need=20
+ Graphic (2,22,516) Horz-Line 5 
+ Position (2,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit'  (20,38) Bold 
+ Print 'Supervisor:'  (20,92) Bold 
+  Lookup EMPLOYEE_FULL_NAME &approver_id_2 $_approver_nm_full_2
+ Print $_approver_nm_full_2 (20,158,25) Bold 
+   Print &Master_Query_2_NBR_UNIT (20,64,2) Bold 
+ let #unit_cld_not_val_cnt = #704ROW_COUNT
+ If $employeeSelected='Y'
+    ! do nothing
+ Else
+ Print #brb_delay_027BFB00 (20,304,7) Delay Bold  Edit 88888na
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print '-'  (20,82) Bold 
+  If $employeeSelected='Y'
+    ! do nothing
+ Else
+ Let $_unitStageLabel2='stages'
+ Print $_unitStageLabel2 (20,336,15) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #704ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Query_2NBR_UNIT_AfterProc704
+ Next-Listing 
+ let #unit_cld_not_val_cnt = #704ROW_COUNT
+ If $employeeSelected='Y'
+    ! do nothing
+ Else
+ Set-Delay-Print #brb_delay_027BFB00 With #unit_cld_not_val_cnt
+ End-If
+ Move 0 To #704ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Query_2DECODE_BeforeProc703
+ Next-Listing  Need=17
+ Graphic (2,22,516) Horz-Line 10 
+ Position (3,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &cnty_decode2 (17,22,13) Bold 
+ let #cnty_cld_not_val_cnt = #703ROW_COUNT
+ If $unitSelected='Y' or $employeeSelected='Y'
+    ! do nothing
+ Else
+ Print #brb_delay_02785BD8 (17,101,7) Delay Bold  Edit 99999na
+ End-If
+  If $unitSelected='Y' or $employeeSelected='Y'
+    ! do nothing
+ Else
+ Let $_cntyStageLabel2='stages'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $_cntyStageLabel2 (17,132,15) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #703ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Query_2DECODE_AfterProc703
+ Next-Listing 
+ let #cnty_cld_not_val_cnt = #703ROW_COUNT
+ If $unitSelected='Y' or $employeeSelected='Y'
+    ! do nothing
+ Else
+ Set-Delay-Print #brb_delay_02785BD8 With #cnty_cld_not_val_cnt
+ End-If
+ Move 0 To #703ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=EMPLOYEE_FULL_NAME
+      Table=EMPLOYEE
+      Key=ID_PERSON
+      Return_Value='NM_EMPLOYEE_LAST || '', '' || NM_EMPLOYEE_FIRST'
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Adoptions Conversion Validation' (45,155,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (15,184,0)
+ Print $current-date (15,473) edit 'MM/DD/YYYY'
+ Print 'Produced On: ' (15,409,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Exception List' (67,220,0) Bold 
+ Let $region_county_header=$region_county_header
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $region_county_header (88,223,13) Bold 
+ Let $region_header=$region_header
+ Print $region_header (105,238,9) Bold 
+ If $unitSelected='N'
+    ! do nothing
+ Else
+ Let $unitHeader='Unit: ' || $_nbr_unit
+ Print $unitHeader (119,1,15) Bold 
+ End-If
+ If $employeeSelected='N'
+    ! do nothing
+ Else
+ Let $cmHeader='Case Manager ID: ' || $_id_employee
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $cmHeader (139,1,27) Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case ID' (163,209,0) Underline  Bold 
+ Print 'Stage ID' (163,278,0) Underline  Bold 
+ Print 'Stage Type' (163,376,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Case ID' (16,209,0) Underline  Bold 
+ Print 'Stage ID' (16,278,0) Underline  Bold 
+ Print 'Stage Type' (16,376,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 60 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (55,486) '' ' of '
+ Last-Page (55,518) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

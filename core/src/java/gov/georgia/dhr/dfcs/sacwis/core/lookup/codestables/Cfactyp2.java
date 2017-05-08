@@ -1,0 +1,61 @@
+package gov.georgia.dhr.dfcs.sacwis.core.lookup.codestables;
+
+public interface Cfactyp2 {
+
+  public static final String CFACTYP2 = "CFACTYP2";
+  public static final String CFACTYP2_01 = "01";
+  public static final String CFACTYP2_04 = "04";
+  public static final String CFACTYP2_06 = "06";
+  public static final String CFACTYP2_07 = "07";
+  public static final String CFACTYP2_11 = "11";
+  public static final String CFACTYP2_13 = "13";
+  public static final String CFACTYP2_14 = "14";
+  public static final String CFACTYP2_16 = "16";
+  public static final String CFACTYP2_17 = "17";
+  public static final String CFACTYP2_19 = "19";
+  public static final String CFACTYP2_20 = "20";
+  public static final String CFACTYP2_21 = "21";
+  public static final String CFACTYP2_22 = "22";
+  public static final String CFACTYP2_23 = "23";
+  public static final String CFACTYP2_24 = "24";
+  public static final String CFACTYP2_25 = "25";
+  public static final String CFACTYP2_26 = "26";
+  public static final String CFACTYP2_27 = "27";
+  public static final String CFACTYP2_28 = "28";
+  public static final String CFACTYP2_29 = "29";
+  public static final String CFACTYP2_30 = "30";
+  public static final String CFACTYP2_31 = "31";
+  public static final String CFACTYP2_32 = "32";
+  public static final String CFACTYP2_33 = "33";
+  public static final String CFACTYP2_35 = "35";
+  public static final String CFACTYP2_36 = "36";
+  public static final String CFACTYP2_37 = "37";
+  public static final String CFACTYP2_38 = "38";
+  public static final String CFACTYP2_39 = "39";
+  public static final String CFACTYP2_46 = "46";
+  public static final String CFACTYP2_48 = "48";
+  public static final String CFACTYP2_49 = "49";
+  public static final String CFACTYP2_51 = "51";
+  public static final String CFACTYP2_52 = "52";
+  public static final String CFACTYP2_53 = "53";
+  public static final String CFACTYP2_55 = "55";
+  public static final String CFACTYP2_56 = "56";
+  public static final String CFACTYP2_57 = "57";
+  public static final String CFACTYP2_58 = "58";
+  public static final String CFACTYP2_59 = "59";
+  public static final String CFACTYP2_60 = "60";
+  public static final String CFACTYP2_63 = "63";
+  public static final String CFACTYP2_64 = "64";
+  public static final String CFACTYP2_65 = "65";
+  public static final String CFACTYP2_66 = "66";
+  public static final String CFACTYP2_67 = "67";
+  public static final String CFACTYP2_68 = "68";
+  public static final String CFACTYP2_69 = "69";
+  public static final String CFACTYP2_70 = "70";
+  public static final String CFACTYP2_71 = "71";
+  public static final String CFACTYP2_88 = "88";
+  public static final String CFACTYP2_98 = "98";
+  public static final String CFACTYP2_99 = "99";
+  public static final String CFACTYP2_XX = "XX";
+
+}

@@ -1,0 +1,1137 @@
+!*****************************************************************************
+!  CAPS HISTORY CHECK REPORT                                                 *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccf06o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 12/04/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brad McCleary                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The CAPS History Check will list, for each case in   *
+!                       which an individual was or is currently a principal  *
+!                       in an investigation, all of the investigation        *
+!                       allegations recorded for that person.  The person    *
+!                       must have been an alleged or designated victim,      *
+!                       alleged perpetrator, designated perpetrator, or a    *
+!                       sustained perpetrator.                               *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 12/04/95   B.McCleary   Initial Programming                                *
+! 03/05/96   B.McCleary   SIR 3563 - Added a procedure so that the person    *
+!                         name information will still be selected even if    *
+!                         the person does not exist in the person_id table.  *
+!                         Calls another procedure to get person_id info.     *
+! 03/14/96   B. McCleary  SIR 3883 - Changed the where clause so that open   *
+!                         stages will have investigation information         *
+!                         retrieved to match the Case Summary window.        *
+! 03/19/96   B. McCleary  SIR 3941 - Changed the codes table in order to     *
+!                         select all person stage roles for an investigation.*
+! 04/03/96   B. McCleary  SIR 20113 - Added SQL to get the risk finding      *
+!                         decode using the risk assessment event; added print*
+!                         for date stage closed.                             *
+! 05/01/96   B. McCleary  SIR 20831 - Made next-listing 10 to keep case info *
+!                         with following information.                        *
+! 05/01/96   B. McCleary  SIR 20832 - Changed stage to stage related in the  *
+!                         admin review where clause.                         *
+! 06/24/96   K. Cys       SIR 21577 - Added code to where clause of the GET- *
+!                         ADMIN-REVIEW section select statement that allows  *
+!                         only the latest admin review info to be selected   *
+!                         when the section is called.                        *
+! 12/16/96   D. Ly        ENH - Change occurences of Name to Name person     *
+!                               full format.                                 *
+! 07/14/97     klm        SIR# 13531 - In Get-Stage-Info, added Person Merge *
+!                         View to the FROM clause to return the IDs of       *
+!                         people that have been merged into the stage        *
+! 05/14/03     dejuanr    SIR# 17336 - Changed from CAPS HISTORY CHECK to    *
+!                         PRS HISTORY CHECK.                                 *
+! 05/24/04   fraserkr     SIR16121 Add Date and reason of death to the list  *
+!                             of demographics on Page 1.                     *
+! 06/21/04   fraserkr     SIR16121 Change 'R.F.D' label to 'Reason for Death'*
+!                             (per Prindle, mark)                            *
+! 05/16/05   menteesj     SIR 23434 - Add PersonMrgView in GET-INVESTIGATION *
+!                             to get "merge closed" personIDs and stages.    *
+!                             Save IDs retrieved and use in GET-ALLEGATION.  *
+!                             Also correct text in some commented statements.*
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup03a.sqc'            ! control codes for Landscape 
+
+    ask ID_PERSON                      ! input parameter
+    
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 4
+  
+print 'Person Name: '                           (1,43)
+if $person_suffix <> '' !***ENH***
+   let $person_name_suff = ', ' || $person_suffix
+end-if
+if $person_middle = ''  !***ENH***
+   let $person_name = $person_first || ' ' || $person_last || $person_name_suff
+else
+   let $person_name = $person_first || ' ' || $person_middle || ' ' || $person_last || $person_name_suff
+end-if 
+print $person_name                              ()
+move '' to $person_name_suff                    !***ENH***
+
+print 'Person ID: '                             (+1,45)
+print #input_id_person                          () edit 8888888888888888
+
+print 'FPS HISTORY CHECK'                      (+2) center
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer03.sqc'       ! Include file with footer information
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                    !Set printer environment
+    
+    move {ID_PERSON}                        to #input_id_person
+
+    move 'PRN'                              to $PRN
+    move 'INV'                              to $INV
+    move '97'                               to $97                              
+    move 'SSN'                              to $SSN
+    move 'COL'                              to $COL
+    move 'COMP'                             to $COMP
+    move 'APRV'                             to $APRV
+    move 'PEND'                             to $PEND
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-CURRENT-INFO, GET-INVESTIGATION, GET-STAGE-INFO    *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+                 
+    do GET-CURRENT-INFO
+    do GET-INVESTIGATION
+    do GET-STAGE-INFO
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-CURRENT-INFO                                                        *
+!                                                                           *
+!       This procedure will retrieve the most current primary name and      *
+!       information for the input person.                                   *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-CURRENT-INFO, GET-PERSON-NUMBER                  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CURRENT-INFO
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.NM_NAME_FIRST  !***ENH***
+    move &A.NM_NAME_FIRST                   to $person_first
+    
+A.NM_NAME_MIDDLE
+    move &A.NM_NAME_MIDDLE                  to $person_middle     
+    
+A.NM_NAME_LAST
+    move &A.NM_NAME_LAST                    to $person_last
+
+CSUFFIX2A.decode
+    move &CSUFFIX2A.decode                  to $person_suffix
+
+CSEX.DECODE
+    move &CSEX.DECODE                       to $sex_dec
+
+to_char(B.DT_PERSON_BIRTH, 'MM/DD/YYYY') &date7
+    move &date7                             to $DOB
+    
+to_char(B.DT_PERSON_DEATH, 'MM/DD/YYYY') &dateDOD           !SIR16121
+    move &dateDOD                           to $death_date 
+
+CETHNIC.DECODE
+    move &CETHNIC.DECODE                    to $ethnic_dec
+    
+CRSNFDTH.DECODE
+    move &CRSNFDTH.DECODE                   to $death_rsn   !SIR16121
+
+    do GET-PERSON-NUMBER    !SIR 3563 - added procedure in case the person does 
+    do PRINT-CURRENT-INFO   !           not exist in the person_id table
+
+FROM    NAME        A,
+        PERSON      B,
+        CSUFFIX2    CSUFFIX2A,    !***ENH***
+        CRSNFDTH    CRSNFDTH,     !SIR16121
+        CSEX        CSEX,
+        CETHNIC     CETHNIC
+        
+WHERE   A.ID_PERSON = #input_id_person
+AND     B.ID_PERSON = A.ID_PERSON
+AND     A.IND_NAME_PRIMARY = 'Y'
+AND     A.DT_NAME_END_DATE= '12/31/4712'
+AND     CSUFFIX2A.CODE(+) = A.CD_NAME_SUFFIX       !***ENH***
+AND     CRSNFDTH.CODE(+) = B.CD_PERSON_DEATH       !SIR16121
+AND     CSEX.CODE(+) = B.CD_PERSON_SEX
+AND     CETHNIC.CODE(+) = B.CD_PERSON_ETHNIC_GROUP
+                     
+END-SELECT
+
+END-PROCEDURE GET-CURRENT-INFO
+       
+!****************************************************************************
+!                                                                           *
+!   GET-PERSON-NUMBER                                                       *
+!                                                                           *
+!       This procedure is called by current info to get the person's id     * 
+!       number if they exist in person detail.                              *
+!                                                                           * 
+!       CALLED BY  : GET-CURRENT-INFO                                       *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PERSON-NUMBER
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                           
+ID_PERSON_ID
+    move &ID_PERSON_ID                    to #id_person_id
+
+NBR_PERSON_ID_NUMBER
+    move &NBR_PERSON_ID_NUMBER            to $person_num
+
+FROM    PERSON_ID
+
+WHERE   ID_PERSON = #input_id_person
+AND     IND_PERSON_ID_INVALID = 'N'
+AND     DT_PERSON_ID_END = '12/31/4712'
+AND     CD_PERSON_ID_TYPE = $SSN
+
+END-SELECT
+
+END-PROCEDURE GET-PERSON-NUMBER
+
+!****************************************************************************
+!                                                                           *
+!   GET-INVESTIGATION                                                       *
+!                                                                           *
+!       This procedure will retrieve all the investigation stages that the  *
+!       person is or was involved in as a principal.                        *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-CASE, PRINT-INVESTIGATION, GET-ALLEGATION,       *
+!                    GET-ADMIN-REV, GET-APS, GET-CPS, GET-FAC, GET-LIC      *
+!                                                                           *
+!  05/16/05 menteesj SIR# 23434 - Added Person Merge View to the list of    *
+!                    tables to retrieve "merge closed" personIDs and their  *
+!                    stages.  If Person Merge View receives a person ID of  *
+!                    a person that has not been merged, the view will return*
+!                    the same ID that was input.  Also, created new variable*
+!                    "#id_stg_person" to hold any "merged closed" personIDs *
+!                    retrieved, so can use them in GET-ALLEGATION.          *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-INVESTIGATION
+
+    move 0                                  to #count2
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+S.ID_CASE
+    move &S.ID_CASE                         to #id_case
+
+C.NM_CASE
+    move &C.NM_CASE                         to $case_name
+
+SPL.ID_STAGE
+    move &SPL.ID_STAGE                      to #id_stage
+
+SPL.ID_PERSON
+    move &SPL.ID_PERSON                     to #id_stg_person
+
+S.CD_STAGE_REASON_CLOSED
+    move &S.CD_STAGE_REASON_CLOSED          to $rsn_closed
+
+!SIR 3941 - Changed the codes table for the investigation stage
+!           person role.
+
+CINVROLE.DECODE            
+    move &CINVROLE.DECODE                   to $role_dec
+
+to_char(S.DT_STAGE_CLOSE, 'MM/DD/YYYY') &date1
+    move &date1                             to $dt_stage_close
+
+CPGRMS.DECODE
+    move &CPGRMS.DECODE                     to $prog_dec
+
+    do GET-ADMIN-REV
+
+  let #count2 = #count2 + 1    
+
+    if #count2 = 1
+    print 'INVESTIGATION HISTORY'               (+2) center
+        do PRINT-CASE
+    else
+
+        if #last_case = #id_case
+        else
+            do PRINT-CASE
+        end-if
+
+    end-if
+
+    if $prog_dec = 'APS'
+        do GET-APS
+    else
+    if $prog_dec = 'CPS'
+        do GET-CPS
+    else
+    if $prog_dec = 'APSFAC'
+        do GET-FAC
+    else
+    if $prog_dec = 'CCL' 
+        do GET-LIC
+    else
+    if $prog_dec = 'RCL' 
+        do GET-LIC
+    end-if    
+    end-if    
+    end-if    
+    end-if    
+    end-if    
+    
+
+    do PRINT-INVESTIGATION
+    do GET-ALLEGATION
+
+FROM    STAGE               S,
+        STAGE_PERSON_LINK   SPL,
+        CAPS_CASE           C,
+        PERSON_MERGE_VIEW   PMV,
+        CPGRMS              CPGRMS,
+        CINVROLE            CINVROLE
+        
+WHERE   PMV.ID_PERSON_INPUT = #input_id_person
+AND     SPL.ID_PERSON = PMV.ID_PERSON_OUTPUT
+AND     SPL.ID_STAGE = S.ID_STAGE
+AND     C.ID_CASE = S.ID_CASE
+AND     SPL.CD_STAGE_PERS_TYPE = $PRN
+AND     S.CD_STAGE = $INV
+AND    (S.CD_STAGE_REASON_CLOSED != $97   !SIR 3883 - allows for open stages
+ OR     S.CD_STAGE_REASON_CLOSED is NULL)
+AND     CINVROLE.CODE(+) = SPL.CD_STAGE_PERS_ROLE
+AND     CPGRMS.CODE(+) = S.CD_STAGE_PROGRAM
+                             
+ORDER BY    S.ID_CASE ASC, S.DT_STAGE_START DESC, S.DT_STAGE_CLOSE ASC                                 
+END-SELECT
+
+END-PROCEDURE GET-INVESTIGATION
+       
+!****************************************************************************
+!                                                                           *
+!   GET-ADMIN-REV                                                           *
+!                                                                           *
+!       This procedure will select the admin review info with the most      * 
+!       current date stage closed.                                          *
+!                                                                           * 
+!       CALLED BY  : GET-INVESTIGATION                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ADMIN-REV
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                           
+CARVTYPE.DECODE
+    move &CARVTYPE.DECODE                  to $app_type_dec
+
+CARVSTAT.DECODE
+    move &CARVSTAT.DECODE                  to $app_stat_dec
+
+to_char(S.DT_STAGE_START, 'MM/DD/YYYY') &date6
+    move &date6                            to $dt_stage_start
+
+
+FROM    STAGE               S,
+        ADMIN_REVIEW        AR,
+        CARVTYPE            CARVTYPE,
+        CARVSTAT            CARVSTAT
+
+WHERE   AR.ID_STAGE_RELATED = #id_stage   !*******SIR 20832*******
+AND     AR.ID_STAGE_RELATED = S.ID_STAGE  !*******SIR 20832*******
+AND     NVL(S.DT_STAGE_CLOSE, '12/31/4712') = 
+        (SELECT NVL(MAX (S2.DT_STAGE_CLOSE), '12/31/4712')
+                             FROM   STAGE          S2
+                             WHERE  S2.ID_STAGE = AR.ID_STAGE_RELATED)
+AND     AR.DT_LAST_UPDATE = (SELECT MAX(DT_LAST_UPDATE) !******SIR 21577******
+                             FROM ADMIN_REVIEW AR2
+                             WHERE AR2.ID_STAGE_RELATED = S.ID_STAGE)
+AND     CARVTYPE.CODE(+) = AR.CD_ADMIN_RV_APPEAL_TYPE
+AND     CARVSTAT.CODE(+) = AR.CD_ADMIN_RV_STATUS 
+
+END-SELECT
+
+END-PROCEDURE GET-ADMIN-REV
+
+!****************************************************************************
+!                                                                           *
+!   GET-APS                                                                 *
+!                                                                           *
+!       This procedure will select investigation information given the      * 
+!       program APS.  The type also controls which codes tables are used.   *
+!                                                                           * 
+!       CALLED BY  : GET-INVESTIGATION                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-APS
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+   
+to_char(AP.DT_APS_INVST_CMPLT, 'MM/DD/YYYY') &date2
+    move &date2                             to $dt_comp
+
+CDISPSTN1.DECODE
+    move &CDISPSTN1.DECODE                  to $disp_dec
+
+FROM    APS_INVST_DETAIL    AP,
+        CDISPSTN            CDISPSTN1
+
+WHERE   AP.ID_APS_STAGE = #id_stage
+AND     CDISPSTN1.CODE(+) = AP.CD_APS_INVST_OVRALL_DISP
+ 
+END-SELECT
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+   
+CAINVCLS.DECODE
+    move &CAINVCLS.DECODE                   to $rsn_dec
+
+FROM    CAINVCLS            CAINVCLS
+
+WHERE   CAINVCLS.CODE(+) = $rsn_closed 
+ 
+END-SELECT
+
+END-PROCEDURE GET-APS  
+
+!****************************************************************************
+!                                                                           *
+!   GET-CPS                                                                 *
+!                                                                           *
+!       This procedure will select investigation information given the      *
+!       program CPS.  The type also controls which codes tables are used.   *
+!                                                                           *
+!       CALLED BY  : GET-INVESTIGATION                                      *
+!       CALLS      : GET-RISK-FINDING                                       *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CPS
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+  
+to_char(CP.DT_CPS_INVST_DTL_COMPLT, 'MM/DD/YYYY') &date3
+    move &date3                             to $dt_comp
+
+CDISPSTN2.DECODE
+    move &CDISPSTN2.DECODE                  to $disp_dec
+
+RA.ID_EVENT
+    move &RA.ID_EVENT               to #id_event
+
+!SIR 200113 - Added SQL to get the risk finding decode using the event from the
+!             risk assessment table
+
+    if #id_event <> 0
+      do GET-RISK-FINDING
+    end-if
+
+FROM    CPS_INVST_DETAIL    CP,
+        RISK_ASSESSMENT     RA,
+        CDISPSTN            CDISPSTN2
+         
+WHERE   CP.ID_CPS_INVST_STAGE = #id_stage
+AND     CDISPSTN2.CODE(+)     = CP.CD_CPS_INVST_DTL_OVRLL_DISPTN
+AND     RA.ID_STAGE(+)        = CP.ID_CPS_INVST_STAGE
+ 
+END-SELECT
+
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+   
+CCINVCLS.DECODE
+    move &CCINVCLS.DECODE                   to $rsn_dec
+
+    if ($status = $APRV) or ($status = $COMP) or ($status = $PEND)
+    else
+    move ''                             to $rsn_dec
+    end-if
+
+FROM    CCINVCLS            CCINVCLS
+
+WHERE   CCINVCLS.CODE(+) = $rsn_closed 
+ 
+END-SELECT
+
+
+END-PROCEDURE GET-CPS  
+
+!****************************************************************************
+!                                                                           *
+!   GET-FAC                                                                 *
+!                                                                           *
+!       This procedure will select investigation information given the      * 
+!       program AFC.  The type also controls which codes tables are used.   *
+!                                                                           * 
+!       CALLED BY  : GET-INVESTIGATION                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-FAC
+
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                     
+to_char(FI.DT_FACIL_INVST_COMPLT, 'MM/DD/YYYY') &date4
+    move &date4                             to $dt_comp 
+
+CDISPSTN3.DECODE
+    move &CDISPSTN3.DECODE                  to $disp_dec
+
+FROM    FACILITY_INVST_DTL  FI,
+        CDISPSTN            CDISPSTN3
+
+WHERE   FI.ID_FACIL_INVST_STAGE = #id_stage
+AND     CDISPSTN3.CODE(+) = FI.CD_FACIL_INVST_OVRALL_DIS
+ 
+END-SELECT
+
+
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+   
+CFCCLCDS.DECODE
+    move &CFCCLCDS.DECODE                   to $rsn_dec
+
+FROM    CFCCLCDS            CFCCLCDS
+
+WHERE   CFCCLCDS.CODE(+) = $rsn_closed            
+ 
+END-SELECT
+
+
+END-PROCEDURE GET-FAC  
+
+!****************************************************************************
+!                                                                           *
+!   GET-LIC                                                                 *
+!                                                                           *
+!       This procedure will select investigation information given the      * 
+!       program CCL or RCL.  The type also controls which codes tables are  *
+!       used.                                                               *
+!                                                                           * 
+!       CALLED BY  : GET-INVESTIGATION                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-LIC
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+  
+to_char(LI.DT_LICNG_INVST_COMPLT, 'MM/DD/YYYY') &date5
+    move &date5                             to $dt_comp
+
+CDISPSTN4.DECODE
+    move &CDISPSTN4.DECODE                  to $disp_dec
+
+FROM    LICENSING_INVST_DTL  LI,
+        CDISPSTN             CDISPSTN4
+
+WHERE   LI.ID_LICNG_INVST_STAGE = #id_stage
+AND     CDISPSTN4.CODE(+) = LI.CD_LICNG_INVST_OVRALL_DISP
+ 
+END-SELECT
+
+
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                            
+CLCRECAT.DECODE
+    move &CLCRECAT.DECODE                   to $rsn_dec
+
+FROM    CLCRECAT            CLCRECAT
+
+WHERE   CLCRECAT.CODE(+) = $rsn_closed           
+
+END-SELECT
+
+
+END-PROCEDURE GET-LIC  
+
+!****************************************************************************
+!                                                                           *
+!   GET-RISK-FINDING                                                        *
+!                                                                           *
+!       This procedure will get the risk finding decode using the event     *
+!       from the risk assessment table.                                     *
+!                                                                           *
+!       CALLED BY  : GET-CPS                                                *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-RISK-FINDING
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CCRSKFND.DECODE
+    move &CCRSKFND.DECODE                   to $ra_find_dec
+
+E.CD_EVENT_STATUS
+    move &E.CD_EVENT_STATUS                 to $status
+
+FROM    EVENT           E,
+        RISK_ASSESSMENT         RA,
+        CCRSKFND                CCRSKFND
+
+WHERE   E.ID_EVENT     = #id_event
+AND     E.ID_EVENT     = RA.ID_EVENT
+AND     E.CD_EVENT_STATUS  IN ($COMP, $APRV, $PEND)
+AND     CCRSKFND.CODE(+)   = RA.CD_RISK_ASSMT_RISK_FIND
+     
+END-SELECT              
+
+END-PROCEDURE GET-RISK-FINDING
+
+!****************************************************************************
+!                                                                           *
+!   GET-ALLEGATION                                                          *
+!                                                                           *
+!       This procedure will select the investigation allegations where the  *
+!       person passed in is either a victim or a perpetrator.               *
+!                                                                           *
+!       CALLED BY  : GET-INVESTIGATION                                      *
+!       CALLS      : PRINT-ALLEGATION-TITLE, PRINT-ALLEGATION               *
+!                                                                           *
+!  05/16/05 menteesj SIR# 23434 - Use new variable "#id_stg_person" in      *
+!                    place of #input_id_person to include any               *
+!                    "merged closed" personIDs in the selection.            *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ALLEGATION
+
+    move 0                                      to #count3
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CABALTYP.DECODE
+    move &CABALTYP.DECODE                       to $alleg_dec
+
+CDISPSTN.DECODE
+    move &CDISPSTN.DECODE                       to $alleg_disp_dec
+
+B.NM_PERSON_FULL
+    move &B.NM_PERSON_FULL                      to $victim_name
+
+C.NM_PERSON_FULL
+    move &C.NM_PERSON_FULL                      to $perp_name
+
+CSEVERTY.DECODE
+    move &CSEVERTY.DECODE                       to $sever_dec
+
+    let #count3 = #count3 + 1
+    
+    if #count3 = 1
+        do PRINT-ALLEGATION-TITLE
+        do PRINT-ALLEGATION
+    else
+        do PRINT-ALLEGATION
+    end-if
+       
+FROM    ALLEGATION  A,
+        PERSON      B,
+        PERSON      C,
+        CSEVERTY    CSEVERTY,
+        CABALTYP    CABALTYP,
+        CDISPSTN    CDISPSTN
+
+WHERE   A.ID_ALLEGATION_STAGE = #id_stage
+AND    (A.ID_VICTIM = #id_stg_person
+OR      A.ID_ALLEGED_PERPETRATOR = #id_stg_person)
+AND     B.ID_PERSON = A.ID_VICTIM
+AND     C.ID_PERSON = A.ID_ALLEGED_PERPETRATOR
+AND     CSEVERTY.CODE(+) = A.CD_ALLEG_SEVERITY
+AND     CABALTYP.CODE(+) = A.CD_ALLEG_TYPE
+AND     CDISPSTN.CODE(+) = A.CD_ALLEG_DISPOSITION
+
+END-SELECT              
+
+END-PROCEDURE GET-ALLEGATION
+           
+!****************************************************************************
+!                                                                           *
+!   GET-STAGE-INFO                                                          *
+!                                                                           *
+!       This procedure will retrieve all the investigation stages that the  *
+!       person is or was involved in as a principal.                        *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-CASE, PRINT-STAGE-TITLE, PRINT-STAGE             *
+!                                                                           *
+!  07/14/97 klm     SIR# 13531 - Added Person Merge View to the list of tables  *
+!         to retrieve people that have been merged into the stage.    *
+!         If Person Merge View recieves a person ID of a person that  *
+!         has not been merged, the view will return the same ID that  *
+!         was input.                                                  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-STAGE-INFO
+
+  if #count2 = 0
+    print 'NO INVESTIGATION HISTORY FOUND'  (+3) center
+  end-if
+
+  move 0                                    to #count4
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+S.ID_CASE &stage_case
+    move &stage_case                        to #id_case
+
+C.NM_CASE &stg_cs_nm
+    move &stg_cs_nm                         to $case_name
+
+SPL.ID_STAGE &spl_stage
+    move &spl_stage                         to #stage_id_stage
+
+CPRSNTYP.DECODE
+    move &CPRSNTYP.DECODE                   to $pers_type_dec
+
+CRPTRINT.DECODE
+    move &CRPTRINT.DECODE                   to $rel_int_dec
+
+to_char(S.DT_STAGE_CLOSE, 'MM/DD/YYYY') &date9
+    move &date9                             to $dt_stage_close
+
+to_char(S.DT_STAGE_START, 'MM/DD/YYYY') &date10
+    move &date10                            to $dt_stage_start
+
+CSTAGES.DECODE
+    move &CSTAGES.DECODE                    to $stage_dec
+
+CSTGTYPE.DECODE
+    move &CSTGTYPE.DECODE                   to $stage_type_dec
+
+S.NM_STAGE
+    move &S.NM_STAGE                        to $stage_name
+
+C.NM_CASE &nm_case
+    move &nm_case                           to $stage_case_name
+
+  let #count4 = #count4 + 1    
+
+    if #count4 = 1
+    NEW-PAGE
+    print 'SUMMARY OF INVOLVEMENT IN ALL STAGES'        (+2) center
+        do PRINT-CASE
+        do PRINT-STAGE-TITLE
+        do PRINT-STAGE
+    else
+        if #last_case = #id_case
+            do PRINT-STAGE
+        else
+            do PRINT-CASE
+            do PRINT-STAGE-TITLE
+            do PRINT-STAGE
+        end-if
+
+    end-if
+
+
+FROM    STAGE               S,
+        STAGE_PERSON_LINK   SPL,
+        CAPS_CASE           C,
+     PERSON_MERGE_VIEW   PMV,
+        CPRSNTYP            CPRSNTYP,
+        CRPTRINT            CRPTRINT,
+        CSTAGES             CSTAGES,
+        CSTGTYPE            CSTGTYPE
+        
+WHERE   PMV.ID_PERSON_INPUT = #input_id_person
+AND     SPL.ID_PERSON = PMV.ID_PERSON_OUTPUT
+AND    (SPL.CD_STAGE_PERS_TYPE = $PRN 
+ OR     SPL.CD_STAGE_PERS_TYPE = $COL)
+AND     S.ID_STAGE = SPL.ID_STAGE
+AND    (S.CD_STAGE_REASON_CLOSED != $97   !SIR 3883 - allows for open stages
+ OR     S.CD_STAGE_REASON_CLOSED is NULL)
+AND     C.ID_CASE = S.ID_CASE
+AND     CPRSNTYP.CODE(+) = SPL.CD_STAGE_PERS_TYPE
+AND     CRPTRINT.CODE(+) = SPL.CD_STAGE_PERS_REL_INT
+AND     CSTAGES.CODE(+) = S.CD_STAGE
+AND     CSTGTYPE.CODE(+) = S.CD_STAGE_TYPE
+
+ORDER BY    C.ID_CASE ASC, S.DT_STAGE_START DESC
+                            
+END-SELECT
+
+  if #count4 = 0
+    print 'NO INVOLVEMENT IN ANY STAGE'  (+3) center
+  end-if
+
+END-PROCEDURE GET-STAGE-INFO
+       
+!****************************************************************************
+!                                                                           *
+!   PRINT-CURRENT-INFO                                                      *
+!                                                                           *
+!       This procedure prints the current information about the input       *
+!       person.                                                             *
+!                                                                           * 
+!       CALLED BY  : GET-CURRENT-INFO                                       *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CURRENT-INFO
+
+print 'Sex: '                                   (+3,1)
+print $sex_dec                                  (+0,12)
+print 'D.O.B.: '                                (+1,1)
+print $DOB                                      (+0,12)
+print 'D.O.D:'                                  (+0,28)  !SIR16121
+print $death_date                               (+0,36)  !SIR16121
+print 'Reason for Death:'                       (+0,50)  !SIR16121
+print $death_rsn                                (+0,69)  !SIR16121
+print 'Ethnicity: '                             (+1,1)
+print $ethnic_dec                               (+0,12)
+print 'SSN: '                                   (+1,1)
+print $person_num                               (+0,12)
+
+END-PROCEDURE PRINT-CURRENT-INFO   
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CASE                                                              *
+!                                                                           *
+!       This procedure prints the case name and ID only once.               *
+!                                                                           *
+!       CALLED BY  : GET-INVESTIGATION, GET-STAGE-INFO                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CASE 
+
+!*******SIR 20831*******
+next-listing need = 10
+
+print 'CASE NAME: '                             (+3,1)
+print $case_name                                (+0,12)
+print 'CASE ID: '                               (+1,1)
+
+if #id_case <> 0
+  print #id_case                                (+0,12) edit 8888888888888888
+end-if
+
+END-PROCEDURE PRINT-CASE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-INVESTIGATION                                                     *
+!                                                                           *
+!       This procedure prints the investigation information about the cases.*
+!                                                                           * 
+!       CALLED BY  : GET-INVESTIGATION                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-INVESTIGATION  
+
+print 'Program: '                               (+2,1)
+print $prog_dec                                 (+0)
+print 'Investigation Conclusion Date: '         (+1,1)
+print $dt_comp                                  ()
+
+!***SIR 200113***
+print 'Date Stage Closed: '                     (+1,1)
+print $dt_stage_close                           ()
+
+    print 'Admin Review Type: '                 (+0,63)
+    print $app_type_dec                         ()
+
+print 'Role: '                                  (+1,1)
+print $role_dec                                 ()
+
+    print 'Admin Review Status: '               (+0,63)
+    print $app_stat_dec                         ()
+
+print 'Overall Disposition: '                   (+1,1)
+print $disp_dec                                 ()
+
+    print 'Admin Review Status Date: '          (+0,63)
+    print $dt_stage_start                       ()
+
+print 'Investigation Conclusions: '             (+1,1)
+print $rsn_dec                                  ()
+
+if $prog_dec = 'CPS'
+    print 'Risk Findings: '                         (+1,1)
+    print $ra_find_dec                              ()
+end-if
+
+  move #id_case                 to #last_case
+  move ''                       to $dt_comp
+  move ''                       to $disp_dec
+  move ''                       to $rsn_dec
+  move ''                       to $ra_find_dec
+  move ''                       to $app_type_dec
+  move ''                       to $app_stat_dec
+  move ''                       to $dt_stage_start
+
+END-PROCEDURE PRINT-INVESTIGATION  
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ALLEGATION-TITLE                                                  *
+!                                                                           *
+!       This procedure prints the allegation title and information about the*
+!       investigations.                                                     *
+!                                                                           * 
+!       CALLED BY  : GET-ALLEGATION                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ALLEGATION-TITLE  
+
+next-listing need = 5
+
+print 'Alleg/Desig Victim'                      (+2,1)
+print 'Allegation'                              (+0,27)
+print 'Alleg/Desig/Sust Perp'                   (+0,54)
+print 'Disposition'                             (+0,80)
+print 'Severity'                                (+0,100)
+print '-'                                       (+1,1,25)  fill
+print '-'                                       (+0,27,26) fill
+print '-'                                       (+0,54,25) fill
+print '-'                                       (+0,80,19) fill
+print '-'                                       (+0,100,8) fill
+
+END-PROCEDURE PRINT-ALLEGATION-TITLE     
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ALLEGATION                                                        *
+!                                                                           *
+!       This procedure prints the rest of the allegations.                  *
+!                                                                           * 
+!       CALLED BY  : GET-ALLEGATION                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ALLEGATION  
+
+print $victim_name                              (+1,1)
+print $alleg_dec                                (+0,27)
+print $perp_name                                (+0,54)
+print $alleg_disp_dec                           (+0,80)
+print $sever_dec                                (+0,100)
+
+END-PROCEDURE PRINT-ALLEGATION     
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-STAGE-TITLE                                                       *
+!                                                                           *
+!       This procedure prints the stage titles only once per case.          *
+!                                                                           * 
+!       CALLED BY  : GET-STAGE-INFO                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-STAGE-TITLE  
+
+next-listing need = 5
+
+print 'Start Date'                              (+1,1)
+print 'End Date'                                (+0,12)
+print 'Stage'                                   (+0,23)
+print 'Stage Type'                              (+0,44)
+print 'Stage Name'                              (+0,65)
+print 'Type'                                    (+0,91)
+print 'Rel/Interest'                            (+0,102)
+print '-'                                       (+1,1,10)    fill
+print '-'                                       (+0,12,10)   fill
+print '-'                                       (+0,23,20)   fill
+print '-'                                       (+0,44,20)   fill
+print '-'                                       (+0,65,25)   fill
+print '-'                                       (+0,91,10)   fill
+print '-'                                       (+0,102,20)  fill
+
+END-PROCEDURE PRINT-STAGE-TITLE     
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-STAGE                                                             *
+!                                                                           *
+!       This procedure prints the stage summary information.                *
+!                                                                           * 
+!       CALLED BY  : GET-STAGE-INFO                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-STAGE  
+
+print $dt_stage_start                           (+1,1)
+print $dt_stage_close                           (+0,12)
+print $stage_dec                                (+0,23)
+print $stage_type_dec                           (+0,44)
+print $stage_name                               (+0,65)
+print $pers_type_dec                            (+0,91)
+print $rel_int_dec                              (+0,102)
+
+  move #id_case                 to #last_case
+
+END-PROCEDURE PRINT-STAGE     
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      * 
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc'

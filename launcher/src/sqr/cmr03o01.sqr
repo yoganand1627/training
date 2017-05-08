@@ -1,0 +1,1446 @@
+!*****************************************************************************
+! REGION WORKLOAD REPORT                                                     *
+!*****************************************************************************  
+!
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cmr03o01.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/blackam/work/sqr                         *
+!                                                                            *
+!                                                                            *
+! DATE:                 06/18/96                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Angela Black                                         *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This program will offer managers the opportunity to  *
+!                       view trends in a region's caseload.  The report      *
+!                       generated will give a summary of the monthly         *
+!                       activities of each region, in addition to            *
+!                       displaying the same information for other months     *
+!                       to provide the opportunity for comparison.  A fiscal *
+!                       year to date total and average are also displayed.   *
+!                       The report will end with a state summary.            * 
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 06/18/96   A. Black     Initial Programming                                *
+! 07/31/96   A. Black     Revised Programming-The program was originally     *
+!                                             designed to display stage      *
+!                                             type and class for particular  *
+!                                             stages.  This code has been    *
+!                                             commented out based on the     *
+!                                             decisions made by Leslie DeHay *
+!                                             and Kathy Slay on July 31,1996.*
+!                                             The program can also run for   *
+!                                             a date other than the system   *
+!                                             date, if the sequel 'GET-DATE' *
+!                                             is uncommented out and a date  *
+!                                             stored in the Batch Parameters *
+!                                             table.                         *
+! 01/10/97   odonnerj     Fixed the GetSysDate function so that it handles   *
+!                         the month of January correctly.  Also fixed the    *
+!                         where clause of the get-state-info so that it      *
+!                         looks for month and year exact combinations.       *
+!                         Finally removed the <= sysdate in the cytd and     *
+!                         fiscal year to date calculations.                  *
+!                                                                            *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup01a.sqc'                 ! control codes for Landscape 
+     
+     ask CD_STATE
+        
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 7
+
+  move 'REGION WORKLOAD REPORT'             to $ReportTitle
+  
+  #INCLUDE 'header01.sqc'               !Include file with Header Information
+                    !Specific to MIS batch landscape reports
+
+print 'REGION'                    (+3,18)
+print 'PROG'                      (+0,35)
+print 'STAGE'                     (+0,43)
+!print 'TYPE/CLASS'                (+0,52)
+print 'STATS'                     (+0,55)
+print 'C   U   R   R   E   N   T            Y   E   A   R'  (+0,71) 
+print 'L  A  S  T       Y  E  A  R'     (+0,136)
+print #input_month                (+1,71) edit 00
+print '/'                         (+0,73)
+print #input_year                 (+0,74) edit 88888 
+print #input_month_1              (+0,82) edit 00
+print '/'                         (+0,84)
+print #input_year_2               (+0,85) edit 88888
+print #input_month_2              (+0,93) edit 00
+print '/'                         (+0,95)
+print #input_year_3               (+0,96) edit 88888
+print 'FYTD'                      (+0,104)
+print 'FYTD'                      (+0,113)
+print 'CYTD'                       (+0,122)
+!print 'YTD'                       (+0,125)
+print #input_month                (+0,134) edit 00
+print '/'                         (+0,136)
+print #input_year_1               (+0,137) edit 88888
+print #input_month_1              (+0,145) edit 00
+print '/'                         (+0,147)
+print #input_year_5               (+0,148) edit 88888
+print #input_month_2              (+0,156) edit 00
+print '/'                         (+0,158)
+print #input_year_6               (+0,159) edit 88888
+print 'TOT'                       (+1,104)
+print 'AVG'                       (+0,113)
+print 'TOT'                       (+0,122)
+!print 'AVG'                       (+0,125)
+!print '[C   U   R   R   E   N   T      Y   E   A   R]'  (+1,71) 
+!print '[L  A  S  T     Y  E  A  R]'     (+0,134)
+print '_'                         (+1,05,160) fill                      
+
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+!   do GET-DATE
+!    if $sysdate <> ''
+!      else
+      do GET-SYSDATE
+!    end-if
+ 
+  !************************************************
+  ! Variables and Constants                       *
+  !************************************************
+
+    move 'IN'           to $IN
+
+   evaluate #input_month
+        when = 1
+            let #input_month_1  = 12
+            let #input_month_2  = 11
+            let #input_month_3  = 10
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year - 1
+            let #input_year_3   = #input_year - 1
+            let #input_year_4   = #input_year - 1
+            let #input_year_5   = #input_year - 2
+            let #input_year_6   = #input_year - 2
+            let #input_year_7   = #input_year - 2
+            let #input_year_8   = #input_year           
+            let #fy_months = 5
+        break
+        when = 2
+            let #input_month_1  = 1
+            let #input_month_2  = 12
+            let #input_month_3  = 11
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year - 1
+            let #input_year_4   = #input_year - 1
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 2
+            let #input_year_7   = #input_year - 2
+            let #input_year_8   = #input_year       
+            let #fy_months = 6
+        break
+        when = 3
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = 12
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year - 1
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 2
+            let #input_year_8   = #input_year       
+            let #fy_months = 7
+        break
+        when = 4
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year 
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_8   = #input_year       
+            let #fy_months = 8
+        break
+        when = 5
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year 
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_8   = #input_year       
+            let #fy_months = 9
+        break
+        when = 6
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year 
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_8   = #input_year       
+            let #fy_months = 10
+        break
+        when = 7
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year 
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_8   = #input_year       
+            let #fy_months = 11
+        break
+        when = 8
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year 
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_8   = #input_year       
+            let #fy_months = 12
+        break
+        when = 9
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year 
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_8   = #input_year + 1      
+            let #fy_months = 1
+        break
+        when = 10
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year 
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_8   = #input_year + 1     
+            let #fy_months = 2
+        break
+        when = 11
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year 
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_8   = #input_year + 1   
+            let #fy_months = 3
+        break
+        when = 12
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year 
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_8   = #input_year + 1     
+            let #fy_months = 4
+        break
+    end-evaluate
+                                
+  move 'N' to $print_stage_flag
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-REGION-INFO                                        *
+!                    GET-STATE-INFO                                         *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do GET-REGION-INFO
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-DATE                                                             *
+!                                                                           *
+!       This procedure will select the system date in order to replace the  * 
+!       input year and month.                                               *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+!BEGIN-PROCEDURE GET-DATE
+       
+!BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+!to_date(DT_PARAM_EFFECTIVE, 'MM/DD/YYYY') &date1
+!     move &date1             to $sysdate
+  
+!  show $sysdate
+
+!  let $input_month = substr($sysdate,1,2)
+!  let $input_year  = substr($sysdate,7,10)
+
+!  move $input_month     to #input_month
+!  move $input_year      to #input_year
+
+!FROM BATCH_PARAMETERS
+!WHERE DT_LAST_UPDATE  = (SELECT MAX(DT_LAST_UPDATE) FROM BATCH_PARAMETERS)
+
+!END-SELECT              
+                     
+!END-PROCEDURE GET-DATE
+    
+!****************************************************************************
+!                                                                           *
+!   GET-SYSDATE                                                             *
+!                                                                           *
+!       This procedure will select the system date in order to replace the  * 
+!       input year and month.                                               *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-SYSDATE
+       
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_date(SYSDATE, 'MM/DD/YYYY') &sysdate
+     move &sysdate            to $sysdate
+
+  let $input_month = substr($sysdate,1,2)
+  let $input_year  = substr($sysdate,7,10)
+
+  move $input_month to #input_month_a
+
+  if #input_month_a = 1
+    let #input_month = 12
+
+    move $input_year to #input_year_a
+    let  #input_year_b = #input_year_a - 1
+    move #input_year_b to #input_year
+  else
+    let  #input_month_b = #input_month_a - 1
+
+    move #input_month_b     to #input_month
+    move $input_year      to #input_year
+
+  end-if
+
+!  show #input_month edit 88
+!  show #input_year  edit 88888
+!  show 'got sysdate'
+  
+FROM DUAL
+     
+END-SELECT              
+     
+END-PROCEDURE GET-SYSDATE
+         
+!****************************************************************************
+!                                                                           *
+!   GET-REGION-INFO                                                         *
+!                                                                           *
+!       This procedure will select region information.                      *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-REGION-INFO                                      *
+!                    GET-REGION-THIS-MONTH                                  *
+!                    GET-REGION-LAST-MONTH                                  *
+!                    GET-REGION-2AGO-MONTH                                  *
+!                    GET-REGION-3AGO-MONTH                                  *
+!                    GET-REGION-YTD-TOTAL                                   *
+!                    GET-REGION-LAST-YEAR-THIS-MONTH                        *
+!                    GET-REGION-LAST-YEAR-LAST-MONTH                        *
+!                    GET-REGION-LAST-YEAR-2AGO-MONTH                        *
+!                    GET-REGION-LAST-YEAR-3AGO-MONTH                        *
+!                    PRINT-REGION-MONTHLY-STATS                             *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REGION-INFO
+
+  move 0          to #region_count
+  
+!  show 'got date'  
+!  show 'getting region info' 
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+  
+!  show 'hello'
+  
+SRW.CD_REGN_REGION
+  move &SRW.CD_REGN_REGION         to $regn_region
+!  show 'getting region region'
+
+SRW.CD_REGN_PROGRAM
+  move &SRW.CD_REGN_PROGRAM        to $regn_program
+!  show 'getting region program'
+  
+SRW.CD_REGN_STAGE
+  move &SRW.CD_REGN_STAGE          to $regn_stage
+!  show 'getting region stage'
+  
+!SRW.CD_REGN_STAGE_TYPE  
+!  move &SRW.CD_REGN_STAGE_TYPE     to $regn_stage_type
+!  show 'getting region stage type'
+  
+  let #region_count = #region_count + 1
+  
+  if #region_count = 1
+  else
+     if ($last_regn_program <> $regn_program)
+         NEW-PAGE
+         move 'N' to $print_stage_flag
+     else
+      move 'Y' to $print_stage_flag
+      end-if
+  end-if    
+  
+  do PRINT-REGION-INFO
+  do GET-REGION-THIS-MONTH
+  do GET-REGION-LAST-MONTH
+  do GET-REGION-2AGO-MONTH
+  do GET-REGION-3AGO-MONTH
+  do GET-REGION-FYTD-TOTAL
+  do GET-REGION-YTD-TOTAL
+  do GET-REGION-LAST-YEAR-THIS-MONTH
+  do GET-REGION-LAST-YEAR-LAST-MONTH
+  do GET-REGION-LAST-YEAR-2AGO-MONTH
+  do GET-REGION-LAST-YEAR-3AGO-MONTH
+  do CALCULATE-EXCEPTION-FIELD
+  do PRINT-REGION-MONTHLY-STATS
+    
+FROM  STATS_REGION_WKM SRW
+    
+WHERE  ((SRW.MO_REGN_STAT_MO = #input_month 
+AND      (SRW.YR_REGN_STAT_YR = #input_year OR SRW.YR_REGN_STAT_YR = #input_year_1))
+OR      (SRW.MO_REGN_STAT_MO = #input_month_1 
+AND      (SRW.YR_REGN_STAT_YR = #input_year_2 OR SRW.YR_REGN_STAT_YR = #input_year_5))
+OR      (SRW.MO_REGN_STAT_MO = #input_month_2 
+AND      (SRW.YR_REGN_STAT_YR = #input_year_3 OR SRW.YR_REGN_STAT_YR = #input_year_6))
+OR      (SRW.MO_REGN_STAT_MO = #input_month_3 
+AND      (SRW.YR_REGN_STAT_YR = #input_year_4 OR SRW.YR_REGN_STAT_YR = #input_year_7)))
+   
+ORDER BY SRW.CD_REGN_PROGRAM, SRW.CD_REGN_REGION
+
+END-SELECT
+
+END-PROCEDURE GET-REGION-INFO
+
+!****************************************************************************
+!                                                                           *
+!   GET-REGION-THIS-MONTH                                                     *
+!                                                                           *
+!       This procedure will select region statistics for the current month.   *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-REGION-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REGION-THIS-MONTH
+!  show 'getting region this month'
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SRW.NBR_REGN_CLOS_FCT_CON)  &srw_nbr_regn_clos_fct_con
+  move &srw_nbr_regn_clos_fct_con      to #this_mo_nbr_regn_clos_fct_con
+
+SUM (SRW.NBR_REGN_CLOS_NO_SIG)   &srw_nbr_regn_clos_no_sig
+  move &srw_nbr_regn_clos_no_sig       to #this_mo_nbr_regn_clos_no_sig
+
+SUM (SRW.NBR_REGN_CLOS_RSK_ASS)  &srw_nbr_regn_clos_rsk_ass
+  move &srw_nbr_regn_clos_rsk_ass      to #this_mo_nbr_regn_clos_rsk_ass
+
+SUM (SRW.NBR_REGN_CLOS_RSK_IND)  &srw_nbr_regn_clos_rsk_ind
+  move &srw_nbr_regn_clos_rsk_ind      to #this_mo_nbr_regn_clos_rsk_ind
+
+SUM (SRW.NBR_REGN_CLOSED)        &srw_nbr_regn_closed
+  move &srw_nbr_regn_closed            to #this_mo_nbr_regn_closed
+
+SUM (SRW.NBR_REGN_END_BAL)       &srw_nbr_regn_end_bal
+  move &srw_nbr_regn_end_bal           to #this_mo_nbr_regn_end_bal
+
+SUM (SRW.NBR_REGN_NEW)           &srw_nbr_regn_new
+  move &srw_nbr_regn_new               to #this_mo_nbr_regn_new
+
+SUM (SRW.NBR_REGN_SECOND_ASGMT)  &srw_nbr_regn_second_asgmt
+  move &srw_nbr_regn_second_asgmt      to #this_mo_nbr_regn_second_asgmt
+
+SUM (SRW.NBR_REGN_TRANSFR_IN)    &srw_nbr_regn_transfr_in
+  move &srw_nbr_regn_transfr_in        to #this_mo_nbr_regn_transfr_in
+
+SUM (SRW.NBR_REGN_TRANSFR_OUT)   &srw_nbr_regn_transfr_out
+  move &srw_nbr_regn_transfr_out       to #this_mo_nbr_regn_transfr_out
+
+  let #sum_this_mo_nbr_regn_closed_total = #this_mo_nbr_regn_clos_fct_con 
+                                         + #this_mo_nbr_regn_clos_no_sig
+                                         + #this_mo_nbr_regn_clos_rsk_ass
+                                         + #this_mo_nbr_regn_clos_rsk_ind
+                                         + #this_mo_nbr_regn_closed
+
+FROM  STATS_REGION_WKM SRW
+
+WHERE SRW.MO_REGN_STAT_MO            =  #input_month
+AND   SRW.YR_REGN_STAT_YR            =  #input_year
+AND   SRW.CD_REGN_STAGE              =  $regn_stage
+AND   SRW.CD_REGN_PROGRAM            =  $regn_program
+AND   SRW.CD_REGN_REGION             =  $regn_region
+!AND   SRW.CD_REGN_STAGE_TYPE        =  $regn_stage_type
+
+END-SELECT
+    
+END-PROCEDURE GET-REGION-THIS-MONTH    
+
+!****************************************************************************
+!                                                                           *
+!   GET-REGION-LAST-MONTH                                                     *
+!                                                                           *
+!       This procedure will select region statistics for the previous month.  *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-REGION-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REGION-LAST-MONTH
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SRW3.NBR_REGN_CLOS_FCT_CON)  &srw3_nbr_regn_clos_fct_con
+  move &srw3_nbr_regn_clos_fct_con      to #last_mo_nbr_regn_clos_fct_con
+
+SUM (SRW3.NBR_REGN_CLOS_NO_SIG)   &srw3_nbr_regn_clos_no_sig
+  move &srw3_nbr_regn_clos_no_sig       to #last_mo_nbr_regn_clos_no_sig
+
+SUM (SRW3.NBR_REGN_CLOS_RSK_ASS)  &srw3_nbr_regn_clos_rsk_ass
+  move &srw3_nbr_regn_clos_rsk_ass      to #last_mo_nbr_regn_clos_rsk_ass
+
+SUM (SRW3.NBR_REGN_CLOS_RSK_IND)  &srw3_nbr_regn_clos_rsk_ind
+  move &srw3_nbr_regn_clos_rsk_ind      to #last_mo_nbr_regn_clos_rsk_ind
+
+SUM (SRW3.NBR_REGN_CLOSED)        &srw3_nbr_regn_closed
+  move &srw3_nbr_regn_closed            to #last_mo_nbr_regn_closed
+
+SUM (SRW3.NBR_REGN_END_BAL)       &srw3_nbr_regn_end_bal
+  move &srw3_nbr_regn_end_bal           to #last_mo_nbr_regn_end_bal
+
+SUM (SRW3.NBR_REGN_NEW)           &srw3_nbr_regn_new
+  move &srw3_nbr_regn_new               to #last_mo_nbr_regn_new
+
+SUM (SRW3.NBR_REGN_SECOND_ASGMT)  &srw3_nbr_regn_second_asgmt
+  move &srw3_nbr_regn_second_asgmt      to #last_mo_nbr_regn_second_asgmt
+
+SUM (SRW3.NBR_REGN_TRANSFR_IN)    &srw3_nbr_regn_transfr_in
+  move &srw3_nbr_regn_transfr_in        to #last_mo_nbr_regn_transfr_in
+
+SUM (SRW3.NBR_REGN_TRANSFR_OUT)   &srw3_nbr_regn_transfr_out
+  move &srw3_nbr_regn_transfr_out       to #last_mo_nbr_regn_transfr_out
+
+!  show 'GETTING REGION LAST MONTH'
+
+  let #sum_last_mo_nbr_regn_closed_total = #last_mo_nbr_regn_clos_fct_con 
+                                         + #last_mo_nbr_regn_clos_no_sig
+                                         + #last_mo_nbr_regn_clos_rsk_ass
+                                         + #last_mo_nbr_regn_clos_rsk_ind
+                                         + #last_mo_nbr_regn_closed
+  
+FROM  STATS_REGION_WKM SRW3
+WHERE SRW3.MO_REGN_STAT_MO            = #input_month_1
+AND   SRW3.YR_REGN_STAT_YR            = #input_year_2
+AND   SRW3.CD_REGN_PROGRAM            = $regn_program
+AND   SRW3.CD_REGN_STAGE              = $regn_stage
+AND   SRW3.CD_REGN_REGION             =  $regn_region
+!AND   SRW3.CD_REGN_STAGE_TYPE         = $regn_stage_type
+!AND   SRW3.CD_REGN_STAGE_CLASS        = $regn_stage_class
+!AND   SRW3.CD_REGN_STAGE_PRIORITY     = $regn_stage_priority
+
+END-SELECT
+    
+END-PROCEDURE GET-REGION-LAST-MONTH
+
+!****************************************************************************
+!                                                                           *
+!   GET-REGION-2AGO-MONTH                                                   *
+!                                                                           *
+!       This procedure will select region statistics for two months ago.    *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-REGION-INFO                                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REGION-2AGO-MONTH
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SRW2.NBR_REGN_CLOS_FCT_CON)  &srw2_nbr_regn_clos_fct_con
+  move &srw2_nbr_regn_clos_fct_con      to #2ago_mo_nbr_regn_clos_fct_con
+
+SUM (SRW2.NBR_REGN_CLOS_NO_SIG)   &srw2_nbr_regn_clos_no_sig
+  move &srw2_nbr_regn_clos_no_sig       to #2ago_mo_nbr_regn_clos_no_sig
+
+SUM (SRW2.NBR_REGN_CLOS_RSK_ASS)  &srw2_nbr_regn_clos_rsk_ass
+  move &srw2_nbr_regn_clos_rsk_ass      to #2ago_mo_nbr_regn_clos_rsk_ass
+
+SUM (SRW2.NBR_REGN_CLOS_RSK_IND)  &srw2_nbr_regn_clos_rsk_ind
+  move &srw2_nbr_regn_clos_rsk_ind      to #2ago_mo_nbr_regn_clos_rsk_ind
+
+SUM (SRW2.NBR_REGN_CLOSED)        &srw2_nbr_regn_closed
+  move &srw2_nbr_regn_closed            to #2ago_mo_nbr_regn_closed
+
+SUM (SRW2.NBR_REGN_END_BAL)       &srw2_nbr_regn_end_bal
+  move &srw2_nbr_regn_end_bal           to #2ago_mo_nbr_regn_end_bal
+
+SUM (SRW2.NBR_REGN_NEW)           &srw2_nbr_regn_new
+  move &srw2_nbr_regn_new               to #2ago_mo_nbr_regn_new
+
+SUM (SRW2.NBR_REGN_SECOND_ASGMT)  &srw2_nbr_regn_second_asgmt
+  move &srw2_nbr_regn_second_asgmt      to #2ago_mo_nbr_regn_second_asgmt
+
+SUM (SRW2.NBR_REGN_TRANSFR_IN)    &srw2_nbr_regn_transfr_in
+  move &srw2_nbr_regn_transfr_in        to #2ago_mo_nbr_regn_transfr_in
+
+SUM (SRW2.NBR_REGN_TRANSFR_OUT)   &srw2_nbr_regn_transfr_out
+  move &srw2_nbr_regn_transfr_out       to #2ago_mo_nbr_regn_transfr_out
+
+!  show 'GETTING REGION TWO MONTHS AGO'
+
+  let #sum_2ago_mo_nbr_regn_closed_total = #2ago_mo_nbr_regn_clos_fct_con 
+                                         + #2ago_mo_nbr_regn_clos_no_sig
+                                         + #2ago_mo_nbr_regn_clos_rsk_ass
+                                         + #2ago_mo_nbr_regn_clos_rsk_ind
+                                         + #2ago_mo_nbr_regn_closed
+  
+FROM  STATS_REGION_WKM SRW2         
+
+WHERE SRW2.MO_REGN_STAT_MO            = #input_month_2
+AND   SRW2.YR_REGN_STAT_YR            = #input_year_3 
+AND   SRW2.CD_REGN_PROGRAM            = $regn_program
+AND   SRW2.CD_REGN_STAGE              = $regn_stage
+AND   SRW2.CD_REGN_REGION             =  $regn_region
+!AND   SRW2.CD_REGN_STAGE_TYPE         = $regn_stage_type
+!AND   SRW2.CD_REGN_STAGE_CLASS        = $regn_stage_class
+!AND   SRW2.CD_REGN_STAGE_PRIORITY     = $regn_stage_priority
+
+END-SELECT
+    
+END-PROCEDURE GET-REGION-2AGO-MONTH 
+
+!****************************************************************************
+!                                                                           *
+!   GET-REGION-3AGO-MONTH                                                   *
+!                                                                           *
+!       This procedure will select region statistics for three months ago.  *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-REGION-INFO                                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REGION-3AGO-MONTH
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SRW1.NBR_REGN_END_BAL)       &srw1_nbr_regn_end_bal
+  move &srw1_nbr_regn_end_bal           to #3ago_mo_nbr_regn_end_bal
+
+!  show 'GETTING REGION THREE MONTHS AGO'
+
+FROM  STATS_REGION_WKM SRW1        
+
+WHERE SRW1.MO_REGN_STAT_MO            = #input_month_3
+AND   SRW1.YR_REGN_STAT_YR            = #input_year_4
+AND   SRW1.CD_REGN_PROGRAM            = $regn_program
+AND   SRW1.CD_REGN_STAGE              = $regn_stage  
+AND   SRW1.CD_REGN_REGION             =  $regn_region
+!AND   SRW1.CD_REGN_STAGE_TYPE         = $regn_stage_type
+!AND   SRW1.CD_REGN_STAGE_CLASS        = $regn_stage_class
+!AND   SRW1.CD_REGN_STAGE_PRIORITY     = $regn_stage_priority
+
+END-SELECT
+    
+END-PROCEDURE GET-REGION-3AGO-MONTH 
+
+!****************************************************************************
+!                                                                           *
+!   GET-REGION-FYTD-TOTAL                                                      *
+!                                                                           *
+!       This procedure will select region statistics for the fiscal year.     *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-REGION-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REGION-FYTD-TOTAL
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SRW5.NBR_REGN_CLOS_FCT_CON)  &srw5_nbr_regn_clos_fct_con
+  move &srw5_nbr_regn_clos_fct_con      to #fytd_nbr_regn_clos_fct_con
+
+SUM (SRW5.NBR_REGN_CLOS_NO_SIG)   &srw5_nbr_regn_clos_no_sig
+  move &srw5_nbr_regn_clos_no_sig       to #fytd_nbr_regn_clos_no_sig
+
+SUM (SRW5.NBR_REGN_CLOS_RSK_ASS)  &srw5_nbr_regn_clos_rsk_ass
+  move &srw5_nbr_regn_clos_rsk_ass      to #fytd_nbr_regn_clos_rsk_ass
+
+SUM (SRW5.NBR_REGN_CLOS_RSK_IND)  &srw5_nbr_regn_clos_rsk_ind
+  move &srw5_nbr_regn_clos_rsk_ind      to #fytd_nbr_regn_clos_rsk_ind
+
+SUM (SRW5.NBR_REGN_CLOSED)        &srw5_nbr_regn_closed
+  move &srw5_nbr_regn_closed            to #fytd_nbr_regn_closed
+
+SUM (SRW5.NBR_REGN_END_BAL)       &srw5_nbr_regn_end_bal
+  move &srw5_nbr_regn_end_bal           to #fytd_nbr_regn_end_bal
+
+SUM (SRW5.NBR_REGN_NEW)           &srw5_nbr_regn_new
+  move &srw5_nbr_regn_new               to #fytd_nbr_regn_new
+
+SUM (SRW5.NBR_REGN_SECOND_ASGMT)  &srw5_nbr_regn_second_asgmt
+  move &srw5_nbr_regn_second_asgmt      to #fytd_nbr_regn_second_asgmt
+
+SUM (SRW5.NBR_REGN_TRANSFR_IN)    &srw5_nbr_regn_transfr_in
+  move &srw5_nbr_regn_transfr_in        to #fytd_nbr_regn_transfr_in
+
+SUM (SRW5.NBR_REGN_TRANSFR_OUT)   &srw5_nbr_regn_transfr_out
+  move &srw5_nbr_regn_transfr_out       to #fytd_nbr_regn_transfr_out
+
+!  show 'GETTING REGION FYTD'
+
+  let #sum_fytd_nbr_regn_closed_total = #fytd_nbr_regn_clos_fct_con 
+                                      + #fytd_nbr_regn_clos_no_sig
+                                      + #fytd_nbr_regn_clos_rsk_ass
+                                      + #fytd_nbr_regn_clos_rsk_ind
+                                      + #fytd_nbr_regn_closed
+  
+FROM  STATS_REGION_WKM SRW5      
+
+WHERE  SRW5.FY_REGN_STAT_FY          = #input_year_8
+AND   SRW5.CD_REGN_PROGRAM            = $regn_program
+AND   SRW5.CD_REGN_STAGE              = $regn_stage
+AND   SRW5.CD_REGN_REGION             =  $regn_region
+!AND   SRW5.CD_REGN_STAGE_TYPE         = $regn_stage_type
+!AND   SRW5.CD_REGN_STAGE_CLASS        = $regn_stage_class
+!AND   SRW5.CD_REGN_STAGE_PRIORITY     = $regn_stage_priority
+
+END-SELECT
+    
+END-PROCEDURE GET-REGION-FYTD-TOTAL
+!****************************************************************************
+!                                                                           *
+!   GET-REGION-YTD-TOTAL                                                    *
+!                                                                           *
+!       This procedure will select region statistics for the current year.  *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-REGION-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REGION-YTD-TOTAL
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SRW5a.NBR_REGN_CLOS_FCT_CON)  &srw5a_nbr_regn_clos_fct_con
+  move &srw5a_nbr_regn_clos_fct_con      to #ytd_nbr_regn_clos_fct_con
+
+SUM (SRW5a.NBR_REGN_CLOS_NO_SIG)   &srw5a_nbr_regn_clos_no_sig
+  move &srw5a_nbr_regn_clos_no_sig       to #ytd_nbr_regn_clos_no_sig
+
+SUM (SRW5a.NBR_REGN_CLOS_RSK_ASS)  &srw5a_nbr_regn_clos_rsk_ass
+  move &srw5a_nbr_regn_clos_rsk_ass      to #ytd_nbr_regn_clos_rsk_ass
+
+SUM (SRW5a.NBR_REGN_CLOS_RSK_IND)  &srw5a_nbr_regn_clos_rsk_ind
+  move &srw5a_nbr_regn_clos_rsk_ind      to #ytd_nbr_regn_clos_rsk_ind
+
+SUM (SRW5a.NBR_REGN_CLOSED)        &srw5a_nbr_regn_closed
+  move &srw5a_nbr_regn_closed            to #ytd_nbr_regn_closed
+
+SUM (SRW5a.NBR_REGN_END_BAL)       &srw5a_nbr_regn_end_bal
+  move &srw5a_nbr_regn_end_bal           to #ytd_nbr_regn_end_bal
+
+SUM (SRW5a.NBR_REGN_NEW)           &srw5a_nbr_regn_new
+  move &srw5a_nbr_regn_new               to #ytd_nbr_regn_new
+
+SUM (SRW5a.NBR_REGN_SECOND_ASGMT)  &srw5a_nbr_regn_second_asgmt
+  move &srw5a_nbr_regn_second_asgmt      to #ytd_nbr_regn_second_asgmt
+
+SUM (SRW5a.NBR_REGN_TRANSFR_IN)    &srw5a_nbr_regn_transfr_in
+  move &srw5a_nbr_regn_transfr_in        to #ytd_nbr_regn_transfr_in
+
+SUM (SRW5a.NBR_REGN_TRANSFR_OUT)   &srw5a_nbr_regn_transfr_out
+  move &srw5a_nbr_regn_transfr_out       to #ytd_nbr_regn_transfr_out
+
+!  show 'GETTING REGION YTD'
+
+  let #sum_ytd_nbr_regn_closed_total = #ytd_nbr_regn_clos_fct_con 
+                                      + #ytd_nbr_regn_clos_no_sig
+                                      + #ytd_nbr_regn_clos_rsk_ass
+                                      + #ytd_nbr_regn_clos_rsk_ind
+                                      + #ytd_nbr_regn_closed
+  
+FROM  STATS_REGION_WKM SRW5a      
+
+WHERE   SRW5a.YR_REGN_STAT_YR          = #input_year
+AND   SRW5a.CD_REGN_PROGRAM            = $regn_program
+AND   SRW5a.CD_REGN_STAGE              = $regn_stage
+AND   SRW5a.CD_REGN_REGION             =  $regn_region
+!AND   SRW5a.CD_REGN_STAGE_TYPE         = $regn_stage_type
+!AND   SRW5a.CD_REGN_STAGE_CLASS        = $regn_stage_class
+!AND   SRW5a.CD_REGN_STAGE_PRIORITY     = $regn_stage_priority
+
+END-SELECT
+    
+END-PROCEDURE GET-REGION-YTD-TOTAL
+
+!****************************************************************************
+!                                                                           *
+!   GET-REGION-LAST-YEAR-THIS-MONTH                                           *
+!                                                                           *
+!       This procedure will select last year's region statistics for the      *
+!       current month.                                                      *
+!                                                                           * 
+!       CALLED BY  : GET-REGION-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REGION-LAST-YEAR-THIS-MONTH
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SRW9.NBR_REGN_CLOS_FCT_CON)  &srw9_nbr_regn_clos_fct_con
+  move &srw9_nbr_regn_clos_fct_con      to #last_year_this_mo_nbr_regn_clos_fct_con
+
+SUM (SRW9.NBR_REGN_CLOS_NO_SIG)   &srw9_nbr_regn_clos_no_sig
+  move &srw9_nbr_regn_clos_no_sig       to #last_year_this_mo_nbr_regn_clos_no_sig
+
+SUM (SRW9.NBR_REGN_CLOS_RSK_ASS)  &srw9_nbr_regn_clos_rsk_ass
+  move &srw9_nbr_regn_clos_rsk_ass      to #last_year_this_mo_nbr_regn_clos_rsk_ass
+
+SUM (SRW9.NBR_REGN_CLOS_RSK_IND)  &srw9_nbr_regn_clos_rsk_ind
+  move &srw9_nbr_regn_clos_rsk_ind      to #last_year_this_mo_nbr_regn_clos_rsk_ind
+
+SUM (SRW9.NBR_REGN_CLOSED)        &srw9_nbr_regn_closed
+  move &srw9_nbr_regn_closed            to #last_year_this_mo_nbr_regn_closed
+
+SUM (SRW9.NBR_REGN_END_BAL)       &srw9_nbr_regn_end_bal
+  move &srw9_nbr_regn_end_bal           to #last_year_this_mo_nbr_regn_end_bal
+
+SUM (SRW9.NBR_REGN_NEW)           &srw9_nbr_regn_new
+  move &srw9_nbr_regn_new               to #last_year_this_mo_nbr_regn_new
+
+SUM (SRW9.NBR_REGN_SECOND_ASGMT)  &srw9_nbr_regn_second_asgmt
+  move &srw9_nbr_regn_second_asgmt      to #last_year_this_mo_nbr_regn_second_asgmt
+
+SUM (SRW9.NBR_REGN_TRANSFR_IN)    &srw9_nbr_regn_transfr_in
+  move &srw9_nbr_regn_transfr_in        to #last_year_this_mo_nbr_regn_transfr_in
+
+SUM (SRW9.NBR_REGN_TRANSFR_OUT)   &srw9_nbr_regn_transfr_out
+  move &srw9_nbr_regn_transfr_out       to #last_year_this_mo_nbr_regn_transfr_out
+
+!  show 'GETTING REGION LAST YEAR THIS MONTH'
+
+  let #sum_last_year_this_mo_nbr_regn_closed_total = #last_year_this_mo_nbr_regn_clos_fct_con 
+                                      + #last_year_this_mo_nbr_regn_clos_no_sig
+                                      + #last_year_this_mo_nbr_regn_clos_rsk_ass
+                                      + #last_year_this_mo_nbr_regn_clos_rsk_ind
+                                      + #last_year_this_mo_nbr_regn_closed
+  
+FROM  STATS_REGION_WKM SRW9
+
+WHERE SRW9.MO_REGN_STAT_MO            = #input_month
+AND   SRW9.YR_REGN_STAT_YR            = #input_year_1
+AND   SRW9.CD_REGN_PROGRAM            = $regn_program
+AND   SRW9.CD_REGN_STAGE              = $regn_stage
+AND   SRW9.CD_REGN_REGION             =  $regn_region
+!AND   SRW9.CD_REGN_STAGE_TYPE         = $regn_stage_type
+!AND   SRW9.CD_REGN_STAGE_CLASS        = $regn_stage_class
+!AND   SRW9.CD_REGN_STAGE_PRIORITY     = $regn_stage_priority
+
+END-SELECT
+    
+END-PROCEDURE GET-REGION-LAST-YEAR-THIS-MONTH  
+
+!****************************************************************************
+!                                                                           *
+!   GET-REGION-LAST-YEAR-LAST-MONTH                                           *
+!                                                                           *
+!       This procedure will select last year's region statistics for the      *
+!       previous month.                                                     *
+!                                                                           * 
+!       CALLED BY  : GET-REGION-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REGION-LAST-YEAR-LAST-MONTH
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SRW8.NBR_REGN_CLOS_FCT_CON)  &srw8_nbr_regn_clos_fct_con
+  move &srw8_nbr_regn_clos_fct_con      to #last_year_last_mo_nbr_regn_clos_fct_con
+
+SUM (SRW8.NBR_REGN_CLOS_NO_SIG)   &srw8_nbr_regn_clos_no_sig
+  move &srw8_nbr_regn_clos_no_sig       to #last_year_last_mo_nbr_regn_clos_no_sig
+
+SUM (SRW8.NBR_REGN_CLOS_RSK_ASS)  &srw8_nbr_regn_clos_rsk_ass
+  move &srw8_nbr_regn_clos_rsk_ass      to #last_year_last_mo_nbr_regn_clos_rsk_ass
+
+SUM (SRW8.NBR_REGN_CLOS_RSK_IND)  &srw8_nbr_regn_clos_rsk_ind
+  move &srw8_nbr_regn_clos_rsk_ind      to #last_year_last_mo_nbr_regn_clos_rsk_ind
+
+SUM (SRW8.NBR_REGN_CLOSED)        &srw8_nbr_regn_closed
+  move &srw8_nbr_regn_closed            to #last_year_last_mo_nbr_regn_closed
+
+SUM (SRW8.NBR_REGN_END_BAL)       &srw8_nbr_regn_end_bal
+  move &srw8_nbr_regn_end_bal           to #last_year_last_mo_nbr_regn_end_bal
+
+SUM (SRW8.NBR_REGN_NEW)           &srw8_nbr_regn_new
+  move &srw8_nbr_regn_new               to #last_year_last_mo_nbr_regn_new
+
+SUM (SRW8.NBR_REGN_SECOND_ASGMT)  &srw8_nbr_regn_second_asgmt
+  move &srw8_nbr_regn_second_asgmt      to #last_year_last_mo_nbr_regn_second_asgmt
+
+SUM (SRW8.NBR_REGN_TRANSFR_IN)    &srw8_nbr_regn_transfr_in
+  move &srw8_nbr_regn_transfr_in        to #last_year_last_mo_nbr_regn_transfr_in
+
+SUM (SRW8.NBR_REGN_TRANSFR_OUT)   &srw8_nbr_regn_transfr_out
+  move &srw8_nbr_regn_transfr_out       to #last_year_last_mo_nbr_regn_transfr_out
+
+!  show 'GETTING REGION LAST YEAR LAST MONTH'
+
+  let #sum_last_year_last_mo_nbr_regn_closed_total = #last_year_last_mo_nbr_regn_clos_fct_con 
+                                      + #last_year_last_mo_nbr_regn_clos_no_sig
+                                      + #last_year_last_mo_nbr_regn_clos_rsk_ass
+                                      + #last_year_last_mo_nbr_regn_clos_rsk_ind
+                                      + #last_year_last_mo_nbr_regn_closed
+  
+FROM  STATS_REGION_WKM SRW8
+
+WHERE SRW8.MO_REGN_STAT_MO            = #input_month_1
+AND   SRW8.YR_REGN_STAT_YR            = #input_year_5
+AND   SRW8.CD_REGN_PROGRAM            = $regn_program
+AND   SRW8.CD_REGN_STAGE              = $regn_stage
+AND   SRW8.CD_REGN_REGION             =  $regn_region
+!AND   SRW8.CD_REGN_STAGE_TYPE         = $regn_stage_type
+!AND   SRW8.CD_REGN_STAGE_CLASS        = $regn_stage_class
+!AND   SRW8.CD_REGN_STAGE_PRIORITY     = $regn_stage_priority
+
+END-SELECT
+    
+END-PROCEDURE GET-REGION-LAST-YEAR-LAST-MONTH  
+
+!****************************************************************************
+!                                                                           *
+!   GET-REGION-LAST-YEAR-2AGO-MONTH                                           *
+!                                                                           *
+!       This procedure will select last year's region statistics for the      *
+!       month 2 months prior.                                               *
+!                                                                           * 
+!       CALLED BY  : GET-REGION-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REGION-LAST-YEAR-2AGO-MONTH
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SRW7.NBR_REGN_CLOS_FCT_CON)  &srw7_nbr_regn_clos_fct_con
+  move &srw7_nbr_regn_clos_fct_con      to #last_year_2ago_mo_nbr_regn_clos_fct_con
+
+SUM (SRW7.NBR_REGN_CLOS_NO_SIG)   &srw7_nbr_regn_clos_no_sig
+  move &srw7_nbr_regn_clos_no_sig       to #last_year_2ago_mo_nbr_regn_clos_no_sig
+
+SUM (SRW7.NBR_REGN_CLOS_RSK_ASS)  &srw7_nbr_regn_clos_rsk_ass
+  move &srw7_nbr_regn_clos_rsk_ass      to #last_year_2ago_mo_nbr_regn_clos_rsk_ass
+
+SUM (SRW7.NBR_REGN_CLOS_RSK_IND)  &srw7_nbr_regn_clos_rsk_ind
+  move &srw7_nbr_regn_clos_rsk_ind      to #last_year_2ago_mo_nbr_regn_clos_rsk_ind
+
+SUM (SRW7.NBR_REGN_CLOSED)        &srw7_nbr_regn_closed
+  move &srw7_nbr_regn_closed            to #last_year_2ago_mo_nbr_regn_closed
+
+SUM (SRW7.NBR_REGN_END_BAL)       &srw7_nbr_regn_end_bal
+  move &srw7_nbr_regn_end_bal           to #last_year_2ago_mo_nbr_regn_end_bal
+
+SUM (SRW7.NBR_REGN_NEW)           &srw7_nbr_regn_new
+  move &srw7_nbr_regn_new               to #last_year_2ago_mo_nbr_regn_new
+
+SUM (SRW7.NBR_REGN_SECOND_ASGMT)  &srw7_nbr_regn_second_asgmt
+  move &srw7_nbr_regn_second_asgmt      to #last_year_2ago_mo_nbr_regn_second_asgmt
+
+SUM (SRW7.NBR_REGN_TRANSFR_IN)    &srw7_nbr_regn_transfr_in
+  move &srw7_nbr_regn_transfr_in        to #last_year_2ago_mo_nbr_regn_transfr_in
+
+SUM (SRW7.NBR_REGN_TRANSFR_OUT)   &srw7_nbr_regn_transfr_out
+  move &srw7_nbr_regn_transfr_out       to #last_year_2ago_mo_nbr_regn_transfr_out
+
+! show 'GETTING REGION LAST YEAR 2AGO MONTH'
+      
+  let #sum_last_year_2ago_mo_nbr_regn_closed_total = #last_year_2ago_mo_nbr_regn_clos_fct_con 
+                                      + #last_year_2ago_mo_nbr_regn_clos_no_sig
+                                      + #last_year_2ago_mo_nbr_regn_clos_rsk_ass
+                                      + #last_year_2ago_mo_nbr_regn_clos_rsk_ind
+                                      + #last_year_2ago_mo_nbr_regn_closed
+  
+FROM  STATS_REGION_WKM SRW7
+
+WHERE SRW7.MO_REGN_STAT_MO            = #input_month_2
+AND   SRW7.YR_REGN_STAT_YR            = #input_year_6
+AND   SRW7.CD_REGN_PROGRAM            = $regn_program
+AND   SRW7.CD_REGN_STAGE              = $regn_stage
+AND   SRW7.CD_REGN_REGION             =  $regn_region
+!AND   SRW7.CD_REGN_STAGE_TYPE         = $regn_stage_type
+!AND   SRW7.CD_REGN_STAGE_CLASS        = $regn_stage_class
+!AND   SRW7.CD_REGN_STAGE_PRIORITY     = $regn_stage_priority
+
+END-SELECT
+    
+END-PROCEDURE GET-REGION-LAST-YEAR-2AGO-MONTH  
+
+!****************************************************************************
+!                                                                           *
+!   GET-REGION-LAST-YEAR-3AGO-MONTH                                           *
+!                                                                           *
+!       This procedure will select last year's region statistics for the      *
+!       previous month.                                                     *
+!                                                                           * 
+!       CALLED BY  : GET-REGION-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REGION-LAST-YEAR-3AGO-MONTH
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SRW6.NBR_REGN_END_BAL)       &srw6_nbr_regn_end_bal
+  move &srw6_nbr_regn_end_bal           to #last_year_3ago_mo_nbr_regn_end_bal
+
+!  show 'GETTING REGION LAST YEAR 3AGO MONTH'
+  
+FROM  STATS_REGION_WKM SRW6                                   
+
+WHERE SRW6.MO_REGN_STAT_MO            = #input_month_3
+AND   SRW6.YR_REGN_STAT_YR            = #input_year_7
+AND   SRW6.CD_REGN_PROGRAM            = $regn_program
+AND   SRW6.CD_REGN_STAGE              = $regn_stage
+AND   SRW6.CD_REGN_REGION             =  $regn_region
+!AND   SRW6.CD_REGN_STAGE_TYPE         = $regn_stage_type
+!AND   SRW6.CD_REGN_STAGE_CLASS        = $regn_stage_class
+!AND   SRW6.CD_REGN_STAGE_PRIORITY     = $regn_stage_priority
+
+END-SELECT
+    
+END-PROCEDURE GET-REGION-LAST-YEAR-3AGO-MONTH                 
+
+!****************************************************************
+!                                                               *
+! PRINT-REGION-INFO                                             *
+!                                                               *
+!   This procedure prints the information selected for each     *
+!   region.                                                     *
+!                                                               *
+! CALLED BY:  GET-REGION-INFO                                   *
+! CALLS:    NONE                                                *
+!****************************************************************
+
+BEGIN-PROCEDURE PRINT-REGION-INFO
+
+!  show 'PRINT REGION INFO'
+
+if $print_stage_flag = 'N'
+  print $regn_region          (+2,18) edit 88888
+  print $regn_program         (+0,35)
+  print $regn_stage           (+0,43)
+!  print $regn_stage_type      (+0,52)
+else
+  print $regn_region          (+2,18) edit 88888
+  print $regn_program         (+0,35)
+  print $regn_stage           (+0,43)
+!  print $regn_stage_type      (+0,52)
+end-if
+
+  move $regn_program       to $last_regn_program
+
+END-PROCEDURE PRINT-REGION-INFO
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-REGION-MONTHLY-STATS                                                *
+!                                                                           *
+!       This procedure prints the majority of fields within the report.     *
+!       It details the statistics of each region for each month               *
+!       selected for reporting.                                             *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-REGION-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-REGION-MONTHLY-STATS
+
+!  show 'PRINT REGION MONTHLY STATS'
+
+print 'BEG BAL'                             (+0,55)
+print #last_mo_nbr_regn_end_bal             (+0,71) edit 88888
+print #2ago_mo_nbr_regn_end_bal             (+0,82) edit 88888
+print #3ago_mo_nbr_regn_end_bal             (+0,93) edit 88888
+print '****'                                  (+0,104)
+print '*****'                                  (+0,113)
+print '****'                                  (+0,122)
+!print '****'                                  (+0,125)
+print #last_year_last_mo_nbr_regn_end_bal   (+0,134) edit 88888
+print #last_year_2ago_mo_nbr_regn_end_bal   (+0,145) edit 88888
+print #last_year_3ago_mo_nbr_regn_end_bal   (+0,156) edit 88888
+
+print 'NEW'                                 (+1,55) 
+print #this_mo_nbr_regn_new                 (+0,71) edit 88888
+print #last_mo_nbr_regn_new                 (+0,82) edit 88888
+print #2ago_mo_nbr_regn_new                 (+0,93) edit 88888
+print #fytd_nbr_regn_new                     (+0,104) edit 888888
+
+        let #fytd_nbr_regn_new_avg = #fytd_nbr_regn_new/#fy_months
+
+print #fytd_nbr_regn_new_avg                 (+0,113) edit 888888.8
+print #ytd_nbr_regn_new                     (+0,122) edit 888888
+
+        let #ytd_nbr_regn_new_avg = #ytd_nbr_regn_new/#input_month
+
+!print #ytd_nbr_regn_new_avg                 (+0,125) edit 8888.8
+print #last_year_this_mo_nbr_regn_new       (+0,134) edit 88888
+print #last_year_last_mo_nbr_regn_new       (+0,145) edit 88888
+print #last_year_2ago_mo_nbr_regn_new       (+0,156) edit 88888
+
+print 'TRNFRIN'                             (+1,55) 
+print #this_mo_nbr_regn_transfr_in               (+0,71) edit 88888
+print #last_mo_nbr_regn_transfr_in               (+0,82) edit 88888
+print #2ago_mo_nbr_regn_transfr_in               (+0,93) edit 88888
+print #fytd_nbr_regn_transfr_in                   (+0,104) edit 888888
+
+        let #fytd_nbr_regn_tr_in_avg = #fytd_nbr_regn_transfr_in/#fy_months
+   
+print #fytd_nbr_regn_tr_in_avg               (+0,113) edit 888888.8
+print #ytd_nbr_regn_transfr_in                   (+0,122) edit 888888
+
+        let #ytd_nbr_regn_tr_in_avg = #ytd_nbr_regn_transfr_in/#input_month
+   
+!print #ytd_nbr_regn_tr_in_avg               (+0,125) edit 8888.8
+print #last_year_this_mo_nbr_regn_transfr_in     (+0,134) edit 88888
+print #last_year_last_mo_nbr_regn_transfr_in     (+0,145) edit 88888
+print #last_year_2ago_mo_nbr_regn_transfr_in     (+0,156) edit 88888
+
+print 'TRNFROUT'                            (+1,55) 
+print #this_mo_nbr_regn_transfr_out           (+0,71) edit 88888
+print #last_mo_nbr_regn_transfr_out              (+0,82) edit 88888
+print #2ago_mo_nbr_regn_transfr_out              (+0,93) edit 88888
+print #fytd_nbr_regn_transfr_out                  (+0,104) edit 888888
+    
+        let #fytd_nbr_regn_tr_out_avg = #fytd_nbr_regn_transfr_out/#fy_months
+   
+print #fytd_nbr_regn_tr_out_avg              (+0,113) edit 888888.8
+print #ytd_nbr_regn_transfr_out                  (+0,122) edit 888888
+    
+        let #ytd_nbr_regn_tr_out_avg = #ytd_nbr_regn_transfr_out/#input_month
+   
+!print #ytd_nbr_regn_tr_out_avg              (+0,125) edit 8888.8
+print #last_year_this_mo_nbr_regn_transfr_out    (+0,134) edit 88888
+print #last_year_last_mo_nbr_regn_transfr_out    (+0,145) edit 88888
+print #last_year_2ago_mo_nbr_regn_transfr_out    (+0,156) edit 88888
+
+print 'CLOSED'                              (+1,55) 
+print #sum_this_mo_nbr_regn_closed_total    (+0,71) edit 88888
+print #sum_last_mo_nbr_regn_closed_total    (+0,82) edit 88888
+print #sum_2ago_mo_nbr_regn_closed_total    (+0,93) edit 88888
+print #sum_fytd_nbr_regn_closed_total        (+0,104) edit 888888
+
+        let #fytd_nbr_regn_clo_avg = #sum_fytd_nbr_regn_closed_total/#fy_months
+
+print #fytd_nbr_regn_clo_avg                 (+0,113) edit 888888.8
+print #sum_ytd_nbr_regn_closed_total        (+0,122) edit 888888
+
+        let #ytd_nbr_regn_clo_avg = #sum_ytd_nbr_regn_closed_total/#input_month
+
+!print #ytd_nbr_regn_clo_avg                 (+0,125) edit 8888.8
+print #sum_last_year_this_mo_nbr_regn_closed_total  (+0,134) edit 88888
+print #sum_last_year_last_mo_nbr_regn_closed_total  (+0,145) edit 88888
+print #sum_last_year_2ago_mo_nbr_regn_closed_total  (+0,156) edit 88888
+
+print 'EXCEPT'                            (+1,55) 
+print #sum_this_mo_nbr_regn_except_total    (+0,71)  edit 888888
+print #sum_last_mo_nbr_regn_except_total    (+0,82)  edit 888888
+print #sum_2ago_mo_nbr_regn_except_total    (+0,93)  edit 888888
+print '****'                              (+0,104)
+print '*****'                             (+0,113)
+print '****'                              (+0,122)
+!print '*****'                            (+0,125)
+print #sum_last_year_this_mo_nbr_regn_except_total  (+0,134) edit 888888
+print #sum_last_year_last_mo_nbr_regn_except_total  (+0,145) edit 888888
+print #sum_last_year_2ago_mo_nbr_regn_except_total  (+0,156) edit 888888
+
+print 'END BAL'                             (+1,55) 
+print #this_mo_nbr_regn_end_bal             (+0,71) edit 88888
+print #last_mo_nbr_regn_end_bal             (+0,82) edit 88888
+print #2ago_mo_nbr_regn_end_bal             (+0,93) edit 88888
+print #fytd_nbr_regn_end_bal                (+0,104) edit 888888
+
+        let #fytd_nbr_regn_end_bal_avg = #fytd_nbr_regn_end_bal/#fy_months
+
+print #fytd_nbr_regn_end_bal_avg            (+0,113) edit 888888.8
+print #ytd_nbr_regn_end_bal                 (+0,122) edit 888888
+
+        let #ytd_nbr_regn_end_bal_avg = #ytd_nbr_regn_end_bal/#input_month
+
+!print #ytd_nbr_regn_end_bal_avg             (+0,125) edit 8888.8
+print #last_year_this_mo_nbr_regn_end_bal   (+0,134) edit 88888
+print #last_year_last_mo_nbr_regn_end_bal   (+0,145) edit 88888
+print #last_year_2ago_mo_nbr_regn_end_bal   (+0,156) edit 88888
+print '2nd asgmt tot'                           (+1,55) 
+print #this_mo_nbr_regn_second_asgmt        (+0,71) edit 88888
+print #last_mo_nbr_regn_second_asgmt              (+0,82) edit 88888
+print #2ago_mo_nbr_regn_second_asgmt              (+0,93) edit 88888
+print #fytd_nbr_regn_second_asgmt                  (+0,104) edit 888888
+  
+        let #fytd_nbr_regn_2nd_as_avg = #fytd_nbr_regn_second_asgmt/#fy_months
+
+print #fytd_nbr_regn_2nd_as_avg              (+0,113) edit 88888.8
+print #ytd_nbr_regn_second_asgmt                  (+0,122) edit 888888
+  
+        let #ytd_nbr_regn_2nd_as_avg = #ytd_nbr_regn_second_asgmt/#input_month
+
+!print #ytd_nbr_regn_2nd_as_avg              (+0,125) edit 88888.8
+print #last_year_this_mo_nbr_regn_second_asgmt    (+0,134) edit 88888
+print #last_year_last_mo_nbr_regn_second_asgmt    (+0,145) edit 88888
+print #last_year_2ago_mo_nbr_regn_second_asgmt    (+0,156) edit 88888
+
+END-PROCEDURE PRINT-REGION-MONTHLY-STATS
+
+!****************************************************************************
+!                                                                           *
+!   CALCULATE-EXCEPTION-FIELD                                               *
+!                                                                           *
+!      This procedure calculates the exception fields                       *
+!                                                                           *
+!       CALLED BY  : GET-STATE-INFO                                         *
+!       CALLS      : NONE                                                   *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE CALCULATE-EXCEPTION-FIELD 
+                                       
+let #sum_this_mo_nbr_regn_except_total = #this_mo_nbr_regn_end_bal 
+                                     - #last_mo_nbr_regn_end_bal
+                                     - #this_mo_nbr_regn_new
+                                     + #sum_this_mo_nbr_regn_closed_total
+                                     - #this_mo_nbr_regn_transfr_in
+                                     + #this_mo_nbr_regn_transfr_out  
+                                     
+let #sum_last_mo_nbr_regn_except_total = #last_mo_nbr_regn_end_bal 
+                                     - #2ago_mo_nbr_regn_end_bal
+                                     - #last_mo_nbr_regn_new
+                                     + #sum_last_mo_nbr_regn_closed_total
+                                     - #last_mo_nbr_regn_transfr_in
+                                     + #last_mo_nbr_regn_transfr_out
+                                     
+let #sum_2ago_mo_nbr_regn_except_total = #2ago_mo_nbr_regn_end_bal 
+                                     - #3ago_mo_nbr_regn_end_bal
+                                     - #2ago_mo_nbr_regn_new
+                                     + #sum_2ago_mo_nbr_regn_closed_total
+                                     - #2ago_mo_nbr_regn_transfr_in
+                                     + #2ago_mo_nbr_regn_transfr_out
+                                     
+let #sum_last_year_this_mo_nbr_regn_except_total = #last_year_this_mo_nbr_regn_end_bal 
+                                     - #last_year_last_mo_nbr_regn_end_bal
+                                     - #last_year_this_mo_nbr_regn_new
+                                     + #sum_last_year_this_mo_nbr_regn_closed_total
+                                     - #last_year_this_mo_nbr_regn_transfr_in
+                                     + #last_year_this_mo_nbr_regn_transfr_out
+                                     
+let #sum_last_year_last_mo_nbr_regn_except_total = #last_year_last_mo_nbr_regn_end_bal 
+                                     - #last_year_2ago_mo_nbr_regn_end_bal
+                                     - #last_year_last_mo_nbr_regn_new
+                                     + #sum_last_year_last_mo_nbr_regn_closed_total
+                                     - #last_year_last_mo_nbr_regn_transfr_in
+                                     + #last_year_last_mo_nbr_regn_transfr_out
+                                     
+let #sum_last_year_2ago_mo_nbr_regn_except_total = #last_year_2ago_mo_nbr_regn_end_bal 
+                                     - #last_year_3ago_mo_nbr_regn_end_bal
+                                     - #last_year_2ago_mo_nbr_regn_new
+                                     + #sum_last_year_2ago_mo_nbr_regn_closed_total
+                                     - #last_year_2ago_mo_nbr_regn_transfr_in
+                                     + #last_year_2ago_mo_nbr_regn_transfr_out
+                                     
+
+END-PROCEDURE CALCULATE-EXCEPTION-FIELD                  
+
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+END-PROCEDURE SqlErrorHandle
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+
+                                         

@@ -1,0 +1,3029 @@
+!*****************************************************************************
+!  SUMMARY READING TOOL
+!*****************************************************************************
+
+!*****************************************************************************
+! PROGRAM NAME:              csd01o00.sqr                                    *
+!                                                                            *
+! DATE (initial RollOut):    04/25/2005                                      *
+!                                                                            *
+! PROGRAMMER NAME:           Karen Fraser                                    *
+!                                                                            *
+! Note:  SQR language is *NOT* Case-Sensitive.  Case-Sensitivity used herein *
+!        for legibility only.                                                *
+!                                                                            *
+! PROGRAM DESCRIPTION:                                                       *
+!                                                                            *
+!                                                                            *
+!                                                                            *
+!*****************************************************************************
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 04/04/05   Fraserkr     SIR 15867.  Initial implementation.                *
+! 04/11/05   fraserkr     SIR 23528 - fixes requested for problems observed  *
+!                           in UAT. 1) fix situation causing SSN and         *
+!                           medicaid# to be overwritten when no              *
+!                           concervatorship removal date exists for the      *
+!                           child;  2)word substitution in REPORT HEADING;   *
+!                           3) change when children report generated for     *
+!                           FSU stage. ALSO, fixed code so that all three    *
+!                           sections identifying adult principals used the   *
+!                           same code.                                       *
+! 04/05/06  Fraserkr      SIR23495: Permanency Plan section of Summary       *
+!       Reading Tool includes Child Plans that have an approver's status     *
+!       other than  approved.  Approver's status can also be PEND, REJT,     *
+!       INVD.  Per L.Burgess, include PEND status as well as APRV status &   *
+!       add Approver's Status to the section.                                *
+!*****************************************************************************
+
+!*****************************************************************************
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!*****************************************************************************
+BEGIN-REPORT
+    do HOUSEKEEPING
+    do PROCESS-REPORT
+    do WRAP-UP
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+    #ifdef ORACLE                      !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+! page-size within setup02b.sqc yielding unusually wide top and bottom margins
+!   so NOT included/used in this report
+
+    ask ID_STAGE            ! sole input parameter
+
+    DECLARE-LAYOUT default
+        orientation=portrait
+        !max-lines = 60  ! default of 60 max lines is too many lines
+        right-margin = 0
+        left-margin  = .25
+    END-DECLARE
+
+    DECLARE-VARIABLE
+        INTEGER #case_id
+        INTEGER #cct_char_width    ! char = characteritics
+        INTEGER #child_char_top_line
+        INTEGER #chld_info_col_1
+        INTEGER #chld_info_col_2
+        INTEGER #chld_info_col_3
+        INTEGER #char_col_1
+        INTEGER #char_col_2
+        INTEGER #name_width
+        INTEGER #max_print_line
+        INTEGER #max_print_line_educ_hist
+        INTEGER #pclmt_liv_arr_col
+        INTEGER #plcmt_end_col
+        INTEGER #plcmt_facil_col
+        INTEGER #plcmt_start_col
+        INTEGER #plcmt_subhdgs_just_printed
+        INTEGER #prsn_char_width
+        INTEGER #set_continuation_heading !indicator re (continue) in section heading
+        INTEGER #prim_chld_id_person
+        INTEGER #id_removal_event
+        INTEGER #id_removal_event_saved
+    END-DECLARE
+!****************************************************************************
+!   REMINDER of SQR Reserved words:                                             *
+!   sqrReserved    #current-column
+!   sqrReserved    #current-date
+!   sqrReserved    #current-line
+!   sqrReserved    #end-file
+!   sqrReserved    #page-count
+!   sqrReserved    #return-status
+!   sqrReserved    #sql-count
+!   sqrReserved    #sql-status
+!   sqrReserved    #sqr-max-columns
+!   sqrReserved    #sqr-max-lines
+!   sqrReserved    #sqr-pid
+!   sqrReserved    #sqr-toc-level
+!   sqrReserved    #sqr-toc-page
+!   sqrReserved    $sql-error
+!   sqrReserved    $sqr-database {sqr-database}
+!   sqrReserved    $sqr-hostname {sqr-hostname}
+!   sqrReserved    $sqr-locale
+!   sqrReserved    $sqr-platform {sqr-platform}
+!   sqrReserved    $sqr-program
+!   sqrReserved    $sqr-report
+!   sqrReserved    $sqr-toc-text
+!   sqrReserved    $sqr-ver
+!   sqrReserved    $username
+!****************************************************************************
+END-SETUP
+
+!*****************************************************************************
+! HEADER                                                                     *
+!*****************************************************************************
+BEGIN-HEADING 6
+  !  Digit following BEGIN-HEADING command is the # of lines to be reserved
+  !  at the top of each page
+
+    if rtrim($case_name,$SPC) = $NULL
+       let $case_header = 'Case ID:  ' || $case_id || '       Case Name:   UNKNOWN'
+    else
+       let $case_header = 'Case ID:  ' || $case_id || '       Case Name:  ' || $case_name
+    end-if
+
+    ! Report titles are:
+    !
+    !   ADOption Stage Family/Child(ren) Reading Tool - Stage ID #########
+    !   FPR Stage Family/Child(ren) Reading Tool - Stage ID #########
+    !   FRE Stage Family/Child(ren) Reading Tool - Stage ID #########
+    !   FSU Stage Family/Child(ren) Reading Tool - Stage ID #########
+    !   SUBstitute Care Stage Family/Child(ren) Reading Tool - Stage ID #########
+    !
+
+    !From:   BURGESS, LARRY  Sent:   Friday, April 08, 2005 2:01 PM
+    !   What about substituting the word "Summary" for "Stage Family/Child(ren)"?
+    !   That way it would read  ADOption Summary Reading Tool, FPR Summary Reading Tool, etc.
+
+     evaluate $input_cd_stage
+          when = $ADO
+              let $input_cd_stage_print = 'ADOption'
+              break
+          when = $FPR
+              let $input_cd_stage_print = $input_cd_stage || $SPC || $input_cd_stage_type
+              break
+          when = $FRE
+              let $input_cd_stage_print = $input_cd_stage || $SPC || $input_cd_stage_type
+              break
+          when = $FSU  !stage_type not needed for FSU
+              let $input_cd_stage_print = $input_cd_stage
+              break
+          when = $SUB
+              let $input_cd_stage_print = 'SUBstitute Care'
+              break
+          when-other  !Report reqs include NO other stage; but allow for testing
+              let $input_cd_stage_print = $input_cd_stage
+              break
+      end-evaluate
+
+    let $main_header = $input_cd_stage_print ||
+          ' Summary Reading Tool - Stage ID ' ||
+          $input_id_stage || $SPC
+
+    print $main_header    ()   center bold
+    !   do PRINT-CURRENT-LINE-FOR-DEBUGGING
+    print $case_header    (+2) center bold
+    !   do PRINT-CURRENT-LINE-FOR-DEBUGGING
+    if #page-count > 1 and $child_header <> $NULL
+      print $child_header (+2) center bold
+    end-if
+    print '                                                                          '
+              (+1,1) center underline    ! 75 chars
+        !print $section_heading (+2,1) bold box  section-heading is not what it seems here
+    print $NULL  (+1,1)      ! if this isn't here, get a print error
+    ! SHOW '#current-line in HeaderPrint=' #current-line
+    move 1 to #heading_just_printed
+
+    let #heading_just_printed = 1
+      ! SHOW 'HEADING JUST PRINTED ' #current-line
+END-HEADING
+
+!*****************************************************************************
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+     ! # following BEGIN-FOOTING command is # of lines to be reserved
+     !    at the bottom of each page
+
+    #INCLUDE 'footer06.sqc' ! portrait footer alternative
+
+END-FOOTING
+
+!****************************************************************************
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!****************************************************************************
+BEGIN-PROCEDURE HOUSEKEEPING
+    #INCLUDE 'setenv.sqc'                  !Set printer environment
+    move '{ID_STAGE}'   to #input_id_stage
+    let $input_id_stage = to_char(#input_id_stage) ! doesn't persist when set in heading procedure
+
+    let #cct_char_width = 50   ! char = characteristics
+    let #child_char_col = 22
+    let #child_char_width = 55
+    let #chld_info_col_1  = 1
+    let #chld_info_col_2  = 40
+    let #chld_info_col_3  = 58
+    ! order of variables at this point is important, must define one variable for use later
+    let #name_width = 25
+    let #char_col_1 = 2
+    let #char_col_2 = #char_col_1 + 1 + #name_width
+    let #max_print_line = 58
+    ! show '#max_print_line (set in HOUSEKEEPING)=' #max_print_line
+    let #new_page_expected = 1
+    let #plcmt_subhdgs_just_printed = 0
+    let #prsn_char_width = 50
+    let #set_continuation_heading = 0
+    let $ALOC = 'ALOC'
+    let $CHILD      ='CH'
+    let $CHILD_HOME = 'DA'
+    let $CPL = 'CPL'    ! child placement characteristics (CD_CHARACTERISTIC)
+    let $CCT = 'CCT'    ! Parent/Caretaker characteristics (CD_CHARACTERISTIC)
+    let $CCH = 'CCH'    ! Child investigation characteristics (CD_CHARACTERISTIC)
+    let $ADO = 'ADO'
+    let $FPR = 'FPR'
+    let $FRE = 'FRE'
+    let $FSU = 'FSU'
+    let $PAL = 'PAL'
+    let $SUB = 'SUB'
+    let $PPT = 'PPT'
+    let $PLN = 'PLN'
+    let $APRV = 'APRV'
+    let $COMP = 'COMP'
+    let $PEND = 'PEND'
+    !   let $PROC = 'PROC', not used but here for documentation purposes
+    let $ASG = 'ASG'
+    let $INT = 'INT'
+    let $INV = 'INV'
+    let $MEDICAID = 'Medicaid #'   !seems odd as code, is true tho, see CNUMTYPE
+    let $OLDEST_VICTIM = 'OV'
+    let $PC = 'PC'  ! Primary Child in stage_person_link.cd_stage_pers_role
+    let $BIRTH_PARENT = 'PB'
+    let $PARENT ='PA'
+    let $PRN = 'PRN'
+    let $SELF          = 'SL'  ! Self (in CD_STAGE_PERS_REL_INT)
+    let $ADOPTEDCHILD  = 'AC'  ! Adoptive Child (in CD_STAGE_PERS_REL_INT)
+    let $SIBLING = 'SB'
+    let $SPC = ' '
+    let $2SPC = '  '
+    let $NULL = ''
+    let $COMMA = ','
+    let $SSN = 'SSN'
+    let $YES_INDICATOR = 'Y'
+    let $NO_INDICATOR = 'N'
+    !   note: date of '12/31/4712' mean NO END DATE - sort of until eternity ;)
+    let $section_heading       = $NULL
+    let $section_heading_saved = $NULL
+! do DISPLAY-SQR-RESERVED-VALUES
+END-PROCEDURE   HOUSEKEEPING
+
+BEGIN-PROCEDURE DISPLAY-SQR-RESERVED-VALUES
+    ! show 'reserved SQR variables - their values'
+    ! show '  #sqr-max-columns=' #sqr-max-columns !reserved SQR variable
+    ! show '  $sqr-hostname ' $sqr-hostname
+    ! show '  $sqr-locale   ' $sqr-locale
+    ! show '  $sqr-program  ' $sqr-program
+    ! show '  $sqr-report   ' $sqr-report
+    ! show '  $sqr-toc-text ' $sqr-toc-text
+    ! show '  $sqr-ver      ' $sqr-ver
+END-PROCEDURE   DISPLAY-SQR-RESERVED-VALUES
+
+!****************************************************************************
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!****************************************************************************
+! From:    BURGESS, LARRY  Sent:    Thursday, April 07, 2005 3:03 PM
+!  If we did 4b, it would end the discussion from the other email on that
+!      subject.
+!  <snip>
+!  4. There are issues with the weird possibilities resulting from
+!     opened--closed--reopened stages and merged cases, etc., that need some
+!     resolution. Appropriate resolution of this gets back to the purpose/use
+!     of the Reading Tool. There are related issues with reports generated on
+!     closed FSU stages showing open SUB stage material long after the FSU
+!     stage has closed.
+!  <snip>
+!  B. For open FSU Reading Tool Reports, add Child Reports on closed SUB stages
+!     as well. If the FSU stage is closed, don't have the printed FSU Reading
+!     Tool show any open or closed SUB stage Child Report material.
+!--------------------------------------------------------------
+! (these requirements are repeated below in procedure used to generate child
+!   reports for open FSU stage).
+BEGIN-PROCEDURE PROCESS-REPORT
+    do GET-CASE-NAME-AND-CD-STAGE
+    evaluate $input_cd_stage
+      when = 'ADO'
+          do GET-PC-CHILD-PERSON-ID
+          do PROCESS-CHILD-REPORT
+          break
+      when = 'SUB'
+          do GET-PC-CHILD-PERSON-ID
+          do PROCESS-CHILD-REPORT
+          break
+      when = 'FSU'
+          do PROCESS-FAMILY-REPORT
+          if $input_dt_stage_close = $NULL ! stage is open
+            do PROCESS-FSU-CHILD-REPORTS
+          end-if
+          break
+      when-other
+          do PROCESS-FAMILY-REPORT
+          break
+    end-evaluate
+!    do PRINT-END-OF-REPORT    not sure wanted
+END-PROCEDURE   PROCESS-REPORT
+
+!****************************************************************************
+!   GET-CASE-NAME-AND-CD-STAGE                                              *
+!****************************************************************************
+BEGIN-PROCEDURE GET-CASE-NAME-AND-CD-STAGE
+! ! show 'GET CASE-NAME-PERSON-AND-CD-STAGE '
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+CC.NM_CASE
+    move &CC.NM_CASE           to $case_name
+CC.ID_CASE
+    move &CC.ID_CASE           to $case_id
+    move &CC.ID_CASE           to #case_id
+STAGE.CD_STAGE
+    move &STAGE.CD_STAGE       to $input_cd_stage
+STAGE.CD_STAGE_TYPE
+    move &STAGE.CD_STAGE_TYPE  to $input_cd_stage_type
+STAGE.DT_STAGE_CLOSE
+    move &STAGE.DT_STAGE_CLOSE to $input_dt_stage_close
+FROM STAGE,
+CAPS_CASE CC
+WHERE STAGE.ID_STAGE = #input_id_stage
+AND   CC.ID_CASE     = STAGE.ID_CASE
+END-SELECT
+use-column 0
+END-PROCEDURE   GET-CASE-NAME-AND-CD-STAGE
+
+!****************************************************************************
+!   PROCESS-FAMILY-REPORT                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PROCESS-FAMILY-REPORT
+    ! show '#sqr-max-columns=' #sqr-max-columns
+    do FMLY-1-PRINCIPALS-SECTION
+    do FMLY-2-PARENT-CCT-INFO-SECTION
+    do FMLY-3-PRINT-AKA-NAMES
+    do FMLY-4-CASE-HIST-ALLEGATIONS
+    do FMLY-5-FAM-STAGE-SECTION
+    if $input_cd_stage = $FSU
+        do FMLY-6A-FSU-CONS-REM-SECTION ! for FSU only
+    end-if
+    if $input_cd_stage = $FRE
+        do FMLY-6B-FRE-CHILD_HOME-SECTION ! for FRE only
+    end-if
+    do FMLY-7-FAMILY-PLANS-SECTION
+    do FMLY-8-SVC-AND-REF-SECTION
+    do FMLY-9-SVC-AUTH-SECTION
+    do FMLY-10-WORKERS-ASSIGNED-SECTION
+END-PROCEDURE   PROCESS-FAMILY-REPORT
+
+!***************************************************************************
+!   GET-PC-CHILD-PERSON-ID
+!
+!      This procedure is called for SUB stage or ADO stage
+!       child report only produced for these two stages and need primary
+!       child's id_person
+!***************************************************************************
+BEGIN-PROCEDURE GET-PC-CHILD-PERSON-ID
+! SHOW 'GET-PC-CHILD-PERSON-ID'
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+SPL_PRIM_CHLD.ID_PERSON
+    move &SPL_PRIM_CHLD.ID_PERSON  to  #prim_chld_id_person
+
+    let $input_id_person = to_char(#prim_chld_id_person)
+    ! show 'GET-PC-CHILD-PERSON-ID: $input_id_person=' $input_id_person
+FROM STAGE_PERSON_LINK SPL_PRIM_CHLD
+WHERE SPL_PRIM_CHLD.ID_STAGE = #input_id_stage
+AND CD_STAGE_PERS_ROLE = $PC
+END-SELECT
+END-PROCEDURE   GET-PC-CHILD-PERSON-ID
+
+!****************************************************************************
+!   PROCESS-FSU-CHILD-REPORTS
+!
+!      This procedure processes the individual SUB reports for children
+!           when the passed stage is FSU
+!****************************************************************************
+!   SOURCE OF REQUIREMENT FOR CHILDREN REPORTS FOR FSU STAGE
+!
+! From:    BURGESS, LARRY  Sent:    Thursday, April 07, 2005 3:03 PM
+!   If we did 4b, it would end the discussion from the other email on that subject.
+!   <snip>
+!   4. There are issues with the weird possibilities resulting from
+!        opened--closed--reopened stages and merged cases, etc., that need some
+!        resolution. Appropriate resolution of this gets back to the purpose/use
+!        of the Reading Tool. There are related issues with reports generated on
+!        closed FSU stages showing open SUB stage material long after the FSU stage
+!        has closed.
+!   <snip>
+!   B. For open FSU Reading Tool Reports, add Child Reports on closed SUB stages
+!        as well. If the FSU stage is closed, don't have the printed FSU Reading
+!        Tool show any open or closed SUB stage Child Report material.
+!-------------------------------
+!   (4.b implemented in this next procedure by dropping check on stage close date)
+!
+BEGIN-PROCEDURE PROCESS-FSU-CHILD-REPORTS
+! Do multiple times, one report for each primary child in a SUB stage (either open
+!   or closed stage) per 4/7/05 email (see above).
+!
+! show 'PROCESS-FSU-CHILD-REPORTS'
+let #sub_report_processed = 0
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+SPL_FSU_SUBS.ID_PERSON
+    move &SPL_FSU_SUBS.ID_PERSON  to  #prim_chld_id_person
+
+    let $input_id_person = to_char(#prim_chld_id_person)
+
+    let #new_page_expected = 1
+    new-page
+
+    do PROCESS-CHILD-REPORT
+    let #sub_report_processed = 1
+
+FROM STAGE_PERSON_LINK SPL_FSU_SUBS
+WHERE SPL_FSU_SUBS.ID_STAGE IN
+    (SELECT ID_STAGE FROM STAGE
+     WHERE ID_CASE = #case_id AND CD_STAGE = $SUB)
+AND CD_STAGE_PERS_ROLE = $PC
+END-SELECT
+
+if #sub_report_processed = 0
+    use-column 0
+    print 'NO OPEN SUB STAGES FOUND - NO CHILD SPECIFIC INFORMATION TO REPORT' (+3,1) bold box
+end-if
+END-PROCEDURE   PROCESS-FSU-CHILD-REPORTS
+!****************************************************************************
+!   PROCESS-CHILD-REPORT                                                    *
+!                                                                           *
+!      This procedure
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT and PROCESS-FSU-CHILD-REPORTS           *
+!****************************************************************************
+BEGIN-PROCEDURE PROCESS-CHILD-REPORT
+    ! show '#sqr-max-columns=' #sqr-max-columns
+    let $child_header = $NULL  ! child header wanted only on pages 2 & forward
+    do CHLD-1-CHILD-INFO-SECTION
+    do CHLD-2-CONS-REMOVAL-DATE
+    !do CHLD-3-PRINT-CHILD-REMOVAL-DT
+    do CHLD-4-CHILD-AKA-NAMES
+    do CHLD-5-LEGAL-STATUS-SECTION
+    let $child_header =
+      'Child Specific Information             Child''s Name:  ' || $chld_nm_name
+    do CHLD-6-LEGAL-ACTIONS-SECTION
+    do CHLD-7-CHILD-CHAR-SECTION
+    do CHLD-8-CHILD-PLACEMENT-HISTORY
+    do CHLD-9-ALOC-SECTION
+    do CHLD-10-PERMANENCY-PLAN
+    do CHLD-11-PERM-PLAN-REVIEW
+    do CHLD-12-EDUCATION-HISTORY
+    do CHLD-13-CHILD-STAGE-SECTION
+END-PROCEDURE   PROCESS-CHILD-REPORT
+
+!****************************************************************************
+!   BEGIN PRINCIPALS SECTION PROCEDURES
+!****************************************************************************
+!   FMLY-1-PRINCIPALS-SECTION                                                           *
+!                                                                           *
+!       This procedure will select the PRINCIPAL  information when the      *
+!       input id_case is the same as the id_case in stage.                  *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-PRINCIPAL-ROW-TITLE, PRINT-PRINCIPAL-ROW                 *
+!****************************************************************************
+BEGIN-PROCEDURE FMLY-1-PRINCIPALS-SECTION
+!   Principals in Stage section
+move 0  to #princ_subhdgs_printed
+! SHOW 'GET PRINCIPAL'
+! SHOW#princ_subhdgs_printed
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+! neither of next is necessary - only the CORRECT syntax of the order by clause
+! is necessary
+!       NVL(PRINC.DT_PERSON_BIRTH, '01/01/0001') &dt_prn_dob_order_only
+!       PRN.DT_PERSON_BIRTH
+
+PRN.NM_PERSON_FIRST
+     move &PRN.NM_PERSON_FIRST  to $prn_nm_first
+PRN.NM_PERSON_MIDDLE
+     move &PRN.NM_PERSON_MIDDLE to $prn_nm_middle
+PRN.NM_PERSON_LAST
+     move &PRN.NM_PERSON_LAST   to $prn_nm_last
+PRN.CD_PERSON_SUFFIX
+     move &PRN.CD_PERSON_SUFFIX to $prn_nm_sfx
+CRPTRINT.decode
+    move &CRPTRINT.decode              to $rel_int
+to_char(PRN.DT_PERSON_BIRTH, 'MM/DD/YYYY') &date2
+    move &date2                                     to $dob
+PRN.ID_PERSON
+     move &PRN.ID_PERSON                  to $id_person
+
+    if (#current-line >= #max_print_line) or #princ_subhdgs_printed = 0    ! that is, new page about to begin
+        do PRINT-PRINCIPAL-SUBHDGS
+        let #princ_subhdgs_printed = 1
+    end-if
+
+    if $prn_nm_middle = $NULL
+      let $prn_nm_name = $prn_nm_first || $SPC || $prn_nm_last || $SPC || $prn_nm_sfx
+    else
+      let $prn_nm_name = $prn_nm_first || $SPC || $prn_nm_middle || $SPC || $prn_nm_last || $SPC || $prn_nm_sfx
+    end-if
+
+    do PRINT-PRINCIPAL-ROW
+    use-column 0 ! returns setting to no columns
+
+FROM    STAGE_PERSON_LINK   SPL2,
+        PERSON              PRN,
+        CRPTRINT            CRPTRINT
+WHERE   SPL2.ID_CASE            = $case_id
+AND     SPL2.ID_STAGE           = #input_id_stage
+AND     SPL2.CD_STAGE_PERS_TYPE = $PRN
+AND     PRN.ID_PERSON           = SPL2.ID_PERSON
+AND     CRPTRINT.CODE(+)        = SPL2.CD_STAGE_PERS_REL_INT
+ORDER BY NVL(PRN.DT_PERSON_BIRTH, TO_DATE('01/01/0001','MM/DD/YYYY')) DESC !so blank DOB sorts to bottom
+! is critical that date is 01/01/0001 so blank is at bottom (order by youngest to oldest,
+!   then blank DOB, first name order)
+END-SELECT
+use-column 0
+END-PROCEDURE   FMLY-1-PRINCIPALS-SECTION
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PRINCIPAL-SUBHDGS                                             *
+!                                                                           *
+!       This procedure prints the STAGE SUB-HEADINGS                        *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PRINCIPAL-SUBHDGS
+! SHOW 'procedure PRINT-PRINCIPAL-SUBHDGS'
+let $section_heading = 'Principals in Stage'
+do PRINT-SECTION-HEADING
+columns 2 30 52 66
+use-column 1
+print 'NAME                   ' (+1,1,#name_width) underline
+use-column 2
+print 'RELATIONSHIP   ' (0,1,20) underline
+NEXT-COLUMN
+print 'BIRTH DATE' (0,1,10) underline  !(line,col,len) is within the col
+use-column 4
+print ' PERSON ID' (0,1,10) underline
+END-PROCEDURE   PRINT-PRINCIPAL-SUBHDGS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PRINCIPAL-ROW                                                         *
+!                                                                           *
+!       This procedure prints the principals and makes sure they are not    *
+!           split between pages.                                            *
+!                                                                           *
+!       CALLED BY  : FMLY-1-PRINCIPALS-SECTION                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PRINCIPAL-ROW
+! SHOW 'procedure PRINT-PRINCIPAL-ROW'
+! (row/line, col, length) where row&col can be absolute or relative (+)
+use-column 1
+print $prn_nm_name   (+1,,#name_width)
+use-column 2
+print $rel_int           (+0,,20)
+use-column 3
+print $dob               (+0)
+use-column 4
+print $id_person         (+0)   edit 9999999999 !10 digits (9,999,999,999)
+END-PROCEDURE   PRINT-PRINCIPAL-ROW
+!****************************************************************************
+!   END PRINCIPALS PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN FAMILY STAGE HISTORY SECTION PROCEDURES
+!****************************************************************************
+!   FMLY-5-FAM-STAGE-SECTION                                                     *
+!                                                                           *
+!       This procedure selects STAGE data, prints the initial heading and   *
+!         prints each row of STAGE information                              *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      :                                                 *
+!****************************************************************************
+!
+!  This select taken from DAM ccmn15d.pc which retrieves all
+!  the stages of a case along with the primary worker of an
+!  open stage or the historical primary of a closed
+!****************************************************************************
+
+BEGIN-PROCEDURE FMLY-5-FAM-STAGE-SECTION
+
+use-column 0
+    !next-listing need = 10
+move 'Summary of Family Stages in Case' to $section_heading
+let #set_continuation_heading = 1
+do PRINT-SECTION-HEADING
+do PRINT-FAM-STAGE-COL-HDGS
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+STG.NM_STAGE
+     move &STG.NM_STAGE               to $nm_stage
+STG.CD_STAGE
+     move &STG.CD_STAGE               to $cd_family_stage
+STG.ID_STAGE
+     move &STG.ID_STAGE               to $id_family_stage
+STG.DT_STAGE_START
+     move &STG.DT_STAGE_START         to $dt_stage_start
+STG.DT_STAGE_CLOSE
+     move &STG.DT_STAGE_CLOSE         to $dt_stage_close
+! cd_stage_reason_closed does not print on report, but is used
+! to flag Merged stages (code 97 = Closed to Merge
+STG.CD_STAGE_REASON_CLOSED
+     move &STG.CD_STAGE_REASON_CLOSED to $cd_stage_reason_closed
+STG.CD_STAGE_TYPE
+     move &STG.CD_STAGE_TYPE          to $cd_stage_type
+
+     if #current-line >= #max_print_line     ! that is, new page about to begin
+       do PRINT-SECTION-HEADING
+       do PRINT-FAM-STAGE-COL-HDGS
+     end-if
+
+     do PRINT-FAM-STAGE-ROW
+
+!! here we want all the FAMILY STAGES, so do not restrict select using #input_id_stage
+FROM    STAGE STG
+WHERE   STG.ID_CASE             = $case_id
+AND     STG.CD_STAGE            IN ($FPR, $FSU, $FRE)
+ORDER BY STG.DT_STAGE_START desc, STG.DT_STAGE_CLOSE desc
+
+END-SELECT
+use-column 0
+!****************************************************************************
+! ccmn37s.src calls ccmn15d; ccmn37s.src sets variables for select of
+! cd_stage_pers_role such that codes are:
+!
+!    PRIMARY_ROLE_STAGE_OPEN         "PR"
+!    PRIMARY_ROLE_STAGE_CLOSED       "HP"
+! which are defined in /opt/impact/sys/prod/inc/impact.h
+!****************************************************************************
+END-PROCEDURE   FMLY-5-FAM-STAGE-SECTION
+
+!****************************************************************************
+!   PRINT-FAM-STAGE-COL-HDGS                                                 *
+!       This procedure prints the STAGE SUB-HEADINGS                        *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-FAM-STAGE-COL-HDGS
+! show 'procedure PRINT-FAM-STAGE-COL-HDGS'
+columns 1 5 25 29 35 47 58
+use-column 1
+print 'MRG'                   (+1,1) underline
+next-column
+print 'STAGE NAME         '   (0,1)  underline
+next-column
+print 'STG'                   (0,1)  underline
+next-column
+print 'TYPE '              (0,1)  underline  !CD_STAGE_TYPE IS 5 CHARS
+next-column
+print '   STAGE ID'           (0,1)  underline
+next-column
+print 'DT  OPENED'            (0,1,10)  underline
+next-column
+print 'DT  CLOSED'            (0,1,10)  underline
+!position (+1,1)
+END-PROCEDURE   PRINT-FAM-STAGE-COL-HDGS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-FAM-STAGE-ROWS                                                        *
+!                                                                           *
+!       This procedure prints one row of STAGE data                         *
+!                                                                           *
+!       CALLED BY  : FMLY-5-FAM-STAGE-SECTION                                    *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-FAM-STAGE-ROW
+! SHOW 'procedure PRINT-FAM-STAGE-ROW'
+! SHOW '$cd_stage_reason_closed=' $cd_stage_reason_closed
+
+    if $cd_stage_reason_closed = '97'  ! from ccmn37s.src and SIR 2141 comments
+         move ' Y ' to $merge_indicator
+    else
+         move '   ' to $merge_indicator
+    end-if
+    use-column 1
+    print $merge_indicator        (+1,1)  edit XXX
+    next-column
+    print $nm_stage               (0,1)
+    next-column
+    print $cd_family_stage        (0,1)
+    next-column
+    print $cd_stage_type      (0,1)
+    next-column
+    print $id_family_stage        (0,2)  edit 9999999999 !10 digits
+    next-column
+    print $dt_stage_start         (0,1)
+    next-column
+    print $dt_stage_close         (0,1)
+END-PROCEDURE   PRINT-FAM-STAGE-ROW
+!****************************************************************************
+!   END FAMILY STAGE HISTORY SECTION PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN ALLEGATIONS IN CASE PROCEDURES
+!****************************************************************************
+!   FMLY-4-CASE-HIST-ALLEGATIONS                                                          *
+!                                                                           *
+!       This procedure will select the investigation allegations where the  *
+!       person passed in is either a victim or a perpetrator.               *
+!                                                                           *
+!       CALLED BY  : GET-INVESTIGATION                                      *
+!       CALLS      : PRINT-ALLEGATION-TITLE, PRINT-ALLEGATION               *
+!****************************************************************************
+! BASED ON SQL IN CINV44S.SRC, CINV90D.PC
+
+BEGIN-PROCEDURE FMLY-4-CASE-HIST-ALLEGATIONS
+    move 0 to #allgzn-counter
+    let #risk_finding_width = 19
+    move 'Allegations in Case' to $section_heading
+    let #set_continuation_heading = 1
+!   heading will be printed with subhdgs
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+D.DT_STAGE_START    ! this has to be here to use DISTINCT
+!   DISTINCT NECESSARY BECAUSE SOME DUPLICATE ALLEGATIONS AT CONVERSION
+VICT.NM_PERSON_FULL
+    move &VICT.NM_PERSON_FULL                   to $victim_name
+PERP.NM_PERSON_FULL
+    move &PERP.NM_PERSON_FULL                   to $perp_name
+A.CD_ALLEG_TYPE
+    move &A.CD_ALLEG_TYPE                       to $alleg_dec
+A.CD_ALLEG_DISPOSITION
+    move &A.CD_ALLEG_DISPOSITION                to $alleg_disp_dec
+CCRSKFND.DECODE
+     move &CCRSKFND.DECODE                   to $risk_finding
+to_char(D.DT_STAGE_START, 'MM/DD/YY') &alleg_start_mmddyy
+    move &alleg_start_mmddyy                 to $dt_stage_start
+
+    add 1 to #allgzn-counter
+    if #allgzn-counter = 1 or #current-line >= #max_print_line
+        do PRINT-CASE-HIST-ALLEG-SUBHDGS
+        do PRINT-ALLEGATION
+    else
+        do PRINT-ALLEGATION
+    end-if
+
+FROM    ALLEGATION  A,
+        PERSON      VICT,
+        PERSON      PERP,
+        STAGE       D,
+        RISK_ASSESSMENT  RA,
+        CCRSKFND    CCRSKFND
+WHERE   A.ID_CASE = $case_id
+AND     VICT.ID_PERSON      = A.ID_VICTIM
+AND     PERP.ID_PERSON(+)   = A.ID_ALLEGED_PERPETRATOR !NEED OUTER JOINT b/c PERP NOT REQUIRED
+AND     D.ID_STAGE          = A.ID_ALLEGATION_STAGE
+AND     RA.ID_STAGE(+)      = A.ID_ALLEGATION_STAGE
+AND     CCRSKFND.CODE(+)    = RA.CD_RISK_ASSMT_RISK_FIND
+ORDER BY D.DT_STAGE_START DESC, VICT.NM_PERSON_FULL, A.CD_ALLEG_TYPE, PERP.NM_PERSON_FULL
+END-SELECT
+! consider getting RISK_ASSESSMENT.risk_finding column as a separate select b/c
+!   risk_finding not done until INV, not available at intake
+!   but wonder if relevant since this is FAMILY BASED - would all intakes be investigated?
+use-column 0
+if #allgzn-counter = 0
+    do PRINT-SECTION-HEADING
+    print 'No Allegations exist for ' (+1,1)
+end-if
+END-PROCEDURE  FMLY-4-CASE-HIST-ALLEGATIONS
+
+!****************************************************************************
+!   PRINT-CASE-HIST-ALLEG-SUBHDGS                                           *
+!                                                                           *
+!       This procedure prints the allegation title and information about the*
+!       investigations.                                                     *
+!                                                                           *
+!       CALLED BY  : FMLY-4-CASE-HIST-ALLEGATIONS                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-CASE-HIST-ALLEG-SUBHDGS
+    !next-listing need = 6
+USE-COLUMN 0
+do PRINT-SECTION-HEADING
+
+COLUMNS 1 10 16 36 56 61
+USE-COLUMN 1
+print '  DATE  '        (+1,0) underline
+NEXT-COLUMN
+print 'ALLEG'           (0,0) underline
+NEXT-COLUMN
+print 'VICTIM             ' (0,0) underline
+NEXT-COLUMN
+print 'ALLEGED PERPETRATOR' (0,0) underline
+NEXT-COLUMN
+print 'DISP'            (0,0) underline
+NEXT-COLUMN
+print 'RISK FINDING       ' (0,0) underline
+!PRINT '  DATE   ALLEG ALLEGED PERPETRATOR VICTIM                DISP RISK FINDING       ' (+2,1)
+use-column 0
+!print '123456789012345678901234567890123456789012345678901234567890123456789012345678901' (+1,1)
+!print '         1         2         3         4         5         6         7         8 ' (+1,1)
+END-PROCEDURE   PRINT-CASE-HIST-ALLEG-SUBHDGS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ALLEGATION                                                        *
+!                                                                           *
+!       This procedure prints the rest of the allegations.                  *
+!                                                                           *
+!       CALLED BY  : FMLY-4-CASE-HIST-ALLEGATIONS                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ALLEGATION
+    print $dt_stage_start         (+1,1)  on-break PRINT = CHANGE/TOP-PAGE
+    print $alleg_dec              (+0,10)
+    print $victim_name            (+0,16,20) ! nam len is 25, but only use 20 chars
+    print $perp_name              (+0,36,20)
+    print $alleg_disp_dec         (+0,56)
+    print $risk_finding           (+0,61,#risk_finding_width)
+END-PROCEDURE   PRINT-ALLEGATION
+!****************************************************************************
+!   END ALLEGATIONS IN CASE PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN CONSERVATORSHIP REMOVALS PROCEDURES
+!****************************************************************************
+!   FMLY-6A-FSU-CONS-REM-SECTION                                                       *
+!                                                                           *
+!       This procedure selects STAGE data, prints the initial heading and   *
+!         prints each row of STAGE information                              *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      :                                                        *
+!****************************************************************************
+BEGIN-PROCEDURE FMLY-6A-FSU-CONS-REM-SECTION
+! show 'procedure FMLY-6A-FSU-CONS-REM-SECTION'
+    move 0 to #Cons-Rem-Hdg-Printed
+    move $NULL to #id_removal_event_saved
+    move $NULL to $adult_rem_na_saved
+    move $NULL to $child_rem_na_saved
+    move 0 to #cons_remvl_item_count
+    !next-listing need = 8
+    use-column 0
+    let #max_print_line_cons_rem = #max_print_line - 5
+    if #current-line >= #max_print_line_cons_rem
+        let #new_page_expected = 1
+        new-page
+    end-if
+    !show '#max_print_line_cons_rem=' #max_print_line_cons_rem
+    !show '#max_print_line=' #max_print_line
+
+    move 'Conservatorship Removals / Characteristics That Contributed' to $section_heading
+    let #set_continuation_heading = 1
+    do PRINT-SECTION-HEADING
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+to_char(CR.DT_REMOVAL, 'MM/DD/YY') &cr_date
+    move &cr_date                to $cons_rem_date
+CR.ID_REMOVAL_EVENT
+    move &CR.ID_REMOVAL_EVENT    to #id_removal_event
+P.NM_PERSON_FULL
+     move &P.NM_PERSON_FULL      to $person_removed
+CR.NBR_REMOVAL_AGE_YR
+     move &CR.NBR_REMOVAL_AGE_YR to $age_rem_yrs
+CR.NBR_REMOVAL_AGE_MO
+     move &CR.NBR_REMOVAL_AGE_MO to $age_rem_mos
+CREMFRHR.DECODE
+     move &CREMFRHR.DECODE       to $removal_reason
+CR.IND_REMOVAL_NA_CARE
+     move &CR.IND_REMOVAL_NA_CARE  to $adult_rem_na
+CR.IND_REMOVAL_NA_CHILD
+     move &CR.IND_REMOVAL_NA_CHILD to $child_rem_na
+
+    !show '#id_removal_event from CNSRVTRSHP_REMOVAL table=' #id_removal_event
+
+     if $age_rem_yrs = $NULL
+          let $age_rem_yrs = '0'
+     end-if
+     if $age_rem_mos = $NULL
+          let $age_rem_mos = '0'
+     end-if
+     let $age_at_removal = $age_rem_yrs || ' Yrs ' || $age_rem_mos || ' Mos'
+     ! SHOW$age_at_removal
+     ! SHOW#max_print_line
+     if (#Cons-Rem-Hdg-Printed = 0) or (#current-line >= #max_print_line)
+       move 1 to #Cons-Rem-Hdg-Printed
+       do PRINT-CONS-REM-SUBHDGS
+     end-if
+
+     add 1 to #cons_remvl_item_count
+     if #cons_remvl_item_count = 1 !then no change could have occurred
+        move #id_removal_event to #id_removal_event_saved
+        move $adult_rem_na to $adult_rem_na_saved
+        move $child_rem_na to $child_rem_na_saved
+     end-if
+     do PRINT-CONS-REM-ROW
+
+FROM    CNSRVTRSHP_REMOVAL CR,
+        PERSON             P,
+        CREMFRHR,
+        REMOVAL_REASON     RR,
+        EVENT              REM_EVENT
+WHERE   CR.ID_CASE       = $case_id
+AND     P.ID_PERSON = CR.ID_VICTIM
+AND     RR.ID_REMOVAL_EVENT (+) = CR.ID_REMOVAL_EVENT
+AND     REM_EVENT.ID_EVENT      = CR.ID_REMOVAL_EVENT
+!   AND     REM_EVENT.CD_EVENT_STATUS = $APRV   !omit per Dorothy
+AND     CREMFRHR.CODE(+)      = RR.CD_REMOVAL_REASON
+ORDER BY CR.DT_REMOVAL DESC, P.NM_PERSON_FULL
+END-SELECT
+use-column 0
+if #cons_remvl_item_count = 0
+    print 'No Conservatorship Removal records exist' (+1,1)
+else
+    !show '#cons_remvl_item_count=' #cons_remvl_item_count
+    do PRINT-REMOVAL-CHARACTERISTICS ! for the last removal row
+end-if
+END-PROCEDURE   FMLY-6A-FSU-CONS-REM-SECTION
+
+BEGIN-PROCEDURE PRINT-CONS-REM-SUBHDGS
+use-column 0
+print 'REMOVAL '                            (+1,1) underline
+print 'NAME OF CHILD       '                (+0,+1) underline
+print 'AGE AT REMOVAL'                      (+0,+1) underline
+print 'REMOVAL REASON                     ' (+0,+1) underline
+END-PROCEDURE   PRINT-CONS-REM-SUBHDGS
+
+!****************************************************************************
+!   PRINT-CONS-REM-ROWS                                                     *
+!                                                                           *
+!       This procedure prints one row of Family Plan event description      *
+!                                                                           *
+!       CALLED BY  : FMLY-6A-FSU-CONS-REM-SECTION                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-CONS-REM-ROW
+!next-listing need = 5
+    !show 'procedure PRINT-CONS-REM-ROW'
+
+! When the id_removal_event changes, we need to print the caretaker
+!   and child removal characteristics using the saved id_removal_event
+!   before we process the removal event just read.  After printing the
+!   characteristics, we'll save the removal event for continued processing
+
+if #id_removal_event <> #id_removal_event_saved
+    ! then new removal event read (see comments above)
+     do PRINT-REMOVAL-CHARACTERISTICS
+     move #id_removal_event to #id_removal_event_saved
+     move $adult_rem_na to $adult_rem_na_saved
+     move $child_rem_na to $child_rem_na_saved
+end-if
+let $cons_rem_date_and_person = $cons_rem_date || $SPC || $person_removed
+! above is so that break is on both the date and the person, not either or
+! SHOW '$cons_rem_date_and_person=' $cons_rem_date_and_person
+print $cons_rem_date_and_person     (+1,1)   on-break PRINT = CHANGE/TOP-PAGE
+print $age_at_removal               (+0,31)  on-break !PRINT = CHANGE/TOP-PAGE
+print $removal_reason               (+0,46,35) wrap 35 2
+END-PROCEDURE   PRINT-CONS-REM-ROW
+
+BEGIN-PROCEDURE PRINT-REMOVAL-CHARACTERISTICS
+!show 'procedure PRINT-REMOVAL-CHARACTERISTICS'
+     !print '  Characterstics That Contributed To Removal' ()
+     !position (+1,1)
+     !columns 5 14
+
+!show '$adult_rem_na=' $adult_rem_na '   $child_rem_na=' $child_rem_na
+!show '$adult_rem_na_saved=' $adult_rem_na_saved '   $child_rem_na_saved=' $child_rem_na_saved
+
+     move 'Caretaker:' to $caretaker_label
+     if $adult_rem_na_saved = $YES_INDICATOR
+         move 'Not Applicable' to $rem_adult_char
+         do PRINT-REM-ADULT-CHAR
+     else
+         do GET-AND-PRINT-REM-ADULT-CHAR
+     end-if
+
+     move  'Child:' to $child_label
+     if $child_rem_na_saved = $YES_INDICATOR
+         move 'Not Applicable' to $rem_child_char
+         do PRINT-REMOVED-CHILD-CHAR
+     else
+         do GET-AND-PRINT-REMOVED-CHILD-CHAR
+     end-if
+END-PROCEDURE   PRINT-REMOVAL-CHARACTERISTICS
+
+! codes table CREMCHCT Stores characteristics assigned to the adult
+!   at the time of conservatorship removal.
+BEGIN-PROCEDURE GET-AND-PRINT-REM-ADULT-CHAR
+!show 'procedure GET-AND-PRINT-REM-ADULT-CHAR'
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+CREMCHCT.DECODE
+     move &CREMCHCT.DECODE to $rem_adult_char
+     !show '                 $rem_adult_char=' $rem_adult_char
+     !show '#id_removal_event_saved for REMOVAL_CHAR_ADULT=' #id_removal_event_saved
+
+     do PRINT-REM-ADULT-CHAR
+FROM    REMOVAL_CHAR_ADULT RCA,
+        CREMCHCT
+WHERE   RCA.ID_REMOVAL_EVENT (+) = #id_removal_event_saved
+AND     CREMCHCT.CODE(+)  = RCA.CD_REMOV_ADULT_CHAR
+END-SELECT
+use-column 0
+END-PROCEDURE   GET-AND-PRINT-REM-ADULT-CHAR
+
+BEGIN-PROCEDURE PRINT-REM-ADULT-CHAR
+!SHOW 'procedure PRINT-REM-ADULT-CHAR'
+     print $caretaker_label   (+1,5)
+     move $NULL to $caretaker_label
+     print $rem_adult_char  (0,19)
+END-PROCEDURE   PRINT-REM-ADULT-CHAR
+
+BEGIN-PROCEDURE GET-AND-PRINT-REMOVED-CHILD-CHAR
+!show 'procedure GET-AND-PRINT-REMOVED-CHILD-CHAR'
+
+! CPL codes table is Characteristics of the child to be placed.
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+CPL.DECODE
+     move &CPL.DECODE    to $rem_child_char
+     !show '#id_removal_event_saved for REMOVAL_CHAR_CHILD=' #id_removal_event_saved
+
+     do PRINT-REMOVED-CHILD-CHAR
+FROM    REMOVAL_CHAR_CHILD RCC,
+        CPL
+WHERE   RCC.ID_REMOVAL_EVENT (+) = #id_removal_event_saved
+AND     CPL.CODE(+) = RCC.CD_REMOV_CHILD_CHAR
+END-SELECT
+use-column 0
+END-PROCEDURE   GET-AND-PRINT-REMOVED-CHILD-CHAR
+
+BEGIN-PROCEDURE PRINT-REMOVED-CHILD-CHAR
+!show 'procedure PRINT-REMOVED-CHILD-CHAR'
+     print $child_label  (+1,5)
+     move $NULL to $child_label
+     print $rem_child_char  (0,19)
+END-PROCEDURE   PRINT-REMOVED-CHILD-CHAR
+!****************************************************************************
+!   END CONSERVATORSHIP REMOVALS PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN CHILDREN RETURN HOME PROCEDURES
+!****************************************************************************
+BEGIN-PROCEDURE FMLY-6B-FRE-CHILD_HOME-SECTION
+! SHOW 'procedure FMLY-6B-FRE-CHILD_HOME-SECTION'
+move 'Most Recent Return Home of Children' to $section_heading
+let #set_continuation_heading = 1
+let #child_return_home_count = 0
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+NM_PERSON_FULL
+    move &NM_PERSON_FULL  to $nm_child_home
+DT_PLCMT_START
+    move &DT_PLCMT_START  to $dt_child_home
+CLEGSTAT.DECODE
+    move &CLEGSTAT.DECODE to $legal_status_child_home
+DT_LEGAL_STAT_STATUS_DT
+    move &DT_LEGAL_STAT_STATUS_DT   to $dt_legal_status_child_home
+
+   ! show '#child_return_home_count=' #child_return_home_count
+        if #child_return_home_count = 0 or #current-line >= #max_print_line
+            do PRINT-RET-HOME-SUBHDGS
+        end-if
+        do PRINT-CHILD_HOME-ROW
+        add 1 to #child_return_home_count
+
+FROM    PLACEMENT,
+        PERSON,
+        LEGAL_STATUS,
+        CLEGSTAT
+WHERE   PLACEMENT.ID_CASE = $case_id
+AND     PLACEMENT.CD_PLCMT_LIV_ARR = $CHILD_HOME
+AND     PERSON.ID_PERSON = PLACEMENT.ID_PLCMT_CHILD
+AND     LEGAL_STATUS.ID_PERSON = PLACEMENT.ID_PLCMT_CHILD
+AND     DT_LEGAL_STAT_STATUS_DT
+                IN (SELECT MAX(DT_LEGAL_STAT_STATUS_DT) FROM LEGAL_STATUS
+                    WHERE ID_PERSON = ID_PLCMT_CHILD)
+AND CLEGSTAT.CODE = LEGAL_STATUS.CD_LEGAL_STAT_STATUS
+ORDER BY DT_PLCMT_START DESC, NM_PERSON_FULL
+END-SELECT
+if #child_return_home_count = 0
+    do PRINT-SECTION-HEADING
+    print 'No Return Home records exist for this child'  (+1,1)
+end-if
+use-column 0
+END-PROCEDURE   FMLY-6B-FRE-CHILD_HOME-SECTION
+
+BEGIN-PROCEDURE PRINT-RET-HOME-SUBHDGS
+    ! show 'procedure PRINT-RET-HOME-SUBHDGS'
+    !next-listing need = 5
+USE-COLUMN 0
+do PRINT-SECTION-HEADING
+print 'NAME OF CHILD            '   (+1,1,#name_width) underline
+print 'RETURN DT '                  (+0,+1,10) underline
+print 'CURRENT LEGAL STATUS       ' (+0,+1,30) underline
+print 'STATUS DT '                  (+0,+1,10) underline
+use-column 0
+END-PROCEDURE   PRINT-RET-HOME-SUBHDGS
+!****************************************************************************
+!   PRINT-CHILD_HOME-ROWS                                                     *
+!       This procedure prints one row of Family Plan event description      *
+!                                                                           *
+!       CALLED BY  : FMLY-6B-FRE-CHILD_HOME-SECTION                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-CHILD_HOME-ROW
+    ! show 'procedure PRINT-CHILD_HOME-ROW'
+    print $nm_child_home                 (+1,1,#name_width)
+    print $dt_child_home                 (+0,+1,10)
+    print $legal_status_child_home       (+0,+1,30)
+    print $dt_legal_status_child_home    (+0,+1,10)
+END-PROCEDURE   PRINT-CHILD_HOME-ROW
+!****************************************************************************
+!   END CHILDREN RETURN HOME PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN PARENT/CARETAKER INFORMATION PROCEDURES
+!****************************************************************************
+!   FMLY-2-PARENT-CCT-INFO-SECTION                                                               *
+!                                                                           *
+!       This procedure will select Ra listing of the characteristics of the *
+!       primary person.                             *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-CAP, GET-CCT, GET-PARENT-CT-CHAR, GET-CPL                     *
+!****************************************************************************
+! Adult principals identified by one of two criterion:
+!   either (1) an adult per marital status or (2) appears to be a teen parent
+!   (in which case could have marital status of child, but rel/int of parent).
+!   so, adult is has:
+!   1) Marital status of anything but 'child, not applicable' OR
+!   2) Marital status of 'child, not applicable' but
+!         Person rel/int to the stage is parent or birth_parent
+!
+BEGIN-PROCEDURE FMLY-2-PARENT-CCT-INFO-SECTION
+! show 'procedure FMLY-2-PARENT-CCT-INFO-SECTION'
+let #parent_cct_count = 0
+let #parent_cct_hdg_printed = 0
+do PRINT-PARENT-CT-SUBHDGS
+let #parent_cct_hdg_printed = 1
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+PS2.NM_PERSON_FIRST
+     move &PS2.NM_PERSON_FIRST  to $p_c_first
+PS2.NM_PERSON_MIDDLE
+     move &PS2.NM_PERSON_MIDDLE to $p_c_middle
+PS2.NM_PERSON_LAST
+     move &PS2.NM_PERSON_LAST   to $p_c_last
+PS2.CD_PERSON_SUFFIX
+     move &PS2.CD_PERSON_SUFFIX to $p_c_suffix
+SPL.ID_PERSON
+     move &SPL.ID_PERSON           to #id_person_char
+PS2.CD_PERSON_CHAR
+     move &PS2.CD_PERSON_CHAR   to $cd_person_char
+
+    let $cd_person_char_decode = $SPC
+    evaluate $cd_person_char
+        when = '0'
+            move 'No characteristic records exist for this person' to $cd_person_char_decode
+            do PRINT-PARENT-CT-NAME-COL
+            do PRINT-PERSON-CHARACS-COL
+            break
+        when = '1'
+            do PRINT-PARENT-CT-NAME-COL !just one line in one column
+            do GET-PRINT-CCT-ENTRIES    ! can be mult lines in next column
+            break
+        when = '2'
+            move 'No Characteristics Applicable is checked' to $cd_person_char_decode
+            do PRINT-PARENT-CT-NAME-COL
+            do PRINT-PERSON-CHARACS-COL
+            break
+    end-evaluate
+
+FROM    STAGE_PERSON_LINK     SPL,
+        PERSON                PS2
+WHERE   SPL.ID_CASE           = $case_id
+AND     SPL.ID_STAGE          = #input_id_stage
+AND     PS2.ID_PERSON      = SPL.ID_PERSON
+AND     SPL.CD_STAGE_PERS_TYPE     =  $PRN
+!-AND     (PS2.CD_PERSON_MARITAL_STATUS <> $CHILD OR SPL.CD_STAGE_PERS_REL_INT IN ($PARENT, $BIRTH_PARENT))
+AND   ((SPL.CD_STAGE_PERS_REL_INT IN ($PARENT, $BIRTH_PARENT) and PS2.CD_PERSON_MARITAL_STATUS = $CHILD)
+         or (PS2.CD_PERSON_MARITAL_STATUS <> $CHILD))   !to identify ADULT PRINCIPALS
+
+
+END-SELECT
+! PER PERSON CHAR DETAIL PAGE STATES, PARENT/CARETAKER FOR CPS IS DISPLAYED
+!   WHEN PERSON IS AN ADULT *OR* IS A MINOR (child) AND HAS THE REL/INT OF
+!   ANY TYPE OF PARENT
+use-column 0
+END-PROCEDURE   FMLY-2-PARENT-CCT-INFO-SECTION
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-PARENT-CT-SUBHDGS
+! show 'procedure PRINT-PARENT-CT-SUBHDGS'
+move 'Parent/Caretaker Information' to $section_heading
+let #set_continuation_heading = 1
+use-column 0
+do PRINT-SECTION-HEADING
+position (+1,1)
+COLUMNS #char_col_1 #char_col_2
+use-column 1
+print 'NAME                    '   (0,1,#name_width) underline
+use-column 2
+print 'PARENT/CARETAKER CHARACTERISTICS                  '
+    (0,1,#cct_char_width) underline
+END-PROCEDURE   PRINT-PARENT-CT-SUBHDGS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PARENT-CT-NAME-COL                                                *
+!                                                                           *
+!       This procedure prints each characteristic.                          *
+!                                                                           *
+!       CALLED BY  : GET-PARENT-CT-CHAR
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-PARENT-CT-NAME-COL
+! show 'procedure PRINT-PARENT-CT-NAME-COL'
+if $p_c_middle = $NULL
+  let $p_c_name = $p_c_first || $SPC || $p_c_last || $SPC || $p_c_suffix
+  ! SHOW 'NMN $p_c_name=' $p_c_name
+else
+  let $p_c_name = $p_c_first || $SPC || $p_c_middle || $SPC || $p_c_last || $SPC || $p_c_suffix
+  ! SHOW '*** $p_c_name=' $p_c_name
+end-if
+next-listing need = 4 !skiplines=1  THIS COMMAND WORKS HERE!
+use-column 1
+print $p_c_name   (0,0,#name_width) !on-break PRINT=CHANGE/TOP-PAGE
+let #parent_cct_item_count = 1 !printing first char on same line as name
+END-PROCEDURE   PRINT-PARENT-CT-NAME-COL
+
+! ******************************************************************
+
+BEGIN-PROCEDURE GET-PRINT-CCT-ENTRIES
+! show 'procedure GET-PRINT-CCT-ENTRIES'
+! note that #parent_cct_item_count is initialized to one when the name is printed
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+CCT.DECODE
+    move &CCT.DECODE               to $cd_person_char_decode
+
+    ! SHOW '$cd_person_char_decode=' $cd_person_char_decode
+    if #parent_cct_hdg_printed = 0
+       do PRINT-PARENT-CT-SUBHDGS
+       let #parent_cct_hdg_printed = 1
+    end-if
+    do PRINT-PERSON-CHARACS-COL
+    add 1 to #parent_cct_item_count !to identify whether or not to adv line
+
+FROM    CHARACTERISTICS       CHARACS,
+        CCT                   CCT
+WHERE   CHARACS.ID_PERSON  = #id_person_char
+AND     CHARACS.CD_CHAR_CATEGORY = $CCT
+AND     CCT.CODE = CHARACS.CD_CHARACTERISTIC
+END-SELECT
+END-PROCEDURE   GET-PRINT-CCT-ENTRIES
+
+BEGIN-PROCEDURE PRINT-PERSON-CHARACS-COL
+! SHOW 'procedure PRINT-PERSON-CHARACS-COL'
+    use-column 2
+    ! SHOW '#parent_cct_item_count=' #parent_cct_item_count
+    if #parent_cct_item_count = 1
+        print $cd_person_char_decode (0,1,#cct_char_width) wrap #cct_char_width 3
+    else
+        position (+1,1) !adv 1 line in column
+        print $cd_person_char_decode (0,1,#cct_char_width) wrap #cct_char_width 3
+    end-if
+END-PROCEDURE   PRINT-PERSON-CHARACS-COL
+!****************************************************************************
+!   END PARENT/CARETAKER INFORMATION PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN PARENT/CARETAKER NAME HISTORY PROCEDURES
+!****************************************************************************
+!   GET-AKA-NAME                                                            *
+!                                                                           *
+!       This procedure will select every name that the person has or goes by*
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-AKA-NAMES                                         *
+!****************************************************************************
+
+BEGIN-PROCEDURE FMLY-3-PRINT-AKA-NAMES
+! SHOW 'procedure FMLY-3-PRINT-AKA-NAMES'
+! SHOW '#id_person=' #id_person
+use-column 0
+let #aka_print_initial_name = 0 !indicator to print heading before 1st name is printed
+move 'Parent/Caretaker Name History' to $section_heading
+let #set_continuation_heading = 1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+NM_PERSON_FIRST
+    move &NM_PERSON_FIRST              to $prim_first
+NM_PERSON_MIDDLE
+    move &NM_PERSON_MIDDLE             to $prim_middle
+NM_PERSON_LAST
+    move &NM_PERSON_LAST               to $prim_last
+CD_PERSON_SUFFIX
+    move &CD_PERSON_SUFFIX             to $prim_suffix
+
+NM_NAME_FIRST
+    move &NM_NAME_FIRST                to $aka_1st
+NM_NAME_MIDDLE
+    move &NM_NAME_MIDDLE               to $aka_midl
+NM_NAME_LAST
+    move &NM_NAME_LAST                 to $aka_last
+!CSUFFIX2B.decode
+!    move &CSUFFIX2B.decode            to $aka_sfx
+CD_NAME_SUFFIX
+    move &CD_NAME_SUFFIX               to $aka_sfx
+SPL3.ID_PERSON
+    move &SPL3.ID_PERSON               to $aka_id_person
+
+    do PRINT-AKA-NAME
+    move $NULL to $aka_sfx
+    move $NULL to $prim_suffix
+    move 1 to #aka_print_initial_name
+
+FROM    STAGE_PERSON_LINK     SPL3,
+        PERSON                P3,
+        NAME                  NAME
+WHERE   SPL3.ID_CASE         = $case_id
+AND     SPL3.ID_STAGE        = #input_id_stage
+AND     SPL3.CD_STAGE_PERS_TYPE     =  $PRN
+AND     SPL3.ID_PERSON    = P3.ID_PERSON
+AND     ((SPL3.CD_STAGE_PERS_REL_INT IN ($PARENT, $BIRTH_PARENT) and P3.CD_PERSON_MARITAL_STATUS = $CHILD)
+          or (P3.CD_PERSON_MARITAL_STATUS <> $CHILD)) !to identify ADULT PRINCIPALS
+AND     SPL3.ID_PERSON    = NAME.ID_PERSON
+AND     NAME.IND_NAME_INVALID = $NO_INDICATOR ! NO INVALID NAMES
+AND NOT(NAME.IND_NAME_PRIMARY = 'Y' AND NAME.DT_NAME_END_DATE = '12/31/4712') !SKIP NAME IN PERSON TABLE
+
+ORDER BY NM_PERSON_FIRST, NM_PERSON_LAST
+END-SELECT
+use-column 0
+if #aka_print_initial_name = 0 ! then no name history printed
+    do PRINT-SECTION-HEADING
+    print 'No name history for any parent/caretaker' (+1,1)
+end-if
+
+END-PROCEDURE   FMLY-3-PRINT-AKA-NAMES
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-AKA-NAME
+! show 'procedure PRINT-AKA-NAMES'
+if #aka_print_initial_name = 0 or #current-line >= #max_print_line
+    do PRINT-SECTION-HEADING
+end-if
+!set up the primary name for printing and comparing to aka name
+if $prim_middle = $NULL
+  let $prim_name = $prim_first || $SPC || $prim_last || $SPC || $prim_suffix
+else
+  let $prim_name = $prim_first || $SPC || $prim_middle || $SPC || $prim_last || $SPC || $prim_suffix
+end-if
+!set up the aka name for printing and comparing to primary name
+if $aka_midl = $NULL
+  let $aka_name =  $aka_1st || $SPC || $aka_last || $SPC || $aka_sfx
+else
+  let $aka_name =  $aka_1st || $SPC || $aka_midl || $SPC || $aka_last || $SPC || $aka_sfx
+end-if
+! SHOW '$prim_name=' $prim_name
+! SHOW '$aka_name=' $aka_name
+!use-column 1
+!let $aka_detail_line = $prim_name || '  ' || $aka_name
+columns 1 28
+print $prim_name (+1,0) on-break PRINT=CHANGE/TOP-PAGE
+NEXT-COLUMN at-end=newline
+let $aka_name = ltrim($aka_name,$SPC) !trim leading spaces
+print $aka_name  (0,0)
+let #aka_print_initial_name = 1
+END-PROCEDURE   PRINT-AKA-NAME
+!****************************************************************************
+!   END PARENT/CARETAKER NAME HISTORY PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN SERVICES AND REFERRALS PROCEDURES
+!****************************************************************************
+BEGIN-PROCEDURE FMLY-8-SVC-AND-REF-SECTION
+    !next-listing need = 7
+let #max_print_line_svc_and_ref = #max_print_line - 4
+if #current-line >= #max_print_line_svc_and_ref
+    let #new_page_expected = 1
+    new-page
+else
+    let #new_page_expected = 0 !paging issue in section 7
+end-if
+move 'Services and Referrals' to $section_heading
+let #set_continuation_heading = 1
+do PRINT-SECTION-HEADING
+!columns 1 25
+use-column 0
+let #cps_checklist_count = 0
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CPS_CHECKLIST.IND_REFERRAL
+    move &CPS_CHECKLIST.IND_REFERRAL  to $cps_checklist_ind_referral
+CPS_CHECKLIST.TXT_COMMENTS
+    move &CPS_CHECKLIST.TXT_COMMENTS  to $cps_checklist_comments
+    if $cps_checklist_ind_referral = $YES_INDICATOR !DOES mean NO Services/Referrals ;(
+        print 'No Services/Referrals is checked'  (+1,1)
+    else
+        do GET-PRINT-SVC-REFRL-ROW
+    end-if
+    print 'Checklist Comments:  ' (+1,1)
+    print $cps_checklist_comments (+0,22) wrap 55 4
+    add 1 to #cps_checklist_count
+FROM    CPS_CHECKLIST
+WHERE   CPS_CHECKLIST.ID_CASE        = $case_id
+AND     CPS_CHECKLIST.ID_STAGE       = #input_id_stage
+END-SELECT
+if #cps_checklist_count = 0
+    print 'No Services/Referrals records exist for this stage'  (+1,1)
+end-if
+use-column 0
+END-PROCEDURE   FMLY-8-SVC-AND-REF-SECTION
+
+!****************************************************************************
+!   GET-PRINT-SVC-REFRL-ROWS                                                *
+!                                                                           *
+!       This procedure prints one row of Family Plan event description      *
+!                                                                           *
+!       CALLED BY  : FMLY-8-SVC-AND-REF-SECTION                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE GET-PRINT-SVC-REFRL-ROW
+    ! show 'procedure GET-PRINT-SVC-REFRL-ROW'
+    use-column 1
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+CSRCKLST.DECODE
+     move &CSRCKLST.DECODE    to $cklist_item
+!     do PRINT-SECTION-HEADING
+     print $cklist_item        (+1,1,70) wrap 70 2
+FROM    CPS_CHECKLIST_ITEM,
+        CSRCKLST
+WHERE   CPS_CHECKLIST_ITEM.ID_CASE       = $case_id
+AND     CPS_CHECKLIST_ITEM.ID_STAGE       = #input_id_stage
+AND     CSRCKLST.CODE = CD_SRVC_REFERRED
+END-SELECT
+END-PROCEDURE   GET-PRINT-SVC-REFRL-ROW
+!****************************************************************************
+!   END SERVICES AND REFERRALS PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN FAMILY PLAN PROCEDURES
+!****************************************************************************
+!   FMLY-7-FAMILY-PLANS-SECTION                                                     *
+!                                                                           *
+!       This procedure
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      :                                                 *
+!****************************************************************************
+BEGIN-PROCEDURE FMLY-7-FAMILY-PLANS-SECTION
+    !show 'procedure FMLY-7-FAMILY-PLANS-SECTION'
+move 0 to #FamPlanHdgPrinted
+move 'Approved Family Plans' to $section_heading
+let #set_continuation_heading = 1
+let #max_print_line_fam_plan = #max_print_line - 4
+    !show '#max_print_line_fam_plan=' #max_print_line_fam_plan
+    !show '#max_print_line=' #max_print_line
+    !show '#current-line=' #current-line
+if #current-line >= #max_print_line_fam_plan
+    let #new_page_expected = 1
+    new-page
+end-if
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+EVENT.DT_EVENT_OCCURRED
+
+EVENT.TXT_EVENT_DESCR
+     move &EVENT.TXT_EVENT_DESCR        to $family_plan_desc
+to_char(EVENT.DT_EVENT_OCCURRED, 'MM/DD/YY') &date7
+    move &date7                         to $family_plan_date
+P7.NM_PERSON_FULL
+    move &P7.NM_PERSON_FULL             to $family_plan_person
+
+    do PRINT-FAM-PLAN-ROW
+
+FROM    EVENT,
+        EVENT_PERSON_LINK   EPL7,
+        PERSON              P7,
+        STAGE_PERSON_LINK   SPL7
+WHERE   EVENT.ID_CASE       = $case_id
+AND     EVENT.CD_EVENT_TYPE   = $PLN
+AND     EVENT.CD_EVENT_STATUS = $APRV
+AND     EPL7.ID_EVENT       = EVENT.ID_EVENT
+AND     EPL7.ID_PERSON      = P7.ID_PERSON
+AND     SPL7.ID_PERSON      = P7.ID_PERSON
+AND     SPL7.ID_STAGE       = #input_id_stage   ! per DOROTHY, this s/be the family plan stage!
+!   AND     (P7.CD_PERSON_MARITAL_STATUS <> $CHILD OR SPL7.CD_STAGE_PERS_REL_INT IN ($PARENT, $BIRTH_PARENT))
+AND   ((SPL7.CD_STAGE_PERS_REL_INT IN ($PARENT, $BIRTH_PARENT) and P7.CD_PERSON_MARITAL_STATUS = $CHILD)
+        or (P7.CD_PERSON_MARITAL_STATUS <> $CHILD)) !to identify ADULT PRINCIPALS
+
+ORDER BY EVENT.DT_EVENT_OCCURRED DESC
+END-SELECT
+! NOTE 'NO CHILDREN' RESTRICTION ISN'T WORKING WHEN CHILD IS A PARENT
+! (see Cristal Campos, stage 26632653)
+use-column 0
+columns 1
+if #FamPlanHdgPrinted = 0 ! THEN no family plan events selected
+    do PRINT-SECTION-HEADING
+    print 'No Approved Family Plan events exist for this case'  (+1,1)
+end-if
+END-PROCEDURE   FMLY-7-FAMILY-PLANS-SECTION
+
+!****************************************************************************
+!   PRINT-FAM-PLAN-ROWS                                                     *
+!                                                                           *
+!       This procedure prints one row of Family Plan event description      *
+!                                                                           *
+!       CALLED BY  : PRINT-FAM-PLAN-SECTION                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-FAM-PLAN-ROW
+!SHOW 'procedure PRINT-FAM-PLAN-ROW'
+
+    if #FamPlanHdgPrinted = 0 or #current-line >= #max_print_line
+        do PRINT-SECTION-HEADING
+        do PRINT-FAMILY-PLAN-SUBHDGS
+    end-if
+    columns 1
+    use-column 1
+    print $family_plan_date       (+1,1,8)  on-break !PRINT = CHANGE/TOP-PAGE
+        !let $family_plan_desc = $family_plan_desc || ' (' || $family_plan_event_id || ')'
+    print $family_plan_desc       (+0,+1,45) wrap 45 3
+    print $family_plan_person     (+0,+1,#name_width)
+        !print $family_plan_event_id   (+0,+1,10) edit 9999999999
+        !do PRINT-CURRENT-LINE-FOR-DEBUGGING
+END-PROCEDURE   PRINT-FAM-PLAN-ROW
+
+BEGIN-PROCEDURE PRINT-FAMILY-PLAN-SUBHDGS
+    COLUMNS 1
+    USE-COLUMN 1
+    print 'ENTRY DT'                                            (+1,1) underline
+    print 'FAMILY PLAN EVENT DESCRIPTION                '       (+0,+1) underline
+    print 'ADULT PRINCIPALS        '                            (+0,+1) underline
+    move 1 to #FamPlanHdgPrinted
+END-PROCEDURE   PRINT-FAMILY-PLAN-SUBHDGS
+!****************************************************************************
+!   END FAMILY PLAN PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN SERVICE AUTHORIZATION PROCEDURES
+!****************************************************************************
+BEGIN-PROCEDURE FMLY-9-SVC-AUTH-SECTION
+! BE AWARE: The order of thise selection and the table joins recommended
+!   by Murthi after I asked for performance improvement
+!
+use-column 0
+let #svcauth_counter = 0
+    !next-listing need = 6
+move 'Service Authorizations' to $section_heading
+let #set_continuation_heading = 1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+SA_DTL.DT_SVC_AUTH_DTL
+
+to_char(SA_DTL.DT_SVC_AUTH_DTL, 'MM/DD/YY') &dt_svc_auth_eff_mdy
+     move &dt_svc_auth_eff_mdy      to $dt_svc_auth_eff
+SA_STAGE.CD_STAGE
+    move &SA_STAGE.CD_STAGE         to $svc_auth_cd_stage
+P_CLIENT.NM_PERSON_FULL
+     move &P_CLIENT.NM_PERSON_FULL  to $svc_auth_nm_client
+CSVCCODE.DECODE
+     move &CSVCCODE.DECODE          to $svc_auth_decode
+
+ !for testing move '1234567890123456789012345' to    $svc_auth_nm_client
+ !for testing move '123456789*123456789*123456789*1235' to    $svc_auth_decode
+
+    do PRINT-SVC-AUTH-ROW
+    move 1 to #svcauth_counter
+
+FROM    SVC_AUTH_EVENT_LINK     SAEL,
+        EVENT                   SA_EVENT,
+        STAGE                   SA_STAGE,
+        SERVICE_AUTHORIZATION   SA_HDR,
+        SVC_AUTH_DETAIL         SA_DTL,
+        PERSON                  P_CLIENT,
+        CSVCCODE                CSVCCODE
+WHERE   SAEL.ID_CASE        = $case_id                  !all SvcAuth Events for this case
+AND     SA_HDR.ID_SVC_AUTH  = SAEL.ID_SVC_AUTH          !to get the SvcAuth row
+AND     SA_EVENT.ID_EVENT   = SAEL.ID_SVC_AUTH_EVENT    !to get the Event row
+AND     SA_EVENT.CD_EVENT_STATUS IN ($APRV,$COMP,$PEND) !COMP&PEND SvcAuth's can be paid, too
+AND     SA_STAGE.ID_STAGE   =  SA_EVENT.ID_EVENT_STAGE  !id_stage not in SvcAuth tables
+AND     SA_STAGE.CD_STAGE   IN ($FPR, $FSU, $FRE)       !limit to family stages
+AND     SA_DTL.ID_SVC_AUTH  = SA_HDR.ID_SVC_AUTH
+AND     P_CLIENT.ID_PERSON  = SA_DTL.ID_PERSON
+AND     CSVCCODE.CODE       = SA_DTL.CD_SVC_AUTH_DTL_SVC
+ORDER BY SA_DTL.DT_SVC_AUTH_DTL DESC
+END-SELECT
+use-column 0
+if #svcauth_counter = 0 ! then no svc auths printed
+    do PRINT-SECTION-HEADING
+    print 'No PEND/COMP/APRV Service Authorization records exist for' (+1,1)
+    print ' family stages in this case' (+1,1)
+
+end-if
+END-PROCEDURE   FMLY-9-SVC-AUTH-SECTION
+
+!****************************************************************************
+!   PRINT-SVC-AUTH-ROWS                                                     *
+!                                                                           *
+!                                                                           *
+!       CALLED BY  : FMLY-9-SVC-AUTH-SECTION                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-SVC-AUTH-ROW
+
+    if #svcauth_counter = 0 or #current-line >= #max_print_line
+        do PRINT-SECTION-HEADING
+        do PRINT-SVC-AUTH-COL-HDG
+    end-if
+    ! show 'procedure PRINT-SVC-AUTH-ROW'
+    columns 1
+    use-column 1
+    print $dt_svc_auth_eff      (+1,1,8)
+    print $svc_auth_cd_stage    (+0,+2,3)
+    print $svc_auth_nm_client   (+0,+2,#name_width)
+    print $svc_auth_decode      (+0,+2,35)
+END-PROCEDURE   PRINT-SVC-AUTH-ROW
+
+BEGIN-PROCEDURE PRINT-SVC-AUTH-COL-HDG
+    ! SHOW 'procedure PRINT-SVC-AUTH-COL-HDG'
+    columns 1
+    use-column 1
+    print 'EFF DATE'                           (+1,1)      underline
+    print 'STG'                                (0,+2)      underline
+    print 'PRIMARY CLIENT           '          (0,+2,#name_width)  underline
+    print 'SERVICE                           ' (0,+2,35)   underline
+END-PROCEDURE   PRINT-SVC-AUTH-COL-HDG
+!****************************************************************************
+!   END SERVICE AUTHORIZATION PROCEDURES
+!****************************************************************************
+
+
+!****************************************************************************
+!   BEGIN PRIMARY WORKER ASSIGNED PROCEDURES
+!****************************************************************************
+!   FMLY-10-WORKERS-ASSIGNED-SECTION                                        *
+!                                                                           *
+!****************************************************************************
+BEGIN-PROCEDURE FMLY-10-WORKERS-ASSIGNED-SECTION
+move 0 to #Asgnd_Worker_Hdg_Printed
+move 'Primary Worker Assignments' to $section_heading
+let #set_continuation_heading = 1
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+ASG_STG.CD_STAGE
+    move &ASG_STG.CD_STAGE                to $worker_assign_stg_type
+ASG_EVNT.DT_EVENT_OCCURRED  ! has to be here so DISTINCT works
+to_char(ASG_EVNT.DT_EVENT_OCCURRED, 'MM/DD/YYYY') &assign_date
+    move &assign_date                     to $worker_assign_date
+ASG_EVNT.TXT_EVENT_DESCR
+     move &ASG_EVNT.TXT_EVENT_DESCR       to $worker_assign_desc
+
+     do PRINT-WORKER-ASGND-ROW
+
+FROM    EVENT   ASG_EVNT,
+        STAGE   ASG_STG
+WHERE   ASG_EVNT.ID_CASE       = $case_id
+AND     ASG_EVNT.CD_EVENT_TYPE = $ASG
+AND     ASG_EVNT.ID_EVENT_PERSON <> 1   !skip Employee,Conversion
+AND     ASG_STG.ID_STAGE       = ASG_EVNT.ID_EVENT_STAGE
+AND     ASG_STG.CD_STAGE NOT IN ($INT, $INV)
+ORDER BY ASG_STG.CD_STAGE, ASG_EVNT.DT_EVENT_OCCURRED DESC
+END-SELECT
+use-column 0
+columns 1
+if #Asgnd_Worker_Hdg_Printed = 0 !
+    do PRINT-SECTION-HEADING
+    print 'No Worker Assignments exist'  (+1,1)
+end-if
+END-PROCEDURE   FMLY-10-WORKERS-ASSIGNED-SECTION
+
+!****************************************************************************
+!   PRINT-WORKER-ASGND-ROWS                                                     *
+!                                                                           *
+!       This procedure prints one row of Family Plan event description      *
+!                                                                           *
+!       CALLED BY  : PRINT-FAM-PLAN-SECTION                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-WORKER-ASGND-ROW
+! SHOW 'procedure PRINT-WORKER-ASGND-ROW'
+! SHOW '#current-line=' #current-line
+    let #worker_asgnd_max_print_line = #max_print_line - 4
+    if #current-line >= #worker_asgnd_max_print_line
+        let #new_page_expected = 1
+        new-page
+    end-if
+
+    if #Asgnd_Worker_Hdg_Printed = 0 or #current-line >= #max_print_line
+        do PRINT-SECTION-HEADING
+        do PRINT-ASSIGNED-WORKER-SUBHDGS
+        move 1 to #Asgnd_Worker_Hdg_Printed
+    end-if
+    columns 1
+    use-column 1
+    print $worker_assign_stg_type   (+1,1,3)    on-break
+    print $worker_assign_date       (+0,+1,10)
+! SHOW '$worker_assign_desc=' $worker_assign_desc
+
+! current format of event descr is 'Primary Assignment Issued For: ' (32 chars)
+!  but older formats exist as      'Primary assignment issued for '  (31 chars)
+! next is to strip first 31 characters from TXT_EVENT_DESCR
+    let $worker_assign_substr_name =
+        substr($worker_assign_desc,31,25)  !strips first 31 chars
+
+! SHOW '$worker_assign_substr_name=' $worker_assign_substr_name
+
+! next removes any leading space not stripped with the substr above
+! leading space will exist for all event descr of current format
+    let $worker_assign_substr_name_2 = ltrim($worker_assign_substr_name,$SPC)
+    print $worker_assign_substr_name_2 (+0,+1) on-break
+
+END-PROCEDURE PRINT-WORKER-ASGND-ROW
+
+BEGIN-PROCEDURE PRINT-ASSIGNED-WORKER-SUBHDGS
+COLUMNS 1
+USE-COLUMN 1
+print 'STG'                                (+1,1) underline
+print 'ASSIGN  DT'                         (+0,+1) underline
+print 'PRIMARY ASSIGNMENT ISSUED FOR'      (+0,+1) underline
+END-PROCEDURE   PRINT-ASSIGNED-WORKER-SUBHDGS
+!****************************************************************************
+!   END PRIMARY WORKER ASSIGNED PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   CHLD-1-CHILD-INFO-SECTION                                                  *
+!                                                                           *
+!       This procedure will select the PRINCIPAL  information when the      *
+!       input id_case is the same as the id_case in stage.                  *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-CHILD-ROW-TITLE, PRINT-CHILD-ROW         *
+!****************************************************************************
+BEGIN-PROCEDURE CHLD-1-CHILD-INFO-SECTION
+
+move 0  to #ChildSubhdgsPrinted
+
+! show 'CHLD-1-CHILD-INFO-SECTION'
+! SHOW#ChildSubhdgsPrinted
+move 'Child Specific Information' to $section_heading
+do PRINT-SECTION-HEADING
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+CHILD.NM_PERSON_FIRST
+     move &CHILD.NM_PERSON_FIRST  to $chld_nm_first
+CHILD.NM_PERSON_MIDDLE
+     move &CHILD.NM_PERSON_MIDDLE to $chld_nm_middle
+CHILD.NM_PERSON_LAST
+     move &CHILD.NM_PERSON_LAST   to $chld_nm_last
+CHILD.CD_PERSON_SUFFIX
+     move &CHILD.CD_PERSON_SUFFIX to $chld_nm_sfx
+to_char(CHILD.DT_PERSON_BIRTH, 'MM/DD/YYYY') &child_dob
+    move &child_dob                   to $dob
+CHILD.NBR_PERSON_ID_NUMBER
+    move &CHILD.NBR_PERSON_ID_NUMBER to $child_ssn
+
+    if $chld_nm_middle = $NULL
+      let $chld_nm_name = $chld_nm_first || $SPC || $chld_nm_last || $SPC || $chld_nm_sfx
+    else
+      let $chld_nm_name = $chld_nm_first || $SPC || $chld_nm_middle || $SPC || $chld_nm_last || $SPC || $chld_nm_sfx
+    end-if
+
+    do PRINT-CHILD-ROW
+    use-column 0 ! returns setting to no COLUMNS
+
+FROM  PERSON CHILD
+WHERE CHILD.ID_PERSON  = #prim_chld_id_person
+END-SELECT
+use-column 0
+END-PROCEDURE   CHLD-1-CHILD-INFO-SECTION
+
+!****************************************************************************
+!   PRINT-CHILD-ROW                                                         *
+!                                                                           *
+!       This procedure
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHILD-ROW
+! SHOW 'procedure PRINT-CHILD-ROW'
+COLUMNS #chld_info_col_1 #chld_info_col_2 #chld_info_col_3    !defined in housekeeping
+use-column 1
+print 'Child''s Name:'  (+1,1)  bold
+! show '                          NAME OF CHILD ' $chld_nm_name
+print $chld_nm_name     (+0,+1,20)  wrap 20 2 keep-top
+use-column 2
+print 'DOB:'            (+0,1)  bold
+print $dob              (+0,+1)
+use-column 3
+print 'PersonID:'      (+0,1)  bold
+print $input_id_person  (+0,+1)   edit 9999999999 !10 digits (9,999,999,999)
+use-column 2
+print 'SSN:'            (+1,1) bold
+print $child_ssn        (+0,+1)
+do  GET-CHILD-MEDICAID-NUMBER
+use-column 3
+print 'MEDICAID #:'     (+0,1) bold
+print $child_medicaid_nbr    (+0,+1)
+END-PROCEDURE   PRINT-CHILD-ROW
+
+BEGIN-PROCEDURE GET-CHILD-MEDICAID-NUMBER
+! SHOW 'GET-CHILD-MEDICAID-NUMBER'
+move $NULL to $child_medicaid_nbr
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+CHLD_ID.NBR_PERSON_ID_NUMBER
+    move &CHLD_ID.NBR_PERSON_ID_NUMBER to $child_medicaid_nbr
+FROM    PERSON_ID     CHLD_ID
+WHERE   CHLD_ID.ID_PERSON      = #prim_chld_id_person
+AND     CHLD_ID.CD_PERSON_ID_TYPE       = $MEDICAID
+AND     CHLD_ID.IND_PERSON_ID_INVALID   = $NO_INDICATOR      ! not invalid
+AND     CHLD_ID.DT_PERSON_ID_END        = '12/31/4712'   ! not end-dated
+END-SELECT
+END-PROCEDURE GET-CHILD-MEDICAID-NUMBER
+
+!****************************************************************************
+!   BEGIN CONSERVATORSHIP REMOVALS PROCEDURES
+!****************************************************************************
+!   CHLD-2-CONS-REMOVAL-DATE                                                *
+!                                                                           *
+!       This procedure selects the primary child's removal date (from home) *
+!****************************************************************************
+BEGIN-PROCEDURE CHLD-2-CONS-REMOVAL-DATE
+! show 'procedure CHLD-2-CONS-REMOVAL-DATE'
+    move 0 to #cons_remvl_item_count
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+to_char(CR.DT_REMOVAL, 'MM/DD/YY') &cr_dt_removal
+    move &cr_dt_removal            to $cons_rem_date
+
+    do  CHLD-3-PRINT-CHILD-REMOVAL-DT
+
+FROM    CNSRVTRSHP_REMOVAL CR
+WHERE   CR.ID_VICTIM        = #prim_chld_id_person
+END-SELECT
+if #cons_remvl_item_count = 0
+    let $cons_rem_date = 'See original'
+    do CHLD-3-PRINT-CHILD-REMOVAL-DT
+    let $cons_rem_date = '  placement date'
+    do CHLD-3-PRINT-CHILD-REMOVAL-DT
+
+end-if
+END-PROCEDURE   CHLD-2-CONS-REMOVAL-DATE
+
+!****************************************************************************
+!   CHLD-3-PRINT-CHILD-REMOVAL-DT
+!                                                                           *
+!       This procedure prints child removal date
+!****************************************************************************
+BEGIN-PROCEDURE CHLD-3-PRINT-CHILD-REMOVAL-DT
+! show 'procedure CHLD-3-PRINT-CHILD-REMOVAL-DT'
+    if #cons_remvl_item_count = 0
+        print 'Removal Date:'   (+2,1)  bold
+        print $cons_rem_date    (+0,15)
+    else
+        print $cons_rem_date    (+1,15)
+    end-if
+    move 1 to #cons_remvl_item_count
+END-PROCEDURE   CHLD-3-PRINT-CHILD-REMOVAL-DT
+
+
+!****************************************************************************
+!   BEGIN CHILD ALSO-KNOWN-AS NAME HISTORY SECTION
+!****************************************************************************
+!   CHLD-4-CHILD-AKA-NAMES                                                  *
+!                                                                           *
+!       This procedure will select every name not marked as invalid         *
+!           the end_date cannot = 12/31/4712 which is effectively NULL      *
+!           as that row reflect the same name in person table               *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-CHILD-AKA-NAMES                                  *
+!****************************************************************************
+BEGIN-PROCEDURE CHLD-4-CHILD-AKA-NAMES
+! show 'procedure CHLD-4-CHILD-AKA-NAMES'
+! SHOW '#id_person=' #id_person
+let #first_aka_name_printed = 0 !indicator to print heading before 1st name is printed
+COLUMNS #chld_info_col_1 #chld_info_col_2
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CHILD_NAME.NM_NAME_FIRST
+    move &CHILD_NAME.NM_NAME_FIRST   to $aka_1st
+CHILD_NAME.NM_NAME_MIDDLE
+    move &CHILD_NAME.NM_NAME_MIDDLE  to $aka_midl
+CHILD_NAME.NM_NAME_LAST
+    move &CHILD_NAME.NM_NAME_LAST    to $aka_last
+CHILD_NAME.CD_NAME_SUFFIX
+    move &CHILD_NAME.CD_NAME_SUFFIX  to $aka_sfx
+
+    do PRINT-CHILD-AKA-NAME
+    move $NULL to $aka_sfx
+    move 1 to #first_aka_name_printed
+
+FROM    NAME   CHILD_NAME
+WHERE   CHILD_NAME.ID_PERSON        = #prim_chld_id_person
+AND     CHILD_NAME.IND_NAME_INVALID = $NO_INDICATOR        ! NO INVALID NAMES
+AND NOT(CHILD_NAME.IND_NAME_PRIMARY = 'Y' AND CHILD_NAME.DT_NAME_END_DATE = '12/31/4712') !SKIP NAME IN PERSON TABLE
+END-SELECT
+use-column 2    ! which is value in #chld_info_col_2
+if #first_aka_name_printed = 0 ! then no name history printed
+    print 'Name History:  ' (0,0) bold
+    print 'No other valid names' (0,+2)
+end-if
+
+END-PROCEDURE   CHLD-4-CHILD-AKA-NAMES
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHILD-AKA-NAME
+    ! show 'procedure PRINT-CHILD-AKA-NAMES'
+!   set up the aka name for printing and comparing to primary name
+    if $aka_midl = $NULL
+      let $aka_name =  $aka_1st || $SPC || $aka_last
+    else
+      let $aka_name =  $aka_1st || $SPC || $aka_midl || $SPC || $aka_last
+    end-if
+    if $aka_sfx != $NULL
+       let $aka_name =  $aka_name || $SPC || $aka_sfx
+    end-if    ! SHOW '$aka_name=' $aka_name
+    let $aka_name = ltrim($aka_name,$SPC) !trim leading spaces
+
+    use-column 2    ! which is value in #chld_info_col_2
+    if #first_aka_name_printed = 0
+        print 'Name History:' ()    bold
+        print $aka_name  (0,+2)
+    else
+        print $aka_name  (+1,+15)
+    end-if
+    position (0,0)
+    let #first_aka_name_printed = 1
+END-PROCEDURE   PRINT-CHILD-AKA-NAME
+!****************************************************************************
+!   END NAME HISTORY PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN LEGAL STATUS PROCEDURES
+!****************************************************************************
+!   CHLD-5-LEGAL-STATUS-SECTION                                                     *
+!                                                                           *
+!       This procedure selects STAGE data, prints the initial heading and   *
+!         prints each row of STAGE information                              *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      :                                                 *
+!****************************************************************************
+BEGIN-PROCEDURE CHLD-5-LEGAL-STATUS-SECTION
+move 0 to #LeglStatusHdgPrinted
+use-column 0
+move 'Legal Status History' to $section_heading
+let #set_continuation_heading = 1
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+LS.DT_LEGAL_STAT_STATUS_DT
+
+LS_EVENT.TXT_EVENT_DESCR
+     move &LS_EVENT.TXT_EVENT_DESCR        to $legal_status_desc
+
+! SHOW '#current-line=' #current-line
+    do PRINT-LEG-STAT-ROW
+
+FROM    EVENT           LS_EVENT,
+        LEGAL_STATUS    LS
+WHERE   LS_EVENT.ID_EVENT IN
+    (SELECT ID_LEGAL_STAT_EVENT FROM LEGAL_STATUS WHERE ID_PERSON = #prim_chld_id_person)
+AND LS.ID_LEGAL_STAT_EVENT = LS_EVENT.ID_EVENT
+ORDER BY LS.DT_LEGAL_STAT_STATUS_DT DESC
+END-SELECT
+! order above is same as that used in csc02o00.sqr (CPS LEGAL LOG)
+use-column 0
+COLUMNS 1
+if #LeglStatusHdgPrinted = 0 ! THEN no legal status events selected
+    do PRINT-SECTION-HEADING
+    print 'No Legal Status records exist for this child'  (+1,1)
+end-if
+END-PROCEDURE   CHLD-5-LEGAL-STATUS-SECTION
+
+!****************************************************************************
+!   PRINT-LEG-STAT-ROWS                                                     *
+!                                                                           *
+!       This procedure
+!                                                                           *
+!       CALLED BY  : PRINT-FAM-PLAN-SECTION                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-LEG-STAT-ROW
+! SHOW 'procedure PRINT-LEG-STAT-ROW'
+! SHOW '#current-line=' #current-line
+
+if #LeglStatusHdgPrinted = 0 or #current-line >= #max_print_line
+    ! show '#max_print_line in legal status section=' #max_print_line
+    do PRINT-SECTION-HEADING
+    move 1 to #LeglStatusHdgPrinted
+end-if
+let $legal_status_line = $legal_status_desc
+print $legal_status_line      (+1,1) wrap 70 3
+END-PROCEDURE   PRINT-LEG-STAT-ROW
+!****************************************************************************
+!   END LEGAL STATUS PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN LEGAL ACTIONS PROCEDURES
+!****************************************************************************
+!   CHLD-6-LEGAL-ACTIONS-SECTION                                            *
+!                                                                           *
+!       This procedure
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      :                                                        *
+!****************************************************************************
+BEGIN-PROCEDURE CHLD-6-LEGAL-ACTIONS-SECTION
+move 0 to #LegActionsHdgPrinted
+use-column 0
+move 'Legal Actions History entered since 09/01/2004' to $section_heading
+let #set_continuation_heading = 1
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+LA.DT_LEGAL_ACT_OUTCOME_DT  ! columns must be listed for distinct to work
+LA.DT_LEGAL_ACT_DATE_FILED
+
+LA_EVENT.TXT_EVENT_DESCR
+     move &LA_EVENT.TXT_EVENT_DESCR     to $legal_actn_desc
+LA_EVENT.CD_EVENT_STATUS
+    move &LA_EVENT.CD_EVENT_STATUS      to $legal_actn_event_status
+
+! SHOW '#current-line=' #current-line
+    do PRINT-LEG-ACTN-ROW
+
+FROM    EVENT           LA_EVENT,
+        LEGAL_ACTION    LA
+WHERE   LA_EVENT.ID_EVENT IN
+    (SELECT ID_LEGAL_ACT_EVENT FROM LEGAL_ACTION
+    WHERE ID_PERSON = #prim_chld_id_person)
+AND LA.ID_LEGAL_ACT_EVENT = LA_EVENT.ID_EVENT
+AND LA_EVENT.DT_EVENT_OCCURRED >= '09/01/2004'
+ORDER BY NVL(LA.DT_LEGAL_ACT_OUTCOME_DT, to_date('01/01/0001','mm/dd/yyyy')) DESC,
+         NVL(LA.DT_LEGAL_ACT_DATE_FILED, to_date('01/01/0001','mm/dd/yyyy')) DESC
+END-SELECT
+! above order by obtained from csc02o00.sqr (CPS LEGAL LOG)
+use-column 0
+COLUMNS 1
+if #LegActionsHdgPrinted = 0 ! THEN no legal status events selected
+    do PRINT-SECTION-HEADING
+    print 'No Legal Action entered on or after 09/01/2004 for this child'  (+1,1)
+end-if
+END-PROCEDURE   CHLD-6-LEGAL-ACTIONS-SECTION
+
+!****************************************************************************
+!   PRINT-LEG-ACTN-ROWS                                                     *
+!                                                                           *
+!       This procedure prints one row of Family Plan event description      *
+!                                                                           *
+!       CALLED BY  : PRINT-FAM-PLAN-SECTION                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-LEG-ACTN-ROW
+!  ! show 'procedure PRINT-LEG-ACTN-ROW'
+! SHOW '#current-line=' #current-line
+
+if #LegActionsHdgPrinted = 0 or #current-line >= #max_print_line
+    ! show '#max_print_line in legal action section=' #max_print_line
+    do PRINT-SECTION-HEADING
+    move 1 to #LegActionsHdgPrinted
+end-if
+!if $legal_actn_event_status = 'PROC'
+    let $legal_actn_line = $legal_actn_desc || ' (' || $legal_actn_event_status || ')'
+!else
+let $legal_actn_line = $legal_actn_desc
+!end-if
+! SHOW '$legal_actn_line=' $legal_actn_line
+print $legal_actn_line      (+1,1) wrap 70 3
+END-PROCEDURE   PRINT-LEG-ACTN-ROW
+!****************************************************************************
+!   END LEGAL ACTIONS PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN CHILD PERSON CHARACTERSTICS SUBSECTION PROCEDURES
+!****************************************************************************
+BEGIN-PROCEDURE CHLD-7-CHILD-CHAR-SECTION
+use-column 0
+let #cch_item_count = 0
+let #cpl_item_count = 0
+! show 'procedure CHLD-7-CHILD-CHAR-SECTION'
+move 'Person Characteristics' to $section_heading
+! SHOW '#current-line JUST B4 PERS CHAR SECTION HEADING = ' #current-line
+if #current-line >= 52
+    NEW-PAGE
+end-if
+do PRINT-SECTION-HEADING
+let #set_continuation_heading = 1
+let $child_char_line = $NULL
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+CCH.DECODE
+    move &CCH.DECODE  to $child_char_item
+
+    add 1 to #cch_item_count !to identify whether or not to adv line
+    if #cch_item_count > 1
+        let $child_char_line =
+                $child_char_line || ', ' || $child_char_item
+    else
+        move $child_char_item to $child_char_line
+    end-if
+
+FROM    CHARACTERISTICS       CCH_CHAR,
+        CCH                   CCH    ! child investigation characteristics
+WHERE   CCH_CHAR.ID_PERSON  = #prim_chld_id_person
+AND     CCH_CHAR.CD_CHAR_CATEGORY = $CCH
+AND     CCH.CODE = CCH_CHAR.CD_CHARACTERISTIC
+END-SELECT
+print 'Child-Investigation'   (+1,1) underline bold
+if #cch_item_count = 0
+    print 'None'   (0,#child_char_col)
+else
+    do PRINT-CHILD-CHAR-ROW
+end-if
+let $child_char_line = $NULL
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+CHILD_CPL.DECODE
+    move &CHILD_CPL.DECODE               to $child_char_item
+
+    add 1 to #cpl_item_count !to identify whether or not to adv line
+    if #cpl_item_count > 1
+        let $child_char_line =
+                $child_char_line || ', ' || $child_char_item
+    else
+        move $child_char_item to $child_char_line
+    end-if
+
+FROM    CHARACTERISTICS CHILD_CHAR,
+        CPL             CHILD_CPL
+WHERE   CHILD_CHAR.ID_PERSON  = #prim_chld_id_person
+AND     CHILD_CHAR.CD_CHAR_CATEGORY = $CPL
+AND     CHILD_CPL.CODE = CHILD_CHAR.CD_CHARACTERISTIC
+END-SELECT
+if #cpl_item_count = 0
+    let $child_char_line = 'None'
+end-if
+! show '  #cch_item_count=' #cch_item_count ' #cpl_item_count=' #cpl_item_count
+! SHOW '#char_col_2=' #char_col_2
+
+! for next print line, use same column 2 that is used for parent/ctt section
+if #cch_item_count = 0 and #cpl_item_count = 0  ! then print on same line as child-investigation
+    print 'Child-Placement'     (0,#char_col_2) underline bold
+    print '  None'              (0)
+else                                            ! then print on next line
+    print 'Child-Placement'     (+1,1) underline bold
+    do PRINT-CHILD-CHAR-ROW
+end-if
+END-PROCEDURE CHLD-7-CHILD-CHAR-SECTION
+
+BEGIN-PROCEDURE PRINT-CHILD-CHAR-ROW
+! show 'procedure PRINT-CHILD-CHAR-ROW'
+print $child_char_line (0,#child_char_col,#child_char_width) wrap #child_char_width 5
+END-PROCEDURE   PRINT-CHILD-CHAR-ROW
+!****************************************************************************
+!   END CHILD PERSON CHARACTERSTICS SUBSECTION PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN CHILD PLACEMENT HISTORY SECTION PROCEDURES
+!****************************************************************************
+!   CHLD-8-CHILD-PLACEMENT-HISTORY                                          *
+!                                                                           *
+!       This procedure will select the EDUC_HIST  information when the      *
+!       input id_case is the same as the id_case in stage.                  *
+!                                                                           *
+!       CALLED BY : PROCESS-REPORT                                          *
+!       CALLS     : PRINT-PLACEMENT-HIST-ROW-TITLE, PRINT-PLACEMENT-HIST-ROW*
+!****************************************************************************
+BEGIN-PROCEDURE CHLD-8-CHILD-PLACEMENT-HISTORY
+! show 'PROCEDURE CHLD-8-CHILD-PLACEMENT-HISTORY'
+move 0  to #PlcmtHistSubhdgsPrinted
+use-column 0
+    !next-listing need = 6       !see if this helps turning on now
+move 'Placement History' to $section_heading
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+PLCMT.DT_PLCMT_END
+PLCMT.DT_PLCMT_START
+to_char(PLCMT.DT_PLCMT_START, 'MM/DD/YY') &plcmt_date1
+    move &plcmt_date1                                  to $dt_plcmt_start
+to_char(PLCMT.DT_PLCMT_END, 'MM/DD/YY')   &plcmt_date2
+    move &plcmt_date2                                  to $dt_plcmt_end
+to_char(PLCMT.DT_PLCMT_END, 'MM/DD/YYYY')  &plcmt_end_mmddyyyy
+    move &plcmt_end_mmddyyyy       to $plcmt_end_mmddyyyy
+PLCMT.NM_PLCMT_FACIL
+    move &PLCMT.NM_PLCMT_FACIL                         to $nm_plcmt_facil
+PLCMT.NM_PLCMT_PERSON_FULL
+    move &PLCMT.NM_PLCMT_PERSON_FULL                   to $nm_plcmt_person_full
+CPLLAFRM.DECODE
+    move &CPLLAFRM.DECODE                              to $living_arr_decode
+CPLREMRO.DECODE
+    move &CPLREMRO.DECODE                              to $plcmt_rem_rsn_decode
+PLCMT.TXT_PLCMT_REMOVAL_RSN
+    move &PLCMT.TXT_PLCMT_REMOVAL_RSN                  to $plcmt_rem_rsn_comment
+CCOUNT.DECODE
+    move &CCOUNT.DECODE                                to $plcmt_addr_plcmt_cnty
+    ! SHOW '#max_print_line b4 placement hist subhdgs checked=' #max_print_line
+
+     if #PlcmtHistSubhdgsPrinted = 0 or #current-line >= #max_print_line
+        do PRINT-SECTION-HEADING
+        let #set_continuation_heading = 1
+        do PRINT-PLACEMENT-HIST-SUBHDGS
+        move 1 to #PlcmtHistSubhdgsPrinted
+     end-if
+     ! we either have a facility or non-cert person with whom child resides but not both
+     if $nm_plcmt_facil = $NULL
+        move $nm_plcmt_person_full to $nm_plcmt_facil
+     end-if
+
+     do PRINT-PLACEMENT-HIST-ROW
+
+FROM        PLACEMENT   PLCMT,
+            CPLLAFRM    CPLLAFRM,
+            CPLREMRO    CPLREMRO,
+            CCOUNT      CCOUNT
+WHERE PLCMT.ID_PLCMT_CHILD   = #prim_chld_id_person
+AND CPLLAFRM.CODE        = PLCMT.CD_PLCMT_LIV_ARR
+AND CPLREMRO.CODE(+)     = PLCMT.CD_PLCMT_REMOVAL_RSN
+AND CCOUNT.CODE(+)       = PLCMT.ADDR_PLCMT_CNTY
+ORDER BY PLCMT.DT_PLCMT_START DESC
+END-SELECT
+use-column 0
+COLUMNS 1
+if #PlcmtHistSubhdgsPrinted = 0 ! THEN no Placement History info
+    do PRINT-SECTION-HEADING
+    print 'No Placement History for this child'  (+1,1)
+end-if
+END-PROCEDURE   CHLD-8-CHILD-PLACEMENT-HISTORY
+
+!****************************************************************************
+!   PRINT-PLACEMENT-HIST-SUBHDGS                                             *
+!                                                                           *
+!       This procedure prints the STAGE SUB-HEADINGS                        *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+!****************************************************************************
+!   PRINT-PLACEMENT-HIST-ROW                                                *
+!                                                                           *
+!       This procedure prints the principals and makes sure they are not    *
+!           split between pages.                                            *
+!                                                                           *
+!       CALLED BY  : CHLD-8-CHILD-PLACEMENT-HISTORY                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-PLACEMENT-HIST-ROW
+! SHOW 'procedure PRINT-PLACEMENT-HIST-ROW'
+if #PlcmtHistSubhdgsPrinted = 0 or #current-line >= #max_print_line
+    do PRINT-SECTION-HEADING
+    let #set_continuation_heading = 1
+    do PRINT-PLACEMENT-HIST-SUBHDGS
+    move 1 to #PlcmtHistSubhdgsPrinted
+end-if
+
+columns 1
+use-column 1
+print $dt_plcmt_start           (+1,#plcmt_start_col,#plcmt_start_len)
+! SHOW '#plcmt_end_col=' #plcmt_end_col
+if $plcmt_end_mmddyyyy = '12/31/4712'
+    move $NULL to $dt_plcmt_end
+end-if
+print $dt_plcmt_end             (+0,#plcmt_end_col,#plcmt_end_len)
+print $nm_plcmt_facil           (+0,#plcmt_facil_col)
+print $living_arr_decode        (+0,#pclmt_liv_arr_col)
+let $plcmt_addr_plcmt_cnty_line = 'County:  ' || $plcmt_addr_plcmt_cnty
+print $plcmt_addr_plcmt_cnty_line  (+1,3,22)
+if $plcmt_rem_rsn_decode > $NULL
+    let $plcmt_rem_rsn_decode = 'Removal Reason:  ' || $plcmt_rem_rsn_decode
+    print $plcmt_rem_rsn_decode    (+1,3)   ! (+0,28,46) to print on same line
+end-if
+if $plcmt_rem_rsn_comment > $NULL
+    let $plcmt_rem_rsn_comment = 'COMMENT:  ' || $plcmt_rem_rsn_comment
+    print $plcmt_rem_rsn_comment   (+1,5,70) wrap 70 5  !max is 300 chars
+end-if
+END-PROCEDURE   PRINT-PLACEMENT-HIST-ROW
+
+BEGIN-PROCEDURE PRINT-PLACEMENT-HIST-SUBHDGS
+! SHOW 'procedure PRINT-PLACEMENT-HIST-SUBHDGS'
+    let #plcmt_start_col        = 1
+    let #plcmt_start_len        = 8
+    let #plcmt_end_col          = #plcmt_start_col + #plcmt_start_len + 2
+    let #plcmt_end_len          = 8
+    let #plcmt_facil_col        = #plcmt_end_col + #plcmt_end_len + 2
+    let #plctm_facil_len        = 30   ! 30 is real max of column
+    let #pclmt_liv_arr_col      = #plcmt_facil_col + #plctm_facil_len + 2
+    let #plcmt_liv_arr_len      = 26 ! max is 26 characters in codes table
+    COLUMNS #plcmt_start_col #plcmt_end_col #plcmt_facil_col #pclmt_liv_arr_col
+    use-column 1
+    print 'START DT'            (+1,#plcmt_start_col) underline bold
+    use-column 2
+    print 'END DATE'            (0,1,#plcmt_end_len) underline bold ! col 1 WITHIN column!
+    use-column 3
+    print 'PLACEMENT FACILITY OR PERSON  '  (0,1) underline bold
+    use-column 4
+    print 'TYPE                     '   (0,1,#plcmt_liv_arr_len) underline bold
+    ! note on label TYPE; this is inconsistent with labe on IMPACT's page
+    move 1 to #plcmt_subhdgs_just_printed
+END-PROCEDURE   PRINT-PLACEMENT-HIST-SUBHDGS
+!****************************************************************************
+!   END PLACEMENT HISTORY PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN LEVEL OF CARE PROCEDURES
+!****************************************************************************
+!   CHLD-9-ALOC-SECTION                                                     *
+!                                                                           *
+!       This procedure
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      :                                                 *
+!****************************************************************************
+! Reqs are for this section to list only when LOC changes and to print the
+!   earliest start date of the LOC
+!
+BEGIN-PROCEDURE CHLD-9-ALOC-SECTION
+    use-column 0
+    move 'Authorized Service Level Established or Changed' to $section_heading
+    let #set_continuation_heading = 1
+    do PRINT-SECTION-HEADING
+    do LIFO-EARLIEST-DATE-INIT-VARIABLES
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+to_char(PERSON_LOC.DT_PLOC_START, 'MM/DD/YYYY') &break_col_2_date
+    move &break_col_2_date   to $break_col_2_date
+CATHPLOC.DECODE
+    move &CATHPLOC.DECODE    to $break_col_1_text
+
+    let $break_col_1_text = 'Level ' || $break_col_1_text
+    let $break_col_2_date = 'Start ' || $break_col_2_date
+
+    do LIFO-EARLIEST-DT-PRT-ROW-DRIVER
+
+FROM    PERSON_LOC      PERSON_LOC,
+        CATHPLOC        CATHPLOC
+WHERE   PERSON_LOC.ID_PERSON    = #prim_chld_id_person
+AND     PERSON_LOC.CD_PLOC_TYPE = $ALOC
+AND     CATHPLOC.CODE           = PERSON_LOC.CD_PLOC_CHILD
+ORDER BY PERSON_LOC.DT_PLOC_START DESC
+END-SELECT
+    if #section_row_counter = 0
+        move 'No Authorized Service Level records exist for this child'
+          to $lifo_earliest_dt_detail
+    end-if
+    do LIFO-EARLIEST-DATE-END-SELECT
+END-PROCEDURE   CHLD-9-ALOC-SECTION
+!****************************************************************************
+!   END LEVEL OF CARE PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN PERMANENCY PLAN PROCEDURES
+!****************************************************************************
+!   CHLD-10-PERMANENCY-PLAN                                                 *
+!                                                                           *
+!       This procedure selects STAGE data, prints the initial heading and   *
+!         prints each row of STAGE information                              *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      :                                                 *
+!****************************************************************************
+! Reqs are for this section to list only when PERM GOAL changes and to print
+!   the earliest start date of the GOAL
+!
+BEGIN-PROCEDURE CHLD-10-PERMANENCY-PLAN
+    move 'Permanency Plan' to $section_heading
+    let #set_continuation_heading = 1
+    do PRINT-SECTION-HEADING
+    let #need_perm_goal_subhdg = 1
+    do LIFO-EARLIEST-DATE-INIT-VARIABLES
+! NOTE: APPROVAL.DT_APPROVAL_DATE is not being updated
+!   thus the use of APPROVERS.DT_APPROVERS_DETERMINATION for approval date
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+APRVR.DT_APPROVERS_DETERMINATION
+CCPPRMGL.DECODE
+    move &CCPPRMGL.DECODE           to $break_col_1_text
+to_char(APRVR.DT_APPROVERS_DETERMINATION, 'MM/DD/YYYY') &date-plan-comp
+    move &date-plan-comp            to $break_col_2_date
+CAPPDESG.DECODE
+    move &CAPPDESG.DECODE           to $approvers_status
+
+! SHOW '#current-line=' #current-line
+    !if $break_col_2_date = $NULL
+     !   let $break_col_2_date = RPAD($break_col_2_date,10,$SPC)
+    !end-if
+
+    let $break_col_1_text = RPAD($break_col_1_text,50,$SPC)
+    let $approvers_status = RPAD($approvers_status,13,$SPC)
+    let $break_col_2_date = LPAD($break_col_2_date,11,$SPC)
+
+    do LIFO-EARLIEST-DT-PRT-ROW-DRIVER
+
+FROM    CHILD_PLAN            CP,
+        APPROVAL_EVENT_LINK   AEL,
+        APPROVERS             APRVR,
+        CCPPRMGL              CCPPRMGL,
+        CAPPDESG              CAPPDESG
+WHERE   CP.ID_PERSON = #prim_chld_id_person
+AND     AEL.ID_EVENT      = CP.ID_CHILD_PLAN_EVENT
+AND     APRVR.ID_APPROVAL = AEL.ID_APPROVAL
+AND     CCPPRMGL.CODE(+) = CP.CD_CSP_PLAN_PERM_GOAL
+AND     CAPPDESG.CODE(+) = APRVR.CD_APPROVERS_STATUS
+ORDER BY APRVR.DT_APPROVERS_DETERMINATION DESC
+END-SELECT
+    if #section_row_counter = 0
+        move 'No permanency plan records exist for this child'
+          to $lifo_earliest_dt_detail
+    end-if
+    do LIFO-EARLIEST-DATE-END-SELECT
+    !let #need_perm_goal_subhdg = 0 !disable for next call (mult children, remember!)
+END-PROCEDURE   CHLD-10-PERMANENCY-PLAN
+
+BEGIN-PROCEDURE PRINT-PERM-GOAL-SUBHDG
+    COLUMNS 1
+    USE-COLUMN 1
+    print '                                                   ------- APPROVER''S -------' (+1,1) bold
+    print 'CHILD PLAN PERMANENCY GOAL ESTABLISHED OR CHANGED  DETERMINATION      DATE   ' (+1,1) underline bold
+    !****************************************************
+    ! Here's the goals currently in existence:
+    !   CHILD PLAN PERMANENCY GOAL ESTABLISHED OR CHANGED
+    !   Alt Family: Foster Family, FPS Conservatorship
+    !   Alt Family: Other Family, FPS Conservatorship
+    !   Alt Family: Other Family, FPS Conservatorship
+    !   Alt Family: Relative, Adoption
+    !   Alt Family: Relative, Conservatorship
+    !   Alt Family: Unrelated, Adoption
+    !   Alt Family: Unrelated, Conservatorship
+    !   Community Care
+    !   Family Preservation
+    !   Family Reunification
+    !   Foster Care without Commitment
+    !   Independent Living
+    !****************************************************
+END-PROCEDURE   PRINT-PERM-GOAL-SUBHDG
+!****************************************************************************
+!   END PERMANENCY PLAN PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   Begin generic LIFO-EARLIEST-DATE procedures written to print sections
+!       where text is in LIFO order, printed on break of text, AND with the
+!       earliest date associated with that same text
+!   Currently used for ALOC and Perm Plan Goals sections
+!****************************************************************************
+BEGIN-PROCEDURE LIFO-EARLIEST-DATE-INIT-VARIABLES
+    let $break_col_1_text_saved = $NULL
+    let $break_col_2_date_saved = $NULL
+    let $lifo_earliest_dt_detail = $NULL
+    let #section_row_counter = 0
+    ! SHOW '#section_row_counter=' #section_row_counter
+    let #mandatory_row_print = 0 !for false
+END-PROCEDURE   LIFO-EARLIEST-DATE-INIT-VARIABLES
+
+BEGIN-PROCEDURE LIFO-EARLIEST-DATE-END-SELECT
+    use-column 0
+    COLUMNS 1
+    ! SHOW 'at END-SELECT, #section_row_counter=' #section_row_counter
+    let #mandatory_row_print = 1 !indicator to ensure last row is printed
+    do PRINT-LIFO-EARLIEST-DT-ROW   ! to print the last saved row
+END-PROCEDURE   LIFO-EARLIEST-DATE-END-SELECT
+
+BEGIN-PROCEDURE LIFO-EARLIEST-DT-PRT-ROW-DRIVER
+    ! show 'procedure LIFO-EARLIEST-DT-PRT-ROW-DRIVER'
+     add 1 to #section_row_counter
+     ! SHOW '#section_row_counter=' #section_row_counter
+
+     ! when first row is read, initialize saved variables so we don't always
+     !   print the first row read.  Subsequent rows may have the same text
+     !   value and we want to wait until break, then print that text value
+     !   with the earliest date associated with that text
+
+     if #section_row_counter = 1
+        move $break_col_1_text to $break_col_1_text_saved
+        move $break_col_2_date to $break_col_2_date_saved
+! show 'ROW1: $break_col_1_text/$break_col_2_date=' $break_col_1_text ' ' $break_col_2_date
+     end-if
+     do PRINT-LIFO-EARLIEST-DT-ROW
+     !ALWAYS save the last start date read so we keep the EARLIEST date
+     move $break_col_2_date to $break_col_2_date_saved
+! show 'SaveDt: $break_col_1_text_saved/$break_col_2_date_saved=' $break_col_1_text_saved ' ' $break_col_2_date_saved
+     let $lifo_earliest_dt_detail
+        = $break_col_1_text_saved || $SPC || $approvers_status || $2SPC || $break_col_2_date_saved
+END-PROCEDURE   LIFO-EARLIEST-DT-PRT-ROW-DRIVER
+
+BEGIN-PROCEDURE PRINT-LIFO-EARLIEST-DT-ROW
+    ! show 'procedure PRINT-LIFO-EARLIEST-DT-ROW'
+    ! show '#current-line=' #current-line
+    if #current-line >= #max_print_line
+        do PRINT-SECTION-HEADING
+    end-if
+
+    if #need_perm_goal_subhdg = 1
+        do PRINT-PERM-GOAL-SUBHDG
+        let #need_perm_goal_subhdg = 0
+    end-if
+
+    ! next to check if break text has changed or if this is the last row
+    ! that must print because no other row has printed yet
+    if ($break_col_1_text <> $break_col_1_text_saved) or (#mandatory_row_print = 1)
+        ! show 'BREAK: $break_col_1_text/$break_col_2_date=' $break_col_1_text ' ' $break_col_2_date
+        ! SHOW 'JustB4Prt: $lifo_earliest_dt_detail=' $lifo_earliest_dt_detail
+        print $lifo_earliest_dt_detail    (+1,1,77)
+        move $break_col_1_text to $break_col_1_text_saved ! save new text
+    end-if
+END-PROCEDURE   PRINT-LIFO-EARLIEST-DT-ROW
+!****************************************************************************
+!   END generic LIFO-EARLIEST-DATE procedures
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN PERMANENCY PLAN REVIEW (PPT) PROCEDURES
+!****************************************************************************
+!   CHLD-11-PERM-PLAN-REVIEW                                                     *
+!                                                                           *
+!       This procedure selects STAGE data, prints the initial heading and   *
+!         prints each row of STAGE information                              *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      :                                                 *
+!****************************************************************************
+! Per Logical Design, this section must be ordered by the
+!   the date the PPT was actually held (stored in PPT.DT_PPT_DATE).
+! Per PPTConversation.java object, SIR 19702 Event Description for PPT
+!   events should be 'Permanency Planning Review" + ' ' PPT.DT_PPT_DATE
+! cannot sort by TXT_EVENT_DESCR as date is included as mm/dd/yyyy format AND
+! it is possible to enter events about PPTs held in the past, so we cannot
+! order by dt_event_occured (which is date event entered); must order by
+! meeting date which is displayed in the TXT_EVENT_DESCR
+!****************************************************************************
+BEGIN-PROCEDURE CHLD-11-PERM-PLAN-REVIEW
+! show 'procedure CHLD-11-PERM-PLAN-REVIEW'
+move 0 to #PermPlanRvwHdgPrinted
+move 'Permanency Planning Review (PPT) Section' to $section_heading
+let #set_continuation_heading = 1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+EVENT_PPT.TXT_EVENT_DESCR
+     move &EVENT_PPT.TXT_EVENT_DESCR        to $perm_plan_rvw_desc
+
+    do PRINT-PPT-ROW
+
+FROM    EVENT               EVENT_PPT,
+        EVENT_PERSON_LINK   EPL_PPT,
+        PPT                 PPT_PC
+WHERE   EPL_PPT.ID_PERSON  = #prim_chld_id_person
+AND     EVENT_PPT.ID_EVENT    = EPL_PPT.ID_EVENT
+AND     EVENT_PPT.CD_EVENT_TYPE = $PPT
+AND     EVENT_PPT.CD_EVENT_STATUS IN ($APRV, $COMP)
+AND     PPT_PC.ID_PPT_EVENT = EVENT_PPT.ID_EVENT
+ORDER BY PPT_PC.DT_PPT_DATE DESC
+END-SELECT
+use-column 0
+columns 1
+if #PermPlanRvwHdgPrinted = 0 !
+    do PRINT-SECTION-HEADING
+    print 'No Permanency Planning Review events exist for this child'  (+1,1)
+end-if
+END-PROCEDURE   CHLD-11-PERM-PLAN-REVIEW
+
+!****************************************************************************
+!   PRINT-PPT-ROWS                                                     *
+!                                                                           *
+!       This procedure prints one row of Family Plan event description      *
+!                                                                           *
+!       CALLED BY  : CHLD-11-PERM-PLAN-REVIEW                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-PPT-ROW
+! SHOW 'procedure PRINT-PPT-ROW'
+! SHOW '#current-line at PPT row=' #current-line
+
+if #PermPlanRvwHdgPrinted = 0 or #current-line >= #max_print_line
+    do PRINT-SECTION-HEADING
+    move 1 to #PermPlanRvwHdgPrinted
+end-if
+columns 1
+use-column 1
+print $perm_plan_rvw_desc       (+1,1,70) wrap 70 3
+END-PROCEDURE   PRINT-PPT-ROW
+!****************************************************************************
+!   END PERMANENCY PLAN REVIEW (PPT) PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN EDUCATION HISTORY SECTION PROCEDURES
+!****************************************************************************
+!   CHLD-12-EDUCATION-HISTORY                                                           *
+!                                                                           *
+!       This procedure will select the EDUC_HIST  information when the      *
+!       input id_case is the same as the id_case in stage.                  *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-EDUC-HIST-ROW-TITLE, PRINT-EDUC-HIST-ROW                 *
+!****************************************************************************
+BEGIN-PROCEDURE CHLD-12-EDUCATION-HISTORY
+! show 'PROCEDURE CHLD-12-EDUCATION-HISTORY'
+move 0  to #EducHistSubhdgsPrinted
+move 'Education History' to $section_heading
+let #set_continuation_heading = 1
+let #max_print_line_educ_hist = #max_print_line - 4
+if #current-line >= #max_print_line_educ_hist
+    let #new_page_expected = 1
+    new-page
+end-if
+    !show '#max_print_line_educ_hist=' #max_print_line_educ_hist
+    !show '#max_print_line=' #max_print_line
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+EH.DT_EDHIST_ENROLL_DATE
+
+CSCHGRAD.decode
+    move &CSCHGRAD.decode                           to $eh_grade_level
+CEDUCNED1.decode
+    move &CEDUCNED1.decode                          to $eh_need1
+CEDUCNED2.decode
+    move &CEDUCNED2.decode                          to $eh_need2
+CEDUCNED3.decode
+    move &CEDUCNED3.decode                          to $eh_need3
+CEDUCNED4.decode
+    move &CEDUCNED4.decode                          to $eh_need4
+CEDUCNED5.decode
+    move &CEDUCNED5.decode                          to $eh_need5
+CEDUCNED6.decode
+    move &CEDUCNED6.decode                          to $eh_need6
+CEDUCNED7.decode
+    move &CEDUCNED7.decode                          to $eh_need7
+CEDUCNED8.decode
+    move &CEDUCNED8.decode                          to $eh_need8
+to_char(EH.DT_EDHIST_ENROLL_DATE, 'MM/DD/YY') &eh_date1
+    move &eh_date1                                  to $dtenrol
+EH.NM_EDHIST_SCHOOL
+    move &EH.NM_EDHIST_SCHOOL                       to $eh_school
+
+     do PRINT-EDUC-HIST-ROW
+
+FROM    EDUCATIONAL_HISTORY     EH,
+        CSCHGRAD                CSCHGRAD,
+        CEDUCNED                CEDUCNED1,
+        CEDUCNED                CEDUCNED2,
+        CEDUCNED                CEDUCNED3,
+        CEDUCNED                CEDUCNED4,
+        CEDUCNED                CEDUCNED5,
+        CEDUCNED                CEDUCNED6,
+        CEDUCNED                CEDUCNED7,
+        CEDUCNED                CEDUCNED8
+WHERE   EH.ID_PERSON          =  #prim_chld_id_person
+AND     CSCHGRAD.CODE(+)        =  EH.CD_EDHIST_ENROLL_GRADE
+AND     CEDUCNED1.CODE(+)        =  EH.CD_EDHIST_NEEDS_1
+AND     CEDUCNED2.CODE(+)        =  EH.CD_EDHIST_NEEDS_2
+AND     CEDUCNED3.CODE(+)        =  EH.CD_EDHIST_NEEDS_3
+AND     CEDUCNED4.CODE(+)        =  EH.CD_EDHIST_NEEDS_4
+AND     CEDUCNED5.CODE(+)        =  EH.CD_EDHIST_NEEDS_5
+AND     CEDUCNED6.CODE(+)        =  EH.CD_EDHIST_NEEDS_6
+AND     CEDUCNED7.CODE(+)        =  EH.CD_EDHIST_NEEDS_7
+AND     CEDUCNED8.CODE(+)        =  EH.CD_EDHIST_NEEDS_8
+ORDER BY EH.DT_EDHIST_ENROLL_DATE DESC
+END-SELECT
+use-column 0
+if #EducHistSubhdgsPrinted = 0
+    do PRINT-SECTION-HEADING
+    print 'No Education History records exist for this child' (+1,1)
+end-if
+END-PROCEDURE   CHLD-12-EDUCATION-HISTORY
+
+!****************************************************************************
+!   PRINT-EDUC-HIST-ROW                                                     *
+!                                                                           *
+!       This procedure prints the principals and makes sure they are not    *
+!           split between pages.                                            *
+!                                                                           *
+!       CALLED BY  : CHLD-12-EDUCATION-HISTORY                                  *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-EDUC-HIST-ROW
+! SHOW 'procedure PRINT-EDUC-HIST-ROW'
+if #EducHistSubhdgsPrinted = 0 or #current-line >= #max_print_line_educ_hist
+    do PRINT-SECTION-HEADING
+    do PRINT-EDUC-HIST-SUBHDGS
+end-if
+
+use-column 1
+print $dtenrol           (+1,,#eh_date_len)
+use-column 2
+print $eh_school         (+0,,#school_len)
+use-column 3
+if $eh_grade_level = 'Head Start'
+    let $eh_grade_level = 'Head  Start ' !so wrap will be pretty
+end-if
+if $eh_grade_level = 'Pre Kindergarten'
+    let $eh_grade_level = 'Pre-K  '
+end-if
+print $eh_grade_level    (+0,1,#grade_len) wrap #grade_len 2
+use-column 4
+if $eh_need1 > $NULL
+    let $eh_needs_list = $eh_need1
+else
+    let $eh_needs_list = $NULL
+end-if
+if $eh_need2 > $NULL
+    let $eh_needs_list = $eh_needs_list || $COMMA || $eh_need2
+end-if
+if $eh_need3 > $NULL
+    let $eh_needs_list = $eh_needs_list || $COMMA || $eh_need3
+end-if
+if $eh_need4 > $NULL
+    let $eh_needs_list = $eh_needs_list || $COMMA || $eh_need4
+end-if
+if $eh_need5 > $NULL
+    let $eh_needs_list = $eh_needs_list || $COMMA || $eh_need5
+end-if
+if $eh_need6 > $NULL
+    let $eh_needs_list = $eh_needs_list || $COMMA || $eh_need6
+end-if
+if $eh_need7 > $NULL
+    let $eh_needs_list = $eh_needs_list || $COMMA || $eh_need7
+end-if
+if $eh_need8 > $NULL
+    let $eh_needs_list = $eh_needs_list || $COMMA || $eh_need8
+end-if
+    ! SHOW '$eh_needs_list(b4 ltrim,)=' $eh_needs_list
+let $eh_needs_list = ltrim($eh_needs_list,$COMMA)
+! SHOW '$eh_needs_list=' $eh_needs_list
+print $eh_needs_list     (0,,#school_pgm_len) wrap #school_pgm_len 3
+END-PROCEDURE   PRINT-EDUC-HIST-ROW
+
+!****************************************************************************
+!   PRINT-EDUC-HIST-SUBHDGS                                             *
+!                                                                           *
+!       This procedure prints the STAGE SUB-HEADINGS                        *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-EDUC-HIST-SUBHDGS
+! SHOW 'procedure PRINT-EDUC-HIST-SUBHDGS'
+    let #enrolled_col   = 1
+    let #eh_date_len    = 8
+    let #school_col     = #enrolled_col + #eh_date_len + 2
+    let #school_len     = 30 !NM_EDHIST_SCHOOL VARCHAR2(30)
+    let #grade_col      = #school_col + #school_len + 1
+    let #grade_len      = 6 ! max is Pre Kindergarten
+    let #school_pgm_col = #grade_col + #grade_len + 1
+    let #school_pgm_len = 30
+    COLUMNS #enrolled_col #school_col #grade_col #school_pgm_col
+    use-column 1
+    print 'ENROLLED' (+1,#enrolled_col) underline bold
+    use-column 2
+    print 'SCHOOL NAME                   ' (0,1,#school_len) underline bold ! col 1 WITHIN column!
+    use-column 3
+    print 'GRADE ' (0,1,#grade_len) underline bold
+    use-column 4
+    print 'SCHOOL PROGRAMS               ' (0,1,#school_pgm_len) underline bold
+    move 1 to #EducHistSubhdgsPrinted
+END-PROCEDURE PRINT-EDUC-HIST-SUBHDGS
+!****************************************************************************
+!   END EDUCATION HISTORY SECTION PROCEDURES
+!****************************************************************************
+
+!****************************************************************************
+!   BEGIN CHILD STAGE HISTORY SECTION PROCEDURES
+!****************************************************************************
+!   CHLD-13-CHILD-STAGE-SECTION                                                     *
+!                                                                           *
+!       This procedure selects STAGE data, prints the initial heading and   *
+!         prints each row of STAGE information                              *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      :                                                 *
+!****************************************************************************
+!  This select taken from DAM ccmn15d.pc which retrieves all
+!  the stages of a case along with the primary worker of an
+!  open stage or the historical primary of a closed
+!****************************************************************************
+BEGIN-PROCEDURE CHLD-13-CHILD-STAGE-SECTION
+use-column 0
+let #child_stage_history_printed = 0
+move 'Child''s Stage History (SUB, ADO, PAL)' to $section_heading
+let #set_continuation_heading = 1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CHILD_STG.NM_STAGE
+     move &CHILD_STG.NM_STAGE               to $csh_nm_stage
+CHILD_STG.CD_STAGE
+     move &CHILD_STG.CD_STAGE               to $csh_cd_stage
+CHILD_STG.DT_STAGE_START
+     move &CHILD_STG.DT_STAGE_START         to $csh_dt_stage_start
+CHILD_STG.DT_STAGE_CLOSE
+     move &CHILD_STG.DT_STAGE_CLOSE         to $csh_dt_stage_close
+! cd_stage_reason_closed does not print on report, but is used
+! to flag Merged stages (code 97 = Closed to Merge)
+CHILD_STG.CD_STAGE_REASON_CLOSED
+     move &CHILD_STG.CD_STAGE_REASON_CLOSED to $cd_stage_reason_closed
+SPL_CH_STG.CD_STAGE_PERS_ROLE
+    move &SPL_CH_STG.CD_STAGE_PERS_ROLE      to $cd_stage_pers_role
+SPL_CH_STG.CD_STAGE_PERS_REL_INT
+    move &SPL_CH_STG.CD_STAGE_PERS_REL_INT   to $cd_stage_pers_rel_int
+CHILD_STG.ID_STAGE
+    move &CHILD_STG.ID_STAGE                 to $csh_id_stage
+
+     if #child_stage_history_printed = 0 or
+            #current-line >= #max_print_line     ! that is, new page about to begin
+       do PRINT-SECTION-HEADING
+       do PRINT-CHILD-STAGE-COL-HDGS
+     end-if
+
+     do PRINT-CHILD-STAGE-ROW
+     add 1 to #child_stage_history_printed
+
+FROM    STAGE_PERSON_LINK   SPL_CH_STG,
+        STAGE               CHILD_STG
+WHERE   SPL_CH_STG.ID_PERSON = #prim_chld_id_person
+AND (SPL_CH_STG.CD_STAGE_PERS_ROLE = $PC
+        OR
+     SPL_CH_STG.CD_STAGE_PERS_REL_INT IN ($SELF, $ADOPTEDCHILD))
+AND CHILD_STG.ID_STAGE = SPL_CH_STG.ID_STAGE
+AND CHILD_STG.CD_STAGE IN ($SUB, $ADO, $PAL) !Per Cindy Robert's SPECS
+ORDER BY CHILD_STG.DT_STAGE_START DESC, CHILD_STG.DT_STAGE_CLOSE DESC
+END-SELECT
+! NOTE:  CD_STAGE_PERS_REL_INT values of self for SUB, adopted child for ADO
+use-column 0
+if #child_stage_history_printed = 0
+    do PRINT-SECTION-HEADING
+    print 'No SUB, ADO or PAL stage history records exist for this child' (+1,1)
+end-if
+END-PROCEDURE   CHLD-13-CHILD-STAGE-SECTION
+
+!****************************************************************************
+!   PRINT-CHILD-STAGE-COL-HDGS                                                 *
+!                                                                           *
+!       This procedure prints the STAGE SUB-HEADINGS                        *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHILD-STAGE-COL-HDGS
+! show 'procedure PRINT-CHILD-STAGE-COL-HDGS'
+COLUMNS 1 5 28 40 52 64 68 72
+use-column 1
+print 'MRG'                   (+1,1) underline bold
+next-column
+print 'STAGE NAME          '   (0,1)  underline bold
+next-column
+print 'STG'                   (0,1)  underline bold
+next-column
+print 'DT OPENED '             (0,1,10)  underline bold
+next-column
+print 'DT CLOSED '             (0,1,10)  underline bold
+!position (+1,1)
+END-PROCEDURE   PRINT-CHILD-STAGE-COL-HDGS
+
+!****************************************************************************
+!   PRINT-CHILD-STAGE-ROWS                                                        *
+!                                                                           *
+!       This procedure prints one row of STAGE data                         *
+!                                                                           *
+!       CALLED BY  : CHLD-13-CHILD-STAGE-SECTION                                    *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-CHILD-STAGE-ROW
+! SHOW 'procedure PRINT-CHILD-STAGE-ROW'
+! SHOW '$cd_stage_reason_closed=' $cd_stage_reason_closed
+
+    if $cd_stage_reason_closed = '97'  ! from ccmn37s.src and SIR 2141 comments
+         move ' Y ' to $merge_indicator
+    else
+         move '   ' to $merge_indicator
+    end-if
+    use-column 1
+    print $csh_mrg_ind       (+1,1)  edit XXX
+    use-column 2
+    print $csh_nm_stage               (0,1)
+    use-column 3
+    print $csh_cd_stage        (0,1)
+    use-column 4
+    print $csh_dt_stage_start         (0,1)
+    use-column 5
+    print $csh_dt_stage_close         (0,1)
+    !Use-column 6
+    !Print $cd_stage_pers_role         (0,1)  !temporary
+    !use-column 7
+    !print $cd_stage_pers_rel_int      (0,1) !temporary
+    !use-column 8
+    !print $csh_id_stage               (0,1) !temporary
+END-PROCEDURE   PRINT-CHILD-STAGE-ROW
+
+!****************************************************************************
+!   END CHILD STAGE HISTORY SECTION PROCEDURES
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-END-OF-REPORT
+    ! SHOW 'procedure PRINT-END-OF-REPORT'
+!    move 'End of Family Summary Information, Child Specific Information follows'
+!      to $section_heading
+    move 'End of Report' to $section_heading
+    do PRINT-SECTION-HEADING
+END-PROCEDURE   PRINT-END-OF-REPORT
+
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-SECTION-HEADING
+    !SHOW 'procedure PRINT-SECTION-HEADING'
+
+    !show '#current-line at enter PRINT-SECTION-HEADING=' $section_heading ' ' #current-line
+    ! SHOW '#heading_just_printed=' #heading_just_printed
+
+    use-column 0
+    ! show '#new_page_expected=' #new_page_expected
+
+    ! next indicator is to avoid one extra blank line after print of header
+    if #new_page_expected = 1
+        print $section_heading (+1,1) bold box
+        move 0 to #new_page_expected
+    else    !skip two lines
+        print $section_heading (+2,1) bold box
+    end-if
+
+    ! show '#new_page_expected=' #new_page_expected
+
+    !   do PRINT-CURRENT-LINE-FOR-DEBUGGING
+    position (+1,1)
+    if #set_continuation_heading = 1
+        let $section_heading = $section_heading || ' (continued)'
+        move 0 to #set_continuation_heading ! do not concat again until indicator explicitly set
+    end-if
+    !SHOW '$section_heading at end of PRINT=' $section_heading
+END-PROCEDURE   PRINT-SECTION-HEADING
+
+BEGIN-PROCEDURE PRINT-CURRENT-LINE-FOR-DEBUGGING
+! comment out this line when debuggin NOT needed.
+  print #current-line     (0,73)    !helps for debugging
+END-PROCEDURE   PRINT-CURRENT-LINE-FOR-DEBUGGING
+
+!****************************************************************************
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE WRAP-UP
+   NEW-PAGE
+END-PROCEDURE   WRAP-UP
+
+!***********************************************************************
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!***********************************************************************
+BEGIN-PROCEDURE SqlErrorHandle
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+  STOP
+END-PROCEDURE   SqlErrorHandle
+
+!****************************************************************************
+!                                                                           *
+!   COMMON MODULE or COMMON PROCEDURE Section                               *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report.                                             *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc' !this is code for the functioning of CASE FILE PRINT
+
+!****************************************************************************
+!   END OF PROGRAM                                                          *
+!****************************************************************************

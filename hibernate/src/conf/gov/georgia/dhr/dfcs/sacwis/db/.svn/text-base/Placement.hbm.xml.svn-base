@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Placement" table="PLACEMENT" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idPlcmtEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_PLCMT_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="contract" class="gov.georgia.dhr.dfcs.sacwis.db.Contract" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PLCMT_CONTRACT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdPlcmtAdult" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PLCMT_ADULT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsResourceByIdRsrcAgency" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_RSRC_AGENCY" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdPlcmtChild" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PLCMT_CHILD" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+        <many-to-one name="personByIdContactWrkr" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_CONTACT_WRKR" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <many-to-one name="policyWaiver" class="gov.georgia.dhr.dfcs.sacwis.db.PolicyWaiver" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_WAIVER" precision="16" scale="0"/>
+        </many-to-one>
+        <many-to-one name="capsResourceByIdRsrcFacil" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RSRC_FACIL" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="connectedAdult" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                     update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON_CONNECTED_ADULT" precision="16" scale="0" not-null="false"/>
+    </many-to-one>
+    <property name="dtPlcmtEnd" type="timestamp" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PLCMT_END" length="7" not-null="true"/>
+    </property>
+    <property name="dtLastPlcmtLogView" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_LAST_PLCMT_LOG_VIEW" length="7" not-null="false"/>
+    </property>
+    <property name="dtCaseMngrCert" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CASE_MNGR_CERT" length="7" not-null="false"/>
+    </property>
+    <property name="dtSupCert" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SUP_CERT" length="7" not-null="false"/>
+    </property>
+    <property name="indCaseMngrCert" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CASE_MNGR_CERT" length="1"/>
+    </property>
+    <property name="indSupCert" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_SUP_CERT" length="1"/>
+    </property>
+    <many-to-one name="idCaseMngrCert" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                     update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE_MNGR_CERT" precision="16" scale="0" not-null="false"/>
+    </many-to-one>
+    <many-to-one name="idSupCert" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                     update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_SUP_CERT" precision="16" scale="0" not-null="false"/>
+    </many-to-one>
+    <many-to-one name="idCaseMngrRsrc" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                     update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE_MNGR_RSRC" precision="16" scale="0" not-null="false"/>
+    </many-to-one>
+    <many-to-one name="idSupRsrc" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                     update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_SUP_RSRC" precision="16" scale="0" not-null="false"/>
+    </many-to-one>
+    <property name="nmCaseMngrRsrc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_CASE_MNGR_RSRC" length="30"/>
+    </property>
+    <property name="nmSupRsrc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_SUP_RSRC" length="30"/>
+    </property>
+    <property name="addrPlcmtCity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PLCMT_CITY" length="20"/>
+    </property>
+    <property name="addrPlcmtCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PLCMT_CNTY" length="3"/>
+    </property>
+    <property name="addrPlcmtLn1" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PLCMT_LN1" length="30"/>
+    </property>
+    <property name="addrPlcmtLn2" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PLCMT_LN2" length="30"/>
+    </property>
+    <property name="addrPlcmtSt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PLCMT_ST" length="2"/>
+    </property>
+    <property name="addrPlcmtZip" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PLCMT_ZIP" length="10"/>
+    </property>
+    <property name="cdPlcmtInfo1" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_1" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo2" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_2" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo3" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_3" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo4" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_4" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo5" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_5" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo6" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_6" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo7" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_7" length="3"/>
+    </property>
+    <property name="cdPlcmtLivArr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_LIV_ARR" length="3"/>
+    </property>
+    <property name="cdPlcmtRemovalRsn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PLCMT_REMOVAL_RSN" length="3"/>
+    </property>
+    <property name="cdPlcmtActPlanned" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PLCMT_ACT_PLANNED" length="1"/>
+    </property>
+    <property name="cdPlcmtType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_TYPE" length="4"/>
+    </property>
+    <property name="cdPlcmtService" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_SERVICE" length="6"/>
+    </property>
+    <property name="dtPlcmtCaregvrDiscuss" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PLCMT_CAREGVR_DISCUSS" length="7"/>
+    </property>
+    <property name="dtPlcmtChildDiscuss" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PLCMT_CHILD_DISCUSS" length="7"/>
+    </property>
+    <property name="dtPlcmtChildPlan" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PLCMT_CHILD_PLAN" length="7"/>
+    </property>
+    <property name="dtPlcmtEducLog" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PLCMT_EDUC_LOG" length="7"/>
+    </property>
+    <property name="dtPlcmtMeddevHistory" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PLCMT_MEDDEV_HISTORY" length="7"/>
+    </property>
+    <property name="dtPlcmtParentsNotif" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PLCMT_PARENTS_NOTIF" length="7"/>
+    </property>
+    <property name="dtPlcmtLastPrebill" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PLCMT_LAST_PREBILL" length="7" not-null="true"/>
+    </property>
+    <property name="dtPlcmtPreplaceVisit" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PLCMT_PREPLACE_VISIT" length="7"/>
+    </property>
+    <property name="dtPlcmtSchoolRecords" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PLCMT_SCHOOL_RECORDS" length="7"/>
+    </property>
+    <property name="dtPlcmtStart" type="timestamp" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PLCMT_START" length="7"/>
+    </property>
+    <property name="dtLTFCAgreementSigned" type="timestamp" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_LTFC_AGREEMENT_SIGNED" length="7"/>
+    </property>
+    <property name="indChildConnectAdult" type="string" unique="false" optimistic-lock="true" lazy="false"
+                      generated="never">
+      <column name="IND_CHILD_CONNECT_ADULT" length="1"/>
+    </property>
+    <property name="indLTFCPlacement" type="string" unique="false" optimistic-lock="true" lazy="false"
+                          generated="never">
+      <column name="IND_LTFC_PLACEMENT" length="1"/>
+    </property>
+    <property name="indPlcmtContCntct" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PLCMT_CONT_CNTCT" length="1"/>
+    </property>
+    <property name="indPlcmtEducLog" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PLCMT_EDUC_LOG" length="1"/>
+    </property>
+    <property name="indPlcmtEmerg" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PLCMT_EMERG" length="1"/>
+    </property>
+    <property name="indPlcmtNotApplic" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PLCMT_NOT_APPLIC" length="1"/>
+    </property>
+    <property name="indPlcmtSchoolDoc" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PLCMT_SCHOOL_DOC" length="1"/>
+    </property>
+    <property name="indPlcmtWriteHistory" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PLCMT_WRITE_HISTORY" length="1"/>
+    </property>
+    <property name="nbrPlcmtPhoneExt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PLCMT_PHONE_EXT" length="8"/>
+    </property>
+    <property name="nbrPlcmtTelephone" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PLCMT_TELEPHONE" length="10"/>
+    </property>
+    <property name="nmPlcmtAgency" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_PLCMT_AGENCY" length="30"/>
+    </property>
+    <property name="nmPlcmtContact" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_PLCMT_CONTACT" length="25"/>
+    </property>
+    <property name="nmPlcmtFacil" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_PLCMT_FACIL" length="30"/>
+    </property>
+    <property name="nmPlcmtPersonFull" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_PLCMT_PERSON_FULL" length="25"/>
+    </property>
+    <property name="txtPlcmtAddrComment" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PLCMT_ADDR_COMMENT" length="300"/>
+    </property>
+    <property name="txtPlcmtDiscussion" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PLCMT_DISCUSSION" length="240"/>
+    </property>
+    <property name="txtPlcmtDocuments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PLCMT_DOCUMENTS" length="240"/>
+    </property>
+    <property name="txtPlcmtRemovalRsn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PLCMT_REMOVAL_RSN" length="300"/>
+    </property>
+    <property name="cdPlcmtInfo8" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_8" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo9" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_9" length="3"/>
+    </property>
+    <property name="dtPlcmtPermEff" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PLCMT_PERM_EFF" length="7"/>
+    </property>
+    <property name="cdPlcmtInfo10" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_10" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo11" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_11" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo12" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_12" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo13" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_13" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo14" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_14" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo15" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_15" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo16" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_16" length="3"/>
+    </property>
+    <property name="cdPlcmtInfo17" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_INFO_17" length="3"/>
+    </property>
+        <property name="cdContactMethod" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_CONTACT_METHOD" length="3" not-null="true"/>
+        </property>
+        <property name="cdTempType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_TEMP_TYPE" length="3"/>
+        </property>
+        <property name="txtTempCmnts" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_TEMP_CMNTS" length="300"/>
+        </property>
+        <property name="indWaiverReqd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_WAIVER_REQD" length="1"/>
+        </property>
+        <property name="cdWaiverType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_WAIVER_TYPE" length="1"/>
+        </property>
+        <property name="txtMatch" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_MATCH" length="3"/>
+        </property>
+        <property name="cdBoardingCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_BOARDING_CNTY" length="3"/>
+        </property>
+        <property name="indTrialHome" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_TRIAL_HOME" length="1"/>
+        </property>
+        <property name="dtTrialCoStart" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_TRIAL_CO_START" length="7"/>
+        </property>
+        <property name="dtTrialCoEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_TRIAL_CO_END" length="7"/>
+        </property>
+        <property name="cdAdoType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_ADO_TYPE" length="3"/>
+        </property>
+        <property name="indPlcmtSafe" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_PLCMT_SAFE" length="1"/>
+        </property>
+        <property name="indPlcmtRestr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_PLCMT_RESTR" length="1"/>
+        </property>
+        <property name="indPlcmtFam" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_PLCMT_FAM" length="1"/>
+        </property>
+        <property name="indPlcmtAppr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_PLCMT_APPR" length="1"/>
+        </property>
+        <property name="indPlcmtProx" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_PLCMT_PROX" length="1"/>
+        </property>
+        <property name="indPlcmtSchDist" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_PLCMT_SCH_DIST" length="1"/>
+        </property>
+        <property name="indPlcmtCasePlan" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_PLCMT_CASE_PLAN" length="1"/>
+        </property>
+        <property name="txtPlcmtChecklist" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_PLCMT_CHECKLIST" length="300"/>
+        </property>
+        <property name="indPlcmtTrauma" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_PLCMT_TRAUMA" length="1"/>
+        </property>
+        <property name="txtPlcmtTrauma" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_PLCMT_TRAUMA" length="300"/>
+        </property>
+        <property name="indPlcmtSibling" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_PLCMT_SIBLING" length="1"/>
+        </property>
+        <property name="nbrPlcmtSibCare" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_PLCMT_SIB_CARE" precision="3" scale="0"/>
+        </property>
+        <property name="nbrPlcmtSibChild" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_PLCMT_SIB_CHILD" precision="3" scale="0"/>
+        </property>
+        <property name="cdPlcmtSibling" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_PLCMT_SIBLING" length="3"/>
+        </property>
+        <property name="txtPlcmtSibling" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_PLCMT_SIBLING" length="300"/>
+        </property>
+        <property name="indPlcmtCcfa" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_PLCMT_CCFA" length="1"/>
+        </property>
+        <property name="cdPlcmtCcfa" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_PLCMT_CCFA" length="3"/>
+        </property>
+        <property name="txtPlcmtCcfa" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_PLCMT_CCFA" length="300"/>
+        </property>
+        <property name="indSpvsn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_SPVSN" length="1"/>
+        </property>
+        <property name="txtSpvsn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_SPVSN" length="300"/>
+        </property>
+        <property name="dtPsyInfo" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_PSY_INFO" length="7"/>
+        </property>
+        <property name="txtPsyInfoContact" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_PSY_INFO_CONTACT" length="50"/>
+        </property>
+        <property name="dtPsyCp" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_PSY_CP" length="7"/>
+        </property>
+        <property name="txtPsyCpContact" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_PSY_CP_CONTACT" length="50"/>
+        </property>
+        <property name="txtMedInfoContact" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_MED_INFO_CONTACT" length="50"/>
+        </property>
+        <property name="dtMedCp" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_MED_CP" length="7"/>
+        </property>
+        <property name="txtMedCpContact" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_MED_CP_CONTACT" length="50"/>
+        </property>
+        <property name="txtEduInfoContact" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_EDU_INFO_CONTACT" length="50"/>
+        </property>
+        <property name="txtEduCpContact" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_EDU_CP_CONTACT" length="50"/>
+        </property>
+        <property name="txtDocCmnts" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_DOC_CMNTS" length="300"/>
+        </property>
+        <property name="cdPlcmtAdptBy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_PLCMT_ADPT_BY" length="1"/>
+        </property>
+        <property name="txtAdoCmnts" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_ADO_CMNTS" length="500"/>
+        </property>
+        <bag name="fceReviewsForIdCurrentPlacementEvent" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CURRENT_PLACEMENT_EVENT" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceReview" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="fceReviewsForIdPlacementRateEvent" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PLACEMENT_RATE_EVENT" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceReview" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="adoptionSubsidies" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PLCMT_EVENT" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdoptionSubsidy" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

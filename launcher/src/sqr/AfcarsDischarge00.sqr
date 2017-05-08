@@ -1,0 +1,386 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Sun Jun 14 16:38:46 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 09\Complete\AfcarsDischarge00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 1.000 
+  Bottom-Margin = 1.000 
+  Left-Margin   = 0.600 
+  Right-Margin  = 0.600 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+Declare-Variable
+ Text $ReportMonth
+End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=180    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions:' (11,6,0) Underline  Bold 
+ Print 'This report displays a list of children whose legal status changed from "In DFCS Custody" to "Not in DFCS custody" status during the reporting month. ' (27,6,117) Wrap 117 3 line-height=12 Keep-Top
+ Print 'ADA:  Adoption' (93,6,0)
+ Print 'FCO:  Another Planned Permanent Living Arrangement Through Long Term Foster Care' (108,6,120)
+ Print 'GDS:  Guardianship' (124,6,20)
+ Print 'LAE:  Another Planned Permanent Living Arrangement Through Emanicipation' (140,6,0)
+ Print 'LLR:   Live with fit and living relatives' (156,6,0)
+ Print 'NOS: Non Selected' (187,6,0)
+ Print 'RUI:   Reunification' (172,6,0)
+ Print 'Permanency Plan:' (77,6,0) Underline 
+ Last-Page (203,673) 
+ Page-Number (203,648) '' ' of '
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=48   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+ Do Get-Input-Month
+ Do Get-Region
+ Do Get-County
+!Do Make_Header
+ Do Master_Query
+End-Program
+Begin-Procedure Get-Input-Month
+Input $dt_occurred 'Enter Month and Year (MM/YYYY)' Maxlen=19 Type=Date Format='MM/YYYY'
+End-Procedure
+!--------------------------------------------------------------------
+Begin-Procedure Get-Region
+Input $_I201_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I201_CD_STAGE_REGION) or IsBlank($_I201_CD_STAGE_REGION) or ($_I201_CD_STAGE_REGION) = '0' 
+  Let $where_clause201 = 'CD_STAGE_REGION is not null'
+  Let $regVar = 'All'
+  Let $regSelected = 'N'
+Else
+  Let $regSelected = 'Y'
+
+Let $regVar = $_I201_CD_STAGE_REGION
+Let $_region = $_I201_CD_STAGE_REGION
+ 
+If SubStr($_I201_CD_STAGE_REGION, 1, 1) != ''''
+  Let $_I201_CD_STAGE_REGION = '''' || $_I201_CD_STAGE_REGION || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I201_CD_STAGE_REGION,'''',0) = 0 and instr($_I201_CD_STAGE_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_STAGE_REGION'
+   Let $where_clause201 = $brb_tmp  || ' = ' ||  '''' || $_I201_CD_STAGE_REGION || '''' 
+ Else
+   If (instr($_I201_CD_STAGE_REGION,'''',0) = 0 and instr($_I201_CD_STAGE_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_STAGE_REGION'
+     Let $where_clause201 = $brb_tmp  || ' = ' || $_I201_CD_STAGE_REGION
+   End-If
+ End-If
+End-If
+End-Procedure
+
+Begin-Procedure Get-County 
+! County Code Parameter
+Input $_I101_CD_COUNTY 'Enter a value for CD_COUNTY' MaxLen=3  Type=Text
+If IsNull($_I101_CD_COUNTY) or IsBlank($_I101_CD_COUNTY) or ($_I101_CD_COUNTY) = '0' 
+  Let $where_clause101 = 'CD_STAGE_CNTY is not null'
+  Let $countyVar = 'All'
+  Let $cntySelected = 'N'
+Else
+ Let $cntySelected = 'Y'
+
+If SubStr($_I101_CD_COUNTY, 1, 1) != ''''
+  Let $_I101_CD_COUNTY = '''' || $_I101_CD_COUNTY || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CD_COUNTY,'''',0) = 0 and instr($_I101_CD_COUNTY,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_STAGE_CNTY'
+   Let $where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I101_CD_COUNTY || '''' 
+ Else
+   If (instr($_I101_CD_COUNTY,'''',0) = 0 and instr($_I101_CD_COUNTY,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_STAGE_CNTY'
+     Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_CD_COUNTY
+   End-If
+ End-If
+End-If
+
+If $cntySelected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From  CCOUNT
+Where CCOUNT.CODE = [$_I101_CD_COUNTY]
+End-Select
+  Move &_County_Decode to $_header_disp
+Else
+  If $regSelected = 'Y'
+    Let $_header_disp = 'Region ' || $_region
+  Else 
+    Let $_header_disp = 'Statewide'
+  End-If
+End-If
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #3ROW_COUNT
+Begin-Select Distinct
+Nocustody.CD_LEGAL_STAT_STATUS &Master_Query_Nocustody.CD_LEGAL_STAT_STATUS
+(SELECT  (max( CNSRVTRSHP_REMOVAL00.DT_REMOVAL ))  FROM  CNSRVTRSHP_REMOVAL CNSRVTRSHP_REMOVAL00,  LEGAL_STATUS_VIEW Nocustody WHERE Nocustody.ID_CASE = CNSRVTRSHP_REMOVAL00.ID_CASE
+ AND  CNSRVTRSHP_REMOVAL00.DT_REMOVAL < Nocustody.DT_LEGAL_STAT_STATUS_DT AND  CNSRVTRSHP_REMOVAL00.ID_CASE = STAGE_3.ID_CASE AND  CNSRVTRSHP_REMOVAL00.ID_VICTIM = STAGE_PERSON_LINK_3.ID_PERSON) &Master_Query_RemovalDate
+CCOUNT.DECODE &Master_Query_CCOUNT.DECODE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+STAGE_3.CD_STAGE_REGION &Master_Query_STAGE_3.CD_STAGE_REGION () On-Break Set=3 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc301 After=Master_QueryCD_STAGE_REGION_AfterProc301
+STAGE_3.CD_STAGE_CNTY &Master_Query_STAGE_3.CD_STAGE_CNTY () On-Break Set=3 Level=2 Print=Never Before=Master_QueryCD_STAGE_CNTY_BeforeProc302 After=Master_QueryCD_STAGE_CNTY_AfterProc302
+STAGE_PERSON_LINK_3.ID_PERSON &Master_Query_STAGE_PERSON_LINK_3.ID_PERSON
+ Do RemovalDate(&Case_ID, &Master_Query_STAGE_PERSON_LINK_3.ID_PERSON)
+ Print &RemovalDate_DT_REMOVAL (11,184) Edit MM/DD/YYYY
+STAGE_3.NM_STAGE &Master_Query_STAGE_3.NM_STAGE (11,60,20)
+Nocustody.DT_LEGAL_STAT_STATUS_DT &Master_Query_Nocustody.DT_LEGAL_STAT_STATUS_DT (11,268) Edit MM/DD/YYYY
+CLEGSTAT.DECODE &Master_Query_CLEGSTAT.DECODE (11,344,49)
+ Do permplan(&Case_ID, &Master_Query_STAGE_PERSON_LINK_3.ID_PERSON)
+ Print &permplan_CD_PRIM_PERM_PLAN (11,626,12)
+STAGE_3.ID_CASE &Case_ID (11,1) Edit 88888888na
+ Add 1 To #3ROW_COUNT
+ Add 1 To #301ROW_COUNT
+ Add 1 To #302ROW_COUNT
+ Next-Listing  SkipLines=1 Need=12
+From  STAGE STAGE_3, STAGE_PERSON_LINK STAGE_PERSON_LINK_3
+,      UNIT, LEGAL_STATUS_VIEW Incustody, LEGAL_STATUS_VIEW Nocustody
+,      CLEGSTAT, CCOUNT
+      Where STAGE_3.ID_STAGE = STAGE_PERSON_LINK_3.ID_STAGE
+            And UNIT.ID_UNIT = STAGE_3.ID_UNIT
+            And Nocustody.ID_CASE = STAGE_3.ID_CASE
+            And Nocustody.ID_PERSON = STAGE_PERSON_LINK_3.ID_PERSON
+            And Incustody.ID_CASE = STAGE_3.ID_CASE
+            And Incustody.ID_PERSON = STAGE_PERSON_LINK_3.ID_PERSON
+            And CLEGSTAT.CODE = Nocustody.CD_LEGAL_STAT_STATUS
+            And CCOUNT.CODE = STAGE_3.CD_STAGE_CNTY
+ And STAGE_3.CD_STAGE IN ('SUB','ADO')
+ And (STAGE_3.DT_STAGE_CLOSE >= (To_date($dt_occurred,'MM/YYYY')) Or STAGE_3.DT_STAGE_CLOSE IS NULL )
+ And STAGE_3.DT_STAGE_START < (last_day(to_date($dt_occurred, 'MM/YYYY'))+1)
+ And STAGE_PERSON_LINK_3.CD_STAGE_PERS_ROLE = 'PC'
+ And Nocustody.IN_DFCS_CUSTODY = 'N'
+ And Nocustody.DT_LEGAL_STAT_STATUS_DT < (last_day(to_date($dt_occurred,'MM/YYYY'))+1)
+ And Nocustody.DT_LEGAL_STAT_STATUS_DT >= (to_date($dt_occurred,'MM/YYYY'))
+ And Incustody.IN_DFCS_CUSTODY = 'Y'
+ And Nocustody.DT_LEGAL_STAT_STATUS_DT = ((Incustody.DT_LEGAL_STAT_END)+1)
+ And [$where_clause201]
+ And [$where_clause101]
+Order By STAGE_3.CD_STAGE_REGION
+,      STAGE_3.CD_STAGE_CNTY
+,      STAGE_3.NM_STAGE
+End-Select
+ Next-Listing
+ Next-Listing  Need=17
+ If #3ROW_COUNT > 0
+ Graphic (2,1,699) Horz-Line 20 
+ Position (4,1)
+ let #Total = #3ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #Total (17,72) Bold  Edit 88888888na
+  Print 'Report Total:'  (17,1) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_BeforeProc302
+if $cntySelected = 'Y'
+ ! do nothing
+else 
+ Next-Listing  Need=20
+ Graphic (1,1,699) Horz-Line 15 
+ Position (2,1)
+ Graphic (21,1,699) Horz-Line 10 
+ Position (22,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CCOUNT.DECODE (16,1,23) Bold 
+   Position (+12,)
+ Next-Listing  SkipLines=1 Need=12
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_AfterProc302
+if $cntySelected = 'Y'
+ ! do nothing
+else 
+
+ Next-Listing  Need=17
+ Graphic (1,1,699) Horz-Line 15 
+ Position (2,1)
+ let #CountyTotal = #302ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #CountyTotal (17,72) Bold  Edit 88888888na
+  Let $CntyLabel='County Total: '
+ Print $CntyLabel (17,1,14) Bold 
+   Position (+12,)
+ Move 0 To #302ROW_COUNT
+ Next-Listing  SkipLines=1 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc301
+if $cntySelected = 'Y' or $regSelected = 'Y'
+ ! do nothing
+else 
+
+ Next-Listing  Need=18
+ Graphic (3,1,699) Horz-Line 20 
+ Position (5,1)
+  Let $RegionGroupLabel='Region '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $RegionGroupLabel (18,1,15) Bold 
+  Print &Master_Query_STAGE_3.CD_STAGE_REGION (18,57,9) Bold 
+   Position (+12,)
+ Next-Listing  SkipLines=1 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc301
+if $cntySelected = 'Y' or $regSelected = 'Y'
+ ! do nothing
+else 
+
+ Next-Listing  Need=18
+ Graphic (1,1,699) Horz-Line 10 
+ Position (2,1)
+  Let $RegLabel='Region Total: '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $RegLabel (18,1,15) Bold 
+ let #RegionTotal = #301ROW_COUNT
+ Print #RegionTotal (18,72) Bold  Edit 88888888na
+   Position (+12,)
+ Move 0 To #301ROW_COUNT
+ Next-Listing  SkipLines=1 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure RemovalDate (#P1_ID_CASE, #P2_ID_VICTIM)
+Begin-Select Loops=1
+DT_REMOVAL &_RemovalDate_DT_REMOVAL
+From  CNSRVTRSHP_REMOVAL, LEGAL_STATUS_VIEW
+      Where CNSRVTRSHP_REMOVAL.ID_CASE = LEGAL_STATUS_VIEW.ID_CASE
+ And CNSRVTRSHP_REMOVAL.ID_CASE = #P1_ID_CASE
+ And ID_VICTIM = #P2_ID_VICTIM
+ And DT_REMOVAL < DT_LEGAL_STAT_STATUS_DT
+End-Select
+End-Procedure
+
+Begin-Procedure permplan (#P1_ID_CASE, #P2_ID_PERSON)
+Begin-Select Loops=1
+CD_PRIM_PERM_PLAN &_permplan_CD_PRIM_PERM_PLAN
+From  FCCP_FAMILY, EVENT_PERSON_LINK
+,      EVENT
+      Where FCCP_FAMILY.ID_EVENT = EVENT_PERSON_LINK.ID_EVENT
+            And EVENT.ID_EVENT = FCCP_FAMILY.ID_EVENT
+ And FCCP_FAMILY.ID_CASE = #P1_ID_CASE
+ And ID_PERSON = #P2_ID_PERSON
+ And CD_EVENT_STATUS = 'APRV'
+ And FCCP_Family.DT_CURR_REV < (LAST_DAY(TO_DATE($_dt_occurred,'MM/YYYY'))+1)
+End-Select
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 48 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Let $ReportMonth=$dt_occurred
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $ReportMonth (112,54,15)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='C:\sacwis\launcher\src\images\SHINES.bmp'
+	Image-size=(102,73)
+ Print 'Foster Care Discharges' (50,286,22) Bold 
+ Print 'Month:' (112,1,8) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Department of Family and Children Services' (29,258,0)
+ Let $ReportHeader=$_header_disp
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $ReportHeader (73,321,13) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case ID' (148,1,7) Underline  Bold 
+ Print 'Foster Child' (148,60,0) Underline  Bold 
+ Print 'Removal Date' (148,181,12) Underline  Bold 
+ Print 'Discharge Date' (148,261,14) Underline  Bold 
+ Print 'Discharge Reason' (148,345,0) Underline  Bold 
+ Print 'Permanency Plan' (148,599,15) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Case ID' (13,1,7) Underline  Bold 
+ Print 'Foster Child' (13,60,0) Underline  Bold 
+ Print 'Removal Date' (13,181,12) Underline  Bold 
+ Print 'Discharge Date' (13,261,14) Underline  Bold 
+ Print 'Discharge Reason' (13,345,0) Underline  Bold 
+ Print 'Permanency Plan' (13,599,15) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (17,651) '' ' of '
+ Last-Page (17,677) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

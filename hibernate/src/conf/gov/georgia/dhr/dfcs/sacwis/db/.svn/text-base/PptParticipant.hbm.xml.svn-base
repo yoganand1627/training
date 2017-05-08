@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.PptParticipant" table="PPT_PARTICIPANT" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idPptPart" type="integer" unsaved-value="0">
+      <column name="ID_PPT_PART" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_PPT_PARTICIPANT</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdPptNotifType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PPT_NOTIF_TYPE" length="3"/>
+    </property>
+    <property name="cdPptPartType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PPT_PART_TYPE" length="3"/>
+    </property>
+    <property name="dtPptPart" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PPT_PART" length="7"/>
+    </property>
+    <property name="dtPptPartDateNotif" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PPT_PART_DATE_NOTIF" length="7"/>
+    </property>
+    <property name="nmPptPartFull" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_PPT_PART_FULL" length="25"/>
+    </property>
+    <property name="sdsPptPartRelationship" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="SDS_PPT_PART_RELATIONSHIP" length="20"/>
+    </property>
+    <property name="cdPptPartTitle" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PPT_PART_TITLE" length="20"/>
+    </property>
+    <property name="nmPptPartAgency" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_PPT_PART_AGENCY" length="30"/>
+    </property>
+    <property name="indAccptdChanges" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ACCPTD_CHANGES" length="1"/>
+    </property>
+    <property name="indSignedWvrAh" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_SIGNED_WVR_AH" length="1"/>
+    </property>
+    <property name="indReqAh" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_REQ_AH" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

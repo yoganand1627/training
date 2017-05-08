@@ -1,0 +1,350 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Thu Feb 17 14:24:13 2011 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2011\TCM\TCMDeniedClaimList00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+#DEFINE NONE_COUNTY 'XXX'
+#DEFINE STATE_OFFICE '999'
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=108    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'This report lists all denied TCM claims statewide, or by region, county, and/or denial reason where service date falls in a specific date range. The report also ' (27,13,230)
+ Print 'Key' (191,1,0) Underline  Bold 
+ Page-Number (522,669) '' ' of '
+ Last-Page (522,696) 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'EOB: Explanation of Benefits' (205,14,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Displaying order is Client Name in ascending alphabetical order then Service Date and Status Date in descending date order so that the most recent transaction' (76,13,227)
+ Print 'The Total at the end of each county section is the count of denied claims per client and service month. Claims denied twice may appear on the report as two ' (112,13,224)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print '0242 - No pricing segment for procedure/modifier combinat' (218,14,84)
+ Print '0252 - Member name and number do not match' (231,14,72)
+ Print '0274 - Date of birth on claim does not match DOB on member file' (244,14,97)
+ Print '0284 - Member is eligible for Hospice coverage by medicare' (258,14,83)
+ Print '0285 - Member ineligible for DOS' (271,14,97)
+ Print '0439 - The member ID is missing or invalid' (284,14,72)
+ Print '0471 - QMB member eligible for MCARE crossovers only' (311,14,111)
+ Print '0737 - Invalid procedure code and modifier' (364,14,97)
+ Print '1153 - Member ID number not on file' (377,14,98)
+ Print '2031 - Hospice claim spans a member hospice segment' (403,14,91)
+ Print '2806 - Practitioner - Exact duplicate of another claim' (258,347,100)
+ Print '2521 - Member has COB Resource and the Service or COB Resource indicates pay and chase' (231,347,102)
+ Print '2091 - Member services covered by CMO plan' (430,14,99)
+ Print '2665 - A conflict exists between the aid category (Peachcare 790 thru 793) and the service received' (244,348,109)
+ Print '4714 - Age to proceudre code conflict' (324,347,66)
+ Print '0535 - Positive adjustment exceeds filing deadline' (324,14,66)
+ Print '2517 - TPL on Member file, not on claim (Pay claim)' (218,347,97)
+ Print '3699 - Provider enrolled for electronic billing' (271,347,125)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'initiated the TCM contact. If contact staff is in regional unit or state office, stage region and county are used.' (55,13,218)
+ Print 'displays resubmitted claims of the denied claims when there were previous resubmissions. Region and county are the unit region and county of the staff that ' (41,13,197)
+ Print 'in the client''s claim history is displayed first.' (90,13,157)
+ Print 'transactions (the first with a status of resubmitted and the second with a status of denied or resubmitted), but the total of specific claims for the client in the service ' (126,13,222)
+ Print 'month may be one.' (140,13,96)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Status: Claim Status' (475,15,0) Underline  Bold 
+ Print 'DND - Denied' (489,15,0)
+ Print 'RSU - Resubmitted' (502,15,0)
+ Print '0465 - Member covered by private insurance ' (297,14,87)
+ Print '6288 - Only one visit allowed per month of service' (351,347,171)
+ Print '6380 - Two case management claims can not be paid in same calendar month' (391,347,110)
+ Print '9918 - Price Adjustment - Max fee pricing applied' (405,347,125)
+ Print '1156 - Replacement or Credit of a denied claim' (391,14,101)
+ Print '4450 - Member is eligible for Hospice related services. Must be billed to Hospice' (311,347,119)
+ Print '4423 - Non emergency services are not payable for undocumented aliens' (297,347,101)
+ Print '4034 - Procedure code/age conflict' (285,347,77)
+ Print 'another case management program' (377,374,99)
+ Print 'proof of date of birth ' (351,42,115)
+ Print '0578 - DOS is before members birth date on file. Correct or submit ' (337,14,115)
+ Print '5609 - Service not allowed same DOS as a comprehensive health check screen' (338,347,84)
+ Print '2064 - Claim DOS/Member date of death conflict' (417,14,105)
+ Print '9955 - Pricing adjustment calculated allowed amount greater than billed amount - cutback to billed' (418,347,145)
+ Print '6386 - Case management claim cannot be billed in the same calendar as a paid claim from the same or ' (364,347,137)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'The RA# is the remittance advice number for the batch of claims submitted to DCH. This number is returned on submitted claims through the TCM Claims interface.' (162,13,238)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+ Do Get_Inputs
+ Do Master_Query
+End-Program
+Begin-Procedure Get_Inputs
+Input $dt_start 'Enter Date Service Start (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+Input $dt_end 'Enter Date Service End (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+Input $cd_denial_reason 'Enter Denial Reason' MaxLen=4 Type=Char
+If isnull($cd_denial_reason) or isblank($cd_denial_reason) or ($cd_denial_reason='0')
+  Let $where_clause_denial_reason = 'cd_denial is not null'
+else 
+  Let $where_clause_denial_reason = 'cd_denial like ' || '''' || '%' || $cd_denial_reason || '%' || ''''
+end-if
+
+Input $cd_region 'Region ' MaxLen=2  Type=Char
+Input $cd_county 'County ' MaxLen=3  Type=Char
+If isnull($cd_region) or isblank($cd_region) or $cd_region = '0'
+  Let $where_clause_region = '1=1'
+  Let $region_selected = 'N'
+Else 
+  Let $region_selected = 'Y'
+  Let $cd_region_str = '''' || $cd_region || ''''
+  Let $where_clause_region = $cd_region_str || 
+                             ' = (CASE WHEN  UNIT_00.CD_COUNTY IN (' || '''' ||
+                             {STATE_OFFICE} || '''' || ',' || '''' || {NONE_COUNTY} || '''' ||
+                             ') THEN  STAGE_00.CD_STAGE_REGION ' ||
+                             ' ELSE SUBSTR(UNIT_00.CD_UNIT_REGION,2) ' ||
+                             ' END)'
+End-If
+
+If isnull($cd_county) or isblank($cd_county) or $cd_county = '0'
+  Let $county_selected = 'N'
+  Let $where_clause_county = '1=1'
+Else 
+  Let $county_selected = 'Y'
+  Let $cd_county_str = '''' || $cd_county || ''''
+  Let $where_clause_county = $cd_county_str || 
+                             ' = (CASE WHEN  UNIT_00.CD_COUNTY IN (' || '''' ||
+                             {STATE_OFFICE} || '''' || ',' || '''' || {NONE_COUNTY} || '''' ||
+                             ') THEN  CCOUNT_STAGE_00.CODE ' ||
+                             ' ELSE  CCOUNT_UNIT_00.CODE ' ||
+                             ' END)'
+End-If
+Let $where_clause_region_county = $where_clause_region || ' AND ' || $where_clause_county
+
+If $county_selected = 'Y'
+Begin-Select 
+DECODE &county_decode
+FROM CCOUNT
+WHERE CODE = [$cd_county_str]
+End-Select
+  Move &county_decode to $region_county_header
+Else
+  If $region_selected = 'Y'
+     Let $region_county_header = '  Region ' || $cd_region
+  Else 
+     Let $region_county_header = '  Statewide  '
+  End-If
+End-If
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select Distinct
+(EMPLOYEE_00.NM_EMPLOYEE_LAST || ', ' ||  EMPLOYEE_00.NM_EMPLOYEE_FIRST ||  EMPLOYEE_00.NM_EMPLOYEE_MIDDLE) &nm_contact_staff
+(trunc(to_date( TCM_CLAIM_00.DT_SERVICE))) &dt_service_trunc
+(trim( TCM_CLAIM_00.NM_CLIENT )) &nm_client_trim
+(case when   TCM_CLAIM_00.CD_STATUS  = 'DND' then 1 else 0 end) &denied_claim
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+('Total Denied Claims for Report') &dummy () On-Break Set=1 Level=1 Print=Never After=Master_Querydummy_AfterProc101
+(CASE WHEN  UNIT_00.CD_COUNTY IN ('999','XXX') THEN  '0' || STAGE_00.CD_STAGE_REGION ELSE  UNIT_00.CD_UNIT_REGION END) &claim_region () On-Break Set=1 Level=2 Print=Never Before=Master_Queryclaim_region_BeforeProc102 After=Master_Queryclaim_region_AfterProc102
+(CASE WHEN  UNIT_00.CD_COUNTY IN ('999','XXX') THEN  CCOUNT_STAGE_00.DECODE ELSE  CCOUNT_UNIT_00.DECODE END) &claim_county () On-Break Set=1 Level=3 Print=Never Before=Master_Queryclaim_county_BeforeProc103 After=Master_Queryclaim_county_AfterProc103
+TCM_CLAIM_00.ID_PERSON &Master_Query_TCM_CLAIM_00.ID_PERSON (10,1) On-Break Set=1 Level=4 Edit 9999999999na
+TCM_CLAIM_00.NBR_MEDICAID &Master_Query_TCM_CLAIM_00.NBR_MEDICAID (10,185,15)
+TCM_CLIENT_00.DT_PERSON_BIRTH &Master_Query_TCM_CLIENT_00.DT_PERSON_BIRTH (10,266) Edit MM/DD/YYYY
+TCM_CLAIM_00.CD_DENIAL &Master_Query_TCM_CLAIM_00.CD_DENIAL (10,327,15) Wrap 15 3 line-height=12 Keep-Top
+TCM_CLAIM_00.DT_STATUS &Master_Query_TCM_CLAIM_00.DT_STATUS (10,472) Edit MM/DD/YYYY
+TCM_CLAIM_00.CD_STATUS &Master_Query_TCM_CLAIM_00.CD_STATUS (10,536,3)
+ Print &nm_contact_staff (10,608,23) Wrap 23 2 line-height=12 Keep-Top
+TCM_CLAIM_00.NBR_RA &Master_Query_TCM_CLAIM_00.NBR_RA (10,558,8)
+ Print &Master_Query_TCM_CLAIM_00.CD_STATUS (10,536,3)
+ Print &dt_service_trunc (10,410) Edit MM/DD/YYYY
+ Print &nm_client_trim (10,60,23) Wrap 23 2 line-height=12 Keep-Top
+  Let $dummyLast = &dummy
+ Add &denied_claim To #denied_claim_num_report
+ Add &denied_claim To #denied_claim_num_region
+ Add &denied_claim To #denied_claim_num_cnty
+ Next-Listing  SkipLines=2 Need=24
+From  CAPS.TCM_CLAIM TCM_CLAIM_00, CAPS.PERSON_ENC TCM_CLIENT_00
+,      CAPS.EMPLOYEE EMPLOYEE_00, CAPS.UNIT UNIT_00, CAPS.CCOUNT CCOUNT_UNIT_00
+,      CAPS.STAGE STAGE_00, CAPS.CCOUNT CCOUNT_STAGE_00
+      Where TCM_CLAIM_00.ID_PERSON = TCM_CLIENT_00.ID_PERSON
+            And TCM_CLAIM_00.ID_STAFF = EMPLOYEE_00.ID_PERSON
+            And UNIT_00.ID_UNIT = EMPLOYEE_00.ID_EMP_UNIT
+            And UNIT_00.CD_COUNTY = CCOUNT_UNIT_00.CODE
+            And TCM_CLAIM_00.ID_STAGE = STAGE_00.ID_STAGE
+            And STAGE_00.CD_STAGE_CNTY = CCOUNT_STAGE_00.CODE
+ And TCM_CLAIM_00.CD_STATUS IN ('DND','RSU')
+ And TCM_CLAIM_00.DT_SERVICE >= TO_DATE($dt_start, 'mm/dd/yyyy')
+ And TCM_CLAIM_00.DT_SERVICE < TO_DATE($dt_end, 'mm/dd/yyyy') + 1
+ And [$where_clause_denial_reason]
+ And EXISTS (SELECT TCM_CLAIM_01.ID_TCM_CLAIM FROM TCM_CLAIM TCM_CLAIM_01 WHERE TCM_CLAIM_01.CD_STATUS IN ('DND') AND TCM_CLAIM_01.ID_PERSON
+     = TCM_CLAIM_00.ID_PERSON AND TCM_CLAIM_01.ID_EVENT = TCM_CLAIM_00.ID_EVENT)
+ And [$where_clause_region_county]
+Order By ('Total Denied Claims for Report')
+,      (CASE WHEN  UNIT_00.CD_COUNTY IN ('999','XXX') THEN  '0' || STAGE_00.CD_STAGE_REGION ELSE  UNIT_00.CD_UNIT_REGION END)
+,      (CASE WHEN  UNIT_00.CD_COUNTY IN ('999','XXX') THEN  CCOUNT_STAGE_00.DECODE ELSE  CCOUNT_UNIT_00.DECODE END)
+,      (trim( TCM_CLAIM_00.NM_CLIENT ))
+,      (trunc(to_date( TCM_CLAIM_00.DT_SERVICE)))
+,      TCM_CLAIM_00.DT_STATUS
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_Queryclaim_region_BeforeProc102
+ Next-Listing  Need=17
+ Graphic (1,1,719) Horz-Line 20 
+ Position (3,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &claim_region (17,40,3) Bold 
+ Print #brb_delay_01733008 (17,88,8) Delay Bold  Edit 999999na
+  Let $explain2='(Denied Claims)'
+ Print $explain2 (17,126,15) Bold 
+ Print 'Region'  (17,1) Bold 
+   Position (+12,)
+ Move 0 To #denied_claim_num_region
+ Next-Listing  SkipLines=2 Need=24
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Queryclaim_region_AfterProc102
+ Next-Listing 
+ Set-Delay-Print #brb_delay_01733008 With #denied_claim_num_region
+ Move 0 To #denied_claim_num_region
+ Next-Listing  SkipLines=2 Need=24
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Queryclaim_county_BeforeProc103
+ Next-Listing  Need=16
+ Graphic (1,1,717) Horz-Line 10 
+ Position (2,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &claim_county (16,1,15) Bold 
+ Print #brb_delay_01733150 (16,88,8) Delay Bold  Edit 999999na
+  Let $explain3='(Denied Claims)'
+ Print $explain3 (16,126,15) Bold 
+   Position (+12,)
+ Move 0 To #denied_claim_num_cnty
+ Next-Listing  SkipLines=2 Need=24
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Queryclaim_county_AfterProc103
+ Next-Listing 
+ Set-Delay-Print #brb_delay_01733150 With #denied_claim_num_cnty
+ Move 0 To #denied_claim_num_cnty
+ Next-Listing  SkipLines=2 Need=24
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querydummy_AfterProc101
+ Next-Listing  Need=25
+ Graphic (2,1,719) Horz-Line 20 
+ Position (4,1)
+ Graphic (27,1,719) Horz-Line 20 
+ Position (29,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #denied_claim_num_report (19,105) Bold  Edit 999999na
+  Print $dummyLast (19,1,19) Bold 
+   Position (+12,)
+ Move 0 To #denied_claim_num_report
+ Next-Listing  SkipLines=2 Need=24
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (13,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'TCM Denied Claims' (41,292,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On: ' (13,585,0)
+ Print $current-date (13,651) edit 'MM/DD/YYYY'
+ Let $date_range=$dt_start || ' - ' || $dt_end
+ Print $date_range (75,298,23) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Let $region_county_header_disp=$region_county_header
+ Print $region_county_header_disp (57,325,13) Bold 
+ Print 'Medicaid#' (103,185,0) Underline  Bold 
+ Print 'DOB' (103,266,0) Underline  Bold 
+ Print 'EOB' (103,327,0) Underline  Bold 
+ Print 'Status Date' (103,472,0) Underline  Bold 
+ Print 'Status & RA#' (102,536,0) Underline  Bold 
+ Print 'Staff Name' (103,607,0) Underline  Bold 
+ Print 'Client ID' (103,16,0) Underline  Bold 
+ Print 'Service Date' (103,410,0) Underline  Bold 
+ Print 'Client Name' (103,60,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Medicaid#' (16,185,0) Underline  Bold 
+ Print 'DOB' (16,266,0) Underline  Bold 
+ Print 'EOB' (16,327,0) Underline  Bold 
+ Print 'Status Date' (16,472,0) Underline  Bold 
+ Print 'Status & RA#' (15,536,0) Underline  Bold 
+ Print 'Staff Name' (16,607,0) Underline  Bold 
+ Print 'Client ID' (16,16,0) Underline  Bold 
+ Print 'Service Date' (16,410,0) Underline  Bold 
+ Print 'Client Name' (16,60,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (19,669) '' ' of '
+ Last-Page (19,696) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+       default-dependency-check="none"
+       default-lazy-init="false">
+
+  <!-- Advice beans. -->
+  <import resource="advice-context.xml"/>
+
+  <!--
+    This advice must be defined here initialized here because it requires a DataSource during initialization and that
+      is only defined in the application context, not the web context.
+  -->
+  <bean id="batchLockInterceptor" class="gov.georgia.dhr.dfcs.sacwis.core.spring.BatchLockInterceptor"
+        init-method="initialize">
+    <property name="dataSource" ref="dataSource"/>
+  </bean>
+
+  <!-- Hibernate services context definitions. -->
+  <import resource="classpath:admin-context.xml"/>
+  <import resource="classpath:adoexchange-context.xml"/>
+  <import resource="classpath:assessment-context.xml"/>
+  <import resource="classpath:casemgmt-context.xml"/>
+  <import resource="classpath:common-context.xml"/>
+  <import resource="classpath:courtprocess-context.xml"/>
+  <import resource="classpath:document-context.xml"/>
+  <import resource="classpath:fad-context.xml"/>
+  <import resource="classpath:fce-context.xml"/>
+  <import resource="classpath:financials-context.xml"/>
+  <import resource="classpath:intake-context.xml"/>
+  <import resource="classpath:investigation-context.xml"/>
+  <import resource="classpath:person-context.xml"/>
+  <import resource="classpath:reports-context.xml"/>
+  <import resource="classpath:resource-context.xml"/>
+  <import resource="classpath:security-context.xml"/>
+  <import resource="classpath:ws-context.xml"/>
+  <!-- 3rd party software service definitions. -->
+  <import resource="classpath:external-context.xml"/>
+  <!-- Special launcher client context definition. -->
+  <import resource="classpath:launcher-client-context.xml"/>
+  <!-- Special web service client context definition. -->
+  <import resource="classpath:ws-client-context.xml"/>
+  <!-- DAO context definition. -->
+  <import resource="classpath:dao-context.xml"/>
+
+  <!-- The base service bean. -->
+  <bean id="baseService" class="gov.georgia.dhr.dfcs.sacwis.service.impl.BaseServiceImpl" abstract="true">
+    <property name="commonDAO" ref="commonDAO"/>
+  </bean>
+
+  <!-- Pull in sacwis.properties for configuration (e.g. web service endpoints). -->
+  <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="location" value="classpath:sacwis.properties"/>
+  </bean>
+
+</beans>

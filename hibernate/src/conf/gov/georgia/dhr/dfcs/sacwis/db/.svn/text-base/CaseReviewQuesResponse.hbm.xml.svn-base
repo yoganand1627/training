@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CaseReviewQuesResponse" table="CASE_REVIEW_QUES_RESPONSE" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idCaseReviewQuestion" type="integer" unsaved-value="0">
+      <column name="ID_CASE_REVIEW_QUES_RESPONSE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_CASE_REVIEW_QUES_RESP</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="caseReviewItem" class="gov.georgia.dhr.dfcs.sacwis.db.CaseReviewItem" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE_REVIEW_ITEM" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="caseReviewCateg" class="gov.georgia.dhr.dfcs.sacwis.db.CaseReviewCateg" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE_REVIEW_CATEG" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdQuestion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_QUESTION" length="10" not-null="true"/>
+    </property>
+    <property name="cdQuesResponse" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_QUES_RESPONSE" length="1"/>
+    </property>
+    <property name="cdVersion" type="integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_VERSION"/>
+    </property>
+  </class>
+</hibernate-mapping>

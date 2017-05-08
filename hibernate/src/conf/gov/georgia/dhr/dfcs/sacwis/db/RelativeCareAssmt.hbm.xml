@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.RelativeCareAssmt" table="RELATIVE_CARE_ASSMT" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idRcaEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_RCA_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="capsResourceByIdResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdAssessorType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ASSESSOR_TYPE" length="1" not-null="true"/>
+    </property>
+    <property name="cdAssmtType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ASSMT_TYPE" length="1" not-null="true"/>
+    </property>
+    <property name="cdState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STATE" length="2"/>
+    </property>
+    <property name="cdCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_COUNTY" length="3"/>
+    </property>
+    <property name="dtReferral" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REFERRAL" length="7"/>
+    </property>
+    <property name="dtDue" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_DUE" length="7"/>
+    </property>
+    <property name="dtSched" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SCHED" length="7"/>
+    </property>
+    <property name="dtActual" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ACTUAL" length="7"/>
+    </property>
+    <property name="dtComplete" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_COMPLETE" length="7"/>
+    </property>
+    <property name="dtReceived" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RECEIVED" length="7"/>
+    </property>
+    <property name="cdAssmtResults" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ASSMT_RESULTS" length="3"/>
+    </property>
+    <property name="dtDecision" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_DECISION" length="7"/>
+    </property>
+    <property name="indDiscussion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_DISCUSSION" length="1"/>
+    </property>
+    <property name="dtDiscussion" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_DISCUSSION" length="7"/>
+    </property>
+    <property name="indAccept" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_ACCEPT" length="1"/>
+    </property>
+    <property name="cdSupport" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SUPPORT" length="3"/>
+    </property>
+    <property name="dtRdRefrral" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RD_REFRRAL" length="7"/>
+    </property>
+    <property name="dtAgreeSigned" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_AGREE_SIGNED" length="7"/>
+    </property>
+    <property name="txtComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_COMMENTS" length="300"/>
+    </property>
+    <property name="cdCaregiverType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CAREGIVER_TYPE" length="1"/>
+    </property>
+    <property name="txtNonRelatives" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_NON_RELATIVES" length="300"/>
+    </property>
+  </class>
+</hibernate-mapping>

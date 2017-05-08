@@ -1,0 +1,149 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE grnds-web-app SYSTEM "grnds-web-app.dtd">
+
+<grnds-web-app>
+
+  <servlet mapping="admin">
+    <conversations>
+     <conversation>
+        <conversation-name>VendorStaffList</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.admin.VendorStaffListConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayVendorStaffList</command-name>
+            <activity type="method">displayVendorStaffList_xa</activity>
+            <presentation type="class" screen="VENDOR_STAFF_LIST">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+              <command>
+            <command-name>displayPendingVendorStaffList</command-name>
+            <activity type="method">displayPendingVendorStaffList_xa</activity>
+            <presentation type="class" screen="PENDING_STAFF_LIST">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+      <conversation>
+        <conversation-name>VendorStaffDetail</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.admin.VendorStaffDetailConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayVendorStaffDetail</command-name>
+            <activity type="method">displayVendorStaffDetail_xa</activity>
+            <presentation type="class" screen="VENDOR_STAFF_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>        
+          <command>
+            <command-name>displayUserProfileDetail</command-name>
+            <activity type="method">displayVendorStaffDetail_xa</activity>
+            <presentation type="class" screen="USER_PROFILE_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>    
+              
+           <command>
+            <command-name>saveUserProfileDetail</command-name>
+            <activity type="method">saveVendorStaffDetail_xa</activity>
+            <presentation type="class" screen="USER_PROFILE_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="url" branch="userPofile">
+              /admin/VendorStaffDetail/displayUserProfileDetail
+            </presentation>
+            <presentation branch="errorUser" type="class" screen="USER_PROFILE_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>                       
+           </command>        
+          
+          <command>
+            <command-name>saveVendorStaffDetail</command-name>
+            <activity type="method">saveVendorStaffDetail_xa</activity>
+            <presentation type="url" branch="staffDtl">
+              /admin/VendorStaffDetail/displayVendorStaffDetail
+            </presentation>
+            <presentation type="url" branch="pending">
+              /admin/VendorStaffDetail/displayPendingVendorStaffDetail
+            </presentation>
+            <presentation branch="errorStaff" type="class" screen="VENDOR_STAFF_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>          
+            <presentation branch="errorPending" type="class" screen="PENDING_STAFF_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>                        
+          </command>
+          <command>
+            <command-name>deleteVendor</command-name>
+            <activity type="method">deleteVendor_xa</activity>
+            <presentation type="url" branch="staffDtl">
+              /admin/VendorStaffDetail/displayVendorStaffDetail
+            </presentation>
+            <presentation type="url" branch="pending">
+              /admin/VendorStaffDetail/displayPendingVendorStaffDetail
+            </presentation>
+            <presentation branch="errorStaff" type="class" screen="VENDOR_STAFF_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="errorPending" type="class" screen="PENDING_STAFF_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>                                   
+          </command>          
+          <command>
+            <command-name>displayPendingVendorStaffDetail</command-name>
+            <activity type="method">displayPendingVendorStaffDetail_xa</activity>
+            <presentation type="class" screen="PENDING_STAFF_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>        
+          <command>
+            <command-name>savePendingVendorStaffDetail</command-name>
+            <activity type="method">savePendingVendorStaffDetail_xa</activity>
+            <presentation type="url">
+              /admin/VendorStaffDetail/displayPendingVendorStaffDetail
+            </presentation>
+            <presentation branch="error" type="class" screen="PENDING_STAFF_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>            
+          </command>
+          <command>
+            <command-name>resetPassword</command-name>
+            <activity type="method">resetPassword_xa</activity>
+            <presentation type="class" screen="VENDOR_STAFF_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>approveVendorStaffDetail</command-name>
+            <activity type="method">approveVendorStaffDetail_xa</activity>
+            <presentation type="url">
+              /admin/VendorStaffList/displayPendingVendorStaffList
+            </presentation>
+            <presentation branch="error" type="class" screen="PENDING_STAFF_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>            
+          </command>
+          <command>
+            <command-name>disapproveVendorStaffDetail</command-name>
+            <activity type="method">disapproveVendorStaffDetail_xa</activity>
+            <presentation type="url">
+              /admin/VendorStaffList/displayPendingVendorStaffList
+            </presentation>
+            <presentation branch="error" type="class" screen="PENDING_STAFF_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>            
+          </command>                              
+        </commands>
+      </conversation>      
+    </conversations>
+  </servlet>
+
+  <error-handling>
+    <domain>sacwis</domain>
+    <logger>grnds.syslog</logger>
+  </error-handling>
+
+
+</grnds-web-app>

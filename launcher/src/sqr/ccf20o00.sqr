@@ -1,0 +1,825 @@
+!*****************************************************************************
+!ccf21o00.sqr                                                                *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccf21o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/dickmaec/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 04/08/2005                                           *
+!                                                                            *
+! PROGRAMMER NAME:      Eric Dickman	                                       *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ------------ -------------------------------------------------  *
+! 04/08/05   Eric Dickman Initial Programming                                *
+! 05/16/05   ANANDV 			Added SQL Conditon to Linked Case                  *
+!					INFO List			                                                     *	
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup05a.sqc'            ! control codes for Landscape 
+
+    ask ID_CASE 
+    
+END-SETUP
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                    !Set printer environment
+   
+   move '{ID_CASE}'        to $passed_in_case_id 
+   
+END-PROCEDURE HOUSEKEEPING
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+
+BEGIN-HEADING 3
+
+ do GET-HEADER-CASE-INFORMATION($passed_in_case_id)
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer03.sqc'       ! Include file with footer information
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+	do GET-CASE-ID-DISTINCT-SQL($passed_in_case_id)
+	
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-CASE-ID-DISTINCT-SQL                                                *
+!   CALLED BY  : GET-CREATE-SQL-STRING($id_person,                          * 
+!   $flag)                                				                          *
+!   CALLS      : GET-LINKED-CASE-INFORMATION($id_case)              	      *
+!   CALLS      : PRINT-STAGE-SUMMARY-LAUNCH($id_case)			                  *
+!   CALLS      : PRINT-PRINCIPALS-SUMMARY-LAUNCH($id_case)		              *	
+!   CALLS      : PRINT-PRINCIPALS-BY-STAGE-LAUNCH($id_case)		              *
+!                                                                           *
+!This is the main login behind this report.  It creates the  a single       *
+!report for each case id.  At the end of each case id a new page is         *
+!created. 								                                                  * 
+!									                                                          *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CASE-ID-DISTINCT-SQL($passed_in_case_id) 
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+C.ID_CASE
+    move &C.ID_CASE     to $id_case
+    
+C.IND_CASE_SENSITIVE    
+		move &C.IND_CASE_SENSITIVE  to $case_sensitive 
+
+CL.IND_CASE_LINK
+		move &CL.IND_CASE_LINK		to $case_link	
+	
+	if $case_link = 'Y' 
+	
+		if $case_sensitive = 'N' or $case_sensitive = ''
+	 	
+	  	do GET-LINKED-CASE-INFORMATION($id_case,
+	  				                         $sql_id_person_final) 
+		
+	  	do PRINT-STAGE-SUMMARY-LAUNCH($id_case) 
+	  	
+	  	do PRINT-PRINCIPALS-SUMMARY-LAUNCH($id_case)
+		
+	  	do PRINT-PRINCIPALS-BY-STAGE-LAUNCH($id_case)
+		
+		  NEW-PAGE
+	
+	  end-if
+	  
+	  if $case_sensitive = 'Y'
+			 	
+	  	do GET-LINKED-CASE-INFORMATION($id_case,
+	  		                             $sql_id_person_final) 
+	  		                             
+	  		                             
+	  	do PRINT-SENSITIVE-CASE()
+	  	
+	  	NEW-PAGE
+	  
+	  end-if  
+	end-if
+	
+	FROM 
+	  STAGE_PERSON_LINK SPL,
+	  PERSON P,
+	  STAGE S,
+	  CAPS_CASE C,
+	  
+	  (SELECT DISTINCT ID_CASE_MERGE_TO   	  
+		  FROM CASE_MERGE
+		  WHERE 
+		    IND_CASE_MERGE_PENDING IS NULL AND
+		    DT_CASE_MERGE_SPLIT IS NULL 
+		    ) CM,
+		    CASE_LINK CL, 
+		    DELETE_CASE D   	 
+		WHERE SPL.CD_STAGE_PERS_TYPE = 'PRN' AND
+		SPL.ID_PERSON IN 
+		        (
+		        	SELECT DISTINCT SPL2.ID_PERSON 
+		          FROM STAGE_PERSON_LINK SPL2 
+		          WHERE SPL2.CD_STAGE_PERS_TYPE = 'PRN' 
+		          AND SPL2.ID_CASE = $passed_in_case_id
+		         )  	  
+		AND C.ID_CASE != $passed_in_case_id
+		AND SPL.ID_CASE = C.ID_CASE   	
+		AND C.ID_CASE = S.ID_CASE   	
+		AND S.ID_STAGE = ( SELECT MAX (SL.ID_STAGE ) 
+		                       FROM STAGE SL
+		                       WHERE  SL.ID_CASE  = C.ID_CASE
+		                 )  
+		    AND D.ID_DELETE_CASE(+) = C.ID_CASE   	 
+		    AND CL.ID_LINKED_CASE(+) = C.ID_CASE 
+		    AND CL.ID_CASE(+) = $passed_in_case_id
+		    AND (CL.IND_CASE_LINK IN ('Y','N') OR CL.IND_CASE_LINK IS NULL)
+		    AND CM.ID_CASE_MERGE_TO(+) = C.ID_CASE   	 
+    		    AND P.ID_PERSON(+) = CL.ID_PERSON_UPDATE
+END-SELECT
+END-PROCEDURE GET-CASE-ID-DISTINCT-SQL
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-LINKED-CASE-INFORMATION                                           *
+!   CALLED BY  : GET-LINKED-CASE-INFORMATION($id_case)                      *
+!                                                                           *
+!		Creates the header for each case id.			                              *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-LINKED-CASE-INFORMATION($linked_full_name,
+																							$linked_id_case)
+																							
+																					
+print 'LINKED CASE INFORMATION'                (+1,5)
+print 'Case Name:'                             (+1,5)
+print $linked_full_name                        (0,16)
+print 'Case #'                                 (+1,5)
+print $linked_id_case                          (0,12)
+
+END-PROCEDURE PRINT-LINKED-CASE-INFORMATION  
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-HEADER-CASE-INFORMATION                                           *
+!   CALLED BY:GET-HEADER-CASE-INFORMATION                                   *
+!								                                                            *
+!   Prints a header page on every pages of the report                       *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-HEADER-CASE-INFORMATION ($header_case_name,
+	  																					 $header_id_case) 
+
+print 'CURRENT CASE INFORMATION'      (1,45)
+print 'Case Name:'		      (+1,45)	
+print $header_case_name               (0,56)
+print 'Case #'                        (+1,45)
+print $header_id_case                 (0,52)
+
+
+END-PROCEDURE PRINT-HEADER-CASE-INFORMATION   
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-STAGE-SUMMARY-LAUNCH                                              *
+!   CALLED BY:GET-HEADER-CASE-INFORMATION                                   *
+!   CALLS: PRINT-STAGE-SUMMARY                                              *
+!   CALLS: GET-STAGE-SUMMARY($stage_summary_id_case)                        *
+!                                                                           *
+!		Launchs the STAGE-SUMMARY section of the report.	                      * 
+!								                                                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-STAGE-SUMMARY-LAUNCH($id_case)
+
+	let $stage_summary_id_case = $id_case
+		
+	do PRINT-STAGE-SUMMARY
+	
+	do GET-STAGE-SUMMARY($stage_summary_id_case)
+
+END-PROCEDURE PRINT-STAGE-SUMMARY-LAUNCH
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PRINCIPALS-SUMMARY-LAUNCH                                         *
+!   CALLED BY:GET-CASE-ID-DISTINCT-SQL($sql_id_person_final)                *
+!   CALLS: PRINT-PRINCIPALS-SUMMARY-HEADER                                  *
+!   CALLS: GET-PRINCIPALS-SUMMARY($principles_summary_id_case)              *
+!									                                                          *
+!		Launchs the PRINCIPALS-SUMMARY section of the report.	                  * 
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PRINCIPALS-SUMMARY-LAUNCH($id_case)
+
+	let $principles_summary_id_case = $id_case
+	
+	do PRINT-PRINCIPALS-SUMMARY-HEADER
+	
+	do GET-PRINCIPALS-SUMMARY($principles_summary_id_case)
+
+END-PROCEDURE PRINT-PRINCIPALS-SUMMARY-LAUNCH
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PRINCIPALS-BY-STAGE-LAUNCH                                        *
+!   CALLED BY:GET-CASE-ID-DISTINCT-SQL($sql_id_person_final)                *
+!   CALLS: PRINT-PRINCIPALS-BY-STAGE                                        *
+!   CALLS: GET-PRINCIPALS-BY-STAGES ($principles_by_stages_id_case)         *
+!									                                                          *
+!		Launchs the PRINCIPALS BY STAGE section of the report.	                *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PRINCIPALS-BY-STAGE-LAUNCH($id_case)
+
+	let $principles_by_stages_id_case = $id_case
+	
+	do PRINT-PRINCIPALS-BY-STAGE
+	
+	do GET-PRINCIPALS-BY-STAGES ($principles_by_stages_id_case)
+
+END-PROCEDURE PRINT-PRINCIPALS-BY-STAGE-LAUNCH
+
+!****************************************************************************
+!                                                                           *
+!   GET-LINKED-CASE-INFORMATION($id_case)                                   *
+!   CALLED BY:GET-CASE-ID-DISTINCT-SQL                                      *
+!   CALLS: PRINT-LINKED-CASE-INFORMATION($linked_case_name,                 *
+!   $linked_id_case)                   					                            *
+!                                                                           *
+!   This method prints the Other/Linked infortmation for each section.      *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-LINKED-CASE-INFORMATION($id_case,
+																						$sql_id_person_final)
+
+let $linked_id_case = $id_case
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+CC.NM_CASE 
+  move &CC.NM_CASE    to $linked_case_name
+ 
+		FROM CAPS_CASE CC, 
+		STAGE STG, 
+		STAGE_PERSON_LINK SPL, 
+		PERSON PER 
+			WHERE CC.ID_CASE = STG.ID_CASE 
+			AND   STG.ID_STAGE = SPL.ID_STAGE
+			AND   SPL.ID_PERSON = PER.ID_PERSON
+			AND   CC.ID_CASE = $linked_id_case
+
+END-SELECT
+	
+	do PRINT-LINKED-CASE-INFORMATION($linked_case_name,
+																	 $linked_id_case) 
+																	 
+END-PROCEDURE GET-LINKED-CASE-INFORMATION
+
+!****************************************************************************
+!                                                                           *
+!   GET-HEADER-CASE-INFORMATION($passed_in_case_id)                         *
+!   CALLED BY:BEGIN-HEADING                                                 *
+!   CALLS: PRINT-HEADER-CASE-INFORMATION ($header_case_name,                *
+!     	  																$header_id_case)                  *
+!                                                                           *
+!   This method will print the Case Information Header.                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-HEADER-CASE-INFORMATION($passed_in_case_id)
+
+let $header_id_case = $passed_in_case_id
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+CC1.NM_CASE 
+  move &CC1.NM_CASE    	to $header_case_name
+ 
+		FROM CAPS_CASE CC1, 
+		STAGE STG1, 
+		STAGE_PERSON_LINK SPL1, 
+		PERSON PER1 
+			WHERE CC1.ID_CASE = STG1.ID_CASE 
+			AND   STG1.ID_STAGE = SPL1.ID_STAGE
+			AND   SPL1.ID_PERSON = PER1.ID_PERSON
+			AND   CC1.ID_CASE = $passed_in_case_id
+
+END-SELECT
+	
+	do PRINT-HEADER-CASE-INFORMATION ($header_case_name, $header_id_case) 
+																	 
+END-PROCEDURE GET-HEADER-CASE-INFORMATION
+!****************************************************************************
+!                                                                           *
+!   GET-STAGE-SUMMARY                                                       *
+!   CALLED BY: PRINT-HEADER-CASE-INFORMATION 				                        *
+!                                                                           *
+!   This SQL will return the results for the Stage Summary section          *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-STAGE-SUMMARY($stage_summary_id_case)
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+             
+S.NM_STAGE 
+	move &S.NM_STAGE   to $name_stage
+	
+S.CD_STAGE
+	move &S.CD_STAGE  to $cd_stage
+
+S.CD_STAGE_TYPE
+	move &S.CD_STAGE_TYPE  to $stage_type
+
+to_char(S.DT_STAGE_START, 'MM/DD/YYYY') &date1
+    move &date1                           to $dt_stage_start
+
+to_char(S.DT_STAGE_CLOSE, 'MM/DD/YYYY') &date2
+    move &date2                           to $dt_stage_close
+
+S.CD_STAGE_REGION
+	move &S.CD_STAGE_REGION		to $stage_region
+
+S.CD_STAGE_PROGRAM
+	move &S.CD_STAGE_PROGRAM	to $stage_program
+
+S.ID_STAGE
+	move &S.ID_STAGE		to $id_stage
+
+S.CD_STAGE_REASON_CLOSED
+	move &S.CD_STAGE_REASON_CLOSED  to $stage_reason_closed
+
+L.ID_PERSON
+	move &L.ID_PERSON		to $id_person_primary
+	
+P.NM_PERSON_FULL
+	move &P.NM_PERSON_FULL          to $name_person_full 
+
+C.CD_CPS_INVST_DTL_OVRLL_DISPTN 
+	move &C.CD_CPS_INVST_DTL_OVRLL_DISPTN   to $overall_disptn
+
+  do PRINT-STAGE-SUMMARY-RESULTS($name_stage, $cd_stage,$stage_type,
+							$dt_stage_start,
+							$dt_stage_close,
+							$stage_region,
+							$stage_program,
+							$id_stage,
+							$stage_reason_closed,
+							$id_person_primary,
+							$name_person_full,
+						 	$overall_disptn)
+
+FROM     STAGE S, 
+         STAGE_PERSON_LINK L, 
+	       CPS_INVST_DETAIL C,
+         PERSON P
+WHERE    S.ID_CASE                  = $stage_summary_id_case
+AND	 P.ID_PERSON                    = L.ID_PERSON
+AND      L.ID_STAGE                 =  S.ID_STAGE 
+AND      C.ID_CPS_INVST_STAGE(+)    =  S.ID_STAGE 
+AND      (L.CD_STAGE_PERS_ROLE      = 'PR' OR L.CD_STAGE_PERS_ROLE = 'HP') 
+ORDER BY S.DT_STAGE_START DESC, S.ID_STAGE DESC           
+       
+              
+END-SELECT
+END-PROCEDURE GET-STAGE-SUMMARY
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-STAGE-SUMMARY                 			                              *
+!   CALLED BY: PRINT-STAGE-SUMMARY-LAUNCH				                            *
+!	                                                                          *
+!   This method prints the section headers for the stage summary page.      *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-STAGE-SUMMARY
+
+print 'STAGE SUMMARY'                           (+2,5) bold
+print 'Mrg'                                     (+1,5)
+print 'Stage Name'                              (0,9)
+print 'Stg'                                     (0,34)
+print 'Type'                                    (0,38)
+print 'Opened'					                        (0,44)
+print 'Closed'					                        (0,55)
+print 'Primary'					                        (0,66)
+print 'Reg'					                            (0,91)
+print 'Stage ID' 				                        (0,95)
+print 'Ov Dsp'							                    (0,105)
+print 'UTC'                                     (0,112)
+print '---'                                     (+1,5)
+print '------------------------'                (0,9)
+print '---'                                     (0,34)
+print '-----'                                   (0,38)
+print '----------'			                      	(0,44)
+print '----------'			                      	(0,55)
+print '------------------------'		            (0,66)
+print '---'					                            (0,91)
+print '---------' 	                      			(0,95)
+print '------'			                        		(0,105)
+print '---'                                     (0,112)
+END-PROCEDURE PRINT-STAGE-SUMMARY 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-STAGE-SUMMARY-RESULTS                                             *
+!   CALLED BY: PRINT-STAGE-SUMMARY-LAUNCH				                            *
+!									                                                          *
+!   This method prints results returned from the SQL for the stage          *
+!		summary section. 					                                              *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-STAGE-SUMMARY-RESULTS($name_stage,
+					                                  $cd_stage,
+				                                  	$stage_type,
+					                                  $dt_stage_start,
+					                                  $dt_stage_close,
+					                                  $stage_region,
+					                                  $stage_program,
+					                                  $id_stage,
+					                                  $stage_reason_closed,
+					                                  $id_person_primary,
+					                                  $name_person_full,
+				                                    $overall_disptn)
+
+if $stage_reason_closed = '97'
+  let $mrg = 'Y'
+else
+ 	let $mrg = 'N'
+end-if 	
+  
+print $mrg                                      (+1,5)
+print $name_stage                               (0,9)
+print $cd_stage                                 (0,34)
+print $stage_type                               (0,38)
+print $dt_stage_start				                    (0,44)
+print $dt_stage_close				                    (0,55)
+print $name_person_full  		                  	(0,66)
+print $stage_region				                      (0,91)
+print $id_stage 				                        (0,95)
+print $overall_disptn 			                  	(0,105)
+
+if $overall_disptn = 'UTC'
+	let $utc = 'Y'
+else
+  let $utc = 'N'
+end-if  
+
+print $utc                                      (0,112)
+
+END-PROCEDURE PRINT-STAGE-SUMMARY-RESULTS 
+
+!****************************************************************************
+!                                                                           *
+!   GET-PRINCIPALS-SUMMARY                                                  * 
+!   CALLED BY: PRINT-PRINCIPALS-SUMMARY-LAUNCH 				                      *
+!                                                                           *
+!This SQL will return the results for the Principals Summary section	      *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PRINCIPALS-SUMMARY($principles_summary_id_case) 
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+PE.ID_PERSON
+	move &PE.ID_PERSON 	to $summ_id_person 
+
+PE.NM_PERSON_FULL
+	move &PE.NM_PERSON_FULL   to $summ_person_full	 
+
+PE.CD_PERSON_SEX
+	move &PE.CD_PERSON_SEX    to $summ_person_sex 
+	
+PE.DT_PERSON_BIRTH
+	move &PE.DT_PERSON_BIRTH  to $summ_person_dob 
+	
+PE.NBR_PERSON_AGE
+	move &PE.NBR_PERSON_AGE   to $summ_person_age 
+
+PE.NBR_PERSON_ID_NUMBER
+	move &PE.NBR_PERSON_ID_NUMBER    to $summ_ssn 
+	
+	do PRINT-PRINCIPALS-SUMMARY-RESULTS($summ_person_full,
+						$summ_id_person,
+						$summ_person_sex,
+						$summ_person_dob,
+						$summ_person_age,
+						$summ_ssn)  
+			   
+		FROM STAGE_PERSON_LINK S,
+		  	 PERSON PE
+			   	 	  
+	  WHERE S.ID_CASE = $principles_summary_id_case
+	  AND CD_STAGE_PERS_TYPE = 'PRN'
+		AND PE.ID_PERSON = S.ID_PERSON
+		ORDER BY PE.NM_PERSON_FULL ASC
+
+END-SELECT
+END-PROCEDURE GET-PRINCIPALS-SUMMARY
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-SENSITIVE-CASE                 			            									*
+!   CALLEDBY:PRINT-SENSITIVE-CASE 							   													*
+!   This method prints the prints sensitive case. 										      *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-SENSITIVE-CASE
+
+PRINT 'Sensitive Case'                             (+3,5) 
+
+END-PROCEDURE PRINT-SENSITIVE-CASE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PRINCIPALS-SUMMARY-HEADER                                         *
+!   CALLED BY: PRINT-PRINCIPALS-SUMMARY-LAUNCH 				                      *
+!									                                                          *
+!   This method will print the Principals summary header                    *	
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PRINCIPALS-SUMMARY-HEADER
+
+print 'PRINCIPALS SUMMARY'                       (+2,5) bold
+print 'Name'                                     (+1,5) bold
+print 'PID'                              	       (0,35) bold
+print 'DOB'                                    	 (0,50) bold
+print 'Sex'                                      (0,65) bold
+print 'SSN'				     	                         (0,72) bold
+
+END-PROCEDURE PRINT-PRINCIPALS-SUMMARY-HEADER
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PRINCIPALS-SUMMARY-RESULTS                                        *
+!   CALLED BY: PRINT-PRINCIPALS-SUMMARY-LAUNCH 				                      *
+!																																						*
+!   This method will print the Principals Summary Results                   *	
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PRINCIPALS-SUMMARY-RESULTS($summ_person_full,
+						 $summ_id_person,	
+						 $summ_person_sex,
+						 $summ_person_dob,
+						 $summ_person_age,
+						 $summ_ssn)  
+
+print $summ_person_full                          (+1,5) 
+print $summ_id_person  				                   (0,35) 
+print $summ_person_dob                        	 (0,50) 
+print $summ_person_sex                           (0,65) 
+print $summ_ssn 				                         (0,72)
+
+END-PROCEDURE PRINT-PRINCIPALS-SUMMARY-RESULTS 
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-PRINCIPALS-BY-STAGES                                                *
+!   CALLED BY: PRINT-PRINCIPALS-BY-STAGES-LAUNCH 			                      *
+!                                                                           *
+!  This SQL will return the results for the Principals by stages 	          *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PRINCIPALS-BY-STAGES($principles_by_stages_id_case)
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+ST.ID_STAGE
+	move &ST.ID_STAGE     to $stg_id_stage 
+	
+ST.CD_STAGE
+	move &ST.CD_STAGE     to $stg_cd_stage
+	
+PERS.NM_PERSON_FULL
+	move &PERS.NM_PERSON_FULL  to $stg_name_person_full 
+	
+LI.ID_PERSON
+	move &LI.ID_PERSON       to $stg_id_person 
+
+PERS.DT_PERSON_BIRTH
+	move &PERS.DT_PERSON_BIRTH    to $stg_person_dob 
+
+LI.CD_STAGE_PERS_REL_INT
+	move &LI.CD_STAGE_PERS_REL_INT   to $stg_rel_int 
+	
+LI.CD_STAGE_PERS_ROLE
+	move &LI.CD_STAGE_PERS_ROLE     to $stg_rel_role 
+	   		
+	   	   	 	
+	   	do PRINT-PRINCIPALS-BY-STAGE-RESULTS($stg_id_stage,
+						 $stg_cd_stage,
+						 $stg_name_person_full,
+						 $stg_id_person,
+						 $stg_person_dob,
+						 $stg_rel_int,
+						 $stg_rel_role)
+	   	FROM STAGE_PERSON_LINK LI, 
+			     STAGE ST, 
+			     PERSON PERS 
+			WHERE LI.ID_CASE  = $principles_by_stages_id_case
+	   	AND LI.CD_STAGE_PERS_TYPE = 'PRN' 
+			AND LI.ID_CASE = ST.ID_CASE
+			AND LI.ID_STAGE = ST.ID_STAGE
+			AND LI.ID_PERSON = PERS.ID_PERSON	
+			ORDER BY ST.ID_STAGE DESC, LI.ID_PERSON ASC
+
+END-SELECT
+END-PROCEDURE GET-PRINCIPALS-BY-STAGES 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PRINCIPALS-BY-STAGE                                               *
+!   CALLED BY: PRINT-PRINCIPALS-BY-STAGES-LAUNCH 			                      *
+!									                                                          *
+!   This method will print the Principals by Stages Header                  *	
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PRINCIPALS-BY-STAGE
+
+print 'PRINCIPALS BY STAGES'                      (+2,5) bold
+print 'Stage ID'                                  (+1,5) bold
+print 'Stage'                             	      (0,15) bold
+print 'Name'                                      (0,23) bold
+print 'PID'                                       (0,50) bold
+print 'DOB'					                              (0,65) bold
+print 'Rel/Int'					                          (0,80) bold
+print 'Role'					                            (0,90) bold
+
+END-PROCEDURE PRINT-PRINCIPALS-BY-STAGE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PRINCIPALS-BY-STAGE-RESULTS                                       *
+!   CALLED BY: PRINT-PRINCIPALS-BY-STAGES-LAUNCH			                      *
+!									                                                          *
+!   This method will print the Principals by Stages Results                 *	
+!****************************************************************************
+
+
+
+
+BEGIN-PROCEDURE PRINT-PRINCIPALS-BY-STAGE-RESULTS($stg_id_stage,
+			                                            $stg_cd_stage,
+			                                            $stg_name_person_full,
+			                                            $stg_id_person,
+			                                            $stg_person_dob,
+			                                            $stg_rel_int,
+			                                            $stg_rel_role)
+
+if $prn_by_stage_break_old != $stg_id_stage
+  print '' 	 				                             (+1,0)
+end-if	 
+				 				
+print $stg_id_stage                              (+1,5) 
+print $stg_cd_stage                          	   (0,15) 
+print $stg_name_person_full                      (0,23) 
+print $stg_id_person                             (0,50) 
+print $stg_person_dob				                     (0,65) 
+print $stg_rel_int 				                       (0,80) 
+print $stg_rel_role				                       (0,90)
+
+let $prn_by_stage_break_old = $stg_id_stage
+
+
+END-PROCEDURE PRINT-PRINCIPALS-BY-STAGE-RESULTS
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      * 
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql_id_person-error                              (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc'

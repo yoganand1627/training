@@ -1,0 +1,408 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Tue Nov 15 16:00:25 2011 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\AdoptionsReportDesigns\Nov15\MyTurnNowException00.sqr
+! Format  : Tabular
+! Username: JPOTTAMMEL
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Text $dt_event_notify_disp 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=96    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,2,0) Underline  Bold 
+ Print 'Key' (189,2,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Race' (205,7,0) Underline  Bold 
+ Print 'AA - American Indian/Alaska Native' (220,9,0)
+ Print 'BK - Black/African American' (234,9,0)
+ Print 'BW - Black and White' (248,9,0)
+ Print 'HP - Native Hawaiian/Other Pacific Islander' (265,9,0)
+ Print 'UD - Unable to Determine' (279,9,0)
+ Print 'WT - White' (294,9,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'This report displays all children under 18 years of age, currently in DFCS custody, registered with the Adoption Exchange who are legally free for adoption.' (28,8,100) Wrap 100 2 line-height=12 Keep-Top
+ Last-Page (630,516) 
+ Page-Number (630,482) '' ' of '
+ Print 'Child''s Legal Risk Field on the Exchange Child Detail page is set to ''No''.' (58,8,0)
+ Print 'Child''s Non-Availability Reason Code in the Child Availability section on the Exchange Child Detail page will be ''Available'' or ''Consideration''.' (81,8,100) Wrap 100 2 line-height=12 Keep-Top
+ Print 'Name of the current primary case manager on the most recently open ADO stage.' (134,90,0)
+ Print 'Case Manager:' (134,11,0) Bold 
+ Print 'Race:' (159,11,0) Bold 
+ Print 'Child''s race: displayed in code and is separated by comma if the child has more than one race recorded in the system.' (159,47,0)
+ Print 'Totals represent the total number of children registered with Adoption Exchange and free for adoption.' (115,9,0)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=12   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do LoadLookupTables
+ Position (1,1)
+ Do Get-Reg-Cnty
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Reg-Cnty 
+Input $_I201_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=3  Type=Char
+If IsNull($_I201_CD_STAGE_REGION) or IsBlank($_I201_CD_STAGE_REGION) or ($_I201_CD_STAGE_REGION = '0')
+ Let $region_selected = 'N'
+Else
+ Let $region_selected = 'Y'
+End-If
+
+Input $_I201_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_I201_CD_STAGE_CNTY) or IsBlank($_I201_CD_STAGE_CNTY) or ($_I201_CD_STAGE_CNTY = '0')
+ Let $county_selected = 'N'
+Else
+ Let $county_selected = 'Y'
+End-If
+
+If $county_selected = 'Y'
+ Do Decode-County
+ Let $header = $county_decode
+ Let $where_clause_reg_cnty = 'CD_STAGE_CNTY = ' || '''' || $_I201_CD_STAGE_CNTY || ''''
+Else
+ If $region_selected = 'Y'
+  Let $where_clause_reg_cnty = 'CD_STAGE_REGION = ' || '''' || $_I201_CD_STAGE_REGION || ''''
+  Let $header = 'Region ' || $_I201_CD_STAGE_REGION
+ Else
+  Let $header = 'Statewide'
+  Let $where_clause_reg_cnty = 'CD_STAGE_REGION IS NOT NULL'
+ End-If
+End-If 
+ ! Fill spaces in front of the header to make it centered on page. This fix might not place header precisely at center due to Arial font letter takes up different space.
+ ! It is however simple to implement and gives decent result.
+ ! Header possible values:
+ ! - County name: currently the longest county name in GA is 13 chars
+ ! - 'Region xx' is 9 chars
+ ! - 'Statewide' is also 9 chars long
+ Let #header_len = length($header)
+ Let #spaces = (13 - #header_len) ! No need to divide by 2 b/c space is non-character; observation shows that compiler does not bold it, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $header = ' ' || $header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+Begin-Procedure Decode-County
+Let $county_decode = 'County ' || $_I201_CD_STAGE_CNTY
+Let $county_code = '''' || $_I201_CD_STAGE_CNTY || ''''
+Begin-Select
+DECODE &county_decode
+ Move &county_decode to $county_decode
+From  CCOUNT
+Where CCOUNT.CODE = [$county_code]
+End-Select
+    
+End-Procedure
+
+Begin-Procedure Get-Person-Race(#id_person, :$str_race)
+Begin-Select
+cd_race &prace
+ If isnull($str_race) or isblank($str_race)
+  Move &prace to $str_race
+ Else
+  Let $str_race = $str_race || ', ' || &prace
+ End-If
+from person_race
+where id_person = #id_person
+End-Select
+End-Procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select Distinct
+PERSON_ENC00.ID_PERSON &id_child2
+ Move '' to $str_race
+ Do Get-Person-Race(&id_child2, $str_race)
+(EMPLOYEE.NM_EMPLOYEE_LAST || ', ' ||  EMPLOYEE.NM_EMPLOYEE_FIRST) &nm_caseworker
+STAGE00.CD_STAGE_CNTY &Master_Query_STAGE00.CD_STAGE_CNTY
+PERSON_ENC00.CD_PERSON_SEX &Master_Query_PERSON_ENC00.CD_PERSON_SEX
+CD_NON_AVAIL_STATUS &Master_Query_CD_NON_AVAIL_STATUS
+DT_NOTIFIED &Master_Query_DT_NOTIFIED
+DT_APPROVED &Master_Query_DT_APPROVED
+DT_REGISTERED &Master_Query_DT_REGISTERED
+DT_RE_REGISTERED &Master_Query_DT_RE_REGISTERED
+DT_FINAL &Master_Query_DT_FINAL
+CAPS.EXCHANGE_CHILD.ID_EVENT &id_child_registration
+STAGE00.ID_STAGE &id_child_stage
+TXT_AVAIL_COMMENTS &Master_Query_TXT_AVAIL_COMMENTS
+TXT_CHILD_IS_LINKED &txt_child_is_linked
+TXT_CHILD_PLACED_WITH &txt_child_placed_with
+(replace( EXCHANGE_CHILD.TXT_AVAIL_COMMENTS , chr(10), ' ')) &txt_comment_replaced
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+(1) &dummy_group_break_for_query_total () On-Break Set=2 Level=1 Print=Never Before=Master_Querydummy_group_break_for_query_total_BeforeProc201 After=Master_Querydummy_group_break_for_query_total_AfterProc201
+STAGE00.CD_STAGE_REGION &Master_Query_STAGE00.CD_STAGE_REGION () On-Break Set=2 Level=2 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc202 After=Master_QueryCD_STAGE_REGION_AfterProc202
+(decode( CCOUNT.DECODE , '-None-', '-Multi-County-',  CCOUNT.DECODE )) &nm_county () On-Break Set=2 Level=3 Print=Never Before=Master_Querynm_county_BeforeProc203 After=Master_Querynm_county_AfterProc203
+ Graphic (14,19,513) Horz-Line 15 
+ Print 'Child Name:' (35,22,0) Underline 
+PERSON_ENC00.NM_PERSON_FULL &nm_child (35,80,25)
+STAGE00.ID_CASE &id_child_case (35,460) Edit 888888888888na
+ Print 'Person ID:' (35,236,0) Underline 
+PERSON_ENC00.ID_PERSON &id_child (35,290) Edit 8888888888888888na
+ Print 'Case ID:' (35,413,0) Underline 
+ Print 'Race:' (52,236,0) Underline 
+ Print 'DOB:' (52,22,0) Underline 
+PERSON_ENC00.DT_PERSON_BIRTH &Master_Query_PERSON_ENC00.DT_PERSON_BIRTH (52,80) Edit MM/DD/YYYY
+ Let $cd_race=$str_race
+ Print $cd_race (52,290,19)
+ Lookup gender_lookup &Master_Query_PERSON_ENC00.CD_PERSON_SEX $dec_gender
+ Print $dec_gender (52,460,7)
+ Print 'Gender:' (52,413,0) Underline 
+ Print &nm_caseworker (69,98,25)
+ Print 'Case Manager:' (69,22,0) Underline 
+ Lookup no_avail_lookup &Master_Query_CD_NON_AVAIL_STATUS $dec_non_avail
+ Print $dec_non_avail (86,100,22)
+ Print 'Non-Availability:' (86,22,0) Underline 
+ Add 1 To #201ROW_COUNT
+ Add 1 To #202ROW_COUNT
+ Add 1 To #203ROW_COUNT
+ Next-Listing  Need=86
+From  CAPS.PERSON_ENC PERSON_ENC00, CAPS.STAGE STAGE00
+,      CAPS.EMPLOYEE, CAPS.EXCHANGE_CHILD, CAPS.STAGE_ASSIGN_HISTORY
+,      CAPS.EVENT, CAPS.CCOUNT, CAPS.LEGAL_STATUS_VIEW
+      Where PERSON_ENC00.ID_PERSON = CAPS.EXCHANGE_CHILD.ID_PERSON
+            And CAPS.EMPLOYEE.ID_PERSON = CAPS.STAGE_ASSIGN_HISTORY.ID_PERSON
+            And STAGE00.ID_STAGE = CAPS.EVENT.ID_EVENT_STAGE
+            And CAPS.EXCHANGE_CHILD.ID_EVENT = CAPS.EVENT.ID_EVENT
+            And CAPS.STAGE_ASSIGN_HISTORY.ID_STAGE = STAGE00.ID_STAGE
+            And STAGE00.CD_STAGE_CNTY = CAPS.CCOUNT.CODE
+            And CAPS.LEGAL_STATUS_VIEW.ID_PERSON = CAPS.EXCHANGE_CHILD.ID_PERSON
+            And CAPS.LEGAL_STATUS_VIEW.ID_CASE = CAPS.EVENT.ID_CASE
+ And [$where_clause_reg_cnty]
+ And ID_STG_ASSGN_HSTRY = (SELECT  (max(  STAGE_ASSIGN_HISTORY00.ID_STG_ASSGN_HSTRY  ))  FROM  CAPS.STAGE_ASSIGN_HISTORY STAGE_ASSIGN_HISTORY00
+     WHERE STAGE_ASSIGN_HISTORY00.CD_ROLE = 'PR' AND  STAGE_ASSIGN_HISTORY00.ID_STAGE = STAGE00.ID_STAGE)
+ And DT_REGISTERED IS NOT NULL 
+ And (DT_CLOSE IS NULL 
+ And CD_REASON_CLOSED IS NULL 
+ And DT_FINAL IS NULL )
+ And (IND_LEGAL_RISK IS NULL  Or IND_LEGAL_RISK = 'N')
+ And CD_EVENT_STATUS <> 'COMP'
+ And CD_NON_AVAIL_STATUS IN ('00','03')
+ And exists (select distinct lsv.id_person from legal_status_view lsv where lsv.id_legal_stat_event = (select max(lsvc.id_legal_stat_event)
+     from legal_status_view lsvc where lsvc.id_person = lsv.id_person and (lsvc.dt_legal_stat_end = to_date('12/31/4712','mm/dd/yyyy') or
+     lsvc.dt_legal_stat_end is null)) and lsv.in_dfcs_custody = 'Y' and (lsv.dt_legal_stat_end = to_date('12/31/4712','mm/dd/yyyy') or lsv.dt_legal_stat_end
+     is null) and lsv.id_person = CAPS.EXCHANGE_CHILD.ID_PERSON  )
+ And (sysdate-PERSON_ENC00.DT_PERSON_BIRTH)/365 < 18
+ And EXCHANGE_CHILD.CD_STATE_ACTIVELY_RECRUITING = 'N'
+ And exists (select distinct ec.id_person from exchange_child ec where ec.id_event = (select max(ec2.id_event) from exchange_child ec2 where
+     ec2.id_person = ec.id_person) and ec.dt_registered is not null)
+ And STAGE00.DT_STAGE_CLOSE is null
+Order By STAGE00.CD_STAGE_REGION
+,      (decode( CCOUNT.DECODE , '-None-', '-Multi-County-',  CCOUNT.DECODE ))
+,      PERSON_ENC00.NM_PERSON_FULL
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc202
+ If $region_selected = 'Y' or ($region_selected = 'Y' and $county_selected = 'Y')
+    ! do nothing
+ Else
+ Next-Listing  Need=22
+ Graphic (3,1,537) Horz-Line 20 
+ Position (5,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region'  (22,12) Bold 
+  Print &Master_Query_STAGE00.CD_STAGE_REGION (22,51,3) Bold 
+ let #regTotal = #202ROW_COUNT
+ If $region_selected = 'Y' or ($region_selected = 'Y' and $county_selected = 'Y')
+    ! do nothing
+ Else
+ Print #brb_delay_01D31410 (22,94,10) Delay Bold  Edit 88888888na
+ End-If
+   Position (+12,)
+ Move 0 To #202ROW_COUNT
+ Next-Listing  Need=86
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc202
+ If $region_selected = 'Y' or ($region_selected = 'Y' and $county_selected = 'Y')
+    ! do nothing
+ Else
+ Next-Listing 
+ let #regTotal = #202ROW_COUNT
+ If $region_selected = 'Y' or ($region_selected = 'Y' and $county_selected = 'Y')
+    ! do nothing
+ Else
+ Set-Delay-Print #brb_delay_01D31410 With #regTotal
+ End-If
+ Move 0 To #202ROW_COUNT
+ Next-Listing  Need=86
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querydummy_group_break_for_query_total_BeforeProc201
+ Next-Listing  SkipLines=1 Need=12
+ let #query_child_tot = #201ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #brb_delay_01D31558 (11,79,9) Delay Bold  Edit 8888888na
+  Let $Report_Total_Header='Report Total:'
+ Print $Report_Total_Header (11,1,13) Bold 
+   Position (+12,)
+ Move 0 To #201ROW_COUNT
+ Next-Listing  Need=86
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querydummy_group_break_for_query_total_AfterProc201
+ Next-Listing 
+ let #query_child_tot = #201ROW_COUNT
+ Set-Delay-Print #brb_delay_01D31558 With #query_child_tot
+ Move 0 To #201ROW_COUNT
+ Next-Listing  Need=86
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querynm_county_BeforeProc203
+If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=23
+ Graphic (5,2,537) Horz-Line 20 
+ Position (7,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &nm_county (23,19,10) Bold 
+ let #cnty_child_tot = #203ROW_COUNT
+ If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Print #brb_delay_01D4CFB8 (23,94,10) Delay Bold  Edit 88888888na
+ End-If
+   Position (+12,)
+ Move 0 To #203ROW_COUNT
+ Next-Listing  Need=86
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querynm_county_AfterProc203
+If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing 
+ let #cnty_child_tot = #203ROW_COUNT
+ If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Set-Delay-Print #brb_delay_01D4CFB8 With #cnty_child_tot
+ End-If
+ Move 0 To #203ROW_COUNT
+ Next-Listing  Need=86
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=gender_lookup
+      Table=CAPS.CSEX
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+   Load-Lookup
+      Name=no_avail_lookup
+      Table=CAPS.CODES_TABLES
+      Key=CODE
+      Return_Value=DECODE Where=CODE_TYPE='CANONAV'
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+End-Procedure
+
+Begin-Heading 12 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (14,184,0)
+ Print 'Produced On: ' (14,408,0)
+ Print $current-date (14,474) edit 'MM/DD/YYYY'
+ Let $header_dsp=$header
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $header_dsp (63,223,13) Bold 
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'It''s My Turn Now Georgia Exception List' (37,129,39) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=1    ! [SQR.INI] 4=Arial,proportional
+ Print '    ' (89,12,2) Bold 
+ Else   ! put a non combined page header
+ Print '    ' (2,12,2) Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 36 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (23,482) '' ' of '
+ Last-Page (23,516) 
+ Alter-Printer Font=901 Point-Size=10
+ Alter-Printer Font=4 Point-Size=10
+
+End-Footing
+

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ProtectiveServiceAlert" table="PROTECTIVE_SERVICE_ALERT" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idProtectiveServiceAlert" type="integer" unsaved-value="0">
+      <column name="ID_PROTECTIVE_SERVICE_ALERT" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_PROTECTIVE_SERVICE_ALERT</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PSA_CASE_MANAGER" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdPsaStage" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PSA_STAGE" length="10"/>
+    </property>
+    <property name="dtPsaDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PSA_DATE" length="7"/>
+    </property>
+    <property name="dtPsaAbsconded" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PSA_ABSCONDED" length="7"/>
+    </property>
+    <property name="cdPsaReasonalert" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PSA_REASONALERT" length="50"/>
+    </property>
+    <property name="chPsaAllpesrlocated" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CH_PSA_ALLPESRLOCATED" length="1"/>
+    </property>
+    <property name="txtPsaComment" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_PSA_COMMENT" length="300"/>
+    </property>
+  </class>
+</hibernate-mapping>

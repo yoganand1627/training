@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE grnds-web-app SYSTEM "grnds-web-app.dtd">
+
+<grnds-web-app>
+
+  <servlet mapping="error">
+    <conversations>
+      <conversation>
+        <conversation-name>Error</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.common.ErrorConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayError</command-name>
+            <presentation type="url">
+              /grnds-docs/Error.jsp
+            </presentation>
+            <presentation type="url" branch="log">
+              /grnds-docs/LogError.jsp
+            </presentation>
+          </command>
+          <command>
+            <command-name>logError</command-name>
+            <activity type="method">logError_xa</activity>
+            <presentation type="url">
+              /grnds-docs/LogErrorResult.jsp
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+
+      <conversation>
+        <conversation-name>MessageDisplay</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.common.MessageDisplayConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>messageDisplay</command-name>
+            <activity type="method">displayMessage_xa</activity>
+            <presentation type="class" screen="MESSAGE_DISPLAY">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="class" screen="NO_SESSION_MESSAGE_DISPLAY" branch="no_session">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+    </conversations>
+  </servlet>
+
+
+  <error-handling>
+    <domain>sacwis</domain>
+    <logger>grnds.syslog</logger>
+  </error-handling>
+
+</grnds-web-app>

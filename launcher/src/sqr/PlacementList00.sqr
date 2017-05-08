@@ -1,0 +1,456 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Apr 22 15:42:42 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\New Folder\PlacementList00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+Begin-Select Loops=1
+CODE &Init_Query_Init_Query_CODE
+DECODE &Init_Query_Init_Query_DECODE
+From  CCOUNT
+Where [$where_clause103]
+End-Select
+ Alter-Report Heading-Size=168    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'The placement type of the child''s current approved placement documented in the case.  This field does not display temporary placements of type Concurrent, Respite Day, and Respite Night as these types of placements may overlap with the child''s primary placement.' (144,89,111) Wrap 111 3 line-height=12 Keep-Top on=  
+ Print 'Definitions' (14,3,11) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Permanency Plan' (308,12,0) Underline  Bold 
+ Print 'ADA: Adoption' (329,12,0)
+ Print 'FCO: Another Planned Permanent Living Arrangement Through Long Term Foster Care' (346,12,49) Wrap 49 2 line-height=10 Keep-Top on= 
+ Print 'GDS: Guardianship' (371,12,0)
+ Print 'LAE: Another Planned Permanent Living Arrangement Through Emancipation' (386,12,49) Wrap 49 3 line-height=10 Keep-Top on= 
+ Print 'LLR: Living with Fit and Living Relatives' (410,12,0)
+ Print 'NOS: Non Selected' (427,12,0)
+ Print 'RUI: Reunification' (444,12,0)
+ Print 'ADH - Adoptive Home ' (329,312,0)
+ Print 'CCI - Child Care Institution ' (343,312,0)
+ Print 'CFH - CPA Family Foster Home ' (358,312,0)
+ Print 'DFH - DFCS Family Foster Home' (372,312,0)
+ Print 'EMS - Emergency Shelter ' (386,312,0)
+ Print 'GRH - Group Home ' (401,312,0)
+ Print 'HOS - Hospital' (415,312,18)
+ Print 'ICA - ICPC - Adoptive' (430,312,0)
+ Print 'ICF - ICPC - Foster' (444,312,0)
+ Print 'ICR - ICPC - Relative' (458,312,0)
+ Print 'IFH - CCI Family Foster Home ' (473,312,0)
+ Print 'LAF - ILP/AfterCare' (329,472,20)
+ Print 'NRP - Non-Relative Paid' (343,472,0)
+ Print 'OTP - Other Person' (358,472,0)
+ Print 'OTR - Other Resource' (372,472,0)
+ Print 'PRN - Parent' (386,472,16)
+ Print 'RFH - Relative Foster Home' (401,472,0)
+ Print 'Placement Type' (308,312,14) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Key' (294,2,4) Underline  Bold 
+ Page-Number (477,670) '' ' of'
+ Last-Page (477,693) 
+ Print 'The plan type of the most recent approved permanency plan on the case involving the child. Permanency Plans are documented in the Foster Care Family (FCF) stage.' (215,89,98) Wrap 98 2 line-height=12 Keep-Top on=  
+ Print 'The date of the child''s removal and entry into foster care.The removal date is calculated as the most recent custody removal date from the custody removal record(s) documented on the case for the child.  If a custody removal record is not present, the removal date is calculated as the earliest placement start date approved for the child on the case.  If neither a custody removal or placement record is available for the child on the case, a removal date does not display.' (76,89,108) Wrap 108 5 line-height=12 Keep-Top on=  
+ Print 'Number of months between the current placement start date and the system date.' (246,89,97) Wrap 97 2 line-height=12 Keep-Top on= 
+ Print 'Perm Plan:' (215,3,10) Bold 
+ Print 'Plcmt Type:' (144,3,11) Bold 
+ Print 'Rmvl Dt:' (76,3,8) Bold 
+ Print 'Mnths in Plcmt:' (246,3,15) Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'REP - Relative - Paid' (415,472,21)
+ Print 'REU - Relative - Unpaid' (430,472,23)
+ Print 'RNA - Runaway' (444,472,13)
+ Print 'SFH - Specialized Foster Home' (458,472,29)
+ Print 'YDC - YDC/RYDC' (473,472,14)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'The selected eligibility (reimbursability) of the child''s approved and present eligibility determination.' (268,89,104)
+ Print 'Funding Source:' (268,3,15) Bold 
+ Print 'This report displays current placement information of all children in fostercare.To be displayed on the report, the child must be in an approved placement regardless of whether the child is in DFCS custody. The reporting county is determined by the county of the stage, not the unit county of the primary case manager. ' (29,5,123) Wrap 123 5 line-height=12 Keep-Top on=  
+ Print 'Plcmt Start Date:' (192,3,0) Bold 
+ Print 'The start date of the current approved placement.' (192,89,0)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do LoadLookupTables
+ Do Get-Input
+ Do Get-Unit-Input
+ Position (1,1)
+ Do StageQuery
+End-Program
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I101_CODE 'Enter a value for COUNTYCD' MaxLen=20  Type=Char
+If IsNull($_I101_CODE) or IsBlank($_I101_CODE)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+! Where clause for theinitaialization query.
+Let $where_clause103 = 'CODE = ''' || $_I101_CODE || ''''
+
+If SubStr($_I101_CODE, 1, 1) != ''''
+  Let $_I101_CODE = '''' || $_I101_CODE || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CODE,'''',0) = 0 and instr($_I101_CODE,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CODE'
+   Let $where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I101_CODE || '''' 
+ Else
+   If (instr($_I101_CODE,'''',0) = 0 and instr($_I101_CODE,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CODE'
+     Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_CODE
+   End-If
+ End-If
+End-Procedure
+
+Begin-Procedure Get-Unit-Input
+Input $_I102_NBR_UNIT 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If ($_I102_NBR_UNIT = '0')
+  Let $where_clause102 = 'NBR_UNIT is not null'
+Let $unitnbr = 'All'
+Else
+Let $unitnbr = $_I102_NBR_UNIT
+
+If SubStr($_I102_NBR_UNIT, 1, 1) != ''''
+  Let $_I102_NBR_UNIT = '''' || $_I102_NBR_UNIT || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I102_NBR_UNIT,'''',0) = 0 and instr($_I102_NBR_UNIT,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+      Let $where_clause102 =  '''' || $_I102_NBR_UNIT || ''''  || ' = ' || 'NBR_UNIT'
+ Else
+   If (instr($_I102_NBR_UNIT,'''',0) = 0 and instr($_I102_NBR_UNIT,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+          Let $where_clause102 = $_I102_NBR_UNIT || ' = ' || 'NBR_UNIT'
+   End-If
+ End-If
+End-If
+
+End-Procedure
+
+Begin-Procedure StageQuery
+Let #cntE = 0
+Let #cntB = 0
+Let #cntNE = 0
+Let #cntNEC = 0
+Let #cntNull = 0
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select
+(NVL(max( CNSRVTRSHP_REMOVAL.DT_REMOVAL ),min( PLACEMENT.DT_PLCMT_START ))) &DateRmvl
+DECODE &County
+(months_between(sysdate,NVL(max( CNSRVTRSHP_REMOVAL.DT_REMOVAL ),min( PLACEMENT.DT_PLCMT_START )))) &Mnths
+PERSON.ID_PERSON &Child
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+NM_STAGE &StageName (14,4,19)
+DT_PERSON_BIRTH &DateOfBirth (14,175) Edit MM/DD/YYYY
+CD_PERSON_SEX &Gender (14,237,4)
+ID_PLCMT_CHILD &StageQuery_ID_PLCMT_CHILD
+ Do PlacementQuery(&Case_ID, &StageQuery_ID_PLCMT_CHILD)
+ Print &PlacementName (14,404,18) Wrap 18 3 line-height=12 Keep-Top on= 
+STAGE_PERSON_LINK.ID_PERSON &StageQuery_STAGE_PERSON_LINK.ID_PERSON
+ Do Eligibility(&StageQuery_STAGE_PERSON_LINK.ID_PERSON, &Case_ID)
+ Print &Eligibility_DECODE (14,607,10) Wrap 10 2 line-height=12 Keep-Top
+ Print &PlacementQuery_PLACEMENT00.CD_PLCMT_TYPE (14,347,6)
+ Do PermPlan_Query(&Child, &Case_ID)
+ Do CalEligCount
+ Print &PermPlan_Query_FCCP_FAMILY_1.CD_PRIM_PERM_PLAN (14,667,9)
+STAGE.ID_CASE &Case_ID (14,117) Edit 8888888888na
+ Print &DateRmvl (14,279) Edit MM/DD/YYYY
+ Print &MnthsinPlcmt (14,569) Edit 8888na
+ Print &PlacementQuery_PLACEMENT00.DT_PLCMT_START (14,509) Edit MM/DD/YYYY
+ Add 1 To #1ROW_COUNT
+ Next-Listing  Need=22
+From  STAGE, STAGE_PERSON_LINK
+,      WORKLOAD, UNIT, PERSON
+,      CCOUNT, EVENT, PLACEMENT
+,      CNSRVTRSHP_REMOVAL
+      Where STAGE_PERSON_LINK.ID_STAGE = STAGE.ID_STAGE
+            And STAGE_PERSON_LINK.ID_PERSON = PERSON.ID_PERSON
+            And STAGE.ID_UNIT = UNIT.ID_UNIT
+            And WORKLOAD.ID_WKLD_STAGE = STAGE.ID_STAGE
+            And STAGE_PERSON_LINK.ID_PERSON = PLACEMENT.ID_PLCMT_CHILD
+            And STAGE.ID_CASE = PLACEMENT.ID_CASE
+            And EVENT.ID_EVENT = PLACEMENT.ID_PLCMT_EVENT
+            And STAGE.CD_STAGE_CNTY = CCOUNT.CODE
+ And CD_STAGE IN ('SUB','ADO')
+ And CD_STAGE_PERS_ROLE = 'PC'
+ And [$where_clause101]
+ And CD_WKLD_STAGE_PERS_ROLE = 'PR'
+ And [$where_clause102]
+ And PERSON.ID_PERSON = CNSRVTRSHP_REMOVAL.ID_VICTIM(+)
+ And CD_EVENT_STATUS = 'APRV'
+ And (CD_TEMP_TYPE IS NULL  Or PLACEMENT.CD_TEMP_TYPE  NOT IN ('COR','RED','REN'))
+ And DT_PLCMT_END >= sysdate
+ And CD_PLCMT_ACT_PLANNED = 'A'
+Group By DECODE
+,      PERSON.ID_PERSON
+,      NM_STAGE
+,      DT_PERSON_BIRTH
+,      CD_PERSON_SEX
+,      ID_PLCMT_CHILD
+,      STAGE_PERSON_LINK.ID_PERSON
+,      STAGE.ID_CASE
+Order By DECODE
+,      NM_STAGE
+End-Select
+ Next-Listing
+ Next-Listing  Need=118
+ If #1ROW_COUNT > 0
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Total Children in Placement:'  (23,8) Bold 
+ let #noChildren = #1ROW_COUNT
+  Print #noChildren (23,159) Edit 999999na
+  Print 'Title IV-E :'  (56,98)
+   Let #EligCountE=#cntE
+ Print #EligCountE (56,159) Edit 999999
+  Print 'Title IV-B :'  (73,98)
+   Let #EligCountB=#cntB
+ Print #EligCountB (73,159) Edit 999999
+  Print 'Not Eligible:'  (88,91)
+   Let #EligCountNE=#cntNE
+ Print #EligCountNE (88,159) Edit 999999
+  Print 'Not Elig-County Pd:'  (102,57)
+   Let #EligCountNEC=#cntNEC
+ Print #EligCountNEC (102,159) Edit 999999
+  Print 'Without IV-E Determination:'  (118,22)
+   Let #EligCountNull=#cntNull
+ Print #EligCountNull (118,159) Edit 999999
+  Print 'Totals by Funding Source'  (40,8) Underline  Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+Begin-Procedure CalEligCount
+Move &Eligibility_DECODE to $varElig
+If $varElig = 'Title IV-E'
+Let #cntE = #cntE + 1
+Else
+If $varElig = 'Title IV-B'
+Let #cntB = #cntB + 1
+Else
+If $varElig = 'Not Eligible'
+Let #cntNE = #cntNE + 1
+Else
+If $varElig = 'Not Elig - County Pd'
+Let #cntNEC = #cntNEC + 1
+Else
+If $varElig = ''
+Let #cntNull = #cntNull + 1
+End-If
+End-If
+End-If
+End-If
+End-If
+End-Procedure
+
+Begin-Procedure PlacementQuery (#P1_ID_CASE, #P2_ID_PLCMT_CHILD)
+Begin-Select Loops=1
+(NVL( PLACEMENT00.NM_PLCMT_FACIL ,  PLACEMENT00.NM_PLCMT_PERSON_FULL )) &_PlacementName
+DECODE &_PlacementType
+PLACEMENT00.ID_PLCMT_EVENT &_IdPlacementEvent
+PLACEMENT00.CD_PLCMT_TYPE &_PlacementQuery_PLACEMENT00.CD_PLCMT_TYPE
+PLACEMENT00.DT_PLCMT_START &_PlacementQuery_PLACEMENT00.DT_PLCMT_START
+(months_between(sysdate, PLACEMENT00.DT_PLCMT_START )) &_MnthsinPlcmt
+From  PLACEMENT PLACEMENT00, CPLMNTYP
+,      EVENT
+      Where PLACEMENT00.CD_PLCMT_TYPE = CPLMNTYP.CODE
+            And PLACEMENT00.ID_PLCMT_EVENT = EVENT.ID_EVENT
+ And PLACEMENT00.ID_CASE = #P1_ID_CASE
+ And PLACEMENT00.ID_PLCMT_CHILD = #P2_ID_PLCMT_CHILD
+ And CD_EVENT_STATUS = 'APRV'
+ And PLACEMENT00.DT_PLCMT_START = (SELECT  (max( PLACEMENT_2.DT_PLCMT_START ))  FROM  EVENT EVENT_2,  PLACEMENT PLACEMENT_2 WHERE EVENT_2.ID_EVENT
+     = PLACEMENT_2.ID_PLCMT_EVENT
+ AND  EVENT_2.CD_EVENT_STATUS = 'APRV' AND  (PLACEMENT_2.CD_TEMP_TYPE IS NULL  OR  PLACEMENT_2.CD_TEMP_TYPE
+      NOT IN ('COR','RED','REN')) AND  PLACEMENT_2.DT_PLCMT_END >= sysdate AND  PLACEMENT_2.ID_PLCMT_CHILD = PLACEMENT00.ID_PLCMT_CHILD AND
+      PLACEMENT_2.ID_CASE = PLACEMENT00.ID_CASE)
+Order By PLACEMENT00.ID_PLCMT_EVENT
+End-Select
+End-Procedure
+
+Begin-Procedure Eligibility (#P1_ID_PERSON, #P2_ID_CASE)
+Begin-Select Loops=1
+DECODE &_Eligibility_DECODE
+ID_EVENT &_Eligibility_ID_EVENT
+From  CELIGIBI, EVENT
+,      ELIGIBILITY
+      Where EVENT.ID_EVENT = ELIGIBILITY.ID_ELIG_EVENT
+            And ELIGIBILITY.CD_ELIG_SELECTED = CELIGIBI.CODE
+ And ID_PERSON = #P1_ID_PERSON
+ And ELIGIBILITY.ID_CASE = #P2_ID_CASE
+ And CD_EVENT_STATUS = 'APRV'
+ And CD_EVENT_TYPE = 'FCD'
+ And (DT_ELIG_START <= sysdate
+ And DT_ELIG_END >= sysdate)
+Order By ID_EVENT
+End-Select
+End-Procedure
+
+Begin-Procedure PermPlan_Query (#P1_ID_PERSON, #P2_ID_CASE)
+Begin-Select Loops=1
+FCCP_FAMILY_1.CD_PRIM_PERM_PLAN &_PermPlan_Query_FCCP_FAMILY_1.CD_PRIM_PERM_PLAN
+From  EVENT_PERSON_LINK EVENT_PERSON_LINK_1, FCCP_FAMILY FCCP_FAMILY_1
+,      STAGE_PERSON_LINK STAGE_PERSON_LINK_1
+      Where EVENT_PERSON_LINK_1.ID_EVENT = FCCP_FAMILY_1.ID_EVENT
+            And FCCP_FAMILY_1.ID_CASE = STAGE_PERSON_LINK_1.ID_CASE
+            And EVENT_PERSON_LINK_1.ID_PERSON = STAGE_PERSON_LINK_1.ID_PERSON
+ And STAGE_PERSON_LINK_1.ID_PERSON = #P1_ID_PERSON
+ And FCCP_FAMILY_1.ID_CASE = #P2_ID_CASE
+ And STAGE_PERSON_LINK_1.CD_STAGE_PERS_ROLE = 'PC'
+ And FCCP_FAMILY_1.ID_EVENT = (SELECT  (max( FCCP_FAMILY_2.ID_EVENT ))  FROM  EVENT EVENT_2,  EVENT_PERSON_LINK EVENT_PERSON_LINK_2,  FCCP_FAMILY
+     FCCP_FAMILY_2 WHERE EVENT_2.ID_CASE = FCCP_FAMILY_2.ID_CASE
+  AND  EVENT_2.ID_EVENT = FCCP_FAMILY_2.ID_EVENT
+  AND  EVENT_2.ID_CASE
+     = FCCP_FAMILY_2.ID_CASE
+  AND  EVENT_2.ID_EVENT = EVENT_PERSON_LINK_2.ID_EVENT
+  AND  EVENT_PERSON_LINK_2.ID_EVENT = FCCP_FAMILY_2.ID_EVENT
+
+     AND  EVENT_2.CD_EVENT_STATUS = 'APRV' AND  FCCP_FAMILY_2.ID_CASE = FCCP_FAMILY_1.ID_CASE AND  EVENT_PERSON_LINK_2.ID_PERSON = STAGE_PERSON_LINK_1.ID_PERSON)
+
+End-Select
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=UnitLookUp
+      Table=UNIT
+      Key=NBR_UNIT
+      Return_Value=NBR_UNIT
+      Rows=65535
+      Extent=65535
+      Sort=SC
+      Quiet
+
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (14,271,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Placement List' (49,313,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (10,656) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (10,590,0)
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'County:' (100,1,0) Bold 
+Print &Init_Query_Init_Query_DECODE (101,62,13)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Print 'Unit:' (125,1,5) Bold 
+ Let $UnitNbr=$unitnbr
+ Print $UnitNbr (125,62,15)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'DOB' (156,176,0) Underline  Bold 
+ Print 'Stage Name' (156,7,0) Underline  Bold 
+ Print 'Gender' (156,237,0) Underline  Bold 
+ Print 'Rmvl Date' (156,279,11) Underline  Bold  Wrap 11 3 line-height=12 Keep-Top
+ Print 'Plcmt Type' (156,346,0) Underline  Bold 
+ Print 'Plcmt Name' (156,404,0) Underline  Bold 
+ Print 'Months' (146,565,0) Bold 
+ Print 'in Plcmt' (156,561,8) Underline  Bold 
+ Print 'Source' (156,606,0) Underline  Bold 
+ Print 'Funding' (146,607,0) Bold 
+ Print 'Case ID' (156,117,7) Underline  Bold 
+ Print 'Plcmt' (146,518,5) Bold  Wrap 5 7 line-height=12 Keep-Top on=$
+ Print 'Start Date' (156,508,0) Underline  Bold 
+ Print 'Perm' (146,666,4) Bold  Wrap 4 5 line-height=12 Keep-Top on= 
+ Print 'Plan' (156,666,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'DOB' (21,176,0) Underline  Bold 
+ Print 'Stage Name' (21,7,0) Underline  Bold 
+ Print 'Gender' (21,237,0) Underline  Bold 
+ Print 'Rmvl Date' (21,279,11) Underline  Bold  Wrap 11 3 line-height=12 Keep-Top
+ Print 'Plcmt Type' (21,346,0) Underline  Bold 
+ Print 'Plcmt Name' (21,404,0) Underline  Bold 
+ Print 'Months' (11,565,0) Bold 
+ Print 'in Plcmt' (21,561,8) Underline  Bold 
+ Print 'Source' (21,606,0) Underline  Bold 
+ Print 'Funding' (11,607,0) Bold 
+ Print 'Case ID' (21,117,7) Underline  Bold 
+ Print 'Plcmt' (11,518,5) Bold  Wrap 5 7 line-height=12 Keep-Top on=$
+ Print 'Start Date' (21,508,0) Underline  Bold 
+ Print 'Perm' (11,666,4) Bold  Wrap 4 5 line-height=12 Keep-Top on= 
+ Print 'Plan' (21,666,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (16,663) '' ' of'
+ Last-Page (16,687) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

@@ -1,0 +1,206 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Thu Jun 26 12:47:47 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\sacwis\launcher\src\sqr\IncomeResources00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 1.000 
+  Bottom-Margin = 1.000 
+  Left-Margin   = 0.600 
+  Right-Margin  = 0.600 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definition' (12,61,11) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'INC:' (109,61,4) Bold 
+ Print 'Income' (109,90,6)
+ Print 'RES:' (122,61,4) Bold 
+ Print 'Resources' (122,90,9)
+ Print 'Income/Resource' (95,61,15) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Key' (82,61,7) Underline  Bold 
+ Print 'This report displays the income and resources on record for each person in the case.  Information is sorted first by Person Name in ascending order, then by Start Date in descending order.' (31,61,73) Wrap 73 3 line-height=12 Keep-Top on= 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input
+ Do Get-Optional-PersonID
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I101_CAPS_CASE_ID_CASE 'Enter a value for CASE ID' MaxLen=16  Type=Number
+If IsNull($_I101_CAPS_CASE_ID_CASE) or IsBlank($_I101_CAPS_CASE_ID_CASE)
+  Let $_I101_CAPS_CASE_ID_CASE = '11304080'
+End-If
+Let $brb_tmp = 'CAPS_CASE.ID_CASE'
+Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_CAPS_CASE_ID_CASE
+End-Procedure
+Begin-Procedure Get-Optional-PersonID
+Input $_I102_STAGE_PERSON_LINK_ID_PERSON 'Enter a value for ID_PERSON' MaxLen=16  Type=Number
+If $_I102_STAGE_PERSON_LINK_ID_PERSON = '0' 
+  Let $where_clause102 = 'STAGE_PERSON_LINK.ID_PERSON is not null' 
+Else
+Let $brb_tmp = 'STAGE_PERSON_LINK.ID_PERSON'
+Let $where_clause102 = $brb_tmp  || ' = ' || $_I102_STAGE_PERSON_LINK_ID_PERSON
+End-If
+Begin-Select
+NM_CASE &NM_CASE
+From CAPS_CASE
+WHERE ID_CASE = [$_I101_CAPS_CASE_ID_CASE]
+END-SELECT
+Move &NM_CASE to $NM_CASE
+End-Procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select Distinct
+(Decode( INCOME_AND_RESOURCES00.IND_INC_RSRC_NOT_ACCESS, 'N', 'Accessible', 'Y', 'Not Accessible')) &Accessible
+NM_CASE &Master_Query_NM_CASE
+NM_PERSON_FULL &Master_Query_NM_PERSON_FULL
+INCOME_AND_RESOURCES00.IND_INC_RSRC_NOT_ACCESS &Master_Query_INCOME_AND_RESOURCES00.IND_INC_RSRC_NOT_ACCESS
+(SELECT DISTINCT  CODES_TABLES00.DECODE  FROM  CODES_TABLES CODES_TABLES00 WHERE CODES_TABLES00.CODE_TYPE IN ('CINC','CRSRC') AND  CODES_TABLES00.CODE = INCOME_AND_RESOURCES00.CD_INC_RSRC_TYPE) &Master_Query_INC_RSC_CODE
+INCOME_AND_RESOURCES00.ID_INC_RSRC &Master_Query_INCOME_AND_RESOURCES00.ID_INC_RSRC
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CAPS_CASE.ID_CASE &Master_Query_CAPS_CASE.ID_CASE () On-Break Set=1 Level=1 Print=Never
+PERSON.ID_PERSON &Master_Query_PERSON.ID_PERSON () On-Break Set=1 Level=2 Print=Never Before=Master_QueryID_PERSON_BeforeProc102
+ Print 'Type:' (24,60,5) Bold 
+DECODE &Master_Query_DECODE (24,100,43)
+ Print 'Income/Resource:' (38,61,17) Bold 
+INCOME_AND_RESOURCES00.CD_INC_RSRC_INCOME &Master_Query_INCOME_AND_RESOURCES00.CD_INC_RSRC_INCOME (40,157,3)
+INCOME_AND_RESOURCES00.DT_INC_RSRC_FROM &Master_Query_INCOME_AND_RESOURCES00.DT_INC_RSRC_FROM (57,157) Edit MM/DD/YYYY
+ Print 'Effective From:' (57,61,15) Bold 
+ Print 'Effective To:' (59,272,14) Bold 
+INCOME_AND_RESOURCES00.DT_INC_RSRC_TO &Master_Query_INCOME_AND_RESOURCES00.DT_INC_RSRC_TO (59,378) Edit MM/DD/YYYY
+INCOME_AND_RESOURCES00.AMT_INC_RSRC &Master_Query_INCOME_AND_RESOURCES00.AMT_INC_RSRC (74,150) Edit 99999999.99na
+INCOME_AND_RESOURCES00.SDS_INC_RSRC_VERF_METHOD &Master_Query_INCOME_AND_RESOURCES00.SDS_INC_RSRC_VERF_METHOD (75,378,24)
+ Print 'Amount/Value:' (75,61,13) Bold 
+ Print 'Verfication Method:' (75,272,19) Bold 
+INCOME_AND_RESOURCES00.SDS_INC_RSRC_SOURCE &Master_Query_INCOME_AND_RESOURCES00.SDS_INC_RSRC_SOURCE (93,378,24)
+ Print 'Source/Employer:' (93,272,17) Bold 
+ Print 'Accessibility:' (93,61,14) Bold 
+ Print &Accessible (93,157,16)
+INCOME_AND_RESOURCES00.TXT_INC_RSRC_DESC &Master_Query_INCOME_AND_RESOURCES00.TXT_INC_RSRC_DESC (110,157,65) Wrap 65 2 line-height=12 Keep-Top on= 
+ Print 'Description:' (110,61,12) Bold 
+ Next-Listing   ! Close up the wrapped columns
+ Graphic (12,60,454) Horz-Line 10 
+ If #page-count > #pageNum
+  Let #pageNum = #page-count
+  Let $Master_Query_CAPS_CASE.ID_CASEFirst = &Master_Query_CAPS_CASE.ID_CASE
+  Let $Master_Query_NM_CASEFirst = &Master_Query_NM_CASE
+ End-If
+ Next-Listing  SkipLines=12 Need=122
+From  CAPS_CASE, INCOME_AND_RESOURCES INCOME_AND_RESOURCES00
+,      PERSON, STAGE_PERSON_LINK, CODES_TABLES
+      Where INCOME_AND_RESOURCES00.ID_PERSON = PERSON.ID_PERSON
+            And PERSON.ID_PERSON = STAGE_PERSON_LINK.ID_PERSON
+            And STAGE_PERSON_LINK.ID_CASE = CAPS_CASE.ID_CASE
+            And INCOME_AND_RESOURCES00.CD_INC_RSRC_TYPE = CODES_TABLES.CODE
+ And CD_STAGE_PERS_ROLE NOT IN ('PR','HP','SE')
+ And [$where_clause101]
+ And [$where_clause102]
+ And CODE_TYPE IN ('CINC','CRSRC')
+Order By NM_PERSON_FULL
+,      INCOME_AND_RESOURCES00.DT_INC_RSRC_FROM Desc
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryID_PERSON_BeforeProc102
+ Next-Listing  Need=31
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_PERSON.ID_PERSON (31,103) Edit 8888888888na
+ Print 'Person ID:'  (30,24) Bold 
+  Print &Master_Query_NM_PERSON_FULL (15,103,29)
+ Print 'Person Name:'  (15,24) Bold 
+   Position (+12,)
+ Next-Listing  Need=122
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (10,455) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (10,388,0)
+ Print 'Division of Family and Children Services' (10,158,0)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='C:\sacwis\launcher\src\images\SHINES.bmp'
+	Image-size=(96,73)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Income and Resources Report' (51,147,29)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Name:' (99,24,10) Bold 
+ Let $Name_Case=$NM_CASE
+ Print $Name_Case (99,88,38)
+ Print 'Case ID:' (116,24,8) Bold 
+ Let $Id_Case=$_I101_CAPS_CASE_ID_CASE
+ Print $Id_Case (116,88,17)
+ Print 'jjj' (136,35,4) Underline  Bold  Foreground=(255,255,255)
+ Else   ! put a non combined page header
+ Print 'jjj' (13,35,4) Underline  Bold  Foreground=(255,255,255)
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (18,471) '' ' of '
+ Last-Page (18,496) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

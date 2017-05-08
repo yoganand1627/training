@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.OnCallCounty" table="ON_CALL_COUNTY" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idOnCallCounty" type="integer" unsaved-value="0">
+      <column name="ID_ON_CALL_COUNTY" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_ON_CALL_COUNTY</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="onCall" class="gov.georgia.dhr.dfcs.sacwis.db.OnCall" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_ON_CALL" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdOnCallCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ON_CALL_COUNTY" length="3"/>
+    </property>
+    <property name="cdOnCallRegion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ON_CALL_REGION" length="3"/>
+    </property>
+  </class>
+</hibernate-mapping>

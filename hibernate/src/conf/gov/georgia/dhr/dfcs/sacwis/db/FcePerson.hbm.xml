@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FcePerson" table="FCE_PERSON" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idFcePerson" type="integer" unsaved-value="0">
+      <column name="ID_FCE_PERSON" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_FCE_PERSON</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="fceEligibility" class="gov.georgia.dhr.dfcs.sacwis.db.FceEligibility" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_FCE_ELIGIBILITY" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="amtCntblIncome" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNTBL_INCOME" precision="16"/>
+    </property>
+    <property name="amtCntblIncome30" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNTBL_INCOME_30" precision="16"/>
+    </property>
+    <property name="amtCntblIncomeLess30" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNTBL_INCOME_LESS_30" precision="16"/>
+    </property>
+    <property name="amtCntblIncomeLessThird" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNTBL_INCOME_LESS_THIRD" precision="16"/>
+    </property>
+    <property name="amtCntblIncomeThird" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNTBL_INCOME_THIRD" precision="16"/>
+    </property>
+    <property name="amtGrossEarnedIncome" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GROSS_EARNED_INCOME" precision="16"/>
+    </property>
+    <property name="amtGrossUnearnedIncome" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GROSS_UNEARNED_INCOME" precision="16"/>
+    </property>
+    <property name="amtStdEarnedIncomeDeduct" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_STD_EARNED_INCOME_DEDUCT" precision="16"/>
+    </property>
+    <property name="cdRelInt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_REL_INT" length="2"/>
+    </property>
+    <property name="indCertifiedGroup" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CERTIFIED_GROUP" length="1"/>
+    </property>
+    <property name="indPersonHmRemoval" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PERSON_HM_REMOVAL" length="1"/>
+    </property>
+    <property name="indDobApprox" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_DOB_APPROX" length="1"/>
+    </property>
+    <property name="dtBirth" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_BIRTH" length="7"/>
+    </property>
+    <property name="nbrAge" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_AGE" precision="3" scale="0"/>
+    </property>
+    <property name="indLegalCustodian" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_LEGAL_CUSTODIAN" length="1"/>
+    </property>
+    <property name="indThirdPartyInsurance" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_THIRD_PARTY_INSURANCE" length="1"/>
+    </property>
+    <bag name="fceExpenditureses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FCE_PERSON" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceExpenditures" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="fceEligibilities" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FCE_PERSON" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceEligibility" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="fceIncomes" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FCE_PERSON" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceIncome" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

@@ -1,0 +1,918 @@
+!*****************************************************************************
+!  Risk Assessment Report                                                    *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         civ17o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 10/10/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brad McCleary                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  Lists the details regarding a child's removal from   *
+!                       the family home.                                     *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 10/10/96   B. McCleary  Initial Programming                                *
+! 02/19/96   B. McCleary  SIR 5022 - Added all task codes in order to include*
+!                         every possible stage type.                         *
+! 05/15/96   B. McCleary  SIR 21166 - Changed the relationship codes table   *
+!                         from CRELVICT to CRPTRINT.                         *
+! 12/15/96   K. Cys       ENH - Changed occurences of name to match Name     *
+!                         Person Full format.                                *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'            ! control codes for Portrait 
+                                       ! On Demand Reports              
+
+    ask ID_STAGE                       !input parameter         
+    
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 4
+
+  #INCLUDE 'header04.sqc'               !Include file with Header Information
+                                        !Specific to portrait on demand reports
+
+  print 'RISK ASSESSMENT'               (+2) center 
+                              
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+                                ! specific to portrait on demand report
+
+ 
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+   move {ID_STAGE}                  to #input_id_stage
+
+  !************************************************
+  ! Variables and Constants                       *
+  !************************************************
+
+  move 'ASM'                        to $ASM
+  move 'COMP'                       to $COMP
+  move 'APRV'                       to $APRV
+  move 'PEND'                       to $PEND
+
+  !SIR 5022 - include task codes for each stage type
+  move '2290'                       to $2290  !INV task code
+  move '3250'                       to $3250  !SUB task code
+  move '7185'                       to $7185  !FPR task code
+  move '8750'                       to $8750  !ADO task code
+  move '9240'                       to $9240  !PAD task code
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-CASE-NAME-NUMBER, GET-RISK-ASSESS,                 *
+!                    GET-DT-UPDATE, GET-ALLEG-PERS-NAMES,                   *
+!                    GET-PAST-ABUSE, GET-CHILDREN,                          *
+!                    GET-ADULTS, PRINT-FINDINGS                             *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do GET-CASE-NAME-NUMBER
+    do GET-RISK-ASSESS
+    do GET-DT-UPDATE
+    do GET-ALLEG-PERS-NAMES
+    do PRINT-ACCESS
+    do GET-PAST-ABUSE
+    do GET-CHILDREN
+    do GET-ADULTS
+    do PRINT-FINDINGS
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-CASE-NAME-NUMBER                                                    *
+!                                                                           *
+!       This procedure will select case name and number from caps_case.     *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CASE-NAME-NUMBER
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.NM_CASE
+    move &A.NM_CASE                         to $Case_Name
+    
+A.ID_CASE    
+    move &A.ID_CASE                         to #Case_Number
+    
+CCINVCLS.decode
+    move &CCINVCLS.decode                   to $case_action
+    
+FROM    CAPS_CASE     A,
+        STAGE         B,
+        CCINVCLS      CCINVCLS
+
+WHERE   A.ID_CASE  = B.ID_CASE
+AND     B.ID_STAGE = #input_id_stage
+AND     CCINVCLS.CODE(+) = B.CD_STAGE_REASON_CLOSED
+
+END-SELECT
+
+END-PROCEDURE GET-CASE-NAME-NUMBER
+
+!****************************************************************************
+!                                                                           *
+!   GET-RISK-ASSESS                                                         *
+!                                                                           *
+!       This procedure will select everything from the risk assessment table*
+!       that is used in the report.                                         *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-RISK-ASSESS                                      *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-RISK-ASSESS
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CPURPRSK.decode
+    move &CPURPRSK.decode                       to $purpose          
+          
+CCRSKFND.decode
+    move &CCRSKFND.decode                       to $finding
+
+CRAFNDDF.decode                                 
+    move &CRAFNDDF.decode                       to $finding_def
+
+CRSKRESP2.decode
+    move &CRSKRESP2.decode                      to $access_dec
+                                                           
+    do PRINT-RISK-ASSESS                                                           
+                                                           
+FROM    CPURPRSK        CPURPRSK,
+        CCRSKFND        CCRSKFND,
+        CRAFNDDF        CRAFNDDF,
+    CRSKRESP        CRSKRESP2,
+        RISK_ASSESSMENT R
+        
+WHERE   R.ID_STAGE = #input_id_stage                 
+AND     CPURPRSK.CODE(+) = R.CD_RISK_ASSMT_PURPOSE
+AND     CCRSKFND.CODE(+) = R.CD_RISK_ASSMT_RISK_FIND
+AND     CRAFNDDF.CODE(+) = R.CD_RISK_ASSMT_RISK_FIND
+AND     CRSKRESP2.CODE(+) = R.IND_RISK_ASSMT_AP_ACCESS
+
+END-SELECT
+    
+END-PROCEDURE GET-RISK-ASSESS
+
+!****************************************************************************
+!                                                                           *
+!   GET-DT-UPDATE                                                           *
+!                                                                           *
+!       This procedure will select the dt last update from the event table. *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-DT-UPDATE                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-DT-UPDATE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(DT_LAST_UPDATE, 'MM/DD/YYYY') &date1
+    move &date1                                 to $date_completed
+
+ID_EVENT
+    move &ID_EVENT                              to #id_event  
+
+    do PRINT-DT-UPDATE
+
+FROM    EVENT
+
+WHERE   ID_EVENT_STAGE  = #input_id_stage
+AND     CD_EVENT_TYPE   = $ASM 
+AND    (CD_TASK         = $2290             !SIR 5022 - added task codes for 
+ OR     CD_TASK         = $3250             !           each stage type
+ OR     CD_TASK         = $7185           
+ OR     CD_TASK         = $8750          
+ OR     CD_TASK         = $9240)            !Added to assure the risk 
+                        !assessment is retrieved
+                        ! SIR 2086
+AND     (CD_EVENT_STATUS = $COMP
+OR       CD_EVENT_STATUS = $PEND            !SIR 5022 allow for pending  
+OR       CD_EVENT_STATUS = $APRV)           !SIR 2658 allow for completed
+                                            !and approved events
+END-SELECT
+    
+END-PROCEDURE GET-DT-UPDATE
+
+!****************************************************************************
+!                                                                           *
+!   GET-ALLEG-PERS-NAMES                                                    *
+!                                                                           *
+!       This procedure will select all allegation and person names.         *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-ALLEG-PERS-NAMES                                 *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ALLEG-PERS-NAMES
+
+    move 0                                          to #count5                          
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+B.NM_PERSON_FIRST                                   !***ENH***
+    move &B.NM_PERSON_FIRST                         to $victim_first
+    
+B.NM_PERSON_MIDDLE
+    move &B.NM_PERSON_MIDDLE                        to $victim_middle
+    
+B.NM_PERSON_LAST
+    move &B.NM_PERSON_LAST                          to $victim_last
+    
+CSUFFIX2A.decode
+    move &CSUFFIX2A.decode                          to $victim_suffix            
+
+C.NM_PERSON_FIRST                                   !***ENH***
+    move &C.NM_PERSON_FIRST                         to $perp_first
+    
+C.NM_PERSON_MIDDLE
+    move &C.NM_PERSON_MIDDLE                        to $perp_middle
+    
+C.NM_PERSON_LAST
+    move &C.NM_PERSON_LAST                          to $perp_last
+    
+CSUFFIX2B.decode
+    move &CSUFFIX2B.decode                          to $perp_suffix         
+    
+CABALTYP.decode    
+    move &CABALTYP.decode                           to $allegation
+    
+CCIVALDS.decode        
+    move &CCIVALDS.decode                           to $disposition
+    
+CSEVERTY.decode
+    move &CSEVERTY.decode                           to $severity
+
+    do PRINT-ALLEG-PERS-NAMES
+
+FROM    CABALTYP            CABALTYP,
+        CCIVALDS            CCIVALDS,
+        CSEVERTY            CSEVERTY,
+        CSUFFIX2            CSUFFIX2A,
+        CSUFFIX2            CSUFFIX2B,
+        PERSON              B,
+        PERSON              C,
+        ALLEGATION          A
+        
+WHERE   A.ID_VICTIM = B.ID_PERSON
+AND     B.CD_PERSON_SUFFIX = CSUFFIX2A.CODE(+)
+AND     C.CD_PERSON_SUFFIX = CSUFFIX2B.CODE(+)
+AND     A.CD_ALLEG_TYPE = CABALTYP.CODE(+)
+AND     A.CD_ALLEG_DISPOSITION = CCIVALDS.CODE(+)
+AND     A.CD_ALLEG_SEVERITY = CSEVERTY.CODE(+)
+AND     A.ID_ALLEGED_PERPETRATOR = C.ID_PERSON(+)
+AND     A.ID_ALLEGATION_STAGE   = #input_id_stage
+
+ORDER BY A.CD_ALLEG_TYPE
+
+END-SELECT
+                                               
+END-PROCEDURE GET-ALLEG-PERS-NAMES
+
+!****************************************************************************
+!                                                                           *
+!   GET-PAST-ABUSE                                                          *
+!                                                                           *
+!       This procedure selects the past abuse information.                  *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-PAST-ABUSE-TITLE, PRINT-PAST-ABUSE               *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PAST-ABUSE
+
+    move 0                                      to #count3
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CRSKFCTR.decode
+    move &CRSKFCTR.decode                       to $past_abuse_factor
+    
+CRSKRESP.decode    
+    move &CRSKRESP.decode                       to $past_abuse_response
+    
+Q.TXT_RISK_FACTOR_COMMENT
+    move &Q.TXT_RISK_FACTOR_COMMENT             to $past_abuse_comment
+                                                          
+    let #count3 = #count3 + 1
+    
+    if #count3 = 1
+        do PRINT-PAST-ABUSE-TITLE
+        do PRINT-PAST-ABUSE
+    else
+        do PRINT-PAST-ABUSE
+    end-if                                                              
+                                                          
+FROM    CRSKFCTR                CRSKFCTR,
+        CRSKRESP                CRSKRESP,
+        RISK_FACTORS            Q
+      
+WHERE   Q.ID_STAGE = #input_id_stage
+AND     CRSKFCTR.CODE(+) = Q.CD_RISK_FACTOR
+AND     CRSKRESP.CODE(+) = Q.CD_RISK_FACTOR_RESPONSE
+AND     Q.CD_RISK_FACTOR LIKE 'F%'
+
+END-SELECT
+
+END-PROCEDURE GET-PAST-ABUSE
+
+!****************************************************************************
+!                                                                           *
+!   GET-CHILDREN                                                            *
+!                                                                           *
+!       This procedure selects all the children.                            *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-CHILDREN-TITLE, PRINT-CHILDREN, GET-FACTORS      *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CHILDREN
+                                                              
+    move 0                                      to #count7
+
+    do PRINT-CHILDREN-TITLE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.ID_PERSON
+    move &A.ID_PERSON                           to #child_id
+    move &A.ID_PERSON                           to #generic_id
+
+A.NM_PERSON_FIRST                                   !***ENH***
+    move &A.NM_PERSON_FIRST                     to $child_first
+    
+A.NM_PERSON_MIDDLE
+    move &A.NM_PERSON_MIDDLE                    to $child_middle
+    
+A.NM_PERSON_LAST
+    move &A.NM_PERSON_LAST                      to $child_last
+    
+CSUFFIX2C.decode
+    move &CSUFFIX2C.decode                      to $child_suffix            
+     
+
+FLOOR((MONTHS_BETWEEN(to_date($date_completed, 'MM/DD/YYYY'), to_date((to_char(A.DT_PERSON_BIRTH, 'MM/DD/YYYY')), 'MM/DD/YYYY'))/12)) &age
+    move &age                                   to $child_age
+
+
+        do PRINT-CHILDREN
+        do GET-FACTORS
+
+FROM    PERSON              A,
+        CSUFFIX2            CSUFFIX2C,
+        STAGE_PERSON_LINK   B,
+        EVENT_PERSON_LINK   C,
+        EVENT               D
+        
+WHERE   C.ID_EVENT = #id_event
+AND     C.ID_EVENT = D.ID_EVENT
+AND     D.ID_EVENT_STAGE = B.ID_STAGE
+AND     C.ID_PERSON = A.ID_PERSON
+AND     B.ID_PERSON = A.ID_PERSON
+AND     A.CD_PERSON_SUFFIX = CSUFFIX2C.CODE(+)
+!*******SIR 21166*******
+AND     B.CD_STAGE_PERS_REL_INT IN ('AC', 'AS', 'CO', 'DA', 'FO', 'FQ', 
+                    'GC', 'NN', 'OV', 'SB', 'SO', 'SR', 
+                    'SS')
+
+END-SELECT
+
+END-PROCEDURE GET-CHILDREN
+
+!****************************************************************************
+!                                                                           *
+!   GET-ADULTS                                                              *
+!                                                                           *
+!       This procedure selects all the adults.                              *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-ADULTS-TITLE, PRINT-ADULTS, GET-FACTORS          *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ADULTS
+
+    move 0                                      to #count8
+
+    do PRINT-ADULTS-TITLE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+  
+A1.ID_PERSON &name1
+    move &name1                                 to #adult_id
+    move &name1                                 to #generic_id
+
+A1.NM_PERSON_FIRST                                   !***ENH***
+    move &A1.NM_PERSON_FIRST                    to $adult_first
+    
+A1.NM_PERSON_MIDDLE
+    move &A1.NM_PERSON_MIDDLE                   to $adult_middle
+    
+A1.NM_PERSON_LAST
+    move &A1.NM_PERSON_LAST                     to $adult_last
+    
+CSUFFIX2D.decode
+    move &CSUFFIX2D.decode                      to $adult_suffix            
+     
+
+!*******SIR 21166*******
+CRPTRINT.decode   
+    move &CRPTRINT.decode                       to $adult_relationship
+
+    do PRINT-ADULTS
+    do GET-FACTORS
+        
+FROM    CRPTRINT                CRPTRINT,
+        CSUFFIX2                CSUFFIX2D,
+        PERSON                  A1,
+        STAGE_PERSON_LINK       B,
+        EVENT_PERSON_LINK       C,
+        EVENT                   D
+
+WHERE   C.ID_EVENT = #id_event
+AND     C.ID_EVENT = D.ID_EVENT
+AND     D.ID_EVENT_STAGE = B.ID_STAGE
+AND     B.CD_STAGE_PERS_REL_INT = CRPTRINT.CODE(+)
+AND     A1.CD_PERSON_SUFFIX = CSUFFIX2D.CODE(+)
+AND     C.ID_PERSON = A1.ID_PERSON
+AND     B.ID_PERSON = A1.ID_PERSON
+!*******SIR 21166*******
+AND     B.CD_STAGE_PERS_REL_INT NOT IN ('AC', 'AS', 'CO', 'DA', 'FO', 'FQ', 
+                    'GC', 'NN', 'OV', 'SB', 'SO', 'SR', 
+                    'SS')
+
+END-SELECT
+    
+END-PROCEDURE GET-ADULTS
+
+!****************************************************************************
+!                                                                           *
+!   GET-FACTORS                                                             *
+!                                                                           *
+!       This procedure selects the persons living at the child's home at    *
+!       the removal date.                                                   *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-FACTORS                                          *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-FACTORS
+
+    move 0                                      to #count8
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+CRSKFCTR1.decode
+    move &CRSKFCTR1.decode                      to $factor
+    
+CRSKRESP1.decode
+    move &CRSKRESP1.decode                      to $factor_response
+    
+Y.TXT_RISK_FACTOR_COMMENT
+    move &Y.TXT_RISK_FACTOR_COMMENT             to $factor_comment
+            
+    do PRINT-FACTORS
+
+FROM    CRSKFCTR        CRSKFCTR1,
+        CRSKRESP        CRSKRESP1,
+        RISK_FACTORS    Y
+        
+WHERE   Y.ID_STAGE = #input_id_stage
+AND     CRSKFCTR1.CODE(+) = Y.CD_RISK_FACTOR
+AND     CRSKRESP1.CODE(+) = Y.CD_RISK_FACTOR_RESPONSE
+AND     Y.ID_PERSON = #generic_id 
+
+END-SELECT
+
+END-PROCEDURE GET-FACTORS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-RISK-ASSESS                                                       *
+!                                                                           *
+!       This procedure prints the purpose for the assessment.               *
+!                                                                           * 
+!       CALLED BY  : GET-RISK-ASSESS                                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-RISK-ASSESS
+
+print 'Purpose: '                               (+2,1) 
+print $purpose                                  (+0,10) 
+
+END-PROCEDURE PRINT-RISK-ASSESS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-DT-UPDATE                                                         *
+!                                                                           *
+!       This procedure prints the date of assessment completion.            *
+!                                                                           * 
+!       CALLED BY  : GET-DT-UPDATE                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-DT-UPDATE
+
+print 'Date Assessment Completed: '             (+1,1)
+print $date_completed                           (+0,28) 
+
+print 'NATURE AND EXTENT OF THE ABUSE OR NEGLECT:  Each type of abuse and neglect'
+                                                (+2,1)            
+print 'that has been investigated is shown.'    (+1,1)
+
+END-PROCEDURE PRINT-DT-UPDATE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ALLEG-PERS-NAMES                                                  *
+!                                                                           *
+!       This procedure prints the victim, alleged perpetrator, allegation,  *
+!           disposition, and severity.                                      *
+!                                                                           * 
+!       CALLED BY  : GET-ALLEG-PERS-NAMES                                   *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ALLEG-PERS-NAMES
+
+print 'Victim: '                                    (+2,1)
+if $victim_suffix <> ''  !***ENH***
+   let $victim_name_suff = ', ' || $victim_suffix
+end-if
+if $victim_middle = ''
+   let $victim_name = $victim_first || ' ' || $victim_last || $victim_name_suff
+else
+   let $victim_name = $victim_first || ' ' || $victim_middle || ' ' || $victim_last || $victim_name_suff
+end-if          
+print $victim_name                                  (+0,14) wrap 28 4 keep-top
+move '' to $victim_name_suff  !***ENH***
+print 'AP: '                                        (+0,50)
+if $perp_suffix <> ''  !***ENH***
+   let $perp_name_suff = ', ' || $perp_suffix
+end-if
+if $perp_middle = ''
+   let $perp_name = $perp_first || ' ' || $perp_last || $perp_name_suff
+else
+   let $perp_name = $perp_first || ' ' || $perp_middle || ' ' || $perp_last || $perp_name_suff
+end-if          
+print $perp_name                                    (+0,61) wrap 17 4
+move '' to $perp_name_suff !***ENH***
+print 'Allegation: '                                (+1,1)
+print $allegation                                   (+0,14)
+print 'Disposition: '                               (+1,1)
+print $disposition                                  (+0,14)
+print 'Severity: '                                  (+0,50)
+print $severity                                     (+0,61)
+
+END-PROCEDURE PRINT-ALLEG-PERS-NAMES
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ACCESS                                                            *
+!                                                                           *
+!       This procedure prints the Risk Factors title and message along with *
+!           the past abuse title.                                           *
+!                                                                           * 
+!       CALLED BY  : GET-PAST-ABUSE                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ACCESS
+
+print 'Does the AP have access to a child in the family?  '  (+2,1)
+print $access_dec                            ()
+
+END-PROCEDURE PRINT-ACCESS
+
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PAST-ABUSE-TITLE                                                  *
+!                                                                           *
+!       This procedure prints the Risk Factors title and message along with *
+!           the past abuse title.                                           *
+!                                                                           * 
+!       CALLED BY  : GET-PAST-ABUSE                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PAST-ABUSE-TITLE 
+
+print 'RISK FACTORS:  The following questions are intended to identify possible'
+                                                    (+2,1)
+print '"risk factors" - elements of family functioning that may place a child'
+                                                    (+1,1)
+print 'at risk of abuse or neglect.'                (+1,1)
+
+print 'PAST ABUSE, NEGLECT, AND RISK:'              (+2,1)                                                                                                        
+    
+END-PROCEDURE PRINT-PAST-ABUSE-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PAST-ABUSE                                                        *
+!                                                                           *
+!       This procedure prints the past abuse factors, responses, and        *
+!           comments.                                                       *
+!                                                                           * 
+!       CALLED BY  : GET-PAST-ABUSE                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PAST-ABUSE  
+
+print $past_abuse_response                          (+2,1)
+print $past_abuse_factor                            (+0,11) wrap 66 3
+print 'Comments: '                                  (+1,11)
+print $past_abuse_comment                           (+0,22) wrap 56 5
+
+END-PROCEDURE PRINT-PAST-ABUSE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CHILDREN-TITLE                                                    *
+!                                                                           *
+!       This procedure prints the children title.                           *
+!                                                                           * 
+!       CALLED BY  : GET-CHILDREN                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHILDREN-TITLE
+
+print 'CURRENT RISK: THE CHILDREN'                  (+3,1)
+
+END-PROCEDURE PRINT-CHILDREN-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CHILDREN                                                          *
+!                                                                           *
+!       This procedure prints the children name.                            *
+!                                                                           * 
+!       CALLED BY  : GET-CHILDREN                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHILDREN
+
+if $child_suffix <> ''  !***ENH***
+   let $child_name_suff = ', ' || $child_suffix
+end-if
+if $child_middle = ''
+   let $child_name = $child_first || ' ' || $child_last || $child_name_suff
+else
+   let $child_name = $child_first || ' ' || $child_middle || ' ' || $child_last || $child_name_suff
+end-if          
+print $child_name                                   (+3,1)
+move '' to $child_name_suff !***ENH***
+print ', age '                                      ()
+print $child_age                                    ()
+
+END-PROCEDURE PRINT-CHILDREN
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ADULTS-TITLE                                                      *
+!                                                                           *
+!       This procedure prints the adult title.                              *
+!                                                                           * 
+!       CALLED BY  : GET-ADULTS                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ADULTS-TITLE
+
+print 'CURRENT RISK: PARENTS AND CARETAKERS'        (+3,1)
+
+END-PROCEDURE PRINT-ADULTS-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ADULTS                                                            *
+!                                                                           *
+!       This procedure prints the adult names.                              *
+!                                                                           * 
+!       CALLED BY  : GET-ADULTS                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ADULTS
+
+if $adult_suffix <> ''  !***ENH***
+   let $adult_name_suff = ', ' || $adult_suffix
+end-if
+if $adult_middle = ''
+   let $adult_name = $adult_first || ' ' || $adult_last || $adult_name_suff
+else
+   let $adult_name = $adult_first || ' ' || $adult_middle || ' ' || $adult_last || $adult_name_suff
+end-if          
+print $adult_name                                   (+3,1)
+move '' to $adult_name !***ENH***
+print ', '                                          ()
+print $adult_relationship                           ()
+
+END-PROCEDURE PRINT-ADULTS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-FACTORS                                                           *
+!                                                                           *
+!       This procedure prints the factors for children and adults.          *
+!                                                                           * 
+!       CALLED BY  : GET-FACTORS                                            *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-FACTORS
+
+print $factor_response                          (+2,1)
+print $factor                                   (+0,11) wrap 66 3
+print 'Comments: '                              (+1,11)
+print $factor_comment                           (+0,22) wrap 56 5
+
+END-PROCEDURE PRINT-FACTORS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-FINDINGS                                                          *
+!                                                                           *
+!       This procedure prints the findings and recommendation.              *
+!                                                                           * 
+!       CALLED BY  : GET-FACTORS                                            *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-FINDINGS
+
+print 'RISK ASSESSMENT FINDING AND RECOMMENDED ACTION:'     (+3,1)
+print 'Finding: '                                           (+2,1)
+print $finding                                              (+0,10)
+print $finding_def                                          (+1,1) wrap 77 5
+print 'Recommended Action: '                                (+2,1)
+print $case_action                                          (+0,21)
+
+END-PROCEDURE PRINT-FINDINGS
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+
+
+#INCLUDE 'cfpstamp.sqc'

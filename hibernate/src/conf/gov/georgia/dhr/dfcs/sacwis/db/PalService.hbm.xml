@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.PalService" table="PAL_SERVICE" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idPalService" type="integer" unsaved-value="0">
+      <column name="ID_PAL_SERVICE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_PAL_SERVICE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PAL_SERVICE_STAGE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdPalServiceCatgory" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PAL_SERVICE_CATGORY" length="4"/>
+    </property>
+    <property name="cdPalServiceType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PAL_SERVICE_TYPE" length="4"/>
+    </property>
+    <property name="dtPalServiceDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PAL_SERVICE_DATE" length="7"/>
+    </property>
+    <property name="nbrPalServiceUnits" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PAL_SERVICE_UNITS" precision="5" scale="0"/>
+    </property>
+    <property name="sdsPalServiceOther" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="SDS_PAL_SERVICE_OTHER" length="30"/>
+    </property>
+  </class>
+</hibernate-mapping>

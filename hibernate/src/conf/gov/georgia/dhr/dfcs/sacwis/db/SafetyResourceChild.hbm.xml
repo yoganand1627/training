@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.SafetyResourceChild" table="SAFETY_RESOURCE_CHILD" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idSrChild" type="integer" unsaved-value="0">
+            <column name="ID_SR_CHILD" precision="16" scale="0"/>
+            <generator class="sequence">
+<param name="sequence">SEQ_SAFETY_RESOURCE_CHILD</param>
+</generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="safetyResource" class="gov.georgia.dhr.dfcs.sacwis.db.SafetyResource" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_SR_EVENT" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <property name="idChild" type="integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ID_CHILD" precision="16" scale="0" not-null="true"/>
+        </property>
+        <property name="dtStart" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_START" length="7"/>
+        </property>
+        <property name="dtEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_END" length="7"/>
+        </property>
+        <property name="cdRelPrimary" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_REL_PRIMARY" length="3" not-null="true"/>
+        </property>
+        <property name="cdRelSecondary" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_REL_SECONDARY" length="3"/>
+        </property>
+    </class>
+</hibernate-mapping>

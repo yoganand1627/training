@@ -1,0 +1,634 @@
+!*****************************************************************************  
+! CLIENT ACCOUNT DETAIL REPORT                                               *
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cfn03o01.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/heardtd/work/sqr                               *
+!                                                                            *
+!                                                                            *
+! DATE:                 12/28/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Tony Heard                                           *
+!                                                                            *
+! PROGRAM DESCRIPTION: The Financial Summary Client Account Detail Report    *
+!                      displays detailed transactions for use by unit        *
+!                      bookkeepers and foster care billing staff as history  *
+!                      of detail account transactions on individual accounts.*
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 12/28/95  Tony Heard   Initial Programming                                 *
+! 04/04/96  B. McCleary  SIR 20107 - Added code to:  select a date from the  *
+!                        batch parameter table, retrieve all open accounts   *
+!                        and accounts closed since the last batch run,       *
+!                        update the parameter table text field with the run  *
+!                        date, and print an error message when the last batch*
+!                        run date cannot be found.                           *
+! 04/09/96  B. McCleary  SIR 20279 - Changed format of the output to allow   *
+!                        for the date and all amounts correctly.             *
+! 04/09/96  B. McCleary  SIR 20283 - Added code to page break at change in   *
+!                        county, print correctly for first transaction, and  *
+!                        added codes table for credit descriptions.          *
+! 04/09/96  B. McCleary  SIR 20191 - Changed condition back to DT_NAME_END   *
+!                        equals MAXDATE.                                     *
+! 04/11/96  B. McCleary  SIR 20378 - Changed client number to id person.     *
+! 04/15/96  B. McCleary  SIR 20438 - Balance Forward should always be 0.     *
+! 04/16/96  B.McCleary   SIR 4227 - Added SQR to make the report print in    *
+!                        PCL format; created unique layout to be used by all *
+!                        landscape batch reports printing in PCL.            *
+! 08/27/96  K. Cys       SIR 22107 - Added condition to select MAX DT_LAST   *
+!                        _UPDATE for Legal Status of client so no duplicate  *
+!                        detail lines are returned.                          *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+!*******SIR 4227*******
+!******* This section sets the report to direct print in PCL format *******
+
+   #DEFINE ColR 108
+
+!*****************************************************************************
+! ****** Modified Layout formerly used for Direct Print to work in IMPACT ****
+!*****************************************************************************
+    !DECLARE-REPORT R1
+    !PRINTER-TYPE=HPLASERJET
+    !END-DECLARE
+
+    !DECLARE-LAYOUT DEFAULT
+    !ORIENTATION=LANDSCAPE
+    !CHAR-WIDTH=4.32
+    !LEFT-MARGIN=.21
+    !RIGHT-MARGIN=.21
+    !TOP-MARGIN=.17
+    !BOTTOM-MARGIN=.50
+    !END-DECLARE
+
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+!    #INCLUDE 'setup01a.sqc'             ! control codes for Landscape   
+                                         ! on Batch reports             
+
+    ask INPUT_REGION
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 7
+
+move 'cfn03o01'                        to $ID                  
+move 'CLIENT ACCOUNT DETAIL REPORT'    to $ReportTitle
+
+  #INCLUDE 'header01.sqc'                                              
+print 'Region:'                        (+1,1)
+print  $region_dec                     (+0,9) 
+print 'County:'                        (+0,22)
+print $old_county                      (+0,30)
+print 'Account'                        (+2,70)
+print 'Check'                          (+0,88)
+print 'Client Name'                    (+1,1)
+print 'Person ID'                      (+0,38)
+print 'Date'                           (+0,56)
+print 'Number'                         (+0,70)
+print 'No.'                            (+0,89)
+print 'Category'                       (+0,96)
+print 'Credit'                         (+0,118)
+print 'Debit'                          (+0,134)
+print 'Balance'                        (+0,150)
+print '-'                              (+1,1,36)   fill 
+print '-'                              (+0,38,16)  fill
+print '-'                              (+0,56,12)  fill
+print '-'                              (+0,70,15)  fill
+print '-'                              (+0,87,7)   fill
+print '-'                              (+0,96,20)  fill
+print '-'                              (+0,118,14) fill
+print '-'                              (+0,134,14) fill
+print '-'                              (+0,150,15) fill
+
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+
+  !************************************************
+  ! Variables and Constants                       *
+  !************************************************
+
+   move '{INPUT_REGION}'                        to $input_region_num
+
+!***SIR 20438***
+
+   move 0                                       to #balance !Beginning balance
+                                                            !always 0
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+! PROCESS-REPORT                                                            *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                          *
+!       CALLS      : GET-CLIENT-INFO                                        * 
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+!*******SIR 4227*******
+
+!*****************************************************************************
+! ****** Modified Layout formerly used for Direct Print to work in IMPACT ****
+!*****************************************************************************
+    !USE-REPORT R1
+    !ALTER-PRINTER FONT=0 PITCH=16.67
+
+
+    do GET-SYSDATE         !***SIR 20107***
+    do GET-BATCH-DATE      !***SIR 20107***
+    do GET-CLIENT-INFO
+    do PRINT-TOTAL
+    do UPDATE-BATCH        !***SIR 20107***
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   UPDATE-BATCH                                                            *
+!                                                                           *
+!       This procedure updates the batch parameter table.                   *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE UPDATE-BATCH   
+
+BEGIN-SQL
+
+UPDATE  BATCH_PARAMETERS
+SET     TXT_PARAMETER_VALUE = $sysdate
+WHERE   TXT_PARAMETER_VALUE = &dt_batch
+
+END-SQL
+
+END-PROCEDURE UPDATE-BATCH    
+
+!****************************************************************************
+!                                                                           *
+!   GET-SYSDATE                                                             *
+!                                                                           *
+!       This procedure gets the system date for a later condition.          *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE  GET-SYSDATE        
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(SYSDATE, 'MM/DD/YYYY') &sysdate
+    move &sysdate                           to $sysdate
+
+FROM    DUAL        
+
+END-SELECT
+
+END-PROCEDURE GET-SYSDATE         
+
+!****************************************************************************
+!                                                                           *
+!   GET-BATCH-DATE                                                          *
+!                                                                           *
+!       This procedure gets the date last run from the batch parameter table*
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE  GET-BATCH-DATE     
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+MAX(to_date(TXT_PARAMETER_VALUE, 'MM/DD/YYYY')) &dt_batch
+    move &dt_batch                          to $dt_batch
+
+FROM    BATCH_PARAMETERS
+
+WHERE   NM_BATCH_PROGRAM = 'CFN03O'
+
+END-SELECT
+
+END-PROCEDURE GET-BATCH-DATE      
+
+!****************************************************************************
+!                                                                           *
+!   GET-CLIENT-INFO                                                         * 
+!                                                                           *
+!       This procedure retrieves account information relating to a client   *
+!       with a unique client number for each account.                       *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-ACCOUNT-ACTIVITY, PRINT-ACCT-DESC                  *  
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CLIENT-INFO
+
+!***SIR 20107***
+
+    if $dt_batch = ''
+      print 'UNABLE TO FIND PREVIOUS RUN DATE'      (+5) center
+      move '01/01/1995' to $dt_batch
+    end-if
+
+    move 0              to #count
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+    move 0              to #credit
+    move 0              to #debit
+
+CREGIONS.DECODE  &region_dec
+   move &region_dec                                   to $region_dec                         
+CCOUNT.DECODE &county_dec    
+     move &county_dec                                 to $county_dec 
+
+A.ID_FIN_ACCT &client_num
+    move &client_num                                  to #client_num
+
+!*** SIR 20378 ***
+
+A.ID_PERSON &id_person 
+    move &id_person                                   to #id_person 
+
+TO_CHAR(B.DT_ACCT_TRAN_DATE, 'MM/DD/YYYY') &trans_date
+    move &trans_date                                  to $trans_date
+
+A.NBR_FIN_ACCT_ACCOUNT &account
+    move &account                                     to $account 
+
+B.NBR_ACCT_TRAN_WARRANT_NBR &check_no
+    move &check_no                                    to #check_no  
+
+A.TXT_FIN_ACCT_COMMENTS &comments
+    move &comments                                    to $comments 
+
+CACTTRDC.DECODE &deb_dec
+ move &deb_dec                                        to $deb_dec
+
+!***SIR 20283***
+
+CACTTRCD.DECODE &cred_dec
+ move &cred_dec                                       to $cred_dec
+
+B.CD_ACCT_TRAN_CATEGORY &category
+   move &category                                     to $category
+
+B.AMT_ACCT_TRAN_AMOUNT &amount                                
+  move &amount                                        to #amount
+
+B.CD_ACCT_TRAN_TYPE &trans_type
+  move &trans_type                                    to $trans_type
+
+E.NM_NAME_FIRST||' '||E.NM_NAME_MIDDLE||' '||E.NM_NAME_LAST &client_name
+  move &client_name                                   to $client_name
+
+CSUFFIX.DECODE
+  move &CSUFFIX.DECODE                                 to $suff_dec
+
+E.CD_NAME_SUFFIX &name_suf
+   move &name_suf                                      to $name_suf 
+
+to_char(A.DT_FIN_ACCT_END_DATE, 'MM/DD/YYYY') &dt_fin_end
+    move &dt_fin_end                                   to $dt_fin_end
+
+    let #count = #count + 1
+
+       if #count = 1 
+         do PRINT-ACCT-DESC
+         move $county_dec     to $old_county 
+         move $account        to $old_account
+         move #client_num     to #old_client_num
+         do GET-ACCOUNT-ACTIVITY
+       else 
+         do GET-ACCOUNT-ACTIVITY
+       end-if
+
+FROM  FINANCIAL_ACCOUNT         A,
+      FIN_ACCT_TRANSACTION      B,
+      LEGAL_STATUS              C,
+      NAME                      E,
+      CCOUNT                    CCOUNT,
+      CSUFFIX                   CSUFFIX,
+      CACTTRDC                  CACTTRDC, 
+      CACTTRCD                  CACTTRCD, 
+      CREGIONS                  CREGIONS
+
+WHERE ((to_date(A.DT_FIN_ACCT_END_DATE, 'MM/DD/YYYY') <= to_date(SYSDATE, 'MM/DD/YYYY')
+AND   to_date(A.DT_FIN_ACCT_END_DATE, 'MM/DD/YYYY') >= to_date($dt_batch, 'MM/DD/YYYY'))
+ OR   A.DT_FIN_ACCT_END_DATE IS NULL)  !***SIR 20107***
+AND   B.ID_FIN_ACCT = A.ID_FIN_ACCT
+AND   C.ID_PERSON  = A.ID_PERSON
+AND   C.CD_LEGAL_STAT_CNTY IN  (SELECT CODE 
+                                FROM CCNTYREG
+                                WHERE DECODE = $input_region_num)
+AND   C.DT_LAST_UPDATE = 
+      (SELECT MAX(D.DT_LAST_UPDATE)  !***SIR 22107***
+       FROM LEGAL_STATUS D
+       WHERE D.ID_PERSON = A.ID_PERSON)
+AND   E.ID_PERSON(+) = A.ID_PERSON
+AND   E.IND_NAME_PRIMARY(+) = 'Y'
+AND   E.IND_NAME_INVALID(+) = 'N'
+AND   E.DT_NAME_END_DATE(+) = '12/31/4712'  !SIR 20131 - Changed from start date
+AND   CCOUNT.CODE(+) = C.CD_LEGAL_STAT_CNTY
+AND   CREGIONS.CODE(+) = $input_region_num
+AND   CSUFFIX.CODE(+) = E.CD_NAME_SUFFIX
+AND   CACTTRDC.CODE(+) = B.CD_ACCT_TRAN_CATEGORY
+AND   CACTTRCD.CODE(+) = B.CD_ACCT_TRAN_CATEGORY
+
+ORDER BY    C.CD_LEGAL_STAT_CNTY, E.NM_NAME_LAST, E.NM_NAME_FIRST, 
+            E.NM_NAME_MIDDLE, A.ID_FIN_ACCT, A.NBR_FIN_ACCT_ACCOUNT, 
+            B.DT_ACCT_TRAN_DATE
+
+END-SELECT
+
+END-PROCEDURE GET-CLIENT-INFO
+
+!****************************************************************************
+!                                                                           *
+!   GET-ACCOUNT-ACTIVITY                                                    *
+!                                                                           *
+!       This procedure determines if the client number and account number   *
+!       are different or the same, the transaction type, balance for each   *
+!       transaction type and a total balance for each account.              *
+!                                                                           * 
+!       CALLED BY  : GET-CLIENT-INFO                                        *
+!       CALLS      : PRINT-TOTAL, PRINT-ACCT-DESC,PRINT-NORMAL              *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ACCOUNT-ACTIVITY   
+
+  if ($old_account <> $account) or (#old_client_num <> #client_num)
+       do PRINT-TOTAL
+
+!***SIR 20283***
+
+       if $county_dec <> $old_county
+       NEW-PAGE
+       end-if
+
+       move $account       to $old_account
+       move #client_num    to #old_client_num
+       move 0              to #total_credit
+       move 0              to #total_debit
+       do PRINT-ACCT-DESC
+  end-if
+
+!***SIR 20283***
+
+     if $trans_type = 'D'
+         let #debit = #amount  
+         let #new_balance = #new_balance - #debit
+         do PRINT-NORMAL    
+     end-if
+     if $trans_type = 'C'
+         let #credit = #amount
+         let #new_balance = #new_balance + #credit
+         do PRINT-NORMAL    
+     end-if
+
+     let #total_credit = #total_credit + #credit
+     let #total_debit  = #total_debit  + #debit 
+
+     move $county_dec to $old_county
+
+END-PROCEDURE GET-ACCOUNT-ACTIVITY
+
+!****************************************************************************
+!                                                                           *
+!  PRINT-ACCT-DESC                                                          *
+!                                                                           *
+!     This procedure prints the client name, client number, transaction     *
+!     date, account number, balance forward, starting balance for a given   *
+!     account.                                                              * 
+!                                                                           * 
+!       CALLED BY  : GET-ACCOUNT-ACTIVITY, GET-CLIENT-INFO                  *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ACCT-DESC        
+
+  move #balance                 to #new_balance
+
+print $client_name           (+3,1) 
+
+if $suff_dec <> ''
+  print ', '                 ()     
+  print $suff_dec            ()    
+end-if
+
+!*** SIR 20378 ***
+
+print #id_person             (+0,38) edit 8888888888888888
+print $trans_date            (+0,56)
+print $account               (+0,70) edit 888888888888888
+print 'Balance Forward'      (+0,96) 
+print #balance               (+0,150) edit 99999999999.00pf 
+print ''                     (+1)   
+
+END-PROCEDURE PRINT-ACCT-DESC
+
+!****************************************************************************
+!                                                                           *
+!  PRINT-NORMAL                                                             *
+!                                                                           *
+!       This procedure prints the transaction date, account number, check   *
+!       number, description, debit or credit and new balance.               *
+!                                                                           * 
+!       CALLED BY  : GET-ACCOUNT-ACTIVITY                                   *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-NORMAL            
+ 
+!***SIR 20279***
+
+let #debit = -(#debit)
+
+print $trans_date            (+1,56)
+print $account               (+0,70) edit 888888888888888
+
+if #check_no  <> 0
+  print #check_no            (+0,87) edit 99999
+end-if
+
+if $deb_dec <> ''
+  print $deb_dec             (+0,96)
+else
+if $cred_dec <> ''
+  print $cred_dec            (+0,96)
+end-if
+end-if
+
+if #credit <> 0
+  print #credit              (+0,120) edit 999999999.00
+end-if
+
+if #debit <> 0
+  print #debit               (+0,135) edit 999999999.00pf 
+end-if
+
+print #new_balance           (+0,150) edit 99999999999.00pf
+
+END-PROCEDURE PRINT-NORMAL 
+
+!****************************************************************************
+!                                                                           *
+!  PRINT-TOTAL                                                              *
+!                                                                           *
+!       This procedure prints the total debits and credits.                 *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-TOTAL              
+
+next-listing need = 2
+
+print '-'                    (+0,118,14) fill
+print '-'                    (+0,134,14) fill
+print 'TOTAL'                (+1,10)
+
+if #total_credit <> 0
+  print #total_credit        (+0,117) edit 999999999999.00
+end-if
+
+if #total_debit <> 0
+  print #total_debit         (+0,132) edit 999999999999.00pf
+end-if
+
+END-PROCEDURE PRINT-TOTAL  
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+! CALLS:  None                                                         *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that    *
+!   will be used in the report                      *
+!****************************************************************************
+
+

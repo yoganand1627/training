@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ReportList" table="REPORT_LIST" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idRptList" type="integer" unsaved-value="0">
+      <column name="ID_RPT_LIST" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_REPORT_LIST</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="reports" class="gov.georgia.dhr.dfcs.sacwis.db.Reports">
+      <column name="NM_RPT_SQR_NAME" length="50" not-null="true"/>
+      <column name="NM_RPT_SQR_VER" length="2" not-null="true"/>
+    </many-to-one>
+    <property name="dtRptLstGeneration" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_RPT_LST_GENERATION" length="7" not-null="true"/>
+    </property>
+    <property name="dtRptLstRetainage" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RPT_LST_RETAINAGE" length="7"/>
+    </property>
+    <property name="nbrRptLstCfpStamp" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RPT_LST_CFP_STAMP" precision="10" scale="0"/>
+    </property>
+    <property name="txtRptGenName" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_RPT_GEN_NAME" length="100"/>
+    </property>
+    <property name="txtRptLstParmlist" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_RPT_LST_PARMLIST" length="800"/>
+    </property>
+    <property name="txtRptLstRuntimeName" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_RPT_LST_RUNTIME_NAME" length="48"/>
+    </property>
+    <property name="txtRptLstStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_RPT_LST_STATUS" length="4"/>
+    </property>
+    <property name="nmRptType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_RPT_TYPE" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

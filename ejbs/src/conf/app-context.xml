@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+       default-dependency-check="none"
+       default-lazy-init="false">
+  <!-- This is the main context used to integrate the existing services with the new EJBs. -->
+  <bean id="appBeanFactory" class="gov.georgia.dhr.dfcs.sacwis.core.spring.SJSASClassPathXmlApplicationContext">
+    <constructor-arg>
+      <list>
+        <!-- Defines services and DAO's. -->
+        <value>classpath:service-context.xml</value>
+        <!-- Defines the performance monitor, Hibernate session factory, and service and DAO proxies.. -->
+        <value>classpath:container-context.xml</value>
+        <!-- Defines the data source; separate so we can alter it for the per user schemas required by training. -->
+        <value>classpath:datasource-context.xml</value>
+      </list>
+    </constructor-arg>
+  </bean>
+</beans>

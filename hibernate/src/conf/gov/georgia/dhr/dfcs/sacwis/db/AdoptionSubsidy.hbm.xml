@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.AdoptionSubsidy" table="ADOPTION_SUBSIDY" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idAdptSub" type="integer" unsaved-value="0">
+      <column name="ID_ADPT_SUB" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_ADOPTION_SUBSIDY</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_ADPT_SUB_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_ADPT_SUB_PAYEE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="placement" class="gov.georgia.dhr.dfcs.sacwis.db.Placement" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PLCMT_EVENT" precision="16" scale="0"/>
+    </many-to-one>
+	<many-to-one name="specialNeedsDetermination" class="gov.georgia.dhr.dfcs.sacwis.db.SpecialNeedsDetermination" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_SPC_NEEDS_DET" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="amtAdptSub" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ADPT_SUB" precision="6"/>
+    </property>
+    <property name="cdAdptSubCloseRsn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ADPT_SUB_CLOSE_RSN" length="2"/>
+    </property>
+    <property name="cdAdptSubDeterm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ADPT_SUB_DETERM" length="2"/>
+    </property>
+    <property name="dtAdptSubAgreeRetn" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ADPT_SUB_AGREE_RETN" length="7"/>
+    </property>
+    <property name="dtAdptSubAgreeSent" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ADPT_SUB_AGREE_SENT" length="7"/>
+    </property>
+    <property name="dtAdptSubAppReturned" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ADPT_SUB_APP_RETURNED" length="7"/>
+    </property>
+    <property name="dtAdptSubAppSent" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ADPT_SUB_APP_SENT" length="7"/>
+    </property>
+    <property name="dtAdptSubApprvd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ADPT_SUB_APPRVD" length="7"/>
+    </property>
+    <property name="dtAdptSubEffective" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ADPT_SUB_EFFECTIVE" length="7"/>
+    </property>
+    <property name="dtAdptSubEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ADPT_SUB_END" length="7"/>
+    </property>
+    <property name="dtAdptSubLastInvc" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ADPT_SUB_LAST_INVC" length="7"/>
+    </property>
+    <property name="indAdptSubThirdParty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ADPT_SUB_THIRD_PARTY" length="1"/>
+    </property>
+    <property name="indAdptSubProcess" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ADPT_SUB_PROCESS" length="1"/>
+    </property>
+    <property name="txtAdptSubRsn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_ADPT_SUB_RSN" length="1000"/>
+    </property>
+    <property name="indSauConf" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_SAU_CONF" length="1"/>
+    </property>
+    <property name="indSpclAsstApprvl" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_SPCL_ASST_APPRVL" length="1"/>
+    </property>
+    <property name="amtSpclAsstReq" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SPCL_ASST_REQ" precision="6" scale="0"/>
+    </property>
+    <property name="nbrCountyAddonAmt" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_COUNTY_ADDON_AMT" precision="6" scale="0"/>
+    </property>
+    <property name="cdBasicRateType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_BASIC_RATE_TYPE" length="3"/>
+    </property>
+    <property name="cdSpclAsstType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SPCL_ASST_TYPE" length="3"/>
+    </property>
+    <property name="txtSpclAsstSpecify" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_SPCL_ASST_SPECIFY" length="40"/>
+    </property>
+    <property name="txtSpclAsstCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_SPCL_ASST_CMNTS" length="1000"/>
+    </property>
+    <property name="dtRenwlEffBegin" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RENWL_EFF_BEGIN" length="7"/>
+    </property>
+    <property name="dtRenwlEffEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RENWL_EFF_END" length="7"/>
+    </property>
+    <property name="dtAdptSubTerminated" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ADPT_SUB_TERMINATED" length="7"/>
+    </property>
+    <property name="cdPaymentMthd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PAYMENT_MTHD" length="3"/>
+    </property>
+    <property name="indDocSsi" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_DOC_SSI" length="1"/>
+    </property>
+    <property name="txtIcamaComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_ICAMA_COMMENTS" length="300"/>
+    </property>
+    <property name="indSchoolVer" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_SCHOOL_VER" length="1"/>
+    </property>
+    <property name="indNonIncSSA" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_NONINC_SSA" length="1"/>
+    </property>
+    <bag name="adptSubEventLinks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ADPT_SUB" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdptSubEventLink" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

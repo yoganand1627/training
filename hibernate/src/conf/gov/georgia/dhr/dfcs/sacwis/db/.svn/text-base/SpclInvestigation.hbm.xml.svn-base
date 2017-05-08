@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.SpclInvestigation" table="SPCL_INVESTIGATION" >
+        <id name="idSpclInvEvent" type="java.lang.Integer" unsaved-value="undefined">
+            <column name="ID_SPCL_INV_EVENT" precision="16" scale="0" />
+            <generator class="foreign">
+              <param name="property">event</param>
+            </generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="null" source="vm"/>
+        <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+        <property name="dtSpclInvSent" type="date">
+            <column name="DT_SPCL_INV_SENT" length="7" />
+        </property>
+        <property name="dtSpclInvApproved" type="date">
+            <column name="DT_SPCL_INV_APPROVED" length="7" />
+        </property>
+        <property name="indConcurAssmntDisp" type="string">
+            <column name="IND_CONCUR_ASSMNT_DISP" length="1" />
+        </property>
+        <property name="indConcurActionRecmnd" type="string">
+            <column name="IND_CONCUR_ACTION_RECMND" length="1" />
+        </property>
+        <property name="indRcmndPlcmntRsrcClosed" type="string">
+            <column name="IND_RCMND_PLCMNT_RSRC_CLOSED" length="1" />
+        </property>
+        <property name="indRcmndChldrnRemoved" type="string">
+            <column name="IND_RCMND_CHLDRN_REMOVED" length="1" />
+        </property>
+        <property name="indRcmndActionPlanDvlpd" type="string">
+            <column name="IND_RCMND_ACTION_PLAN_DVLPD" length="1" />
+        </property>
+        <property name="indRcmndNoChangeStatus" type="string">
+            <column name="IND_RCMND_NO_CHANGE_STATUS" length="1" />
+        </property>
+        <property name="indRcmndCpaCciNotUsed" type="string">
+            <column name="IND_RCMND_CPA_CCI_NOT_USED" length="1" />
+        </property>
+        <property name="indRcmndWaiverAttached" type="string">
+            <column name="IND_RCMND_WAIVER_ATTACHED" length="1" />
+        </property>
+        <property name="indRcmndOther" type="string">
+            <column name="IND_RCMND_OTHER" length="1" />
+        </property>
+        <property name="indRecordChkViewed" type="string">
+            <column name="IND_RECORD_CHK_VIEWED" length="1" />
+        </property>
+        <property name="txtConcurComments" type="string">
+            <column name="TXT_CONCUR_COMMENTS" length="4000" />
+        </property>
+        <property name="txtRcmndOtherComments" type="string">
+            <column name="TXT_RCMND_OTHER_COMMENTS" length="4000" />
+        </property>
+        <property name="txtResults48hrStaffing" type="string">
+            <column name="TXT_RESULTS_48HR_STAFFING" length="4000" />
+        </property>
+        <property name="txtNamesAgncyRepStaffing" type="string">
+            <column name="TXT_NAMES_AGNCY_REP_STAFFING" length="4000" />
+        </property>
+        <property name="txtJustHmeRemainOpen" type="string">
+            <column name="TXT_JUST_HME_REMAIN_OPEN" length="4000" />
+        </property>
+        <property name="txtSynopsisRecReviewed" type="string">
+            <column name="TXT_SYNOPSIS_REC_REVIEWED" length="4000" />
+        </property>
+        <property name="txtStepsAssureSafety" type="string">
+            <column name="TXT_STEPS_ASSURE_SAFETY" length="4000" />
+        </property>
+        <bag name="homeWaiverChildren" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+          <key on-delete="noaction" update="false">
+            <column name="ID_SPCL_INV_EVENT" precision="16" scale="0" not-null="true"/>
+          </key>
+          <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.SpclInvHmeWaiverChildHist" not-found="exception" embed-xml="true"/>
+        </bag>
+        <bag name="stateConcurs" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+          <key on-delete="noaction" update="false">
+            <column name="ID_SPCL_INV_EVENT" precision="16" scale="0" not-null="true"/>
+          </key>
+          <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.SpclInvStateConcur" not-found="exception" embed-xml="true"/>
+        </bag>
+    </class>
+</hibernate-mapping>

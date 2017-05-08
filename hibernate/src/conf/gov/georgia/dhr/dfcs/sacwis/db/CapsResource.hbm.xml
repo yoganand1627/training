@@ -1,0 +1,600 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" table="CAPS_RESOURCE" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idResource" type="integer" unsaved-value="0">
+      <column name="ID_RESOURCE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_CAPS_RESOURCE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RSRC_FA_HOME_EVENT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RSRC_FA_HOME_STAGE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="addrRsrcStLn1" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSRC_ST_LN_1" length="30"/>
+    </property>
+    <property name="addrRsrcStLn2" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSRC_ST_LN_2" length="30"/>
+    </property>
+    <property name="addrRsrcCity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSRC_CITY" length="20"/>
+    </property>
+    <property name="cdRsrcState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_STATE" length="2"/>
+    </property>
+    <property name="addrRsrcZip" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSRC_ZIP" length="10"/>
+    </property>
+    <property name="addrRsrcAttn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSRC_ATTN" length="30"/>
+    </property>
+    <property name="cdRsrcCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_CNTY" length="3"/>
+    </property>
+    <property name="cdRsrcInvolClosure" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_INVOL_CLOSURE" length="1"/>
+    </property>
+    <property name="cdRsrcClosureRsn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_CLOSURE_RSN" length="3"/>
+    </property>
+    <property name="cdRsrcSourceInquiry" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_SOURCE_INQUIRY" length="3"/>
+    </property>
+    <property name="cdRsrcType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_TYPE" length="2"/>
+    </property>
+    <property name="cdRsrcCampusType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_CAMPUS_TYPE" length="1"/>
+    </property>
+    <property name="cdRsrcMaintainer" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_MAINTAINER" length="2"/>
+    </property>
+    <property name="cdRsrcSchDist" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_SCH_DIST" length="6"/>
+    </property>
+    <property name="cdRsrcOwnership" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_OWNERSHIP" length="2"/>
+    </property>
+    <property name="cdRsrcFacilType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_FACIL_TYPE" length="2"/>
+    </property>
+    <property name="cdRsrcHub" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_HUB" length="2"/>
+    </property>
+    <property name="cdRsrcCertBy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_CERT_BY" length="2"/>
+    </property>
+    <property name="cdRsrcOperBy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_OPER_BY" length="2"/>
+    </property>
+    <property name="cdRsrcSetting" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_SETTING" length="2"/>
+    </property>
+    <property name="cdRsrcPayment" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_PAYMENT" length="2"/>
+    </property>
+    <property name="cdRsrcCategory" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_CATEGORY" length="1"/>
+    </property>
+    <property name="cdRsrcEthnicity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_ETHNICITY" length="2"/>
+    </property>
+    <property name="cdRsrcLanguage" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_LANGUAGE" length="2"/>
+    </property>
+    <property name="cdRsrcMaritalStatus" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_MARITAL_STATUS" length="2"/>
+    </property>
+    <property name="cdRsrcRecmndReopen" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_RECMND_REOPEN" length="3"/>
+    </property>
+    <property name="cdRsrcRegion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_REGION" length="2"/>
+    </property>
+    <property name="cdRsrcReligion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_RELIGION" length="2"/>
+    </property>
+    <property name="cdRsrcRespite" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_RESPITE" length="1"/>
+    </property>
+    <property name="cdRsrcFaHomeStatus" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_FA_HOME_STATUS" length="3"/>
+    </property>
+    <property name="cdRsrcFaHomeType1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_FA_HOME_TYPE_1" length="3"/>
+    </property>
+    <property name="cdRsrcFaHomeType2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_FA_HOME_TYPE_2" length="3"/>
+    </property>
+    <property name="cdRsrcFaHomeType3" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_FA_HOME_TYPE_3" length="3"/>
+    </property>
+    <property name="cdRsrcFaHomeType4" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_FA_HOME_TYPE_4" length="3"/>
+    </property>
+    <property name="cdRsrcFaHomeType5" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_FA_HOME_TYPE_5" length="3"/>
+    </property>
+    <property name="cdRsrcFaHomeType6" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_FA_HOME_TYPE_6" length="3"/>
+    </property>
+    <property name="cdRsrcFaHomeType7" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_FA_HOME_TYPE_7" length="3"/>
+    </property>
+    <property name="cdRsrcStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_STATUS" length="2"/>
+    </property>
+    <property name="dtRsrcMarriage" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RSRC_MARRIAGE" length="7"/>
+    </property>
+    <property name="dtRsrcClose" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RSRC_CLOSE" length="7"/>
+    </property>
+    <property name="dtRsrcCert" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RSRC_CERT" length="7"/>
+    </property>
+    <property name="indRsrcWriteHist" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RSRC_WRITE_HIST" length="1"/>
+    </property>
+    <property name="indRsrcCareProv" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_RSRC_CARE_PROV" length="1"/>
+    </property>
+    <property name="indRsrcEmergPlace" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RSRC_EMERG_PLACE" length="1"/>
+    </property>
+    <property name="indRsrcInactive" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_RSRC_INACTIVE" length="1"/>
+    </property>
+    <property name="indRsrcTransport" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RSRC_TRANSPORT" length="1"/>
+    </property>
+    <property name="indCurrHmStdyExsts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CURR_HM_STDY_EXSTS" length="1"/>
+    </property>
+    <property name="indRsrcNonDfcs" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_RSRC_NONDFCS" length="1"/>
+    </property>
+    <property name="nmRsrcLastUpdate" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_RSRC_LAST_UPDATE" length="25"/>
+    </property>
+    <property name="nmResource" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_RESOURCE" length="30"/>
+    </property>
+    <property name="nmRsrcNameIndex" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="always">
+      <column name="NM_RSRC_NAME_INDEX" length="2"/>
+    </property>
+    <property name="nmRsrcContact" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_RSRC_CONTACT" length="25"/>
+    </property>
+    <property name="nbrRsrcPhn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_RSRC_PHN" length="10"/>
+    </property>
+    <property name="nbrRsrcPhoneExt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_RSRC_PHONE_EXT" length="8"/>
+    </property>
+    <property name="nbrRsrcFacilCapacity" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_FACIL_CAPACITY" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRsrcFacilAcclaim" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_FACIL_ACCLAIM" precision="8" scale="0"/>
+    </property>
+    <property name="nbrRsrcVid" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_RSRC_VID" length="14"/>
+    </property>
+    <property name="nbrRsrcCampusNbr" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_CAMPUS_NBR" precision="8" scale="0"/>
+    </property>
+    <property name="nbrRsrcIntChildren" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_INT_CHILDREN" precision="3" scale="0"/>
+    </property>
+    <property name="nbrRsrcIntFeAgeMax" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_INT_FE_AGE_MAX" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRsrcIntFeAgeMin" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_INT_FE_AGE_MIN" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRsrcIntMaAgeMax" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_INT_MA_AGE_MAX" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRsrcIntMaAgeMin" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_INT_MA_AGE_MIN" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRsrcAnnualIncome" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_ANNUAL_INCOME" precision="16" scale="0"/>
+    </property>
+    <property name="nbrRsrcFmAgeMax" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_FM_AGE_MAX" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRsrcFmAgeMin" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_FM_AGE_MIN" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRsrcMaAgeMax" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_MA_AGE_MAX" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRsrcMaAgeMin" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_MA_AGE_MIN" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRsrcOpenSlots" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_OPEN_SLOTS" precision="2" scale="0"/>
+    </property>
+    <property name="txtRsrcAddrCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_RSRC_ADDR_CMNTS" length="300"/>
+    </property>
+    <property name="txtRsrcComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_RSRC_COMMENTS" length="300"/>
+    </property>
+    <property name="cdRsrcMhmrCompCode" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_MHMR_COMP_CODE" length="4"/>
+    </property>
+    <property name="dtCclUpdate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CCL_UPDATE" length="7"/>
+    </property>
+    <property name="cdRsrcMhmrSite" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_MHMR_SITE" length="4"/>
+    </property>
+    <property name="indRsrcContracted" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RSRC_CONTRACTED" length="1"/>
+    </property>
+    <property name="nmLegal" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_LEGAL" length="45"/>
+    </property>
+    <property name="ndfcsCertEntity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NDFCS_CERT_ENTITY" length="30"/>
+    </property>
+    <property name="nmRsrcContactTitle" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_RSRC_CONTACT_TITLE" length="30"/>
+    </property>
+    <property name="nbrRsrcNtnlProvider" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_NTNL_PROVIDER" length="20"/>
+    </property>
+    <property name="addrRsrcEmail" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSRC_EMAIL" length="70"/>
+    </property>
+    <property name="addrRsrcWebsite" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSRC_WEBSITE" length="300"/>
+    </property>
+    <property name="cdSchoolType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SCHOOL_TYPE" length="3"/>
+    </property>
+    <property name="cdPaymentDelivery" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PAYMENT_DELIVERY" length="3"/>
+    </property>
+    <property name="txtSpecCert" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_SPEC_CERT" length="50"/>
+    </property>
+    <property name="cdExchangeStat" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EXCHANGE_STAT" length="3"/>
+    </property>
+    <property name="indWaiver" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_WAIVER" length="1"/>
+    </property>
+    <property name="cdSchDist" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SCH_DIST" length="3"/>
+    </property>
+    <property name="cdElem" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ELEM" length="10"/>
+    </property>
+    <property name="cdMiddle" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_MIDDLE" length="10"/>
+    </property>
+    <property name="cdHigh" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_HIGH" length="10"/>
+    </property>
+    <property name="dtFostManual" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_FOST_MANUAL" length="7"/>
+    </property>
+    <property name="dtFostBill" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_FOST_BILL" length="7"/>
+    </property>
+    <property name="indSpecificChild" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_SPECIFIC_CHILD" length="1"/>
+    </property>
+    <property name="dtLicBegin" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_LIC_BEGIN" length="7"/>
+    </property>
+    <property name="dtLicEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_LIC_END" length="7"/>
+    </property>
+    <property name="txtClosureComm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CLOSURE_COMM" length="300"/>
+    </property>
+    <property name="indPrevFamStdyRqstd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PREV_FAM_STDY_RQSTD" length="1"/>
+    </property>
+    <property name="rsrcOthSpcCertf" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="RSRC_OTH_SPC_CERTF" length="50"/>
+    </property>
+    <property name="indAfterHours" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_AFTER_HOURS" length="1"/>
+    </property>
+    <property name="txtHmPrgInterest" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_HM_PRG_INTEREST" length="80"/>
+    </property>
+    <property name="nbrRsrcContactPhn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+        <column name="NBR_RSRC_CONTACT_PHN" length="10" />
+    </property>
+    <property name="nbrRsrcContactPhoneExt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+        <column name="NBR_RSRC_CONTACT_PHONE_EXT" length="8" />
+    </property>
+    <property name="indHomeIveReimbursable" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_HOME_IVE_REIMBURSABLE" length="1"/>
+    </property>
+    <property name="dtReimbursableEffective" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REIMBURSABLE_EFFECTIVE" length="7"/>
+    </property>
+    <property name="dtReimbursableEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REIMBURSABLE_END" length="7"/>
+    </property>
+    <property name="indHoldPlacements" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_HOLD_PLACEMENTS" length="1"/>
+    </property>
+    <bag name="specSvcses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_SPEC_SVC_RSRC" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.SpecSvcs" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="adoInfos" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdoInfo" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="incomingFacilities" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IncomingFacility" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="facilityLocs" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FacilityLoc" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="rsrcLinksForIdRsrcLinkChild" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RSRC_LINK_CHILD" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.RsrcLink" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="needsOutcomeses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.NeedsOutcomes" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="lawEnforcZips" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.LawEnforcZip" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="placementsForIdRsrcFacil" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RSRC_FACIL" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Placement" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="referralHomeLinks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ReferralHomeLink" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="facilityInvstDtlsForIdAffilResource" inverse="true" mutable="true" optimistic-lock="true"
+         embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_AFFIL_RESOURCE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FacilityInvstDtl" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="contracts" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Contract" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="resourceHistories" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ResourceHistory" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="capsCaretakers" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CapsCaretaker" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="adoptionSubsidies" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ADPT_SUB_PAYEE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdoptionSubsidy" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="resourceChrctrs" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ResourceChrctr" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="adoInfoFamilies" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdoInfoFamily" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="placementsForIdRsrcAgency" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RSRC_AGENCY" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Placement" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="resourcePhones" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ResourcePhone" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="facilityInvstDtlsForIdFacilResource" inverse="true" mutable="true" optimistic-lock="true"
+         embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FACIL_RESOURCE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FacilityInvstDtl" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="incomingDetails" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IncomingDetail" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="incomingDetailsforIdReferredResource" inverse="true" mutable="true" optimistic-lock="true"
+         embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_REFERRED_RESOURCE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IncomingDetail" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="rsrcLinksForIdRsrcLinkParent" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RSRC_LINK_PARENT" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.RsrcLink" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="resourceServices" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ResourceService" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="placementReferrals" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.PlacementReferral" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="licensingInvstDtls" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.LicensingInvstDtl" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="serviceAuthorizations" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ServiceAuthorization" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="educationalHistories" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.EducationalHistory" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="contractCounties" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ContractCounty" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="contractCountyViews" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ContractCountyView" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="resourceAddresses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ResourceAddress" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="homeApplicantInfos" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.HomeApplicantInfo" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="delvrdSvcDtls" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.DelvrdSvcDtl" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="facilityLicenseTypes" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FacilityLicenseType" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="policyWaivers" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_WVR_RSRC" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.PolicyWaiver" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

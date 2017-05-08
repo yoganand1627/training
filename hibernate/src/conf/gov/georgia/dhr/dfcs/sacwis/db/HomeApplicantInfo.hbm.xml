@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.HomeApplicantInfo" table="HOME_APPLICANT_INFO" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idHomeApplicant" type="integer" unsaved-value="undefined">
+      <column name="ID_HOME_APPLICANT" precision="16" scale="0"/>
+      <generator class="assigned"/>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="dtInquiry" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INQUIRY" length="7"/>
+    </property>
+        <property name="dtApplied" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_APPLIED" length="7"/>
+    </property>
+    <property name="cdInquiryRcvd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INQUIRY_RCVD" length="3"/>
+    </property>
+    <property name="cdInfoPacket" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INFO_PACKET" length="3"/>
+    </property>
+    <property name="dtInfoSent" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INFO_SENT" length="7"/>
+    </property>
+    <property name="txtChildInt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CHILD_INT" length="30"/>
+    </property>
+    <property name="txtInqryComm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_INQRY_COMM" length="300"/>
+    </property>
+    <property name="dtOrient1" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ORIENT1" length="7"/>
+    </property>
+    <property name="cdOrient1Stat" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ORIENT1_STAT" length="3"/>
+    </property>
+    <property name="dtOrient2" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ORIENT2" length="7"/>
+    </property>
+    <property name="cdOrient2Stat" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ORIENT2_STAT" length="3"/>
+    </property>
+    <property name="dtOrient3" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ORIENT3" length="7"/>
+    </property>
+    <property name="cdOrient3Stat" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ORIENT3_STAT" length="3"/>
+    </property>
+    <property name="dtInvite1" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INVITE1" length="7"/>
+    </property>
+    <property name="cdInvite1Stat" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INVITE1_STAT" length="3"/>
+    </property>
+    <property name="txtInvite1Loc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_INVITE1_LOC" length="30"/>
+    </property>
+    <property name="dtInvite2" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INVITE2" length="7"/>
+    </property>
+    <property name="cdInvite2Stat" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INVITE2_STAT" length="3"/>
+    </property>
+    <property name="txtInvite2Loc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_INVITE2_LOC" length="30"/>
+    </property>
+    <property name="dtInvite3" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INVITE3" length="7"/>
+    </property>
+    <property name="cdInvite3Stat" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INVITE3_STAT" length="3"/>
+    </property>
+    <property name="txtInvite3Loc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_INVITE3_LOC" length="30"/>
+    </property>
+    <property name="txtTrnComm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_TRN_COMM" length="300"/>
+    </property>
+    <property name="inqReqNbrChldrn" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="INQ_REQ_NBR_CHLDRN" precision="3" scale="0"/>
+    </property>
+    <bag name="homeApplicantCbxes" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_HOME_APPLICANT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.HomeApplicantCbx" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

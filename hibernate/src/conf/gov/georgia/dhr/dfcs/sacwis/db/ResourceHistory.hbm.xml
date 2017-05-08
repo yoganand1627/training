@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ResourceHistory" table="RESOURCE_HISTORY" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idResourceHistory" type="integer" unsaved-value="0">
+      <column name="ID_RESOURCE_HISTORY" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_RESOURCE_HISTORY</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RSHS_FA_HOME_EVENT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RSHS_FA_HOME_STAGE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="dtRshsEffective" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RSHS_EFFECTIVE" length="7"/>
+    </property>
+    <property name="dtRshsClose" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RSHS_CLOSE" length="7"/>
+    </property>
+    <property name="dtRshsCert" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RSHS_CERT" length="7"/>
+    </property>
+    <property name="dtRshsMarriage" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RSHS_MARRIAGE" length="7"/>
+    </property>
+    <property name="dtRshsEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="always">
+      <column name="DT_RSHS_END" length="7"/>
+    </property>
+    <property name="addrRshsStLn1" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSHS_ST_LN_1" length="30"/>
+    </property>
+    <property name="addrRshsStLn2" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSHS_ST_LN_2" length="30"/>
+    </property>
+    <property name="addrRshsCity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSHS_CITY" length="20"/>
+    </property>
+    <property name="cdRshsState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_STATE" length="2"/>
+    </property>
+    <property name="addrRshsZip" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSHS_ZIP" length="10"/>
+    </property>
+    <property name="addrRshsAttn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSHS_ATTN" length="30"/>
+    </property>
+    <property name="cdRshsCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_CNTY" length="3"/>
+    </property>
+    <property name="cdRshsInvolClosure" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_INVOL_CLOSURE" length="1"/>
+    </property>
+    <property name="cdRshsClosureRsn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_CLOSURE_RSN" length="3"/>
+    </property>
+    <property name="cdRshsType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_TYPE" length="2"/>
+    </property>
+    <property name="cdRshsHub" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_HUB" length="2"/>
+    </property>
+    <property name="cdRshsCampusType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_CAMPUS_TYPE" length="1"/>
+    </property>
+    <property name="cdRshsSourceInquiry" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_SOURCE_INQUIRY" length="3"/>
+    </property>
+    <property name="cdRshsMaintainer" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_MAINTAINER" length="2"/>
+    </property>
+    <property name="cdRshsSchDist" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_SCH_DIST" length="6"/>
+    </property>
+    <property name="cdRshsOwnership" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_OWNERSHIP" length="2"/>
+    </property>
+    <property name="cdRshsStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_STATUS" length="2"/>
+    </property>
+    <property name="cdRshsFacilType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_FACIL_TYPE" length="2"/>
+    </property>
+    <property name="cdRshsCertBy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_CERT_BY" length="2"/>
+    </property>
+    <property name="cdRshsOperBy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_OPER_BY" length="2"/>
+    </property>
+    <property name="cdRshsSetting" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_SETTING" length="2"/>
+    </property>
+    <property name="cdRshsPayment" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_PAYMENT" length="2"/>
+    </property>
+    <property name="cdRshsCategory" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_CATEGORY" length="1"/>
+    </property>
+    <property name="cdRshsEthnicity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_ETHNICITY" length="2"/>
+    </property>
+    <property name="cdRshsLanguage" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_LANGUAGE" length="2"/>
+    </property>
+    <property name="cdRshsMaritalStatus" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_MARITAL_STATUS" length="2"/>
+    </property>
+    <property name="cdRshsRecmndReopen" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_RECMND_REOPEN" length="3"/>
+    </property>
+    <property name="cdRshsRegion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_REGION" length="2"/>
+    </property>
+    <property name="cdRshsReligion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_RELIGION" length="2"/>
+    </property>
+    <property name="cdRshsRespite" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSHS_RESPITE" length="1"/>
+    </property>
+    <property name="cdRshsFaHomeStatus" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_FA_HOME_STATUS" length="3"/>
+    </property>
+    <property name="cdRshsFaHomeType1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_FA_HOME_TYPE1" length="3"/>
+    </property>
+    <property name="cdRshsFaHomeType2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_FA_HOME_TYPE2" length="3"/>
+    </property>
+    <property name="cdRshsFaHomeType3" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_FA_HOME_TYPE3" length="3"/>
+    </property>
+    <property name="cdRshsFaHomeType4" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_FA_HOME_TYPE4" length="3"/>
+    </property>
+    <property name="cdRshsFaHomeType5" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_FA_HOME_TYPE5" length="3"/>
+    </property>
+    <property name="cdRshsFaHomeType6" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_FA_HOME_TYPE6" length="3"/>
+    </property>
+    <property name="cdRshsFaHomeType7" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_FA_HOME_TYPE7" length="3"/>
+    </property>
+    <property name="indRshsCareProv" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_RSHS_CARE_PROV" length="1"/>
+    </property>
+    <property name="indRshsInactive" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_RSHS_INACTIVE" length="1"/>
+    </property>
+    <property name="indRshsTransport" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RSHS_TRANSPORT" length="1"/>
+    </property>
+    <property name="indRshsEmergPlace" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RSHS_EMERG_PLACE" length="1"/>
+    </property>
+    <property name="nmRshsResource" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_RSHS_RESOURCE" length="30"/>
+    </property>
+    <property name="nmRshsContact" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_RSHS_CONTACT" length="25"/>
+    </property>
+    <property name="nmRshsLastUpdate" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_RSHS_LAST_UPDATE" length="25"/>
+    </property>
+    <property name="nbrRshsVid" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_RSHS_VID" length="14"/>
+    </property>
+    <property name="nbrRshsPhn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_RSHS_PHN" length="10"/>
+    </property>
+    <property name="nbrRshsFacilCapacity" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_FACIL_CAPACITY" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRshsFacilAcclaim" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_FACIL_ACCLAIM" precision="8" scale="0"/>
+    </property>
+    <property name="nbrRshsPhoneExt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_RSHS_PHONE_EXT" length="8"/>
+    </property>
+    <property name="nbrRshsCampusNbr" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_CAMPUS_NBR" precision="8" scale="0"/>
+    </property>
+    <property name="nbrRshsAnnualIncome" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_ANNUAL_INCOME" precision="16" scale="0"/>
+    </property>
+    <property name="nbrRshsFmAgeMax" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_FM_AGE_MAX" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRshsFmAgeMin" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_FM_AGE_MIN" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRshsMaAgeMax" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_MA_AGE_MAX" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRshsMaAgeMin" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_MA_AGE_MIN" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRshsIntChildren" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_INT_CHILDREN" precision="3" scale="0"/>
+    </property>
+    <property name="nbrRshsIntFeAgeMax" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_INT_FE_AGE_MAX" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRshsIntFeAgeMin" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_INT_FE_AGE_MIN" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRshsIntMaAgeMax" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_INT_MA_AGE_MAX" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRshsIntMaAgeMin" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_INT_MA_AGE_MIN" precision="4" scale="0"/>
+    </property>
+    <property name="txtRshsAddrCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_RSHS_ADDR_CMNTS" length="300"/>
+    </property>
+    <property name="txtRshsComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_RSHS_COMMENTS" length="300"/>
+    </property>
+    <property name="nbrRshsOpenSlots" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSHS_OPEN_SLOTS" precision="2" scale="0"/>
+    </property>
+    <property name="indRshsWriteAudit" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RSHS_WRITE_AUDIT" length="1"/>
+    </property>
+    <property name="cdRshsMhmrCompCode" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSHS_MHMR_COMP_CODE" length="4"/>
+    </property>
+    <property name="dtCclUpdate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CCL_UPDATE" length="7"/>
+    </property>
+    <property name="cdRsrcMhmrSite" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_MHMR_SITE" length="4"/>
+    </property>
+    <property name="indRsrcContracted" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RSRC_CONTRACTED" length="1"/>
+    </property>
+    <property name="nmLegal" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_LEGAL" length="90"/>
+    </property>
+    <property name="nmRsrcContactTitle" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_RSRC_CONTACT_TITLE" length="30"/>
+    </property>
+    <property name="nbrRsrcNtnlProvider" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_NTNL_PROVIDER" length="20"/>
+    </property>
+    <property name="addrRsrcEmail" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSRC_EMAIL" length="70"/>
+    </property>
+    <property name="addrRsrcWebsite" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_RSRC_WEBSITE" length="300"/>
+    </property>
+    <property name="cdSchoolType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SCHOOL_TYPE" length="3"/>
+    </property>
+    <property name="cdPaymentDelivery" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PAYMENT_DELIVERY" length="3"/>
+    </property>
+    <property name="txtSpecCert" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_SPEC_CERT" length="50"/>
+    </property>
+    <property name="cdExchangeStat" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EXCHANGE_STAT" length="3"/>
+    </property>
+    <property name="indWaiver" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_WAIVER" length="1"/>
+    </property>
+    <property name="cdSchDist" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SCH_DIST" length="3"/>
+    </property>
+    <property name="cdElem" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ELEM" length="10"/>
+    </property>
+    <property name="cdMiddle" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_MIDDLE" length="10"/>
+    </property>
+    <property name="cdHigh" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_HIGH" length="10"/>
+    </property>
+    <property name="dtFostManual" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_FOST_MANUAL" length="7"/>
+    </property>
+    <property name="dtFostBill" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_FOST_BILL" length="7"/>
+    </property>
+    <property name="indSpecificChild" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_SPECIFIC_CHILD" length="1"/>
+    </property>
+    <property name="dtLicBegin" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_LIC_BEGIN" length="7"/>
+    </property>
+    <property name="dtLicEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_LIC_END" length="7"/>
+    </property>
+    <property name="txtClosureComm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CLOSURE_COMM" length="300"/>
+    </property>
+    <property name="ndfcsCertEntity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NDFCS_CERT_ENTITY" length="30"/>
+    </property>
+    <property name="indRsrcNondfcs" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_RSRC_NONDFCS" length="1"/>
+    </property>
+    <property name="indCurrHmStdyExsts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CURR_HM_STDY_EXSTS" length="1"/>
+    </property>
+    <property name="indPrevFamStdyRqstd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PREV_FAM_STDY_RQSTD" length="1"/>
+    </property>
+    <property name="rsrcOthSpcCertf" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="RSRC_OTH_SPC_CERTF" length="50"/>
+    </property>
+    <property name="indAfterHours" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_AFTER_HOURS" length="1"/>
+    </property>
+    <property name="txtHmPrgInterest" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_HM_PRG_INTEREST" length="80"/>
+    </property>
+    <property name="indHomeIveReimbursable" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_HOME_IVE_REIMBURSABLE" length="1"/>
+    </property>
+    <property name="dtReimbursableEffective" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REIMBURSABLE_EFFECTIVE" length="7"/>
+    </property>
+    <property name="dtReimbursableEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REIMBURSABLE_END" length="7"/>
+    </property>
+    <property name="indHoldPlacements" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_HOLD_PLACEMENTS" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.SpclInvHmeWaiverChildHist" table="SPCL_INV_HME_WAIVER_CHILD_HIST" >
+        <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.SpclInvHmeWaiverChildHistId">
+            <key-property name="personChild" type="integer">
+                <column name="ID_CHILD" precision="16" scale="0" />
+            </key-property>
+            <key-property name="spclInvEvent" type="integer">
+                <column name="ID_SPCL_INV_EVENT" precision="16" scale="0" />
+            </key-property>
+        </composite-id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="null" source="vm"/>
+        <many-to-one name="personChild" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" insert="false" update="false" >
+            <column name="ID_CHILD" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <many-to-one name="spclInvEvent" class="gov.georgia.dhr.dfcs.sacwis.db.SpclInvestigation" fetch="select" insert="false" update="false">
+            <column name="ID_SPCL_INV_EVENT" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="cdChildLegalCounty" type="string">
+            <column name="CD_CHILD_LEGAL_COUNTY" length="3" />
+        </property>
+        <property name="cdChildLegalStatus" type="string">
+            <column name="CD_CHILD_LEGAL_STATUS" length="3" />
+        </property>
+        <property name="cdChildPermncyPlan" type="string">
+            <column name="CD_CHILD_PERMNCY_PLAN" length="3" />
+        </property>
+        <property name="cdChildConcurPlan" type="string">
+            <column name="CD_CHILD_CONCUR_PLAN" length="3" />
+        </property>
+        <property name="cdChildPlcmntType" type="string">
+            <column name="CD_CHILD_PLCMNT_TYPE" length="3" />
+        </property>
+        <property name="indRemainInHome" type="string">
+            <column name="IND_REMAIN_IN_HOME" length="1" />
+        </property>
+        <property name="numYearInPlcmnt" type="java.lang.Integer">
+            <column name="NUM_YEAR_IN_PLCMNT" precision="2" scale="0" />
+        </property>
+        <property name="numMonthsInPlcmnt" type="java.lang.Integer">
+            <column name="NUM_MONTHS_IN_PLCMNT" precision="3" scale="0" />
+        </property>
+    </class>
+</hibernate-mapping>

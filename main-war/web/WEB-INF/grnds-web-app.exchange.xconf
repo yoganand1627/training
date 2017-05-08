@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE grnds-web-app SYSTEM "grnds-web-app.dtd">
+
+<grnds-web-app>
+
+  <servlet mapping="exchange">
+    <conversations>
+	  <conversation>
+        <conversation-name>ExchangeHomeSearch</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.exchange.ExchangeHomeSearchConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayExchangeHomeSearch</command-name>
+            <activity type="method">displayExchangeHomeSearch_xa</activity>
+            <presentation type="class" screen="EXCHANGE_HOME_SEARCH">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>searchExchangeHome</command-name>
+            <activity type="method">exchangeHomeSearch_xa</activity>
+            <presentation type="class" screen="EXCHANGE_HOME_SEARCH">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="NoRecordReturned" type="class" screen="EXCHANGE_HOME_SEARCH">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="TooManyRowsReturned" type="class" screen="EXCHANGE_HOME_SEARCH">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayHomeInformationDetail</command-name>
+            <activity type="method">displayHomeInformationDetail_xa</activity>
+            <presentation type="url">
+              /fad/HomeInfrmtn/displayInitHomeInformation
+            </presentation>
+          </command>
+		  <command>
+            <command-name>displayExchangeHomeDetail</command-name>
+            <activity type="method">displayExchangeHomeDetail_xa</activity>
+            <presentation type="url">
+              /fad/ExchangeHomeDetail/displayExchangeHomeDetail
+            </presentation>
+          </command>
+		  <command>
+			<command-name>pullBackExchangeHomeDetail</command-name>
+            <activity type="method">pullBackExchangeHomeDetail_xa</activity>
+            <presentation type="class" screen="EXCHANGE_HOME_SEARCH">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+	  <conversation>
+        <conversation-name>ExchangeChildSearch</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.exchange.ExchangeChildSearchConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayExchangeChildSearch</command-name>
+            <activity type="method">displayExchangeChildSearch_xa</activity>
+            <presentation type="class" screen="EXCHANGE_CHILD_SEARCH">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="EXCHANGE_CHILD_SEARCH">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+           <command>
+            <command-name>displayExchangeChildDetail</command-name>
+            <activity type="method">displayExchangeChildDetail_xa</activity>
+            <presentation type="url">
+              /person/ExchangeChildDetail/displayExchangeChildDetail
+            </presentation>
+          </command>
+           <command>
+            <command-name>displayPersonDetail</command-name>
+            <activity type="method">displayPersonDetail_xa</activity>
+            <presentation type="url">
+              /person/PersonDetail/displayPersonDetail
+            </presentation>
+          </command>
+            <command>
+            <command-name>displayAdoInfo</command-name>
+            <activity type="method">displayAdoInfo_xa</activity>
+            <presentation type="url">
+              /subcare/AdoptionInformation/displayAdoption
+            </presentation>
+          </command>
+          <command>
+            <command-name>searchExchangeChild</command-name>
+            <activity type="method">exchangeChildSearch_xa</activity>
+            <presentation type="class" screen="EXCHANGE_CHILD_SEARCH">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="EXCHANGE_CHILD_SEARCH">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+		  <command>
+            <command-name>pullBackExchangeChildDetail</command-name>
+            <activity type="method">pullBackExchangeChildDetail_xa</activity>
+            <presentation type="class" screen="EXCHANGE_CHILD_SEARCH">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+    </conversations>
+  </servlet>
+  
+  <error-handling>
+    <domain>sacwis</domain>
+    <logger>grnds.syslog</logger>
+  </error-handling>
+</grnds-web-app>

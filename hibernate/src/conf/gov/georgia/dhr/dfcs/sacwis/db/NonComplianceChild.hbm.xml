@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.NonComplianceChild" table="NON_COMPLIANCE_CHILD" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.NonComplianceChildId" mapped="false" unsaved-value="undefined">
+            <key-property name="idNonCompliance" type="int">
+                <column name="ID_NON_COMPLIANCE" precision="16" scale="0"/>
+            </key-property>
+            <key-property name="idPerson" type="integer">
+                <column name="ID_PERSON" precision="16" scale="0"/>
+            </key-property>
+        </composite-id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="nonCompliance" class="gov.georgia.dhr.dfcs.sacwis.db.NonCompliance" update="false" insert="false" fetch="select" unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_NON_COMPLIANCE" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" update="false" insert="false" unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+             <column name="ID_PERSON" precision="16" scale="0"/>
+        </many-to-one>
+        <property name="indHomeViolation" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_HOME_VIOLATION" length="1"/>
+        </property>
+        <property name="indAdoptiveProcess" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_ADOPTIVE_PROCESS" length="1"/>
+        </property>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,805 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+       default-dependency-check="all"
+       default-lazy-init="false">
+  <bean id="calculateCaseRetention" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.CalculateCaseRetentionImpl"
+        parent="baseService">
+    <property name="adminReviewDAO" ref="adminReviewDAO"/>
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="capsResourceDAO" ref="capsResourceDAO"/>
+    <property name="complexRecordsRetentionDAO" ref="complexRecordsRetentionDAO"/>
+    <property name="cpsInvstDetailDAO" ref="cpsInvstDetailDAO"/>
+    <property name="licensingInvstDtlDAO" ref="licensingInvstDtlDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="placementDAO" ref="placementDAO"/>
+    <property name="recRetenTypeDAO" ref="recRetenTypeDAO"/>
+    <property name="resourceHistoryDAO" ref="resourceHistoryDAO"/>
+    <property name="riskAssessmentDAO" ref="riskAssessmentDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stageLinkDAO" ref="stageLinkDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+  </bean>
+  <bean id="checkIntakeProgressionStatus" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.CheckIntakeProgressionStatusImpl"
+        parent="baseService">
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="approversDAO" ref="approversDAO"/>
+  </bean>
+  <bean id="checkStageEventStatus" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.CheckStageEventStatusImpl"
+        parent="baseService">
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="taskDAO" ref="taskDAO"/>
+  </bean>
+  <bean id="closeOpenStage" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.CloseOpenStageImpl"
+        parent="baseService">
+    <property name="aaFundingDAO" ref="aaFundingDAO"/>
+    <property name="aaFundingReasonEligDAO" ref="aaFundingReasonEligDAO"/>
+    <property name="adminReviewDAO" ref="adminReviewDAO"/>
+    <property name="adptSubEventLinkDAO" ref="adptSubEventLinkDAO"/>
+    <property name="allegationDAO" ref="allegationDAO"/>
+    <property name="contactDAO" ref="contactDAO"/>
+    <property name="contactCbxDAO" ref="contactCbxDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="checkIfUserHasRight" ref="checkIfUserHasRight"/>
+    <property name="closeStageCase" ref="closeStageCase"/>
+    <property name="complexEventDAO" ref="complexEventDAO"/>
+    <property name="complexPersonEligibilityDAO" ref="complexPersonEligibilityDAO"/>
+    <property name="complexStageDAO" ref="complexStageDAO"/>
+    <property name="cpsInvstDetailDAO" ref="cpsInvstDetailDAO"/>
+    <property name="diversionConclusionDAO" ref="diversionConclusionDAO"/>
+    <property name="dynamicEventDAO" ref="dynamicEventDAO"/>
+    <property name="eligibilityDAO" ref="eligibilityDAO"/>
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO"/>
+    <property name="eventPlanLinkDAO" ref="eventPlanLinkDAO"/>
+    <property name="intakeAllegationDAO" ref="intakeAllegationDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="personEligibilityDAO" ref="personEligibilityDAO"/>
+    <property name="situationDAO" ref="situationDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stageLinkDAO" ref="stageLinkDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="stagePersRelMapStgPrgDAO" ref="stagePersRelMapStgPrgDAO"/>    
+    <property name="stageProgDAO" ref="stageProgDAO"/>
+    <property name="serviceAuthorizationDAO" ref="serviceAuthorizationDAO"/>
+    <property name="svcAuthDetailDAO" ref="svcAuthDetailDAO"/>
+    <property name="svcAuthEventLinkDAO" ref="svcAuthEventLinkDAO"/>
+    <property name="todoCommonFunction" ref="todoCommonFunction"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+    <property name="adoNewNameDAO" ref="adoNewNameDAO"/>
+  </bean>
+  <bean id="closeStageCase" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.CloseStageCaseImpl"
+        parent="baseService">
+    <property name="adminReviewDAO" ref="adminReviewDAO"/>
+    <property name="calculateCaseRetention" ref="calculateCaseRetention"/>
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="caseFileManagementDAO" ref="caseFileManagementDAO"/>
+    <property name="complexEventDAO" ref="complexEventDAO"/>
+    <property name="complexPersonEligibilityDAO" ref="complexPersonEligibilityDAO"/>
+    <property name="complexStageDAO" ref="complexStageDAO"/>
+    <property name="cpsInvstDetailDAO" ref="cpsInvstDetailDAO"/>
+    <property name="dynamicEventDAO" ref="dynamicEventDAO"/>
+    <property name="employeeDAO" ref="employeeDAO"/>
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="personEligibilityDAO" ref="personEligibilityDAO"/>
+    <property name="situationDAO" ref="situationDAO"/>
+    <property name="serviceAuthorizationDAO" ref="serviceAuthorizationDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="stageProgDAO" ref="stageProgDAO"/>
+    <property name="svcAuthEventLinkDAO" ref="svcAuthEventLinkDAO"/>
+    <property name="svcAuthDetailDAO" ref="svcAuthDetailDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="adoNewNameDAO" ref="adoNewNameDAO"/>
+  </bean>
+  <bean id="deleteTodo" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.DeleteTodoImpl" parent="baseService">
+    <property name="todoDAO" ref="todoDAO"/>
+  </bean>
+  <bean id="invalidateAndPostEvent" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.InvalidateAndPostEventImpl"
+        parent="baseService">
+        <property name="invalidateApproval" ref="invalidateApproval"/>
+        <property name="postEvent" ref="postEvent"/>
+  </bean>
+  <bean id="invalidateApproval" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.InvalidateApprovalImpl"
+        parent="baseService">
+    <property name="approvalEventLinkDAO" ref="approvalEventLinkDAO"/>
+    <property name="approversDAO" ref="approversDAO"/>
+    <property name="complexEventDAO" ref="complexEventDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+  </bean>
+  <bean id="postEvent" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.PostEventImpl" parent="baseService">
+    <property name="complexEventDAO" ref="complexEventDAO"/>
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    
+  </bean>
+  <bean id="retrieveAdminReview" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveAdminReviewImpl"
+        parent="baseService">
+    <property name="adminReviewDAO" ref="adminReviewDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+  </bean>
+  <bean id="retrieveApprovalStatus" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveApprovalStatusImpl"
+        parent="baseService">
+    <property name="approvalDAO" ref="approvalDAO"/>
+    <property name="approvalEventLinkDAO" ref="approvalEventLinkDAO"/>
+    <property name="approvalRejectionDAO" ref="approvalRejectionDAO"/>
+    <property name="approversDAO" ref="approversDAO"/>
+    <property name="complexStageDAO" ref="complexStageDAO"/>
+    <property name="employeeDAO" ref="employeeDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="stageProgDAO" ref="stageProgDAO"/>
+    <property name="taskDAO" ref="taskDAO"/>
+  </bean>
+  <bean id="retrieveAssign" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveAssignImpl"
+        parent="baseService">
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+    <property name="empOnCallLinkDAO" ref="empOnCallLinkDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="onCallCountyDAO" ref="onCallCountyDAO"/>
+    <property name="workloadDAO" ref="workloadDAO"/>
+    <property name="dynamicWorkloadDAO" ref="dynamicWorkloadDAO"/>
+  </bean>
+  <bean id="retrieveCaseFileManagement"
+        class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveCaseFileManagementImpl" parent="baseService">
+    <property name="caseFileManagementDAO" ref="caseFileManagementDAO"/>
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="officeDAO" ref="officeDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="unitDAO" ref="unitDAO"/>
+  </bean>
+  <bean id="retrieveCaseList" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveCaseListImpl"
+        parent="baseService">
+    <property name="dynamicCapsCaseDAO" ref="dynamicCapsCaseDAO"/>
+    <property name="caseMergeDAO" ref="caseMergeDAO"/>
+    <property name="cpsInvstDetailDAO" ref="cpsInvstDetailDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="unitAccess" ref="unitAccess"/>
+  </bean>
+  <bean id="retrieveCaseMergeList" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveCaseMergeListImpl"
+        parent="baseService">
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="complexCaseMergeDAO" ref="complexCaseMergeDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="unitAccess" ref="unitAccess"/>
+  </bean>
+  <bean id="retrieveCaseMergeVerify" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveCaseMergeVerifyImpl"
+        parent="baseService">
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="caseMergeDAO" ref="caseMergeDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="incomingDetailDAO" ref="incomingDetailDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="svcAuthDetailDAO" ref="svcAuthDetailDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="unitAccess" ref="unitAccess"/>
+  </bean>
+  <bean id="retrieveCaseSummary" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveCaseSummaryImpl"
+        parent="baseService">
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stffAsgnmtHistoryDAO" ref="stffAsgnmtHistoryDAO"/>
+    <property name="stageLinkDAO" ref="stageLinkDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="legalStatusDAO" ref="legalStatusDAO"/>
+  </bean>
+  <bean id="retrieveCaseTodo" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveCaseTodoImpl"
+        parent="baseService">
+    <property name="dynamicTodoDAO" ref="dynamicTodoDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+  </bean>
+  <bean id="retrieveChangeCaseName" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveChangeCaseNameImpl"
+        parent="baseService">
+    <property name="facilityInvstDtlDAO" ref="facilityInvstDtlDAO"/>
+    <property name="licensingInvstDtlDAO" ref="licensingInvstDtlDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="allegationHistoryDAO" ref="allegationHistoryDAO"/>
+    <property name="stageLinkDAO" ref="stageLinkDAO"/>
+    <property name="incomingFacilityDAO" ref="incomingFacilityDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+  </bean>
+  <bean id="retrieveChildUnitList" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveChildUnitListImpl"
+        parent="baseService">
+    <property name="unitDAO" ref="unitDAO"/>
+  </bean>
+  <bean id="retrieveClosureEvent" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveClosureEventImpl"
+        parent="baseService">
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="adoNewNameDAO" ref="adoNewNameDAO"/>
+    <property name="stageReopenDAO" ref="stageReopenDAO"/>
+  </bean>
+  <bean id="retrieveDesignees" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveDesigneesImpl"
+        parent="baseService">
+    <property name="empTempAssignDAO" ref="empTempAssignDAO"/>
+  </bean>
+  <bean id="retrieveEmployeeDetail" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveEmployeeDetailImpl"
+        parent="baseService">
+    <property name="empJobHistoryDAO" ref="empJobHistoryDAO"/>
+    <property name="employeeDAO" ref="employeeDAO"/>
+    <property name="employeeSkillDAO" ref="employeeSkillDAO"/>
+    <property name="nameDAO" ref="nameDAO"/>
+    <property name="officeDAO" ref="officeDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="personIdDAO" ref="personIdDAO"/>
+    <property name="personRaceDAO" ref="personRaceDAO"/>
+    <property name="personEthnicityDAO" ref="personEthnicityDAO"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+    <property name="unitAccess" ref="unitAccess"/>
+  </bean>
+  <bean id="retrieveEventList" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveEventListImpl"
+        parent="baseService">
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="dynamicEventDAO" ref="dynamicEventDAO"/>
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO"/>
+    <property name="taskDAO" ref="taskDAO"/>
+    <property name="riskAssessmentDAO" ref="riskAssessmentDAO"/>
+    <property name="relativeCareAssmtPersonDAO" ref="relativeCareAssmtPersonDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+	<property name="specialNeedsDeterminationDAO" ref="specialNeedsDeterminationDAO" />
+	<property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>	
+  </bean>
+  <bean id="retrieveIntake" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveIntakeImpl"
+        parent="baseService">
+    <property name="personDAO" ref="personDAO"/>
+    <property name="taskDAO" ref="taskDAO"/>
+    <property name="unitDAO" ref="unitDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="incomingDetailDAO" ref="incomingDetailDAO"/>
+	<property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+	<property name="empTempAssignDAO" ref="empTempAssignDAO"/>
+  </bean>
+  <bean id="retrieveOfficeCity" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveOfficeCityImpl"
+        parent="baseService">
+    <property name="mailCodeDAO" ref="mailCodeDAO"/>
+  </bean>
+  <bean id="retrieveOfficeName" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveOfficeNameImpl"
+        parent="baseService">
+    <property name="officeDAO" ref="officeDAO"/>
+  </bean>
+  <bean id="retrieveOnCallListCounty"
+        class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveOnCallListCountyImpl" parent="baseService">
+    <property name="onCallCountyDAO" ref="onCallCountyDAO"/>
+  </bean>
+  <bean id="retrieveOnCallList" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveOnCallListImpl"
+        parent="baseService">
+    <property name="dynamicOnCallDAO" ref="dynamicOnCallDAO"/>
+  </bean>
+  <bean id="retrieveOnCallPhone" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveOnCallPhoneImpl"
+        parent="baseService">
+    <property name="personPhoneDAO" ref="personPhoneDAO"/>
+  </bean>
+  <bean id="retrieveRecordsRetention"
+        class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveRecordsRetentionImpl" parent="baseService">
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="recordsRetentionDAO" ref="recordsRetentionDAO"/>
+  </bean>
+  <bean id="retrieveSpecialHandling" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveSpecialHandlingImpl"
+        parent="baseService">
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+  </bean>
+  <bean id="retrieveStaffList" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveStaffListImpl"
+        parent="baseService">
+    <property name="employeeDAO" ref="employeeDAO"/>
+    <property name="dynamicEmployeeDAO" ref="dynamicEmployeeDAO"/>
+    <property name="personPhoneDAO" ref="personPhoneDAO"/>
+  </bean>
+  <bean id="retrieveStaffSecurity" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveStaffSecurityImpl"
+        parent="baseService">
+    <property name="empSecClassLinkDAO" ref="empSecClassLinkDAO"/>
+    <property name="employeeDAO" ref="employeeDAO"/>
+    <property name="securityClassDAO" ref="securityClassDAO"/>
+    <property name="empTempAssignDAO" ref="empTempAssignDAO"/>
+  </bean>
+  <bean id="retrieveStaffTodo" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveStaffTodoImpl"
+        parent="baseService">
+    <property name="dynamicTodoDAO" ref="dynamicTodoDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+  </bean>
+  <bean id="retrieveStageList" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveStageListImpl"
+        parent="baseService">
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+  </bean>
+  <bean id="retrieveStageProgression"
+        class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveStageProgressionImpl" parent="baseService">
+    <property name="stageProgDAO" ref="stageProgDAO"/>
+    <property name="legalStatusDAO" ref="legalStatusDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+  </bean>
+  <bean id="retrieveStageReopen"
+        class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveStageReopenImpl" parent="baseService">
+    <property name="stageReopenDAO" ref="stageReopenDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="stageLinkDAO" ref="stageLinkDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="legalStatusDAO" ref="legalStatusDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="approversDAO" ref="approversDAO"/>
+  </bean>
+  <bean id="retrieveUnitID" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveUnitIDImpl"
+        parent="baseService">
+    <property name="unitDAO" ref="unitDAO"/>
+  </bean>
+  <bean id="retrieveUnitList" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveUnitListImpl"
+        parent="baseService">
+    <property name="dynamicUnitDAO" ref="dynamicUnitDAO"/>
+  </bean>
+  <bean id="retrieveUnitSummary" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveUnitSummaryImpl"
+        parent="baseService">
+    <property name="retrieveUnitHierarchy" ref="retrieveUnitHierarchy"/>
+    <property name="unitDAO" ref="unitDAO"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+    <property name="workloadDAO" ref="workloadDAO"/>
+    <property name="dynamicUnitEmpLinkDAO" ref="dynamicUnitEmpLinkDAO"/>
+     <property name="checkIfUserHasRight" ref="checkIfUserHasRight"/>
+  </bean>
+  <bean id="retrieveUnitSupervisor" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveUnitSupervisorImpl"
+        parent="baseService">
+    <property name="unitDAO" ref="unitDAO"/>
+  </bean>
+  <bean id="retrieveUserProfile" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveUserProfileImpl"
+        parent="baseService">
+    <property name="employeeDAO" ref="employeeDAO"/>
+    <property name="empSecClassLinkDAO" ref="empSecClassLinkDAO"/>
+    <property name="empTempAssignDAO" ref="empTempAssignDAO"/>
+    <property name="portalUserDAO" ref="portalUserDAO"/>
+    <property name="portalUserSecClassLinkDAO" ref="portalUserSecClassLinkDAO"/>
+    <property name="portalUserVendorLinkDAO" ref="portalUserVendorLinkDAO"/>
+  </bean>
+  <bean id="retrieveVendorStaffDetail" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveVendorStaffDetailImpl"
+        parent="baseService">
+    <property name="portalUserDAO" ref="portalUserDAO"/>    
+    <property name="portalUserDtlDAO" ref="portalUserDtlDAO"/>
+    <property name="portalUserVendorLinkDAO" ref="portalUserVendorLinkDAO"/>
+  </bean>  
+  <bean id="retrieveWorkload" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveWorkloadImpl"
+        parent="baseService">
+    <property name="tempStagePersLinkDAO" ref="tempStagePersLinkDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="dynamicWorkloadDAO" ref="dynamicWorkloadDAO"/>
+    <property name="unitAccess" ref="unitAccess"/>
+  </bean>
+  <bean id="saveAdminReview" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveAdminReviewImpl"
+        parent="baseService">
+    <property name="adminAllegationDAO" ref="adminAllegationDAO"/>
+    <property name="adminReviewDAO" ref="adminReviewDAO"/>
+    <property name="checkStageEventStatus" ref="checkStageEventStatus"/>
+    <property name="closeStageCase" ref="closeStageCase"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="todoCommonFunction" ref="todoCommonFunction"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+	<property name="cpsInvstDetailDAO" ref="cpsInvstDetailDAO"/>
+	<property name="todoDAO" ref="todoDAO"/>
+  </bean>
+  <bean id="saveAutoAdoStage" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveAutoAdoStageImpl"
+        parent="baseService">
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO"/>
+    <property name="legalActionDAO" ref="legalActionDAO"/>
+    <property name="legalActionOutcomeDAO" ref="legalActionOutcomeDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="siblingGroupDAO" ref="siblingGroupDAO"/>
+    <property name="siblingDAO" ref="siblingDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="saveStageProgression" ref="saveStageProgression"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+  </bean>
+  <bean id="saveApproval" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveApprovalImpl" parent="baseService">
+    <property name="approversDAO" ref="approversDAO"/>
+    <property name="approvalEventLinkDAO" ref="approvalEventLinkDAO"/>
+    <property name="approvalRejectionDAO" ref="approvalRejectionDAO"/>
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="capsResourceDAO" ref="capsResourceDAO"/>
+    <property name="retrieveSpecializedUnitPersonnel" ref="retrieveSpecializedUnitPersonnel"/>
+    <property name="complexTodoDAO" ref="complexTodoDAO"/>
+    <property name="closeStageCase" ref="closeStageCase"/>
+    <property name="closeOpenStage" ref="closeOpenStage"/>
+    <property name="complexCapsResourceDAO" ref="complexCapsResourceDAO"/>
+    <property name="complexEventDAO" ref="complexEventDAO"/>
+    <property name="contractDAO" ref="contractDAO"/>
+    <property name="contractPeriodDAO" ref="contractPeriodDAO"/>
+    <property name="contractVersionDAO" ref="contractVersionDAO"/>
+    <property name="contractServiceDAO" ref="contractServiceDAO"/>
+    <property name="contractCountyDAO" ref="contractCountyDAO"/>
+    <property name="determineWhichApprover" ref="determineWhichApprover"/>
+    <property name="employeeDAO" ref="employeeDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="legalActionDAO" ref="legalActionDAO"/>
+    <property name="legalActionOutcomeDAO" ref="legalActionOutcomeDAO"/>
+    <property name="paymentOfCareDAO" ref="paymentOfCareDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="retrieveSpclInvestigation" ref="retrieveSpclInvestigation"/>
+    <property name="resourceAddressDAO" ref="resourceAddressDAO"/>
+    <property name="resourceHistoryDAO" ref="resourceHistoryDAO"/>
+    <property name="resourceHistoryAuditDAO" ref="resourceHistoryAuditDAO"/>
+    <property name="resourceServiceDAO" ref="resourceServiceDAO"/>
+    <property name="saveAutoAdoStage" ref="saveAutoAdoStage"/>
+    <property name="saveCaseBudgetLimitList" ref="saveCaseBudgetLimitList"/>
+    <property name="saveClientOutbound" ref="saveClientOutbound"/>
+    <property name="saveStageProgression" ref="saveStageProgression"/>
+    <property name="serviceAuthorizationDAO" ref="serviceAuthorizationDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>   
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="svcAuthDetailDAO" ref="svcAuthDetailDAO"/>
+    <property name="taskDAO" ref="taskDAO"/>
+    <property name="todoCommonFunction" ref="todoCommonFunction"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+    <property name="countyBudgetLimitDAO" ref="countyBudgetLimitDAO"/>
+    <property name="saveVendorOutbound" ref="saveVendorOutbound"/>
+    <property name="savePlacementAlerts" ref="savePlacementAlerts"/>
+    <property name="placementDAO" ref="placementDAO"/>
+    <property name="incomingDetailDAO" ref="incomingDetailDAO" />
+    <property name="specialNeedsDeterminationDAO" ref="specialNeedsDeterminationDAO" />
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO" />
+    <property name="saveAdoFinalized" ref="saveAdoFinalized" />
+    <property name="spclInvestigationDAO" ref="spclInvestigationDAO" />
+    <property name="adoInfoDAO" ref="adoInfoDAO" />
+    <property name="fosterHomeConvPerLinkDAO" ref="fosterHomeConvPerLinkDAO" />
+    <property name="fosterHomeConvDAO" ref="fosterHomeConvDAO" />
+    <property name="rsrcLinkDAO" ref="rsrcLinkDAO" />
+    <property name="exchangeHomeDAO" ref="exchangeHomeDAO" />
+	<property name="adptSubEventLinkDAO" ref="adptSubEventLinkDAO" />
+	<property name="saveStageClosureAlerts" ref="saveStageClosureAlerts" />
+	<property name="safetyResourceDAO" ref="safetyResourceDAO"/>
+	<property name="fccpFamilyDAO" ref="fccpFamilyDAO"/>
+	<property name="contactStandardsDAO" ref="contactStandardsDAO"/>
+	<property name="cpsInvstDetailDAO" ref="cpsInvstDetailDAO"/>
+	<property name="incomingFacilityDAO" ref="incomingFacilityDAO"/>
+	<property name="saveTodo" ref="saveTodo"/>
+	<property name="unitDAO" ref="unitDAO"/>
+	<property name="empTempAssignDAO" ref="empTempAssignDAO"/>
+  </bean>
+  <bean id="saveAssign" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveAssignImpl" parent="baseService">
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="checkIfUserHasRight" ref="checkIfUserHasRight"/>
+    <property name="checkStageEventStatus" ref="checkStageEventStatus"/>
+    <property name="employeeDAO" ref="employeeDAO"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="stffAsgnmtHistoryDAO" ref="stffAsgnmtHistoryDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="unitDAO" ref="unitDAO" />
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO" />
+    
+  </bean>
+  <bean id="saveCaseFileManagement" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveCaseFileManagementImpl"
+        parent="baseService">
+    <property name="officeDAO" ref="officeDAO"/>
+    <property name="unitDAO" ref="unitDAO"/>
+    <property name="caseFileManagementDAO" ref="caseFileManagementDAO"/>
+  </bean>
+  <bean id="saveCaseMerge" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveCaseMergeImpl"
+        parent="baseService">
+    <property name="complexCaseMergeDAO" ref="complexCaseMergeDAO"/>
+    <property name="caseMergeDAO" ref="caseMergeDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="approvalEventLinkDAO" ref="approvalEventLinkDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="invalidateApproval" ref="invalidateApproval"/>
+  </bean>
+  <bean id="saveCaseName" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveCaseNameImpl" parent="baseService">
+    <property name="checkStageEventStatus" ref="checkStageEventStatus"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="capsResourceDAO" ref="capsResourceDAO"/>
+  </bean>
+  <bean id="saveCounty" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveCountyImpl" parent="baseService">
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="checkStageEventStatus" ref="checkStageEventStatus"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="stageDAO" ref="stageDAO"/>
+  </bean>
+  <bean id="saveCreateAdminReview" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveCreateAdminReviewImpl"
+        parent="baseService">
+    <property name="adminAllegationDAO" ref="adminAllegationDAO"/>
+    <property name="adminReviewDAO" ref="adminReviewDAO"/>
+    <property name="closeOpenStage" ref="closeOpenStage"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="todoCommonFunction" ref="todoCommonFunction"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+    <property name="allegationDAO" ref="allegationDAO"/>
+  </bean>
+  <bean id="saveDesignees" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveDesigneesImpl"
+        parent="baseService">
+    <property name="empTempAssignDAO" ref="empTempAssignDAO"/>
+  </bean>
+  <bean id="saveEmployeeDetail" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveEmployeeDetailImpl"
+        parent="baseService">
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="complexPersonCategoryDAO" ref="complexPersonCategoryDAO"/>
+    <property name="employeeDAO" ref="employeeDAO"/>
+    <property name="complexEmployeeDAO" ref="complexEmployeeDAO"/>
+    <property name="empJobHistoryDAO" ref="empJobHistoryDAO"/>
+    <property name="empOnCallLinkDAO" ref="empOnCallLinkDAO"/>
+    <property name="empSecClassLinkDAO" ref="empSecClassLinkDAO"/>
+    <property name="empTempAssignDAO" ref="empTempAssignDAO"/>
+    <property name="nameDAO" ref="nameDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="personCategoryDAO" ref="personCategoryDAO"/>
+    <property name="personEthnicityDAO" ref="personEthnicityDAO"/>
+    <property name="personIdDAO" ref="personIdDAO"/>
+    <property name="personRaceDAO" ref="personRaceDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="unitDAO" ref="unitDAO"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+  </bean>
+    <bean id="saveNewUnitToBecomeItsOwnParentUnit" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveNewUnitToBecomeItsOwnParentUnitImpl"
+        parent="baseService">
+    <property name="unitDAO" ref="unitDAO"/>
+  </bean>
+  <bean id="saveOnCallDetail" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveOnCallDetailImpl"
+        parent="baseService">
+    <property name="complexOnCallDAO" ref="complexOnCallDAO"/>
+    <property name="complexOnCallCountyDAO" ref="complexOnCallCountyDAO"/>
+    <property name="dynamicOnCallDAO" ref="dynamicOnCallDAO"/>
+    <property name="empOnCallLinkDAO" ref="empOnCallLinkDAO"/>
+    <property name="onCallDAO" ref="onCallDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+  </bean>
+  <bean id="saveOnCallList" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveOnCallListImpl"
+        parent="baseService">
+    <property name="dynamicOnCallDAO" ref="dynamicOnCallDAO"/>
+    <property name="complexOnCallDAO" ref="complexOnCallDAO"/>
+    <property name="onCallCountyDAO" ref="onCallCountyDAO"/>
+    <property name="empOnCallLinkDAO" ref="empOnCallLinkDAO"/>
+    <property name="onCallDAO" ref="onCallDAO"/>
+    <property name="complexOnCallCountyDAO" ref="complexOnCallCountyDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+  </bean>
+  <bean id="saveRecordsRetention" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveRecordsRetentionImpl"
+        parent="baseService">
+    <property name="recordsRetentionDAO" ref="recordsRetentionDAO"/>
+    <property name="complexRecordsRetentionDAO" ref="complexRecordsRetentionDAO"/>
+  </bean>
+  <bean id="saveReopenStage" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveReopenStageImpl"
+        parent="baseService">
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="complexEventDAO" ref="complexEventDAO"/>
+    <property name="dynamicEventDAO" ref="dynamicEventDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="placementDAO" ref="placementDAO"/>
+    <property name="recordsRetentionDAO" ref="recordsRetentionDAO"/>
+    <property name="serviceAuthorizationDAO" ref="serviceAuthorizationDAO"/>
+    <property name="situationDAO" ref="situationDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="svcAuthEventLinkDAO" ref="svcAuthEventLinkDAO"/>
+    <property name="svcAuthDetailDAO" ref="svcAuthDetailDAO"/>
+    <property name="todoCommonFunction" ref="todoCommonFunction"/>
+  </bean>
+  <bean id="saveSpecialHandling" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveSpecialHandlingImpl"
+        parent="baseService">
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+  </bean>
+  <bean id="saveStaffSecurity" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveStaffSecurityImpl"
+        parent="baseService">
+    <property name="empSecClassLinkDAO" ref="empSecClassLinkDAO"/>
+    <property name="employeeDAO" ref="employeeDAO"/>
+    <property name="empTempAssignDAO" ref="empTempAssignDAO"/>
+  </bean>
+  <bean id="saveStageProgression" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveStageProgressionImpl"
+  	     parent="baseService">
+  	<property name="capsResourceDAO" ref="capsResourceDAO"/>
+  	<property name="closeOpenStage" ref="closeOpenStage"/>
+  	<property name="eventDAO" ref="eventDAO"/>
+	<property name="incomingDetailDAO" ref="incomingDetailDAO"/>
+	<property name="personDAO" ref="personDAO"/>
+	<property name="stageDAO" ref="stageDAO"/>
+	<property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+  	<property name="todoDAO" ref="todoDAO"/>
+  	<property name="complexTodoDAO" ref="complexTodoDAO"/>  	
+	<property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+  </bean>
+  <bean id="saveStageReopen" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveStageReopenImpl"
+        parent="baseService">
+    <property name="stageReopenDAO" ref="stageReopenDAO"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="approversDAO" ref="approversDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="approvalEventLinkDAO" ref="approvalEventLinkDAO"/>
+    <property name="approvalRejectionDAO" ref="approvalRejectionDAO"/>
+    <property name="approvalDAO" ref="approvalDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+  </bean>
+  <bean id="saveSummaryVerifiedStage" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveSummaryVerifiedStageImpl"
+        parent="baseService">
+    <property name="stageDAO" ref="stageDAO"/>
+  </bean>
+  <bean id="saveSummaryRedFlagCaseStage" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveSummaryRedFlagCaseStageImpl"
+        parent="baseService">
+    <property name="stageDAO" ref="stageDAO"/>
+  </bean>
+  <bean id="saveTodo" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveTodoImpl" parent="baseService">
+    <property name="checkStageEventStatus" ref="checkStageEventStatus"/>
+    <property name="approvalEventLinkDAO" ref="approvalEventLinkDAO"/>
+    <property name="complexTodoDAO" ref="complexTodoDAO"/>
+    <property name="approvalDAO" ref="approvalDAO"/>
+    <property name="approversDAO" ref="approversDAO"/>
+    <property name="complexEventDAO" ref="complexEventDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="taskDAO" ref="taskDAO"/>
+    <property name="complexApprovalDAO" ref="complexApprovalDAO"/>
+    <property name="familyAssmtDAO" ref="familyAssmtDAO"/>
+    <property name="employeeDAO" ref="employeeDAO"/>
+    <property name="empOnCallLinkDAO" ref="empOnCallLinkDAO"/>
+    <property name="svcAuthEventLinkDAO" ref="svcAuthEventLinkDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="checkIfUserHasRight" ref="checkIfUserHasRight"/>
+    <property name="saveCaseBudgetLimitList" ref="saveCaseBudgetLimitList"/>
+  </bean>
+  <bean id="saveUnitDetail" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveUnitDetailImpl"
+        parent="baseService">
+    <property name="complexUnitDAO" ref="complexUnitDAO"/>
+    <property name="empJobHistoryDAO" ref="empJobHistoryDAO"/>
+    <property name="unitDAO" ref="unitDAO"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+  </bean>
+  <bean id="stageClosureEditChecks" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.StageClosureEditChecksImpl"
+        parent="baseService">
+    <property name="eligibilityDAO" ref="eligibilityDAO"/>
+    <property name="placementDAO" ref="placementDAO"/>
+    <property name="paymentOfCareDAO" ref="paymentOfCareDAO"/>
+    <property name="legalStatusDAO" ref="legalStatusDAO"/>
+    <property name="dynamicStageDAO" ref="dynamicStageDAO"/>
+    <property name="adptSubEventLinkDAO" ref="adptSubEventLinkDAO"/>
+    <property name="dynamicEventDAO" ref="dynamicEventDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="invalidateApproval" ref="invalidateApproval"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="serviceAuthorizationDAO" ref="serviceAuthorizationDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="stageProgDAO" ref="stageProgDAO"/>
+    <property name="svcAuthDetailDAO" ref="svcAuthDetailDAO"/>
+    <property name="svcAuthEventLinkDAO" ref="svcAuthEventLinkDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="adoNewNameDAO" ref="adoNewNameDAO"/>
+    <property name="adoptionSubsidyDAO" ref="adoptionSubsidyDAO"/>
+    <property name="exchangeChildDAO" ref="exchangeChildDAO"/>
+    <property name="specialNeedsDeterminationDAO" ref="specialNeedsDeterminationDAO"/>
+  </bean>
+  <bean id="todoCommonFunction" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.TodoCommonFunctionImpl"
+        parent="baseService">
+    <property name="todoInfoDAO" ref="todoInfoDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="complexStageDAO" ref="complexStageDAO"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+  </bean>
+  <bean id="unitAccess" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.UnitAccessImpl" parent="baseService">
+    <property name="unitDAO" ref="unitDAO"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+  </bean>
+  <bean id="retrieveCodeTypesList" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveCodeTypesListImpl" parent="baseService">
+    <property name="codesTablesInfoDAO" ref="codesTablesInfoDAO"/>
+  </bean>
+  <bean id="retrieveCodesTableDetail" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveCodesTableDetailImpl" parent="baseService">
+    <property name="dynamicCodesTablesDAO" ref="dynamicCodesTablesDAO"/>
+    <property name="codesTablesInfoDAO" ref="codesTablesInfoDAO"/>
+  </bean>
+    <bean id="saveCodeDetail" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveCodeDetailImpl" parent="baseService">
+    <property name="codesTablesHistoryDAO" ref="codesTablesHistoryDAO"/>
+    <property name="codesTablesDAO" ref="codesTablesDAO"/>
+  </bean>
+    <bean id="retrieveCodeDetail" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveCodeDetailImpl" parent="baseService">
+    <property name="codesTablesDAO" ref="codesTablesDAO"/>
+    <property name="codesTablesInfoDAO" ref="codesTablesInfoDAO"/>
+  </bean>
+    <bean id="saveAdoFinalized" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveAdoFinalizedImpl" parent="baseService">
+    <property name="personDAO" ref="personDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="personDtlDAO" ref="personDtlDAO"/>
+    <property name="personEthnicityDAO" ref="personEthnicityDAO"/>
+    <property name="personRaceDAO" ref="personRaceDAO"/>
+    <property name="incomeAndResourcesDAO" ref="incomeAndResourcesDAO"/>
+    <property name="characteristicsDAO" ref="characteristicsDAO"/>
+    <property name="medicationDAO" ref="medicationDAO"/>
+    <property name="clientOutboundDAO" ref="clientOutboundDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="placementDAO" ref="placementDAO"/>
+    <property name="adoNewNameDAO" ref="adoNewNameDAO"/>
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO"/>
+    <property name="approvalEventLinkDAO" ref="approvalEventLinkDAO"/>
+    <property name="approvalDAO" ref="approvalDAO"/>
+    <property name="approversDAO" ref="approversDAO"/>
+    <property name="stageLinkDAO" ref="stageLinkDAO"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+    <property name="situationDAO" ref="situationDAO"/>
+    <property name="specialNeedsDeterminationDAO" ref="specialNeedsDeterminationDAO"/>
+    <property name="adoptionSubsidyDAO" ref="adoptionSubsidyDAO"/>
+    <property name="eligibilityDAO" ref="eligibilityDAO"/>
+    <property name="adptSubEventLinkDAO" ref="adptSubEventLinkDAO"/>
+    <property name="nameDAO" ref="nameDAO"/>
+    <property name="svcAuthDetailDAO" ref="svcAuthDetailDAO"/>
+    <property name="svcAuthEventLinkDAO" ref="svcAuthEventLinkDAO"/>
+    <property name="serviceAuthorizationDAO" ref="serviceAuthorizationDAO"/>
+    <property name="dynamicEventDAO" ref="dynamicEventDAO"/>
+    <property name="closeStageCase" ref="closeStageCase"/>
+    <property name="capsResourceDAO" ref="capsResourceDAO"/>
+    <property name="legalStatusDAO" ref="legalStatusDAO"/>
+    <property name="exchangeChildDAO" ref="exchangeChildDAO"/>
+    <property name="personCitizenshipDAO" ref="personCitizenshipDAO"/>
+    <property name="checkIfUserHasRight" ref="checkIfUserHasRight"/>
+    <property name="aaFundingDAO" ref="aaFundingDAO"/>
+    <property name="aaFundingReasonEligDAO" ref="aaFundingReasonEligDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+  </bean>
+  <bean id="retrieveFADStageResource" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.RetrieveFADStageResourceImpl" parent="baseService">
+    <property name="capsResourceDAO" ref="capsResourceDAO"/>
+  </bean>
+    <bean id="saveStageClosureAlerts" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveStageClosureAlertsImpl" parent="baseService">
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="workloadDAO" ref="workloadDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="adoptionSubsidyDAO" ref="adoptionSubsidyDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="capsResourceDAO" ref="capsResourceDAO"/>
+  	<property name="placementDAO" ref="placementDAO"/>  
+  	<property name="eventDAO" ref="eventDAO"/>    
+    <property name="retrieveSpecializedUnitPersonnel" ref="retrieveSpecializedUnitPersonnel"/>
+    <property name="checkIfUserHasRight" ref="checkIfUserHasRight"/>
+  </bean>
+  <bean id="saveVendorStaffDetail" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.SaveVendorStaffDetailImpl"
+        parent="baseService">
+    <property name="portalLoginAuditDAO" ref="portalLoginAuditDAO"/>
+    <property name="portalUserDAO" ref="portalUserDAO"/>
+    <property name="portalUserDtlDAO" ref="portalUserDtlDAO"/>    
+    <property name="portalUserVendorLinkDAO" ref="portalUserVendorLinkDAO"/>
+    <property name="portalUserAuditDAO" ref="portalUserAuditDAO"/>
+    <property name="portalUserVendorLinkAuditDAO" ref="portalUserVendorLinkAuditDAO"/>    
+    <property name="portalUserSecClassLinkDAO" ref="portalUserSecClassLinkDAO"/>
+    <property name="portalSecurityClassDAO" ref="portalSecurityClassDAO"/>
+    <property name="complexPortalUserDAO" ref="complexPortalUserDAO"/>
+    <property name="capsResourceDAO" ref="capsResourceDAO"/>
+    <property name="employeeDAO" ref="employeeDAO"/>
+    <property name="yrppLinkDAO" ref="yrppLinkDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+  </bean>  
+  <bean id="validateLogin" class="gov.georgia.dhr.dfcs.sacwis.service.admin.impl.ValidateLoginImpl" parent="baseService">
+    <property name="portalUserDAO" ref="portalUserDAO"/>
+  </bean>
+</beans>

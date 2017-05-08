@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CaseReviewCbxLookup" table="CASE_REVIEW_CBX_LOOKUP" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.CaseReviewCbxLookupId" mapped="false"
+                  unsaved-value="undefined">
+      <meta attribute="implement-equals">true</meta>
+      <key-property name="cdQuestion" type="string">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="CD_QUESTION" length="10"/>
+      </key-property>
+      <key-property name="cdVersion" type="integer">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="CD_VERSION"/>
+      </key-property>
+      <key-property name="cdCbxQuestion" type="string">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="CD_CBX_QUESTION" length="10"/>
+      </key-property>
+    </composite-id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="txtCbxQuestion" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_CBX_QUESTION" length="100"/>
+    </property>
+  </class>
+</hibernate-mapping>

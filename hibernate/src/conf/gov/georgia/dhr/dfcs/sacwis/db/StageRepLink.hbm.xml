@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.StageRepLink" table="STAGE_REP_LINK" >
+        <id name="idStageRepLink" type="integer">
+            <column name="ID_STAGE_REP_LINK" precision="16" scale="0" />
+            <generator class="sequence"><param name="sequence">SEQ_STAGE_REP_LINK</param></generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="null" source="vm"/>
+        <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select">
+            <column name="ID_STAGE" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select">
+	            <column name="ID_PERSON" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="dtRepStart" type="date">
+            <column name="DT_REP_START" length="7" />
+        </property>
+        <property name="dtRepEnd" type="date">
+            <column name="DT_REP_END" length="7" />
+        </property>
+    </class>
+</hibernate-mapping>

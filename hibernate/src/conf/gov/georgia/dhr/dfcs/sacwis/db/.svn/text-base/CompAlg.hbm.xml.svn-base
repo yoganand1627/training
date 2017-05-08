@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.CompAlg" table="COMP_ALG" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+        <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.CompAlgId">
+            <meta attribute="implement-equals">true</meta>
+            <key-property name="intakeid" type="string">
+                <meta attribute="use-in-equals">true</meta>
+                <column name="INTAKEID" length="10" />
+            </key-property>
+            <key-property name="algid" type="string">
+                <meta attribute="use-in-equals">true</meta>
+                <column name="ALGID" length="3" />
+            </key-property>
+        </composite-id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="cintake" class="gov.georgia.dhr.dfcs.sacwis.db.CIntake" update="false" insert="false" fetch="select"
+                 unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="INTAKEID" length="10" not-null="true"/>
+        </many-to-one>
+        <property name="AType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="A_TYPE" length="2" />
+        </property>
+        <property name="APri" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="A_PRI" length="1" />
+        </property>
+        <property name="AFind" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="A_FIND" length="1" />
+        </property>
+        <property name="ADef" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="A_DEF" length="1" />
+        </property>
+        <property name="AHcfa" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="A_HCFA" length="1" />
+        </property>
+        <property name="priordesc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="PRIORDESC" length="16" />
+        </property>
+        <property name="typedesc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TYPEDESC" length="50" />
+        </property>
+        <property name="finddesc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="FINDDESC" length="50" />
+        </property>
+        <property name="ASub" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="A_SUB" length="2" />
+        </property>
+        <property name="subdesc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="SUBDESC" length="50" />
+        </property>
+        <property name="updatedt" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="UPDATEDT" length="7" />
+        </property>
+        <property name="employeeid" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="EMPLOYEEID" length="16" />
+        </property>
+        <property name="ASerious" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="A_SERIOUS" length="2" />
+        </property>
+        <property name="seriousdesc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="SERIOUSDESC" length="50" />
+        </property>
+        <property name="isemtala" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ISEMTALA" length="1" />
+        </property>
+        <property name="isResSecl" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IS_RES_SECL" length="1" />
+        </property>
+        <property name="algfindm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ALGFINDM" />
+        </property>
+        <property name="summpvm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="SUMMPVM" />
+        </property>
+        <property name="cdetailm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CDETAILM" />
+        </property>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,914 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed May 20 14:13:41 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\Code Review\Post 5-15 deploy\ActiveTotals00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=120    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'Foster Care Active First Day of Month:' (86,9,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'The number of children in DFCS custody active in foster care as of the first day of the month.' (86,130,85) Wrap 85 2 line-height=12 Keep-Top
+ Print 'Foster Care Opened During Month:' (118,9,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'The number of new children in DFCS custody who entered care at any point during the month. The child must have also been in DFCS custody at some point during the month.' (118,130,85) Wrap 85 2 line-height=12 Keep-Top
+ Print 'Foster Care Closed During Month:' (149,9,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'The number of children that were in DFCS custody at some point during the month that were not in DFCS custody at the end of the month.' (149,130,85) Wrap 85 2 line-height=12 Keep-Top
+ Print 'Foster Care Active Last Day of Month:' (180,9,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'The number of children in DFCS custody active in foster care as of the last day of the month.' (180,130,85) Wrap 85 2 line-height=12 Keep-Top
+ Print 'Court Ordered Study:' (213,9,23) Bold  Wrap 23 2 line-height=12 Keep-Top
+ Print 'The number of intakes with the special circumstance of "Juvenile Court - No Maltreatment Alleged".' (213,130,85) Wrap 85 2 line-height=12 Keep-Top
+ Print 'Non-Incident Courtesy Interviews:' (244,9,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'The number of intakes with the non-incident request type of "Courtesy Interview".' (244,130,0)
+ Print 'ICPC - Other State:' (276,9,0) Bold 
+ Print 'The number of Foster Care Child stages opened as a result of a non-incident request type "ICPC".' (276,130,85) Wrap 85 2 line-height=12 Keep-Top
+ Print 'CPS Safety Resources:' (310,9,21) Bold 
+ Print 'The number of distinct primary safety resources. An active safety resource is defined as actively supervising at least one child. An opened during the month safety resource is a safety resource that was not active(no children in care) at the beginning of the month but active(new children come to care) during the month. A closed during the month safety resource is a safety resource that was active at some point during the month and inactive at the end of the month. ' (311,130,85) Wrap 85 6 line-height=12 Keep-Top
+ Print 'This report replaces the Active Totals report in the legacy system. It provides summary stage totals during the month along with a breakdown of children by placement type active during the month. This report determines county assignments based on the stage county. When the stage county is not available (i.e. intakes), the report uses the unit county of the primary case manager. Also note that Secondary Assignments exclude MES worker.' (27,9,111) Wrap 111 4 line-height=12 Keep-Top
+ Print 'Child Placement Types Active During the Month:' (616,9,20) Bold  Wrap 20 3 line-height=12 Keep-Top
+ Print 'The number of children in approved placements by placement type at any time during the month.  All children in Foster Care Child (FCC) or Adoption (ADO) stages are counted regardless of legal status.  Children in Post Foster Care (PFC) stages are excluded.  In addition, temporary placements of type Concurrent, Respite Day, or Respite Night are not counted because these placements may overlap with the child''s primary placement.' (616,131,85) Wrap 85 6 line-height=12 Keep-Top
+ Print 'OTI Active First Day of Month:' (394,9,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'The number of secondary assignments that are active at the first day of the month where the secondary worker''s unit county is different from the stage county, or the primary worker''s unit county when the stage county is not available. The comparison is made at the first day at the month. ' (394,130,85) Wrap 85 4 line-height=12 Keep-Top
+ Print 'OTI Open During Month: ' (449,9,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'The number of new secondary assignments in the reporting month where the secondary worker''s unit county is different from stage county, or the primary worker''s unit county when the stage county is not available, at the time the secondary assignment was made on the case.' (449,130,85) Wrap 85 4 line-height=12 Keep-Top
+ Print 'OTI Closed During Month:' (503,9,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'The number of terminated secondary assignments in the reporting month where the secondary worker''s unit county is different from the stage county, or the primary worker''s unit county when the stage county is not available, at the time the secondary assignment was made on the case.' (503,130,85) Wrap 85 4 line-height=12 Keep-Top
+ Print 'OTI Active Last Day of Month:' (558,9,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'The number of secondary assignments that are active at the last day of the month where the secondary worker''s unit county is different from the stage county, or the primary worker''s unit county when the stage county is not available. The comparison is made at the last day at the month.' (558,130,85) Wrap 85 4 line-height=12 Keep-Top
+ Page-Number (676,489) '' ' of '
+ Last-Page (676,512) 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=12   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-My-Input
+ Position (1,1)
+ Do Get_Fostercare_Counts
+ ! Get count of active as of first day of the month, opened during the month, closed during the month and active as of last day of the month
+ ! for Investigation, Diversion and Ongoing stage.
+ Do Get_Simple_Counts('INV', $_dt_report, $_where_clause_master, #fdom_inv_count, #odm_inv_count, #cdm_inv_count, #ldom_inv_count)
+ Do Get_Simple_Counts('DIV', $_dt_report, $_where_clause_master, #fdom_div_count, #odm_div_count, #cdm_div_count, #ldom_div_count)
+ Do Get_Simple_Counts('FPR', $_dt_report, $_where_clause_master, #fdom_ong_count, #odm_ong_count, #cdm_ong_count, #ldom_ong_count)
+ Do Get_Court_Ordered_Study_Counts
+ Do Get_Non-Incident_Courtesy_Interview_Counts
+ Do Get_Other_State_Counts
+ Do Get_CPS_Safety_Resource_Counts
+Do Get_OTI_Counts
+
+ Do Services_Counts
+ Do Pla_Type_Counts
+End-Program
+
+Begin-Procedure Get-My-Input
+! -----------------------------
+Input $_dt_report 'Enter month and year (MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+If IsNull($_dt_report) or IsBlank($_dt_report)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+! -----------------------------
+! Sample where_clause_master
+! (unit.CD_COUNTY IN '097' OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY IN '097')) : old logic 
+! (stage.CD_STAGE_CNTY IN '097' or (stage.CD_STAGE_CNTY is null and unit.CD_COUNTY IN '097')) : current logic as of 8/2008  
+! -----------------------------
+! Sample where_clause_oti-- use only se's unit region and/or county
+! (unit_se.cd_unit_region = '017' and unit_se.cd_county = '097')
+!
+Let $_CD_STAGE_REGION_OUT_OF_STATE = '''' || '97'|| ''''
+Let $_CD_UNIT_REGION_OUT_OF_STATE = '''' || '097' || ''''
+
+Input $_CD_REGION 'Enter a value for CD_REGION' MaxLen=2  Type=Char
+Let $_CD_REGION_NQ = $_CD_REGION
+If IsNull($_CD_REGION) or IsBlank($_CD_REGION) or ($_CD_REGION = '0')  
+  Let $_where_clause_oti_region = 'unit_se.cd_unit_region is not null'
+  Let $region_selected = 'N'
+Else
+  Let $_CD_STAGE_REGION = '''' || $_CD_REGION || ''''
+  Let $_CD_UNIT_REGION = '''' || '0' || $_CD_REGION || ''''
+  !Let $_where_clause_oti_region = 'unit_se.cd_unit_region' || ' = ' || $_CD_UNIT_REGION
+  Let $region_selected = 'Y'
+End-If
+
+Input $_CD_COUNTY 'Enter a value for CD_COUNTY' MaxLen=3  Type=Char
+Let $_CD_COUNTY_NQ = $_CD_COUNTY ! COUNTY CODE WITH NO ENCLOSING QUOTES
+If IsNull($_CD_COUNTY) or IsBlank($_CD_COUNTY) or ($_CD_COUNTY = '0')
+  Let $_where_clause_oti_county = 'unit_se.cd_county is not null'
+  Let $county_selected = 'N'
+Else
+  Let $_CD_COUNTY = '''' || $_CD_COUNTY || ''''
+  !Let $_where_clause_oti_county = 'unit_se.cd_county' || ' = ' || $_CD_COUNTY
+  Let $county_selected = 'Y'
+End-If
+
+If $county_selected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From  CCOUNT
+Where CCOUNT.CODE = [$_CD_COUNTY]
+End-Select
+  Move &_County_Decode to $_header_dsp
+  Let $_where_clause_master = '(STAGE.CD_STAGE_CNTY  = ' || $_CD_COUNTY || ' OR (STAGE.CD_STAGE_CNTY IS NULL AND CD_COUNTY   = ' || $_CD_COUNTY || '))'
+  Let $_where_clause_master2 = '(STAGE2.CD_STAGE_CNTY  = ' || $_CD_COUNTY || ' OR (STAGE2.CD_STAGE_CNTY IS NULL AND UNIT2.CD_COUNTY   = ' || $_CD_COUNTY || '))'
+  Let $_where_clause_oti = 'unit_se.cd_county' || ' = ' || $_CD_COUNTY
+  If $region_selected = 'Y' and $_CD_COUNTY_NQ = 'XXX'
+    Let $_where_clause_oti = $_where_clause_oti || ' and unit_se.cd_unit_region = ' || $_CD_UNIT_REGION
+    Let $_region_header_dsp = 'Region ' || $_CD_REGION_NQ
+    lET $_header_dsp = 'County ' || $_header_dsp
+  End-If
+Else
+  If $region_selected = 'Y'
+    Let $_header_dsp = 'Region ' || $_CD_REGION_NQ
+    Let $_where_clause_master = '(STAGE.CD_STAGE_REGION  = ' || $_CD_STAGE_REGION || ' OR (STAGE.CD_STAGE_REGION IS NULL AND CD_UNIT_REGION   = ' || $_CD_UNIT_REGION || '))'
+    Let $_where_clause_master2 = '(STAGE2.CD_STAGE_REGION  = ' || $_CD_STAGE_REGION || ' OR (STAGE2.CD_STAGE_REGION IS NULL AND UNIT2.CD_UNIT_REGION   = ' || $_CD_UNIT_REGION || '))'
+    Let $_where_clause_oti = 'unit_se.cd_unit_region' || ' = ' || $_CD_UNIT_REGION
+  Else 
+    Let $_header_dsp = 'Statewide'
+    Let $_where_clause_master = '(STAGE.CD_STAGE_REGION  <> ' || $_CD_STAGE_REGION_OUT_OF_STATE || ' OR (STAGE.CD_STAGE_REGION IS NULL AND CD_UNIT_REGION <> ' || $_CD_UNIT_REGION_OUT_OF_STATE || '))'
+    Let $_where_clause_master2 = '(STAGE2.CD_STAGE_REGION  <> ' || $_CD_STAGE_REGION_OUT_OF_STATE || ' OR (STAGE2.CD_STAGE_REGION IS NULL AND UNIT2.CD_UNIT_REGION <> ' || $_CD_UNIT_REGION_OUT_OF_STATE || '))'
+    Let $_where_clause_oti = ' unit_se.cd_unit_region is not null '
+  End-If
+End-If
+
+!Let $_where_clause_oti = $_where_clause_oti_region || ' and ' || $_where_clause_oti_county
+Let $_where_clause_oti_compare = '(unit_se.cd_county <> stage.cd_stage_cnty or (stage.cd_stage_cnty is null and unit_se.cd_county <> unit_pr.cd_county))'
+End-Procedure
+
+Begin-Procedure Get_Fostercare_Counts
+!Get_Active_Placement_1st_Of_Month_Count
+Begin-Select distinct
+count(distinct spl.id_person) &_active_pla_1st_cnt
+from stage, stage_person_link spl, unit, legal_status_view 
+where stage.cd_stage in ('SUB','ADO')
+  and (stage.dt_stage_close >= (TO_DATE($_dt_report, 'MM/YYYY')) or stage.dt_stage_close is null) !closed after first of month
+  and stage.dt_stage_start < (TO_DATE($_dt_report, 'MM/YYYY')) !started before first of month
+  and spl.cd_stage_pers_role='PC'
+  and stage.id_stage = spl.id_stage 
+  AND stage.id_unit = unit.id_unit
+  AND legal_status_view.IN_DFCS_CUSTODY = 'Y' !designates legal status is considered IN DFCS CUSTODY
+  and legal_status_view.ID_CASE = stage.ID_CASE !joining child's legal status to the case, not just the stage
+  and legal_status_view.ID_PERSON = spl.ID_PERSON
+  and legal_status_view.DT_LEGAL_STAT_STATUS_DT <(TO_DATE($_dt_report, 'MM/YYYY')) !status began before the first day of the month < (TO_DATE($_dt_report, 'MM/YYYY'))
+  and legal_status_view.DT_LEGAL_STAT_END >= (TO_DATE($_dt_report, 'MM/YYYY')) !status ended after first day of month.
+  and [$_where_clause_master]
+  !AND (unit.CD_COUNTY = [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = [$_CD_COUNTY])) ! County Parameter 
+End-Select
+
+!Get_New_Placement_In_Month_Count
+Begin-Select 
+count(distinct spl.id_person) &_new_pla_cnt
+from stage, stage_person_link spl, unit, legal_status_view 
+where stage.cd_stage in ('SUB','ADO')
+  and stage.dt_stage_start < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! opened before month end
+  and stage.dt_stage_start >= (TO_DATE($_dt_report, 'MM/YYYY')) ! started after first of month
+  and spl.cd_stage_pers_role='PC'
+  and stage.id_stage = spl.id_stage 
+  AND stage.id_unit = unit.id_unit
+  AND legal_status_view.IN_DFCS_CUSTODY = 'Y' ! designates legal status is considered IN DFCS CUSTODY
+  and legal_status_view.ID_CASE = stage.ID_CASE ! joining child's legal status to the case, not just the stage
+  and legal_status_view.ID_PERSON = spl.ID_PERSON
+  and legal_status_view.DT_LEGAL_STAT_STATUS_DT < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY')) + 1) !status began before the LAST day of the month
+  and legal_status_view.DT_LEGAL_STAT_END >= (TO_DATE($_dt_report, 'MM/YYYY')) !status ended after first day of month.
+  and [$_where_clause_master]
+  !AND (unit.CD_COUNTY = [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = [$_CD_COUNTY])) ! County Parameter   
+  and not exists! this stgeagere should not be a pending at the 1st of the month of the same child
+    (select *
+      from stage stage2, stage_person_link spl2, unit unit2, legal_status_view legal_status_view2 
+      where stage2.cd_stage in ('SUB','ADO')
+      and (stage2.dt_stage_close >= (TO_DATE($_dt_report, 'MM/YYYY')) or stage2.dt_stage_close is null) !closed after first of month
+      and stage2.dt_stage_start < (TO_DATE($_dt_report, 'MM/YYYY')) ! started before first of month
+      and spl2.cd_stage_pers_role='PC'
+      and stage2.id_stage = spl2.id_stage 
+      AND stage2.id_unit = unit2.id_unit
+      AND legal_status_view2.IN_DFCS_CUSTODY = 'Y' ! designates legal status is considered IN DFCS CUSTODY
+      and legal_status_view2.ID_CASE = stage2.ID_CASE ! joining child's legal status to the case, not just the stage
+      and legal_status_view2.ID_PERSON = spl2.ID_PERSON
+      and legal_status_view2.DT_LEGAL_STAT_STATUS_DT < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY')) + 1) !status began before the LAST day of the month
+      and legal_status_view2.DT_LEGAL_STAT_END >= (TO_DATE($_dt_report, 'MM/YYYY')) !status ended after first day of month.
+      and [$_where_clause_master2]
+!AND (unit2.CD_COUNTY = [$_CD_COUNTY] OR (unit2.cd_county = 'XXX' AND s2.CD_STAGE_CNTY = [$_CD_COUNTY])) ! County Parameter 
+      and stage.id_case = stage2.id_case ! join to main query above
+      and spl.id_person = spl2.id_person   !join to main query above
+    )
+End-Select
+
+!Get_Closed_Placement_In_Month_Count
+Begin-Select
+count(distinct spl.id_person) &_clsd_pla_cnt
+from stage, stage_person_link spl, unit, legal_status_view 
+where stage.cd_stage in ('SUB','ADO')
+  and stage.dt_stage_start < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! opened before month end
+  and (stage.dt_stage_close >= TO_DATE($_dt_report, 'MM/YYYY') or dt_stage_close is null) ! closed after first day of reporting period identifies all stages active at any time during the month
+  and spl.cd_stage_pers_role='PC'
+  and stage.id_stage = spl.id_stage 
+  AND stage.id_unit = unit.id_unit
+  AND legal_status_view.IN_DFCS_CUSTODY = 'Y' ! designates legal status is considered IN DFCS CUSTODY
+  and legal_status_view.ID_CASE = stage.ID_CASE ! joining child's legal status to the case, not just the stage
+  and legal_status_view.ID_PERSON = spl.ID_PERSON
+  and legal_status_view.DT_LEGAL_STAT_STATUS_DT < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! status began before month end 
+  and legal_status_view.DT_LEGAL_STAT_END >= TO_DATE($_dt_report, 'MM/YYYY') !status ended after first day of month.
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY = [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = [$_CD_COUNTY])) ! County Parameter 
+  and not exists
+    (select *
+      from stage stage2, stage_person_link spl2, unit unit2, legal_status_view legal_status_view2 
+      where stage2.cd_stage in ('SUB','ADO')
+      and (stage2.dt_stage_close >= (TO_DATE($_dt_report, 'MM/YYYY')) or stage2.dt_stage_close is null) !closed after first of month or null
+      and stage2.dt_stage_start < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! started before last day of month
+      and spl2.cd_stage_pers_role='PC'
+      and stage2.id_stage = spl2.id_stage 
+      AND stage2.id_unit = unit2.id_unit
+      AND legal_status_view2.IN_DFCS_CUSTODY = 'Y' ! designates legal status is considered IN DFCS CUSTODY
+      and legal_status_view2.ID_CASE = stage2.ID_CASE ! joining child's legal status to the case, not just the stage
+      and legal_status_view2.ID_PERSON = spl2.ID_PERSON
+      and legal_status_view2.DT_LEGAL_STAT_STATUS_DT < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! end of month legal status  !status began before the first day of the month
+      and legal_status_view2.DT_LEGAL_STAT_END >= (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))) ! end of month legal status (do not use the '+1' here since legal status view already subtracts 1 day from the following legal status start date
+      and [$_where_clause_master2]
+!AND (unit2.CD_COUNTY = [$_CD_COUNTY] OR (unit2.cd_county = 'XXX' AND s2.CD_STAGE_CNTY = [$_CD_COUNTY])) ! County Parameter 
+      and stage.id_case = stage2.id_case ! join to main query above
+      and spl.id_person = spl2.id_person   !join to main query above
+     )
+End-Select
+
+!Get_Active_Placement_Last_Day_Of_Month_Count
+Begin-Select distinct
+count(distinct spl.id_person) &_active_pla_last_cnt
+from stage, stage_person_link spl, unit, legal_status_view 
+where stage.cd_stage in ('SUB','ADO')
+  and (stage.dt_stage_close >= (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) or stage.dt_stage_close is null) 
+  and stage.dt_stage_start < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) !started before first day of next month.
+  and spl.cd_stage_pers_role='PC'
+  and stage.id_stage = spl.id_stage 
+  AND stage.id_unit = unit.id_unit
+  AND legal_status_view.IN_DFCS_CUSTODY = 'Y' ! designates legal status is considered IN DFCS CUSTODY
+  and legal_status_view.ID_CASE = stage.ID_CASE ! joining child's legal status to the case, not just the stage
+  and legal_status_view.ID_PERSON = spl.ID_PERSON
+  and legal_status_view.DT_LEGAL_STAT_STATUS_DT < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! end of month legal status  !status began before the first day of the month
+  and legal_status_view.DT_LEGAL_STAT_END >= (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))) ! end of month legal status (do not use the '+1' here because the legal status view already subtracts 1 day from the following legal status start date
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY = [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = [$_CD_COUNTY])) ! County Parameter 
+End-Select
+End-Procedure
+
+Begin-Procedure Get_Simple_Counts($STAGE_TYPE, $DT_RPRT, $where_clause, :#fdom_cnt, :#odm_cnt, :#cdm_cnt, :#ldom_cnt)
+!Get_Active First Day of the Month
+Begin-Select 
+count (distinct stage.id_stage) &active_1st_cnt
+from stage, unit
+where stage.cd_stage = $STAGE_TYPE 
+  and (dt_stage_close is null or dt_stage_close >= to_date($DT_RPRT, 'MM/YYYY') )
+  and dt_stage_start < to_date($DT_RPRT, 'MM/YYYY') 
+  AND stage.id_unit = unit.id_unit
+  and [$where_clause]
+End-Select
+
+
+!Get Opened During the Month
+Begin-Select 
+count (stage.id_stage) &new_cnt
+from caps.stage, unit
+  where stage.cd_stage = $STAGE_TYPE 
+  and dt_stage_start < (LAST_DAY(TO_DATE($DT_RPRT, 'MM/YYYY'))+1) 
+  and dt_stage_start >= to_date($DT_RPRT, 'MM/YYYY') 
+  AND stage.id_unit = unit.id_unit
+  and [$where_clause]
+!AND (unit.CD_COUNTY = $COUNTY OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = $COUNTY))
+End-Select
+  
+!Get Closed During the Month
+Begin-Select
+count (stage.id_stage) &clsd_cnt
+from caps.stage, unit
+  where stage.cd_stage = $STAGE_TYPE 
+  and dt_stage_close < (LAST_DAY(TO_DATE($DT_RPRT, 'MM/YYYY'))+1) 
+  and dt_stage_close >= to_date($DT_RPRT, 'MM/YYYY') 
+  AND stage.id_unit = unit.id_unit
+  and [$where_clause]!
+!AND (unit.CD_COUNTY = $COUNTY OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = $COUNTY))   
+End-Select
+
+!Get Active Last Day of the Month 
+Begin-Select 
+count (distinct stage.id_stage) &active_last_cnt
+from stage, unit
+  where stage.cd_stage = $STAGE_TYPE 
+  and (dt_stage_close >= (LAST_DAY(TO_DATE($DT_RPRT, 'MM/YYYY'))+1) or dt_stage_close is null) 
+  and dt_stage_start < (LAST_DAY(TO_DATE($DT_RPRT, 'MM/YYYY'))+1) 
+  AND stage.id_unit = unit.id_unit
+  and [$where_clause]!
+End-Select  
+Move &active_1st_cnt to #fdom_cnt
+Move &new_cnt to #odm_cnt
+Move &clsd_cnt to #cdm_cnt
+Move &active_last_cnt to #ldom_cnt
+
+End-Procedure
+
+Begin-Procedure Get_Court_Ordered_Study_Counts
+! Get count of active at first day of the month
+Begin-Select
+count (distinct stage.id_stage) &_active_cos_1st_cnt
+from stage, unit, incoming_detail
+  where stage.cd_stage in ('INT') 
+  and (dt_stage_close is null or dt_stage_close >= to_date($_dt_report, 'MM/YYYY')) ! first day of reporting period 
+  and dt_stage_start < to_date($_dt_report, 'MM/YYYY') ! began before first day of reporting period
+  AND stage.id_unit = unit.id_unit
+  and incoming_detail.ID_STAGE = stage.id_stage
+  and incoming_detail.CD_SPCL_CIRCUMSTANCES = 'JCN' ! Stands For Juvenile Court  No Maltreatment Alleged
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY = [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = [$_CD_COUNTY]))
+End-Select
+! Get count of opened during the month
+Begin-Select
+count (distinct stage.id_stage)  &_new_cos_cnt
+from caps.stage, unit, incoming_detail
+  where stage.cd_stage in ('INT') 
+  and dt_stage_start < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! began before the first day of the next reporting period
+  and dt_stage_start >= to_date($_dt_report, 'MM/YYYY') ! began on or after the first day of reporting period
+  AND stage.id_unit = unit.id_unit
+  and incoming_detail.ID_STAGE = stage.id_stage
+  and incoming_detail.CD_SPCL_CIRCUMSTANCES = 'JCN' 
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY IN [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY IN [$_CD_COUNTY]))
+End-Select
+! Get count of closed during the month
+Begin-Select
+count (distinct stage.id_stage) &_clsd_cos_cnt
+from caps.stage, unit, incoming_detail
+  where stage.cd_stage in ('INT') 
+  and dt_stage_close < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! closed before first day of next reporting period
+  and dt_stage_close >= to_date($_dt_report, 'MM/YYYY') ! closed on or after the first day of the month
+  AND stage.id_unit = unit.id_unit
+  and incoming_detail.ID_STAGE = stage.id_stage
+  and incoming_detail.CD_SPCL_CIRCUMSTANCES = 'JCN' 
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY IN [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY IN [$_CD_COUNTY]))
+End-Select
+! Get count of active at last day of the month
+Begin-Select
+count (distinct stage.id_stage) &_active_cos_last_cnt
+from caps.stage, unit, incoming_detail
+  where stage.cd_stage in ('INT') 
+  and (dt_stage_close is null or dt_stage_close >= (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1)) ! closed after first day of next reporting period 
+  and dt_stage_start < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! began before first day of the next reporting period
+  AND stage.id_unit = unit.id_unit
+  and incoming_detail.ID_STAGE = stage.id_stage
+  and incoming_detail.CD_SPCL_CIRCUMSTANCES = 'JCN' 
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY IN [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY IN [$_CD_COUNTY]))
+End-Select
+End-Procedure
+
+Begin-Procedure Get_Non-Incident_Courtesy_Interview_Counts 
+! Get count of non-incident request type of "Courtesy Interview" active at first day of the month     
+Begin-Select
+count (distinct stage.id_stage) &_active_nici_1st_cnt
+from stage, unit, incoming_detail
+  where stage.cd_stage in ('INT') 
+  and (dt_stage_close is null or dt_stage_close >= to_date($_dt_report, 'MM/YYYY')) ! first day of reporting period
+  and dt_stage_start < to_date($_dt_report, 'MM/YYYY') ! began before first day of reporting period
+  AND stage.id_unit = unit.id_unit
+  and incoming_detail.ID_STAGE = stage.id_stage
+  and incoming_detail.CD_NON_RSDNT_REQ_TYPE = 'CO' ! Stands For Courtesy Interview
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY IN [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY IN [$_CD_COUNTY]))  
+End-Select
+! Get count of non-incident request type of "Courtesy Interview" Opened During Month
+Begin-Select
+count (distinct stage.id_stage) &_new_nici_cnt
+from stage, unit, incoming_detail
+  where stage.cd_stage in ('INT') 
+  and dt_stage_start < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! began before the first day of the next reporting period
+  and dt_stage_start >= to_date($_dt_report, 'MM/YYYY') ! began on or after the first day of reporting period
+  AND stage.id_unit = unit.id_unit
+  and incoming_detail.ID_STAGE = stage.id_stage
+  and incoming_detail.CD_NON_RSDNT_REQ_TYPE = 'CO' 
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY IN [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY IN [$_CD_COUNTY])) ! County Parameter 
+End-Select
+! Get count of non-incident request type of "Courtesy Interview" Closed During Month
+Begin-Select
+count (distinct stage.id_stage) &_clsd_nici_cnt
+from stage, unit, incoming_detail
+  where stage.cd_stage in ('INT') 
+  and dt_stage_close < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! closed before first day of next reporting period
+  and dt_stage_close >= to_date($_dt_report, 'MM/YYYY') ! closed on or after the first day of the month
+  AND stage.id_unit = unit.id_unit
+  and incoming_detail.ID_STAGE = stage.id_stage
+  and incoming_detail.CD_NON_RSDNT_REQ_TYPE = 'CO' 
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY IN [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY IN [$_CD_COUNTY]))  
+End-Select  
+! Get count of non-incident request type of "Courtesy Interview" active at last day of the month 
+Begin-Select
+count (distinct stage.id_stage) &_active_nici_last_cnt
+from stage, unit, incoming_detail
+  where stage.cd_stage in ('INT') 
+  and (dt_stage_close is null or dt_stage_close >= (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1)) ! closed after first day of next reporting period
+  and dt_stage_start < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! began before first day of the next reporting period
+  AND stage.id_unit = unit.id_unit
+  and incoming_detail.ID_STAGE = stage.id_stage
+  and incoming_detail.CD_NON_RSDNT_REQ_TYPE = 'CO' 
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY IN [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY IN [$_CD_COUNTY]))
+End-Select
+End-Procedure
+
+Begin-Procedure Get_Other_State_Counts
+! The number of FCC stages opened as a result of a non-incident request type "ICPC" active at first day of the month     
+Begin-Select
+count (distinct stage.id_stage)   &_active_icpc_1st_cnt
+from stage, unit, stage_link, incoming_detail
+  where stage.cd_stage in ('SUB') 
+  and (dt_stage_close is null or dt_stage_close >= to_date($_dt_report, 'MM/YYYY')) ! first day of reporting period 
+  and dt_stage_start < to_date($_dt_report, 'MM/YYYY') ! began before first day of reporting period
+  AND stage.id_unit = unit.id_unit
+  and stage.ID_STAGE = stage_link.ID_STAGE 
+  and stage_link.ID_PRIOR_STAGE = incoming_detail.ID_STAGE
+  and incoming_detail.CD_NON_RSDNT_REQ_TYPE = 'IC' ! means ICPC
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY = [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = [$_CD_COUNTY])) 
+End-Select  
+! The number of FCC stages opened as a result of a non-incident request type "ICPC" during the month
+Begin-Select
+count (distinct stage.id_stage)  &_new_icpc_cnt
+from stage, unit, stage_link, incoming_detail
+  where stage.cd_stage in ('SUB') 
+  and dt_stage_start < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! began before the first day of the next reporting period
+  and dt_stage_start >= to_date($_dt_report, 'MM/YYYY') ! began on or after the first day of reporting period
+  AND stage.id_unit = unit.id_unit
+  and stage.ID_STAGE = stage_link.ID_STAGE 
+  and stage_link.ID_PRIOR_STAGE = incoming_detail.ID_STAGE
+  and incoming_detail.CD_NON_RSDNT_REQ_TYPE = 'IC' 
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY = [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = [$_CD_COUNTY])) 
+End-Select  
+! The number of FCC stages resulted of a non-incident request type "ICPC" closed during the month
+Begin-Select
+count (distinct stage.id_stage)  &_clsd_icpc_cnt
+from stage, unit, stage_link, incoming_detail 
+  where stage.cd_stage in ('SUB') 
+  and dt_stage_close < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! closed before first day of next reporting period
+  and dt_stage_close >= to_date($_dt_report, 'MM/YYYY') ! closed on or after the first day of the month
+  AND stage.id_unit = unit.id_unit
+  and stage.ID_STAGE = stage_link.ID_STAGE 
+  and stage_link.ID_PRIOR_STAGE = incoming_detail.ID_STAGE
+  and incoming_detail.CD_NON_RSDNT_REQ_TYPE = 'IC' 
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY = [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = [$_CD_COUNTY])) 
+End-Select  
+! The number of FCC stages opened as a result of a non-incident request type "ICPC" active at the last day of the month
+Begin-Select
+count (distinct stage.id_stage)   &_active_icpc_last_cnt
+from stage, unit, stage_link, incoming_detail
+  where stage.cd_stage in ('SUB') 
+  and (dt_stage_close is null or dt_stage_close >= (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1)) ! closed after first day of next reporting period 
+  and dt_stage_start < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! began before first day of the next reporting period
+  AND stage.id_unit = unit.id_unit
+  and stage.ID_STAGE = stage_link.ID_STAGE 
+  and stage_link.ID_PRIOR_STAGE = incoming_detail.ID_STAGE
+  and incoming_detail.CD_NON_RSDNT_REQ_TYPE = 'IC' 
+  and [$_where_clause_master]
+!AND (unit.CD_COUNTY = [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = [$_CD_COUNTY]))
+End-Select
+End-Procedure
+
+Begin-Procedure Get_CPS_Safety_Resource_Counts 
+! Active First Day of Month
+Begin-Select
+count (distinct safety_resource.ID_PRIMARY) &_active_sr_1st_cnt
+from safety_resource, safety_resource_child, stage, unit, event
+where safety_resource.ID_EVENT = safety_resource_child.ID_SR_EVENT
+and safety_resource_child.DT_START < to_date($_dt_report, 'MM/YYYY') ! began before first day of reporting period
+and (safety_resource_child.DT_END >= to_date($_dt_report, 'MM/YYYY') ! first day of reporting period
+  or safety_resource_child.DT_END is null)
+and safety_resource.ID_EVENT = event.id_event
+and stage.id_stage = event.id_event_stage   
+and stage.id_unit = unit.id_unit   
+and [$_where_clause_master]
+!AND (unit.CD_COUNTY = [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = [$_CD_COUNTY]))
+End-Select
+!CPS Safety Resources Opened During Month
+Begin-Select
+count (distinct safety_resource.ID_PRIMARY)  &_new_sr_cnt
+from safety_resource, safety_resource_child, stage, unit, event
+where safety_resource.ID_EVENT = safety_resource_child.ID_SR_EVENT
+and safety_resource_child.DT_START >= to_date($_dt_report, 'MM/YYYY') ! began on or after first day of reporting period
+and safety_resource_child.DT_START < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! began before the first day of the next reporting period
+and safety_resource.ID_EVENT = event.id_event
+and stage.id_stage = event.id_event_stage   
+and stage.id_unit = unit.id_unit   
+and [$_where_clause_master]
+and not exists !excluding resources which had children in care in the beginning of the month
+   (Select
+     distinct safety_resource2.ID_PRIMARY 
+     from safety_resource safety_resource2
+     , safety_resource_child safety_resource_child2, stage stage2, unit unit2, event event2
+     where safety_resource2.ID_EVENT = safety_resource_child2.ID_SR_EVENT
+     and safety_resource_child2.DT_START < to_date($_dt_report, 'MM/YYYY') ! began before first day of reporting period
+     and (safety_resource_child2.DT_END >= to_date($_dt_report, 'MM/YYYY') ! first day of reporting period
+     or safety_resource_child2.DT_END is null)
+     and safety_resource2.ID_EVENT = event2.id_event
+     and stage2.id_stage = event2.id_event_stage   
+     and stage2.id_unit = unit2.id_unit   
+     and [$_where_clause_master]and safety_resource2.id_primary = safety_resource.id_primary
+    ) 
+!AND (unit.CD_COUNTY = [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = [$_CD_COUNTY]))
+End-Select
+
+!CPS Safety Resources Closed During Month- Resources that were active at some point in the month and inactive at the end of the month
+Begin-Select
+count (distinct safety_resource.ID_PRIMARY)  &_clsd_sr_cnt
+from safety_resource, safety_resource_child, stage, unit, event
+where safety_resource.ID_EVENT = safety_resource_child.ID_SR_EVENT
+and safety_resource_child.DT_END >= to_date($_dt_report, 'MM/YYYY') ! closed on or after the first day of the month
+and safety_resource_child.DT_END < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! closed before first day of next reporting period
+and safety_resource.ID_EVENT = event.id_event
+and stage.id_stage = event.id_event_stage   
+and stage.id_unit = unit.id_unit   
+and [$_where_clause_master]
+!AND (unit.CD_COUNTY = [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = [$_CD_COUNTY]))
+and not exists ( ! ensure this resource dioes not have anyc other child at month end
+select distinct safety_resource2.ID_PRIMARY ! safety resources active at end of the month
+from safety_resource safety_resource2, safety_resource_child, stage, unit, event
+where safety_resource2.ID_EVENT = safety_resource_child.ID_SR_EVENT
+and safety_resource_child.DT_START < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) 
+and (safety_resource_child.DT_END >= (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1)
+  or safety_resource_child.DT_END is null)
+and safety_resource2.ID_EVENT = event.id_event
+and stage.id_stage = event.id_event_stage   
+and stage.id_unit = unit.id_unit  
+and safety_resource2.id_primary = safety_resource.id_primary 
+and [$_where_clause_master]
+)
+End-Select
+!CPS Safety Resources Active Last Day of Month
+Begin-Select
+count (distinct safety_resource.ID_PRIMARY)  &_active_sr_last_cnt
+from safety_resource, safety_resource_child, stage, unit, event
+where safety_resource.ID_EVENT = safety_resource_child.ID_SR_EVENT
+and safety_resource_child.DT_START < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! began before first day of the next reporting period
+and (safety_resource_child.DT_END >= (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) ! closed after first day of next reporting period
+  or safety_resource_child.DT_END is null)
+and safety_resource.ID_EVENT = event.id_event
+and stage.id_stage = event.id_event_stage   
+and stage.id_unit = unit.id_unit   
+and [$_where_clause_master]
+!AND (unit.CD_COUNTY = [$_CD_COUNTY] OR (unit.cd_county = 'XXX' AND stage.CD_STAGE_CNTY = [$_CD_COUNTY]))
+End-Select
+End-Procedure
+
+Begin-Procedure Get_OTI_Counts
+Begin-Select distinct 
+sah_se.id_person &id_person_active_1st
+sah_se.id_stage  &id_stage_active_1st
+ Add 1 to #_active_oti_1st_cnt
+from stage_assign_history sah_se, employee emp_se, unit unit_se, stage_assign_history sah_pr, employee emp_pr, unit unit_pr, stage  
+where sah_se.id_person = emp_se.id_person and emp_se.id_emp_unit = unit_se.id_unit
+and sah_se.CD_ROLE = 'SE'
+and sah_se.DT_ASSGND < to_date($_dt_report, 'mm/yyyy') and (sah_se.DT_UNASSGND is null or sah_se.DT_UNASSGND >= to_date($_dt_report, 'mm/yyyy'))
+and emp_se.CD_EMPLOYEE_CLASS <> 'G1008'
+and sah_se.id_stage = sah_pr.id_stage 
+and [$_where_clause_oti_compare]
+and sah_pr.id_person = emp_pr.id_person and emp_pr.id_emp_unit = unit_pr.id_unit
+and sah_pr.cd_role = 'PR'
+and sah_pr.DT_ASSGND < to_date($_dt_report, 'mm/yyyy') and (sah_pr.DT_UNASSGND is null or sah_pr.DT_UNASSGND >= to_date($_dt_report, 'mm/yyyy'))
+and [$_where_clause_oti]
+! changing to stage's county 8/2008
+and sah_pr.id_stage = stage.id_stage
+End-Select
+
+Begin-Select distinct 
+sah_se.id_person &id_person_new
+sah_se.id_stage  &id_stage_new
+ Add 1 to #_new_oti_cnt
+from stage_assign_history sah_se, employee emp_se, unit unit_se, stage_assign_history sah_pr, employee emp_pr, unit unit_pr, stage 
+where sah_se.id_person = emp_se.id_person and emp_se.id_emp_unit = unit_se.id_unit
+and sah_se.CD_ROLE = 'SE'
+and sah_se.DT_ASSGND < (last_day(to_date($_dt_report, 'mm/yyyy'))+1) and sah_se.DT_ASSGND >= to_date($_dt_report, 'mm/yyyy')
+and emp_se.CD_EMPLOYEE_CLASS <> 'G1008'
+and sah_se.id_stage = sah_pr.id_stage 
+and [$_where_clause_oti_compare]
+and sah_pr.id_person = emp_pr.id_person and emp_pr.id_emp_unit = unit_pr.id_unit
+and sah_pr.cd_role = 'PR'
+and sah_pr.DT_ASSGND <= sah_se.DT_ASSGND and (sah_pr.DT_UNASSGND is null or sah_pr.DT_UNASSGND >= sah_se.DT_ASSGND)
+and [$_where_clause_oti]
+and not exists (
+select * ! active at first of the month  
+from stage_assign_history sah_se2, employee emp_se2, unit unit_se, stage_assign_history sah_pr, employee emp_pr, unit unit_pr, stage 
+where sah_se2.id_person = emp_se2.id_person and emp_se2.id_emp_unit = unit_se.id_unit
+and sah_se2.CD_ROLE = 'SE'
+and sah_se2.DT_ASSGND < to_date($_dt_report, 'mm/yyyy') and (sah_se2.DT_UNASSGND is null or sah_se2.DT_UNASSGND >= to_date($_dt_report, 'mm/yyyy'))
+and emp_se2.CD_EMPLOYEE_CLASS <> 'G1008'
+and sah_se2.id_stage = sah_pr.id_stage 
+and [$_where_clause_oti_compare]
+and sah_pr.id_person = emp_pr.id_person and emp_pr.id_emp_unit = unit_pr.id_unit
+and sah_pr.cd_role = 'PR'
+and sah_pr.DT_ASSGND < to_date($_dt_report, 'mm/yyyy') and (sah_pr.DT_UNASSGND is null or sah_pr.DT_UNASSGND >= to_date($_dt_report, 'mm/yyyy'))
+and [$_where_clause_oti]
+and sah_se2.id_stage = sah_se.id_stage
+and  emp_se2.id_person= emp_se.id_person
+! changing to stage's county 8/2008
+and sah_pr.id_stage = stage.id_stage
+)
+! changing to stage's county 8/2008
+and sah_pr.id_stage = stage.id_stage
+End-Select
+
+Begin-Select distinct 
+sah_se.id_person &id_person_clsd
+sah_se.id_stage  &id_stage_clsd
+ Add 1 to #_clsd_oti_cnt
+from stage_assign_history sah_se, employee emp_se, unit unit_se, stage_assign_history sah_pr, employee emp_pr, unit unit_pr, stage 
+where sah_se.id_person = emp_se.id_person and emp_se.id_emp_unit = unit_se.id_unit
+and sah_se.CD_ROLE = 'SE'
+and sah_se.DT_UNASSGND < (last_day(to_date($_dt_report, 'mm/yyyy'))+1) and sah_se.DT_UNASSGND >= to_date($_dt_report, 'mm/yyyy')
+and emp_se.CD_EMPLOYEE_CLASS <> 'G1008'
+and sah_se.id_stage = sah_pr.id_stage 
+and [$_where_clause_oti_compare]
+and sah_pr.id_person = emp_pr.id_person and emp_pr.id_emp_unit = unit_pr.id_unit
+and sah_pr.cd_role = 'PR'
+and sah_pr.DT_ASSGND <= sah_se.DT_ASSGND and (sah_pr.DT_UNASSGND is null or sah_pr.DT_UNASSGND >= sah_se.DT_ASSGND)
+and [$_where_clause_oti]
+and not exists (
+select * ! active at last of the month  
+from stage_assign_history sah_se2, employee emp_se2, unit unit_se, stage_assign_history sah_pr, employee emp_pr, unit unit_pr, stage 
+where sah_se2.id_person = emp_se2.id_person and emp_se2.id_emp_unit = unit_se.id_unit
+and sah_se2.CD_ROLE = 'SE'
+and sah_se2.DT_ASSGND < (last_day(to_date($_dt_report, 'mm/yyyy'))+1) and (sah_se2.DT_UNASSGND is null or sah_se2.DT_UNASSGND >= (last_day(to_date($_dt_report, 'mm/yyyy'))+1))
+and emp_se2.CD_EMPLOYEE_CLASS <> 'G1008'
+and sah_se2.id_stage = sah_pr.id_stage
+and [$_where_clause_oti_compare]
+and sah_pr.id_person = emp_pr.id_person and emp_pr.id_emp_unit = unit_pr.id_unit
+and sah_pr.cd_role = 'PR'
+and sah_pr.DT_ASSGND <= (last_day(to_date($_dt_report, 'mm/yyyy'))+1) and (sah_pr.DT_UNASSGND is null or sah_pr.DT_UNASSGND >= (last_day(to_date($_dt_report, 'mm/yyyy'))+1))
+and [$_where_clause_oti]
+and sah_se2.id_stage = sah_se.id_stage
+and  emp_se2.id_person= emp_se.id_person
+! changing to stage's county 8/2008
+and sah_pr.id_stage = stage.id_stage
+)
+! changing to stage's county 8/2008
+and sah_pr.id_stage = stage.id_stage
+End-Select
+
+Begin-Select
+sah_se.id_person &id_person_active_last
+sah_se.id_stage  &id_stage_active_last
+ Add 1 to #_active_oti_last_cnt
+from stage_assign_history sah_se, employee emp_se, unit unit_se, stage_assign_history sah_pr, employee emp_pr, unit unit_pr, stage 
+where sah_se.id_person = emp_se.id_person and emp_se.id_emp_unit = unit_se.id_unit
+and sah_se.CD_ROLE = 'SE'
+and sah_se.DT_ASSGND < (last_day(to_date($_dt_report, 'mm/yyyy'))+1) and (sah_se.DT_UNASSGND is null or sah_se.DT_UNASSGND >= (last_day(to_date($_dt_report, 'mm/yyyy'))+1))
+and emp_se.CD_EMPLOYEE_CLASS <> 'G1008'
+and sah_se.id_stage = sah_pr.id_stage 
+and [$_where_clause_oti_compare]
+and sah_pr.id_person = emp_pr.id_person and emp_pr.id_emp_unit = unit_pr.id_unit
+and sah_pr.cd_role = 'PR'
+and sah_pr.DT_ASSGND <= (last_day(to_date($_dt_report, 'mm/yyyy'))+1) and (sah_pr.DT_UNASSGND is null or sah_pr.DT_UNASSGND >= (last_day(to_date($_dt_report, 'mm/yyyy'))+1))
+and [$_where_clause_oti]
+! changing to stage's county 8/2008
+and sah_pr.id_stage = stage.id_stage
+End-Select
+
+End-Procedure
+
+
+Begin-Procedure Services_Counts
+ Do CreateXML_ManifestFile
+Begin-Select
+(1) &dummy
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Active First$Day of Month' (14,178,13) Underline  Bold  Wrap 13 2 line-height=12 Keep-Top on=$
+ Print 'Primary Services' (14,4,0) Underline  Bold 
+ Print 'Opened$During Month' (14,274,13) Underline  Bold  Wrap 13 2 line-height=12 Keep-Top on=$
+ Print 'Closed$During Month' (14,366,13) Underline  Bold  Wrap 13 2 line-height=12 Keep-Top on=$
+ Print 'Active Last$Day of Month' (14,461,15) Underline  Bold  Wrap 15 2 line-height=12 Keep-Top on=$
+ Next-Listing   ! Close up the wrapped columns
+ Graphic (19,163,211) Vert-Line 10 
+ Graphic (19,257,212) Vert-Line 10 
+ Graphic (19,350,212) Vert-Line 10 
+ Graphic (19,444,211) Vert-Line 10 
+ Graphic (19,2,211) Vert-Line 10 
+ Graphic (19,538,213) Vert-Line 10 
+ Graphic (19,1,537) Horz-Line 10 
+ Let #active_pla_1st_count=&_active_pla_1st_cnt
+ Print #active_pla_1st_count (33,193) Edit 999999
+ Let #new_pla_cnt=&_new_pla_cnt
+ Print #new_pla_cnt (33,283) Edit 999999
+ Let #clsd_pla_cnt=&_clsd_pla_cnt
+ Print #clsd_pla_cnt (33,375) Edit 999999
+ Print 'Foster Care' (33,5,0)
+ Let #active_pla_last_cnt=&_active_pla_last_cnt
+ Print #active_pla_last_cnt (33,472) Edit 999999
+ Graphic (43,1,537) Horz-Line 10 
+ Let #active_inv_1st_cnt=#fdom_inv_count
+ Print #active_inv_1st_cnt (56,193) Edit 999999
+ Let #new_inv_cnt=#odm_inv_count
+ Print #new_inv_cnt (56,283) Edit 999999
+ Let #clsd_inv_cnt=#cdm_inv_count
+ Print #clsd_inv_cnt (56,375) Edit 999999
+ Let #active_inv_last_cnt=#ldom_inv_count
+ Print #active_inv_last_cnt (56,472) Edit 999999
+ Print 'Investigation' (56,5,0)
+ Graphic (66,2,536) Horz-Line 10 
+ Print 'CPS Ongoing' (80,5,0)
+ Let #active_ong_1st_cnt=#fdom_ong_count
+ Print #active_ong_1st_cnt (80,193) Edit 999999
+ Let #new_ong_cnt=#odm_ong_count
+ Print #new_ong_cnt (80,283) Edit 999999
+ Let #clsd_ong_cnt=#cdm_ong_count
+ Print #clsd_ong_cnt (80,375) Edit 999999
+ Let #active_ong_last_cnt=#ldom_ong_count
+ Print #active_ong_last_cnt (80,472) Edit 999999
+ Graphic (90,2,536) Horz-Line 10 
+ Print 'Diversion' (103,5,0)
+ Let #active_div_1st_cnt=#fdom_div_count
+ Print #active_div_1st_cnt (103,193) Edit 999999
+ Let #new_div_cnt=#odm_div_count
+ Print #new_div_cnt (103,283) Edit 999999
+ Let #clsd_div_cnt=#cdm_div_count
+ Print #clsd_div_cnt (103,375) Edit 999999
+ Let #active_div_last_cnt=#ldom_div_count
+ Print #active_div_last_cnt (103,472) Edit 999999
+ Graphic (113,2,536) Horz-Line 10 
+ Let #active_cos_last_cnt=&_active_cos_last_cnt
+ Print #active_cos_last_cnt (127,472) Edit 999999
+ Let #clsd_cos_cnt=&_clsd_cos_cnt
+ Print #clsd_cos_cnt (127,375) Edit 999999
+ Let #new_cos_cnt=&_new_cos_cnt
+ Print #new_cos_cnt (127,283) Edit 999999
+ Let #active_cos_1st_cnt=&_active_cos_1st_cnt
+ Print #active_cos_1st_cnt (127,193) Edit 999999
+ Print 'Court Ordered Study' (127,5,0)
+ Graphic (136,1,537) Horz-Line 10 
+ Let #active_nici_last_cnt=&_active_nici_last_cnt
+ Print #active_nici_last_cnt (150,472) Edit 999999
+ Let #clsd_nici_cnt=&_clsd_nici_cnt
+ Print #clsd_nici_cnt (150,375) Edit 999999
+ Let #new_nici_cnt=&_new_nici_cnt
+ Print #new_nici_cnt (150,283) Edit 999999
+ Let #active_nici_1st_cnt=&_active_nici_1st_cnt
+ Print #active_nici_1st_cnt (150,193) Edit 999999
+ Print 'Non-Incident Courtesy Interviews' (150,5,0)
+ Graphic (160,1,537) Horz-Line 10 
+ Print 'ICPC - Other State' (174,5,0)
+ Let #active_icpc_1st_cnt=&_active_icpc_1st_cnt
+ Print #active_icpc_1st_cnt (174,193) Edit 999999
+ Let #active_icpc_last_cnt=&_active_icpc_last_cnt
+ Print #active_icpc_last_cnt (174,472) Edit 999999
+ Let #new_icpc_cnt=&_new_icpc_cnt
+ Print #new_icpc_cnt (174,283) Edit 999999
+ Let #clsd_icpc_cnt=&_clsd_icpc_cnt
+ Print #clsd_icpc_cnt (174,375) Edit 999999
+ Graphic (183,1,537) Horz-Line 10 
+ Print 'CPS Safety Resources' (197,5,0)
+ Let #active_sr_1st_cnt=&_active_sr_1st_cnt
+ Print #active_sr_1st_cnt (197,193) Edit 999999
+ Let #new_sr_cnt=&_new_sr_cnt
+ Print #new_sr_cnt (197,283) Edit 999999
+ Let #clsd_sr_cnt=&_clsd_sr_cnt
+ Print #clsd_sr_cnt (197,375) Edit 999999
+ Let #active_sr_last_cnt=&_active_sr_last_cnt
+ Print #active_sr_last_cnt (197,472) Edit 999999
+ Graphic (207,1,537) Horz-Line 10 
+ Print 'OTI - Secondary Assignments' (220,5,0)
+ Let #active_oti_1st_cnt=#_active_oti_1st_cnt
+ Print #active_oti_1st_cnt (220,193) Edit 999999
+ Let #new_oti_cnt=#_new_oti_cnt
+ Print #new_oti_cnt (220,283) Edit 999999
+ Let #clsd_oti_cnt=#_clsd_oti_cnt
+ Print #clsd_oti_cnt (220,375) Edit 999999
+ Let #active_oti_last_cnt=#_active_oti_last_cnt
+ Print #active_oti_last_cnt (220,472) Edit 999999
+ Graphic (230,1,537) Horz-Line 10 
+ Print 'Foster Care category requires the primary child''s foster care stage status (active, opened, closed) and legal status to be timely and accurately documented in SHINES for the counts to be correct. The sum of new and existing cases might not be equal to the sum of cases closed and active at the end of the reporting month if the child''s foster care stage status and legal status are not in agreement as of the reporting month.' (263,4,115) Wrap 115 4 line-height=12 Keep-Top
+ Print 'OTI - Secondary Assignments category counts are defined when secondary case managers were in different county with primary case managers. The sum of new and existing secondary assignments might not be equal to the sum of assignments closed and active at the end of the reporting month if the secondary case manager''s county was later changed to be the same county with the primary case manager.' (332,4,115) Wrap 115 4 line-height=12 Keep-Top
+ Print 'Child Placement Types Active During the Month' (403,5,0) Underline  Bold 
+ Next-Listing  Need=418
+From 
+ dual
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Pla_Type_Counts
+Begin-Select
+(count( CPLMNTYP.DECODE )) &pla_type_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+DECODE &Pla_Type_Counts_DECODE (16,40,25)
+ Print &pla_type_cnt (16,249) Edit 9999999na
+ Next-Listing  Need=16
+From  EVENT, PLACEMENT
+,      STAGE, UNIT, CPLMNTYP
+      Where EVENT.ID_EVENT = PLACEMENT.ID_PLCMT_EVENT
+            And EVENT.ID_EVENT_STAGE = STAGE.ID_STAGE
+            And STAGE.ID_UNIT = UNIT.ID_UNIT
+            And PLACEMENT.CD_PLCMT_TYPE = CPLMNTYP.CODE
+ And CD_STAGE IN ('ADO','SUB')
+ And DT_PLCMT_START < (last_day(to_date($_dt_report, 'mm/yyyy')) +1)
+ And DT_PLCMT_END >= to_date($_dt_report, 'mm/yyyy')
+ And CD_EVENT_STATUS = 'APRV'
+ And CD_PLCMT_ACT_PLANNED = 'A'
+ And (CD_TEMP_TYPE IS NULL  Or CD_TEMP_TYPE NOT IN ('COR','RED','REN'))
+ And [$_where_clause_master]
+Group By DECODE
+Order By DECODE
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 12 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+Alter-Printer Font=4 Point-Size=10
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (14,184,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'SHINES Active Totals' (39,197,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On: ' (14,409,0)
+ Print $current-date (14,475) edit 'MM/DD/YYYY'
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'Reporting Month:' (102,1,0) Bold 
+ Let $dt_rprt_month=$_dt_report
+ Print $dt_rprt_month (103,109,15)
+ Let $header_dsp=$_header_dsp
+ Print $header_dsp (63,226,13)
+ Let $region_header_dsp=$_region_header_dsp
+ Print $region_header_dsp (81,240,9)
+ Alter-Printer Font=901 Point-Size=1    ! [SQR.INI] 901=MS Shell Dlg,proportional
+ Print '  ' (114,1,0)
+ Else   ! put a non combined page header
+ Print '  ' (3,1,0)
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (15,493) '' ' of '
+ Last-Page (15,516) 
+ Alter-Printer Font=4 Point-Size=10
+ Alter-Printer Font=4 Point-Size=10
+
+End-Footing
+

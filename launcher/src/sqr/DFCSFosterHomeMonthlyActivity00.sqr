@@ -1,0 +1,1505 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Tue Apr 19 10:32:16 2011 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2011\MR75\DFCS Foster Home Monthly Activity\DFCSFosterHomeMonthlyActivity00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definition' (12,1,12) Underline  Bold 
+ Print 'Calls for Inquiry:' (66,1,34) Bold 
+ Print 'Homes Attended Orientation:' (109,1,39) Bold 
+ Print 'Homes that Attended Pre-Service Training:' (152,1,46) Bold 
+ Print 'Homes Approved - Full:' (174,1,54) Bold 
+ Print 'Homes Approved - Special:' (195,1,25) Bold 
+ Print '# of Beds:' (262,1,24) Bold  Wrap 24 2 line-height=12 Keep-Top on= 
+ Print 'Homes Waitlisted:' (322,1,19) Bold 
+ Print 'Home Closures:' (344,1,15) Bold 
+ Print 'Number of homes placed in Closed status at any point during the reporting month in Foster, Adoption and Legal Risk ' (344,209,158)
+ Print 'Number of homes placed in Waitlisted status at any point during the reporting month.' (322,209,117)
+ Print 'Number of beds (capacity) available for homes placed in Approved - Full or Approved - Special status during the ' (262,209,138)
+ Print 'Number of homes placed in Approved - Special status at any point during the reporting month.' (195,209,117)
+ Print 'Number of homes placed in Approved - Full status at any point during the reporting month.' (174,209,110) Wrap 110 2 line-height=12 Keep-Top on= 
+ Print 'Number of new inquiries received during the reporting month, does not include any homes remaining in inquiry status ' (66,209,199)
+ Print 'Number of homes that attended Orientation during the reporting month.' (109,209,117)
+ Print 'Number of homes that attended Pre-Service training during the reporting month.' (152,209,120)
+ Print 'Number of homes placed in Applicant (Pre-Service training) status at any point during the reporting month.' (131,209,129)
+ Print 'The Foster Home Activity displays the numbers  for Foster, Foster/Adopt(Legal Risk), and Adoptive homes for the reporting month.' (28,1,181)
+ Page-Number (431,661) '' ' of'
+ Last-Page (431,690) 
+ Print 'from a prior month.' (83,209,35)
+ Print 'reporting month.' (279,209,43)
+ Print 'category.' (361,209,43)
+ Print 'Homes in Applicant Pre-Service Training:' (130,1,51) Bold 
+ Print 'Full Approval 30 Day Grace:' (216,1,31) Bold 
+ Print 'Special Approval 30 Day Grace:' (240,1,33) Bold 
+ Print 'Number of homes placed in Full Approval 30 Day Grace status at any point during the reporting month.' (216,208,106)
+ Print 'Number of homes placed in Special Approval 30 Day Grace status at any point during the reporting month.' (240,208,121)
+ Print 'Homes Unapproved:' (300,1,19) Bold 
+ Print 'Number of homes placed in Unapproved status at any point during the reporting month.' (300,209,115)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+Do Get-My-Input
+Do Get_Region_County
+
+ Position (1,1)
+Do Get-Inquiry
+Do Attend_Orientation
+Do Pre_Service_Train
+Do Attend_Training
+Do Home-Approval
+Do Home-Capacity
+Do Waitlist-Homes
+DO Unapproved-Homes
+DO Closed-Homes
+Do FH-Closed
+ Do Master_Query
+ Do Master_Query_5
+ Do Master_Query_2
+ Do Master_Query_6
+ Do Master_Query_3
+ Do Master_Query_7
+ Do Master_Query_4
+End-Program
+Begin-Procedure Get-My-Input
+Input $_ReportMonth 'Enter Month and Year (MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+If IsNull($_ReportMonth) or IsBlank($_ReportMonth)
+  Show 'Input Error (7734): No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+End-Procedure
+
+! -----------------------------
+! Get Region and County Optional Parameters
+Begin-Procedure Get_Region_County
+! Get region optional input
+Input $_I201_CD_RSHS_REGION 'Enter a value for CD_RSHS_REGION' MaxLen=2  Type=Char
+If IsNull($_I201_CD_RSHS_REGION) or IsBlank($_I201_CD_RSHS_REGION) or ($_I201_CD_RSHS_REGION='0')
+  Let $where_clause_region_hist = 'CD_RSHS_REGION is not null'
+  Let $where_clause_region_resc = 'CD_RSRC_REGION is not null'
+  Let $regionSelected = 'N'
+Else 
+  Let $where_clause_region_hist = 'CD_RSHS_REGION = ' || '''' || $_I201_CD_RSHS_REGION || ''''
+  Let $where_clause_region_resc = 'CD_RSRC_REGION = ' || '''' || $_I201_CD_RSHS_REGION || ''''
+  Let $regionSelected = 'Y'
+End-If
+!------------
+! Get county optional input
+Input $_I202_CD_RSHS_CNTY 'Enter a value for CD_RSHS_CNTY' MaxLen=3  Type=Char
+If IsNull($_I202_CD_RSHS_CNTY) or IsBlank($_I202_CD_RSHS_CNTY) or ($_I202_CD_RSHS_CNTY='0')
+  Let $where_clause_county_hist = 'CD_RSHS_CNTY IS NOT NULL'
+  Let $where_clause_county_resc = 'CD_RSRC_CNTY is not null'
+  Let $countySelected = 'N'
+Else 
+  Let $where_clause_county_hist = 'CD_RSHS_CNTY = ' || '''' || $_I202_CD_RSHS_CNTY|| ''''
+  Let $where_clause_county_resc = 'CD_RSRC_CNTY = ' || '''' || $_I202_CD_RSHS_CNTY|| ''''
+  Let $countySelected = 'Y'
+End-If
+! Create where clause for region, county and unit input
+Let $_where_clause_region_county_hist = $where_clause_region_hist || ' and ' || $where_clause_county_hist 
+Let $_where_clause_region_county_resc = $where_clause_region_resc || ' and ' || $where_clause_county_resc 
+
+Do Make_Header
+End-Procedure
+!-----------
+!Make Region County Header
+Begin-Procedure Make_Header
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_I202_CD_RSHS_CNTY || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_I202_CD_RSHS_CNTY = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_I1402_CCNTYREG_DECODE
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_I1402_CCNTYREG_DECODE
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+
+Begin-Procedure Get-Inquiry
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &_inq_foster_disp
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'INQ'
+AND resource_history.CD_RSHS_CATEGORY = 'F'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+and [$_where_clause_region_county_hist]
+End-Select
+move &_inq_foster_disp to #fostercount
+
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &_inq_legal_disp
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'INQ'
+AND resource_history.CD_RSHS_CATEGORY = 'L'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &_inq_adop_disp
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'INQ'
+AND resource_history.CD_RSHS_CATEGORY = 'A'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+and [$_where_clause_region_county_hist]
+End-Select
+End-Procedure
+
+Begin-Procedure Attend_Orientation
+Begin-Select DISTINCT 
+count (caps_resource.ID_RESOURCE) &_att_orient_foster
+FROM caps_resource
+WHERE caps_resource.CD_RSRC_CATEGORY = 'F' !change to L and A as appropriate for Legal Risk and Adoptive homes
+and caps_resource.IND_RSRC_NONDFCS = 'N'
+and [$_where_clause_region_county_resc]
+and exists ( select *
+             from HOME_APPLICANT_INFO
+             where caps_resource.ID_RESOURCE = HOME_APPLICANT_INFO.ID_RESOURCE !join to outer query
+             and (
+                   (HOME_APPLICANT_INFO.DT_ORIENT1 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+                   and HOME_APPLICANT_INFO.DT_ORIENT1 >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+                   and HOME_APPLICANT_INFO.CD_ORIENT1_STAT = 'ATT' ! means the status was Attended
+                   ) 
+                   OR 
+                   (HOME_APPLICANT_INFO.DT_ORIENT2 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+                   and HOME_APPLICANT_INFO.DT_ORIENT2 >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+                   and HOME_APPLICANT_INFO.CD_ORIENT2_STAT = 'ATT' ! means the status was Attended
+                   ) 
+                   OR 
+                   (HOME_APPLICANT_INFO.DT_ORIENT3 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+                   and HOME_APPLICANT_INFO.DT_ORIENT3 >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+                   and HOME_APPLICANT_INFO.CD_ORIENT3_STAT = 'ATT' ! means the status was Attended
+                   )  
+                )           
+         )
+End-Select
+
+Begin-Select DISTINCT 
+count (caps_resource.ID_RESOURCE) &_att_orient_legal
+FROM caps_resource
+WHERE caps_resource.CD_RSRC_CATEGORY = 'L' !L for Legal Risk homes
+and caps_resource.IND_RSRC_NONDFCS = 'N'
+and [$_where_clause_region_county_resc]
+and exists ( select *
+             from HOME_APPLICANT_INFO
+             where caps_resource.ID_RESOURCE = HOME_APPLICANT_INFO.ID_RESOURCE !join to outer query
+             and (
+                   (HOME_APPLICANT_INFO.DT_ORIENT1 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+                   and HOME_APPLICANT_INFO.DT_ORIENT1 >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+                   and HOME_APPLICANT_INFO.CD_ORIENT1_STAT = 'ATT' ! means the status was Attended
+                   ) 
+                   OR 
+                   (HOME_APPLICANT_INFO.DT_ORIENT2 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+                   and HOME_APPLICANT_INFO.DT_ORIENT2 >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+                   and HOME_APPLICANT_INFO.CD_ORIENT2_STAT = 'ATT' ! means the status was Attended
+                   ) 
+                   OR 
+                   (HOME_APPLICANT_INFO.DT_ORIENT3 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+                   and HOME_APPLICANT_INFO.DT_ORIENT3 >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+                   and HOME_APPLICANT_INFO.CD_ORIENT3_STAT = 'ATT' ! means the status was Attended
+                   )  
+                )           
+         )
+End-Select
+
+Begin-Select DISTINCT 
+count (caps_resource.ID_RESOURCE) &_att_orient_adopt
+FROM caps_resource
+WHERE caps_resource.CD_RSRC_CATEGORY = 'A' ! A for Adoptive homes
+and caps_resource.IND_RSRC_NONDFCS = 'N'
+and [$_where_clause_region_county_resc]
+and exists ( select *
+             from HOME_APPLICANT_INFO
+             where caps_resource.ID_RESOURCE = HOME_APPLICANT_INFO.ID_RESOURCE !join to outer query
+             and (
+                   (HOME_APPLICANT_INFO.DT_ORIENT1 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+                   and HOME_APPLICANT_INFO.DT_ORIENT1 >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+                   and HOME_APPLICANT_INFO.CD_ORIENT1_STAT = 'ATT' ! means the status was Attended
+                   ) 
+                   OR 
+                   (HOME_APPLICANT_INFO.DT_ORIENT2 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+                   and HOME_APPLICANT_INFO.DT_ORIENT2 >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+                   and HOME_APPLICANT_INFO.CD_ORIENT2_STAT = 'ATT' ! means the status was Attended
+                   ) 
+                   OR 
+                   (HOME_APPLICANT_INFO.DT_ORIENT3 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+                   and HOME_APPLICANT_INFO.DT_ORIENT3 >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+                   and HOME_APPLICANT_INFO.CD_ORIENT3_STAT = 'ATT' ! means the status was Attended
+                   )  
+                )           
+         )
+End-Select
+End-Procedure
+
+Begin-Procedure Pre_Service_Train
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &_train_foster_disp
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'APP'
+AND resource_history.CD_RSHS_CATEGORY = 'F'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE)  &_train_legal_disp
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'APP'
+AND resource_history.CD_RSHS_CATEGORY = 'L'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &_train_adopt_disp
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'APP'
+AND resource_history.CD_RSHS_CATEGORY = 'A'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+and [$_where_clause_region_county_hist]
+End-Select
+End-Procedure
+
+Begin-Procedure Attend_Training
+Begin-SELECT DISTINCT 
+count (distinct caps_resource.ID_RESOURCE) &_attend_train_foster
+FROM caps_resource
+WHERE caps_resource.CD_RSRC_CATEGORY = 'F' !F for Foster homes
+and caps_resource.IND_RSRC_NONDFCS = 'N'
+and [$_where_clause_region_county_resc]
+and exists 
+( select *
+  from HOME_APPLICANT_INFO
+  where caps_resource.ID_RESOURCE = HOME_APPLICANT_INFO.ID_RESOURCE !join to outer query
+  and (
+       (HOME_APPLICANT_INFO.DT_INVITE1 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+        and HOME_APPLICANT_INFO.DT_INVITE1  >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+        and HOME_APPLICANT_INFO.CD_INVITE1_STAT = 'ATT' ! means the status was Attended
+       ) 
+       OR 
+       (HOME_APPLICANT_INFO.DT_INVITE2 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+        and HOME_APPLICANT_INFO.DT_INVITE2  >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+        and HOME_APPLICANT_INFO.CD_INVITE2_STAT = 'ATT' ! means the status was Attended
+       ) 
+       OR 
+       (HOME_APPLICANT_INFO.DT_INVITE3 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+        and HOME_APPLICANT_INFO.DT_INVITE3  >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+        and HOME_APPLICANT_INFO.CD_INVITE3_STAT = 'ATT' ! means the status was Attended
+       )  
+      )           
+)
+End-Select
+
+Begin-SELECT DISTINCT 
+count (distinct caps_resource.ID_RESOURCE) &_attend_train_legal
+FROM caps_resource
+WHERE caps_resource.CD_RSRC_CATEGORY = 'L' !L for Legal Risk homes
+and caps_resource.IND_RSRC_NONDFCS = 'N'
+and [$_where_clause_region_county_resc]
+and exists 
+( select *
+  from HOME_APPLICANT_INFO
+  where caps_resource.ID_RESOURCE = HOME_APPLICANT_INFO.ID_RESOURCE !join to outer query
+  and (
+       (HOME_APPLICANT_INFO.DT_INVITE1 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+        and HOME_APPLICANT_INFO.DT_INVITE1  >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+        and HOME_APPLICANT_INFO.CD_INVITE1_STAT = 'ATT' ! means the status was Attended
+       ) 
+       OR 
+       (HOME_APPLICANT_INFO.DT_INVITE2 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+        and HOME_APPLICANT_INFO.DT_INVITE2  >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+        and HOME_APPLICANT_INFO.CD_INVITE2_STAT = 'ATT' ! means the status was Attended
+       ) 
+       OR 
+       (HOME_APPLICANT_INFO.DT_INVITE3 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+        and HOME_APPLICANT_INFO.DT_INVITE3  >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+        and HOME_APPLICANT_INFO.CD_INVITE3_STAT = 'ATT' ! means the status was Attended
+       )  
+      )           
+)
+End-Select
+
+Begin-SELECT DISTINCT 
+count (distinct caps_resource.ID_RESOURCE) &_attend_train_adopt
+FROM caps_resource
+WHERE caps_resource.CD_RSRC_CATEGORY = 'L' !A for Adoptive homes
+and caps_resource.IND_RSRC_NONDFCS = 'N'
+and [$_where_clause_region_county_resc]
+and exists 
+( select *
+  from HOME_APPLICANT_INFO
+  where caps_resource.ID_RESOURCE = HOME_APPLICANT_INFO.ID_RESOURCE !join to outer query
+  and (
+       (HOME_APPLICANT_INFO.DT_INVITE1 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+        and HOME_APPLICANT_INFO.DT_INVITE1  >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+        and HOME_APPLICANT_INFO.CD_INVITE1_STAT = 'ATT' ! means the status was Attended
+       ) 
+       OR 
+       (HOME_APPLICANT_INFO.DT_INVITE2 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+        and HOME_APPLICANT_INFO.DT_INVITE2  >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+        and HOME_APPLICANT_INFO.CD_INVITE2_STAT = 'ATT' ! means the status was Attended
+       ) 
+       OR 
+       (HOME_APPLICANT_INFO.DT_INVITE3 < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+        and HOME_APPLICANT_INFO.DT_INVITE3  >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+        and HOME_APPLICANT_INFO.CD_INVITE3_STAT = 'ATT' ! means the status was Attended
+       )  
+      )           
+)
+End-Select
+End-Procedure
+
+Begin-Procedure Home-Approval
+Begin-Select distinct 
+count (distinct resource_history.ID_RESOURCE)  &_full_approval_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'AFA'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'F'
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-Select distinct
+count (distinct resource_history.ID_RESOURCE)  &_full_approval_legal
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'AFA'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'L'
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-Select distinct 
+count (distinct resource_history.ID_RESOURCE)  &_full_approval_adopt
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'AFA'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'A'
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-Select distinct 
+count (distinct resource_history.ID_RESOURCE)  &_special_approval_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'ASA'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'F'
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-Select distinct
+count (distinct resource_history.ID_RESOURCE)  &_special_approval_legal
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'ASA'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'L'
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-Select distinct 
+count (distinct resource_history.ID_RESOURCE)  &_special_approval_adopt
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'ASA'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'A'
+and [$_where_clause_region_county_hist]
+End-Select
+
+! Calculation for Full Approval 30 day Grace
+Begin-Select distinct 
+count (distinct resource_history.ID_RESOURCE)  &_full_grace_approval_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'FLG'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'F'
+and [$_where_clause_region_county_hist]
+End-Select
+
+
+Begin-Select distinct
+count (distinct resource_history.ID_RESOURCE)  &_full_grace_approval_legal
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'FLG'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'L'
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-Select distinct 
+count (distinct resource_history.ID_RESOURCE)  &_full_grace_approval_adopt
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'FLG'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'A'
+and [$_where_clause_region_county_hist]
+End-Select
+
+! Calculation for Special Approval 30 day Grace
+Begin-Select distinct 
+count (distinct resource_history.ID_RESOURCE)  &_special_grace_approval_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'FSG'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'F'
+and [$_where_clause_region_county_hist]
+End-Select
+
+
+Begin-Select distinct
+count (distinct resource_history.ID_RESOURCE)  &_special_grace_approval_legal
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'FSG'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'L'
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-Select distinct 
+count (distinct resource_history.ID_RESOURCE)  &_special_grace_approval_adopt
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'FSG'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'A'
+and [$_where_clause_region_county_hist]
+End-Select
+
+! No longer use Temporary Approval due to MR-0675 
+Begin-Select distinct 
+count (distinct resource_history.ID_RESOURCE)  &_temp_approval_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !last day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'ATA'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'F'
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-Select distinct
+count (distinct resource_history.ID_RESOURCE)  &_temp_approval_legal
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'ATA'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'L'
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-Select distinct 
+count (distinct resource_history.ID_RESOURCE)  &_temp_approval_adopt
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date ($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day (to_date ($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'ATA'
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = 'A'
+and [$_where_clause_region_county_hist]
+End-Select
+End-Procedure
+
+Begin-Procedure Home-Capacity
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_full_app_capacity_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'AFA' 
+AND resource_history.CD_RSHS_CATEGORY = 'F'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY = 
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS = 'AFA'   
+   AND resource_history_max.CD_RSHS_CATEGORY = 'F'  !for Foster homes
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+)
+End-Select
+
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_full_app_capacity_legal
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'AFA' 
+AND resource_history.CD_RSHS_CATEGORY = 'L'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY = 
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS = 'AFA'   
+   AND resource_history_max.CD_RSHS_CATEGORY = 'L'  ! for Legal Risk home
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+)
+End-Select
+
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_full_app_capacity_adopt
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1)!last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'AFA' 
+AND resource_history.CD_RSHS_CATEGORY = 'A'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY = 
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS = 'AFA'   
+   AND resource_history_max.CD_RSHS_CATEGORY = 'A'  ! for Adoptive home
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+)
+End-Select
+
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_special_app_capacity_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY'))  !first day of reporting period 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'ASA' 
+AND resource_history.CD_RSHS_CATEGORY = 'F'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY = 
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS = 'ASA'   
+   AND resource_history_max.CD_RSHS_CATEGORY = 'F'  ! for foster home
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+) 
+End-Select
+
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_special_app_capacity_legal
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY'))  !first day of reporting period 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'ASA' 
+AND resource_history.CD_RSHS_CATEGORY = 'L'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY = 
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS = 'ASA'   
+   AND resource_history_max.CD_RSHS_CATEGORY = 'L'  !for Legal Risk home
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+) 
+End-Select
+
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_special_app_capacity_adopt
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY'))  !first day of reporting period 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'ASA' 
+AND resource_history.CD_RSHS_CATEGORY = 'A'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY = 
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS = 'ASA' 
+   AND resource_history_max.CD_RSHS_CATEGORY = 'A'  !for Adoptive home
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+) 
+End-Select
+
+! Full Approval 30 Day Grace Capacity Count
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_full_grace_app_capacity_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY'))  !first day of reporting period 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'FLG' 
+AND resource_history.CD_RSHS_CATEGORY = 'F'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY = 
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS = 'FLG'   
+   AND resource_history_max.CD_RSHS_CATEGORY = 'F'  ! for foster home
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+) 
+End-Select
+
+
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_full_grace_app_capacity_legal
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY'))  !first day of reporting period 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'FLG' 
+AND resource_history.CD_RSHS_CATEGORY = 'L'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY = 
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS = 'FLG'   
+   AND resource_history_max.CD_RSHS_CATEGORY = 'L'  ! for legal risk home
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+) 
+End-Select
+
+
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_full_grace_app_capacity_adopt
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY'))  !first day of reporting period 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'FLG' 
+AND resource_history.CD_RSHS_CATEGORY = 'A'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY = 
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS = 'FLG'   
+   AND resource_history_max.CD_RSHS_CATEGORY = 'A'  ! for adoption home
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+) 
+End-Select
+
+
+
+! Special Approval 30 Day Grace Capacity Count
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_special_grace_app_capacity_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY'))  !first day of reporting period 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'FSG' 
+AND resource_history.CD_RSHS_CATEGORY = 'F'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY = 
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS = 'FSG'   
+   AND resource_history_max.CD_RSHS_CATEGORY = 'F'  ! for foster home
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+) 
+End-Select
+
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_special_grace_app_capacity_legal
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY'))  !first day of reporting period 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'FSG' 
+AND resource_history.CD_RSHS_CATEGORY = 'L'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY = 
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS = 'FSG'   
+   AND resource_history_max.CD_RSHS_CATEGORY = 'L'  ! for legal home
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+) 
+End-Select
+
+
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_special_grace_app_capacity_adopt
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY'))  !first day of reporting period 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'FSG' 
+AND resource_history.CD_RSHS_CATEGORY = 'A'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY = 
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS = 'FSG'   
+   AND resource_history_max.CD_RSHS_CATEGORY = 'A'  ! for adoption home
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+) 
+End-Select
+
+
+! Do not use Temp Approved anymore due to MR-075
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_temp_app_capacity_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'ATA' 
+AND resource_history.CD_RSHS_CATEGORY = 'F'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY =
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS IN ('ATA')   !use 'ATA' and 'ASA' as appropriate
+   AND resource_history_max.CD_RSHS_CATEGORY = 'F'  !change to L and A as appropriate for Legal Risk and Adoptive homes
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+) 
+End-Select
+
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_temp_app_capacity_legal
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'ATA' 
+AND resource_history.CD_RSHS_CATEGORY = 'L'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY =
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS IN ('ATA')   
+   AND resource_history_max.CD_RSHS_CATEGORY = 'L'  !for Legal Risk home
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+) 
+End-Select
+
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &_temp_app_capacity_adopt
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'ATA' 
+AND resource_history.CD_RSHS_CATEGORY = 'A'
+AND resource_history.IND_RSRC_NONDFCS = 'N' 
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+and resource_history.ID_RESOURCE_HISTORY =
+(select max (resource_history_max.ID_RESOURCE_HISTORY)
+   from resource_history resource_history_max
+   WHERE resource_history_max.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) !last day of reporting period
+   AND resource_history_max.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) !first day of reporting period
+   AND resource_history_max.CD_RSHS_FA_HOME_STATUS IN ('ATA')  
+   AND resource_history_max.CD_RSHS_CATEGORY = 'A'  !for Adoptive homes
+   AND resource_history_max.IND_RSRC_NONDFCS = 'N'
+   and resource_history.ID_RESOURCE = resource_history_max.ID_RESOURCE  !join by resource id to the outer query
+) 
+End-Select
+End-Procedure
+
+! Calculates Unapproved Homes
+BEGIN-PROCEDURE Unapproved-Homes
+Begin-SELECT DISTINCT 
+count (resource_history.ID_RESOURCE) &_unapproved_homes_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'AUN'
+AND resource_history.CD_RSHS_CATEGORY = 'F' ! for foster home
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-SELECT DISTINCT 
+count (resource_history.ID_RESOURCE) &_unapproved_homes_legal
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'AUN'
+AND resource_history.CD_RSHS_CATEGORY = 'L' ! for legal risk home
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-SELECT DISTINCT 
+count (resource_history.ID_RESOURCE) &_unapproved_homes_adopt
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'AUN'
+AND resource_history.CD_RSHS_CATEGORY = 'A' ! for adopt home
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+End-Select
+END-PROCEDURE
+
+!Calculation for homes in Closed status
+Begin-Procedure Closed-Homes
+Begin-SELECT DISTINCT 
+count (resource_history.ID_RESOURCE) &_closed_homes_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'CSD'
+AND resource_history.CD_RSHS_CATEGORY = 'F' ! for foster home
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND CD_RSHS_CLOSURE_RSN is not null
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-SELECT DISTINCT 
+count (resource_history.ID_RESOURCE) &_closed_homes_legal
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'CSD'
+AND resource_history.CD_RSHS_CATEGORY = 'L' !for Legal Risk home
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND CD_RSHS_CLOSURE_RSN is not null
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-SELECT DISTINCT 
+count (resource_history.ID_RESOURCE) &_closed_homes_adopt
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'CSD'
+AND resource_history.CD_RSHS_CATEGORY = 'A' !for Adoptive home
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+AND CD_RSHS_CLOSURE_RSN is not null
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+End-Select
+End-Procedure
+
+
+
+
+! Calculation for home in waitlist status
+Begin-Procedure Waitlist-Homes
+Begin-SELECT DISTINCT 
+count (resource_history.ID_RESOURCE) &_waitlst_homes_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'WTL'
+AND resource_history.CD_RSHS_CATEGORY = 'F' ! for foster home
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-SELECT DISTINCT 
+count (resource_history.ID_RESOURCE) &_waitlst_homes_legal
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'WTL'
+AND resource_history.CD_RSHS_CATEGORY = 'L' !for Legal Risk home
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+End-Select
+
+Begin-SELECT DISTINCT 
+count (resource_history.ID_RESOURCE) &_waitlst_homes_adopt
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'WTL'
+AND resource_history.CD_RSHS_CATEGORY = 'A' !for Adoptive home
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+End-Select
+End-Procedure
+
+Begin-Procedure FH-Closed
+Begin-SELECT DISTINCT   
+sum (count (distinct resource_history.ID_RESOURCE))  &_close_cnt_foster
+FROM resource_history
+WHERE resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) ! last day of reporting period
+AND resource_history.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) ! first day of reporting period
+AND resource_history.CD_RSHS_FA_HOME_STATUS = 'CSD'
+AND resource_history.CD_RSHS_CATEGORY = 'F' !change to L and A as appropriate for Legal Risk and Adoptive homes
+AND resource_history.IND_RSRC_NONDFCS = 'N'
+!and [$_where_clause201]
+!and [$_where_clause202]
+and [$_where_clause_region_county_hist]
+group by resource_history.ID_RESOURCE
+End-Select
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select Distinct
+(1) &Dummy
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Adoption' (15,532,9) Bold 
+ Print 'Legal Risk' (15,421,11) Bold 
+ Print 'Foster' (15,328,8) Bold 
+ Graphic (22,44,325) Vert-Line 11 
+ Graphic (22,43,564) Horz-Line 11 
+ Graphic (23,303,325) Vert-Line 10 
+ Graphic (23,398,324) Vert-Line 10 
+ Graphic (23,608,324) Vert-Line 11 
+ Graphic (24,502,323) Vert-Line 10 
+ Print 'Calls for Inquiry' (35,46,27)
+ Let #Inq_foster_disp=&_inq_foster_disp
+ Print #Inq_foster_disp (35,324) Edit 9999999
+ Let #Adopt_Foster=&_inq_adop_disp
+ Print #Adopt_Foster (35,533) Edit 9999999
+ Let #Legal_Foster=&_inq_legal_disp
+ Print #Legal_Foster (35,434) Edit 9999999
+ Graphic (40,44,563) Horz-Line 10 
+ Print 'Homes Attended Orientation' (54,46,35)
+ Let #att_orient_foster=&_att_orient_foster
+ Print #att_orient_foster (54,324) Edit 9999999
+ Let #att_orient_adopt=&_att_orient_adopt
+ Print #att_orient_adopt (54,533) Edit 9999999
+ Let #att_orient_legal=&_att_orient_legal
+ Print #att_orient_legal (54,434) Edit 9999999
+ Graphic (59,43,562) Horz-Line 10 
+ Let #Train_Foster_Disp=&_train_foster_disp
+ Print #Train_Foster_Disp (73,324) Edit 9999999
+ Let #Train_Adopt_Disp=&_train_adopt_disp
+ Print #Train_Adopt_Disp (73,533) Edit 9999999
+ Print 'Homes in Applicant Pre-Service Training' (73,46,45)
+ Let #Train_Legal_Disp=&_train_legal_disp
+ Print #Train_Legal_Disp (73,434) Edit 9999999
+ Graphic (78,43,564) Horz-Line 10 
+ Print 'Homes that attended Pre-Service Training ' (93,46,45)
+ Let #attend_train_foster=&_attend_train_foster
+ Print #attend_train_foster (93,324) Edit 9999999
+ Let #attend_train_adopt=&_attend_train_adopt
+ Print #attend_train_adopt (93,533) Edit 9999999
+ Let #attend_train_legal=&_attend_train_legal
+ Print #attend_train_legal (93,434) Edit 9999999
+ Graphic (99,44,563) Horz-Line 10 
+ Let #full_approval_foster=&_full_approval_foster
+ Print #full_approval_foster (113,324) Edit 9999999
+ Let #full_approval_adopt=&_full_approval_adopt
+ Print #full_approval_adopt (113,533) Edit 9999999
+ Print 'Homes Approved - Full' (113,46,44)
+ Let #full_approval_legal=&_full_approval_legal
+ Print #full_approval_legal (113,434) Edit 9999999
+ Print '# of Beds' (129,46,9)
+ Let #full_app_capacity_foster=&_full_app_capacity_foster
+ Print #full_app_capacity_foster (129,306) Edit 9999
+ Let #full_app_capacity_legal=&_full_app_capacity_legal
+ Print #full_app_capacity_legal (129,404) Edit 9999
+ Let #full_app_capacity_adopt=&_full_app_capacity_adopt
+ Print #full_app_capacity_adopt (129,511) Edit 9999
+ Graphic (135,44,563) Horz-Line 10 
+ Print 'Homes Approved - Special' (150,46,32)
+ Let #special_approval_foster=&_special_approval_foster
+ Print #special_approval_foster (150,324) Edit 9999999
+ Let #special_approval_adopt=&_special_approval_adopt
+ Print #special_approval_adopt (150,533) Edit 9999999
+ Let #special_approval_legal=&_special_approval_legal
+ Print #special_approval_legal (150,434) Edit 9999999
+ Print '# of Beds' (164,46,10)
+ Let #special_app_capacity_foster=&_special_app_capacity_foster
+ Print #special_app_capacity_foster (164,306) Edit 9999
+ Let #special_app_capacity_legal=&_special_app_capacity_legal
+ Print #special_app_capacity_legal (164,404) Edit 9999
+ Let #special_app_capacity_adopt=&_special_app_capacity_adopt
+ Print #special_app_capacity_adopt (164,511) Edit 9999
+ Graphic (169,44,562) Horz-Line 15 
+ Let #full_approval_foster=&_full_approval_foster
+ Let #special_approval_foster=&_special_approval_foster
+ Let #total_approval_foster=#full_approval_foster + #special_approval_foster
+ Print #total_approval_foster (185,322) Edit 9999999 Bold 
+ Let #full_approval_adopt=&_full_approval_adopt
+ Let #special_approval_adopt=&_special_approval_adopt
+ Let #total_approval_adopt=#full_approval_adopt + #special_approval_adopt
+ Print #total_approval_adopt (185,531) Edit 9999999 Bold 
+ Let #full_approval_legal=&_full_approval_legal
+ Let #special_approval_legal=&_special_approval_legal
+ Let #total_approval_legal=#full_approval_legal + #special_approval_legal
+ Print #total_approval_legal (185,431) Edit 9999999 Bold 
+ Print 'Total Full/Special Homes Approved' (185,98,40) Bold 
+ Graphic (190,43,563) Horz-Line 15 
+ Print 'Full Approval 30 Day Grace' (204,46,33)
+ Let #full_grace_approval_foster=&_full_grace_approval_foster
+ Print #full_grace_approval_foster (204,324) Edit 9999999
+ Let #full_grace_approval_legal=&_full_grace_approval_legal
+ Print #full_grace_approval_legal (204,434) Edit 9999999
+ Let #full_grace_approval_adopt=&_full_grace_approval_adopt
+ Print #full_grace_approval_adopt (204,533) Edit 9999999
+ Let #full_grace_app_capacity_foster=&_full_grace_app_capacity_foster
+ Print #full_grace_app_capacity_foster (219,306) Edit 9999
+ Let #full_grace_app_capacity_legal=&_full_grace_app_capacity_legal
+ Print #full_grace_app_capacity_legal (219,404) Edit 9999
+ Let #full_grace_app_capacity_adopt=&_full_grace_app_capacity_adopt
+ Print #full_grace_app_capacity_adopt (219,511) Edit 9999
+ Print '# of Beds' (219,47,10)
+ Graphic (224,43,563) Horz-Line 10 
+ Let #special_grace_approval_foster=&_special_grace_approval_foster
+ Print #special_grace_approval_foster (238,324) Edit 9999999
+ Let #special_grace_approval_legal=&_special_grace_approval_legal
+ Print #special_grace_approval_legal (238,434) Edit 9999999
+ Let #special_grace_approval_adopt=&_special_grace_approval_adopt
+ Print #special_grace_approval_adopt (238,533) Edit 9999999
+ Print 'Special Approval 30 Day Grace' (238,46,29)
+ Let #special_grace_app_capacity_foster=&_special_grace_app_capacity_foster
+ Print #special_grace_app_capacity_foster (256,306) Edit 9999
+ Let #special_grace_app_capacity_legal=&_special_grace_app_capacity_legal
+ Print #special_grace_app_capacity_legal (256,404) Edit 9999
+ Let #special_grace_app_capacity_adopt=&_special_grace_app_capacity_adopt
+ Print #special_grace_app_capacity_adopt (256,511) Edit 9999
+ Print '# of Beds' (256,47,10)
+ Graphic (261,44,563) Horz-Line 15 
+ Print 'Total Full/Special Approval 30 Day Grace' (278,98,54) Bold 
+ Let #full_grace_approval_foster=&_full_grace_approval_foster
+ Let #special_grace_approval_foster=&_special_grace_approval_foster
+ Let #total_grace_foster=#full_grace_approval_foster + #special_grace_approval_foster
+ Print #total_grace_foster (278,322) Edit 9999999 Bold 
+ Let #full_grace_approval_legal=&_full_grace_approval_legal
+ Let #special_grace_approval_legal=&_special_grace_approval_legal
+ Let #total_grace_legal=#full_grace_approval_legal + #special_grace_approval_legal
+ Print #total_grace_legal (278,431) Edit 9999999 Bold 
+ Let #full_grace_approval_adopt=&_full_grace_approval_adopt
+ Let #special_grace_approval_adopt=&_special_grace_approval_adopt
+ Let #total_grace_adopt=#full_grace_approval_adopt + #special_grace_approval_adopt
+ Print #total_grace_adopt (278,531) Edit 9999999 Bold 
+ Graphic (284,43,563) Horz-Line 15 
+ Print 'Homes Unapproved' (298,46,34)
+ Let #unapproved_homes_adopt=&_unapproved_homes_adopt
+ Print #unapproved_homes_adopt (298,533) Edit 9999999
+ Let #unapproved_homes_foster=&_unapproved_homes_foster
+ Print #unapproved_homes_foster (299,324) Edit 9999999
+ Let #unapproved_homes_legal=&_unapproved_homes_legal
+ Print #unapproved_homes_legal (300,434) Edit 9999999
+ Graphic (305,43,563) Horz-Line 10 
+ Let #waitlst_homes_adopt=&_waitlst_homes_adopt
+ Print #waitlst_homes_adopt (322,533) Edit 9999999
+ Let #waitlst_homes_legal=&_waitlst_homes_legal
+ Print #waitlst_homes_legal (322,434) Edit 9999999
+ Print 'Homes Waitlisted ' (322,46,21)
+ Let #waitlst_homes_foster=&_waitlst_homes_foster
+ Print #waitlst_homes_foster (322,324) Edit 9999999
+ Graphic (328,42,564) Horz-Line 11 
+ Let #closed_homes_adopt=&_closed_homes_adopt
+ Print #closed_homes_adopt (342,533) Edit 9999999
+ Let #closed_homes_legal=&_closed_homes_legal
+ Print #closed_homes_legal (342,434) Edit 9999999
+ Print 'Homes Closed' (342,47,21)
+ Let #closed_homes_foster=&_closed_homes_foster
+ Print #closed_homes_foster (342,324) Edit 9999999
+ Graphic (348,44,564) Horz-Line 11 
+ Next-Listing  SkipLines=5 Need=347
+From  CAPS.RESOURCE_HISTORY
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_Query_5
+begin-SELECT 
+(count( RESOURCE_HISTORY.ID_RESOURCE )) &fclosecnt
+FROM 
+    RESOURCE_HISTORY, 
+    CFACLOSE
+WHERE
+    RESOURCE_HISTORY.CD_RSHS_CLOSURE_RSN = CFACLOSE.CODE
+  AND CD_RSHS_FA_HOME_STATUS = 'CSD' AND 
+    CD_RSHS_CATEGORY = 'F' AND 
+    IND_RSRC_NONDFCS = 'N' AND 
+    (RESOURCE_HISTORY.DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) AND 
+    RESOURCE_HISTORY.DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')))  
+   ! And [$_where_clause201]
+ !And [$_where_clause202]
+and [$_where_clause_region_county_hist]
+End-Select
+if IsNull(&fclosecnt) or &fclosecnt = 0 
+ Let $dispText = 'No results are available'
+End-If
+Begin-Select
+('Foster Home Closures') &dispTextName
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &dispTextName (10,43,20) Underline  Bold 
+ Let $_dispTextCnt=$dispText
+ Print $_dispTextCnt (31,106,46)
+ Next-Listing  SkipLines=2 Need=33
+From 
+ dual
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Query_2
+ Move 0 To #5ROW_COUNT
+ Move 0 To #CloseCountFoster
+Begin-Select
+(count (resource_history.ID_RESOURCE)) &close_cnt_foster
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+! Do DisplayCounts1
+DECODE &Master_Query_2_DECODE (17,47,49) Wrap 49 2 line-height=12 Keep-Top on= 
+ Print &close_cnt_foster (17,361) Edit 9999999na
+ Add &close_cnt_foster To #CloseCountFoster
+ Add 1 To #5ROW_COUNT
+ Next-Listing  Need=22
+From  CAPS.RESOURCE_HISTORY, CAPS.CFACLOSE
+      Where CAPS.RESOURCE_HISTORY.CD_RSHS_CLOSURE_RSN = CAPS.CFACLOSE.CODE
+ And DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1)
+ And DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY'))
+ And CD_RSHS_FA_HOME_STATUS = 'CSD'
+ And CD_RSHS_CATEGORY = 'F'
+ And IND_RSRC_NONDFCS = 'N'
+ And [$_where_clause_region_county_hist]
+Group By DECODE
+Order By DECODE
+End-Select
+ Next-Listing
+ Next-Listing  Need=20
+ If #5ROW_COUNT > 0
+ Graphic (3,357,43) Horz-Line 10 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Total Closures'  (19,251) Bold 
+  Print #CloseCountFoster (20,352) Edit 999999999na
+ End-If
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Query_6
+
+begin-select
+(count( RESOURCE_HISTORY.ID_RESOURCE )) &lclosecnt
+FROM 
+    RESOURCE_HISTORY, 
+    CFACLOSE
+WHERE
+    RESOURCE_HISTORY.CD_RSHS_CLOSURE_RSN = CFACLOSE.CODE
+  AND     DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) AND 
+    DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) AND 
+    CD_RSHS_FA_HOME_STATUS = 'CSD' AND 
+    CD_RSHS_CATEGORY = 'L' AND 
+    IND_RSRC_NONDFCS = 'N' 
+!And [$_where_clause201]
+! And [$_where_clause202]
+and [$_where_clause_region_county_hist]
+
+End-select
+if IsNull(&lclosecnt) or &lclosecnt = 0 
+ Let $dispTextlegal = 'No results are available'
+End-If
+
+
+Begin-Select
+('Legal Risk Closures') &legalClosureHeader
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &legalClosureHeader (17,43,36) Underline  Bold 
+ Let $_dispTextlegal=$dispTextlegal
+ Print $_dispTextlegal (39,119,38)
+ Next-Listing  Need=39
+From 
+ dual
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Query_3
+ Move 0 To #9ROW_COUNT
+ Move 0 To #CloseCountLegal
+Begin-Select
+(count( RESOURCE_HISTORY.ID_RESOURCE )) &close_cnt_legal
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+DECODE &Master_Query_3_DECODE (13,46,49)
+ Print &close_cnt_legal (14,360) Edit 9999999na
+ Add &close_cnt_legal To #CloseCountLegal
+ Add 1 To #9ROW_COUNT
+ Next-Listing  Need=14
+From  CAPS.RESOURCE_HISTORY, CAPS.CFACLOSE
+      Where CAPS.RESOURCE_HISTORY.CD_RSHS_CLOSURE_RSN = CAPS.CFACLOSE.CODE
+ And DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1)
+ And DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY'))
+ And CD_RSHS_FA_HOME_STATUS = 'CSD'
+ And CD_RSHS_CATEGORY = 'L'
+ And IND_RSRC_NONDFCS = 'N'
+ And [$_where_clause_region_county_hist]
+Group By DECODE
+Order By DECODE
+End-Select
+ Next-Listing
+ Next-Listing  Need=20
+ If #9ROW_COUNT > 0
+ Graphic (3,352,45) Horz-Line 20 
+ Position (5,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #CloseCountLegal (20,350) Edit 999999999na
+  Print 'Total Closures'  (20,261) Bold 
+ End-If
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Query_7
+Begin-Select
+(count( RESOURCE_HISTORY.ID_RESOURCE )) &aclosecnt
+FROM 
+    RESOURCE_HISTORY, 
+    CFACLOSE
+WHERE
+    RESOURCE_HISTORY.CD_RSHS_CLOSURE_RSN = CFACLOSE.CODE
+  AND     DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1) AND 
+    DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY')) AND 
+    CD_RSHS_FA_HOME_STATUS = 'CSD' AND 
+    CD_RSHS_CATEGORY = 'A' AND 
+    IND_RSRC_NONDFCS = 'N'  
+and [$_where_clause_region_county_hist]
+
+End-Select
+if IsNull(&aclosecnt) or (&aclosecnt = 0)
+ Let $dispTextadopt = 'No results are available'
+End-If
+
+Begin-Select
+('Adoption Closures') &adoptionclosureHeader
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &adoptionclosureHeader (17,43,29) Underline  Bold 
+ Let $_dispTextadopt=$dispTextadopt
+ Print $_dispTextadopt (39,119,26)
+ Next-Listing  Need=39
+From 
+ dual
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Query_4
+ Move 0 To #16ROW_COUNT
+ Move 0 To #CloseCountAdopt
+Begin-Select
+(count( RESOURCE_HISTORY.ID_RESOURCE )) &close_cnt_adopt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+DECODE &Master_Query_4_DECODE (15,46,49) Wrap 49 2 line-height=12 Keep-Top on= 
+ Print &close_cnt_adopt (15,361) Edit 9999999na
+ Add &close_cnt_adopt To #CloseCountAdopt
+ Add 1 To #16ROW_COUNT
+ Next-Listing  Need=22
+From  CAPS.RESOURCE_HISTORY, CAPS.CFACLOSE
+      Where CAPS.CFACLOSE.CODE = CAPS.RESOURCE_HISTORY.CD_RSHS_CLOSURE_RSN
+ And DT_RSHS_EFFECTIVE < (last_day(to_date($_ReportMonth, 'MM/YYYY'))+1)
+ And DT_RSHS_EFFECTIVE >= (to_date($_ReportMonth, 'MM/YYYY'))
+ And CD_RSHS_FA_HOME_STATUS = 'CSD'
+ And CD_RSHS_CATEGORY = 'A'
+ And IND_RSRC_NONDFCS = 'N'
+ And [$_where_clause_region_county_hist]
+Group By DECODE
+Order By DECODE
+End-Select
+ Next-Listing
+ Next-Listing  Need=21
+ If #16ROW_COUNT > 0
+ Graphic (4,347,53) Horz-Line 10 
+ Position (5,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Total Closures'  (20,253) Bold 
+  Print #CloseCountAdopt (21,350) Edit 999999999na
+ End-If
+ Next-Listing
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (13,594,12)
+ Print $current-date (13,660) edit 'MM/DD/YYYY'
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(125,88)
+ Print 'Division of Family and Children Services' (41,284,49)
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'DFCS Foster Home Activity' (61,295,25) Bold 
+ Print 'Report Month:' (110,13,13) Bold 
+ Let $ReportMonth=$_ReportMonth
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $ReportMonth (109,105,15)
+ Let $DisplayHeader=$_DisplayHeader
+ Print $DisplayHeader (79,335,18)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print '1' (134,7,1) Foreground=(255,255,255)
+ Else   ! put a non combined page header
+ Print '1' (11,7,1) Foreground=(255,255,255)
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (16,663) '' ' of'
+ Last-Page (16,692) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

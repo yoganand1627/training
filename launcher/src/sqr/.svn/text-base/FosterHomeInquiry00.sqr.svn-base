@@ -1,0 +1,265 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Fri Aug 22 11:36:15 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\Foster Home Inquiry\FosterHomeInquiry00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 1.000 
+  Bottom-Margin = 1.000 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+Begin-Select Loops=1
+CCOUNT.CODE &CountyHeader_CountyHeader_CCOUNT.CODE
+CCOUNT.DECODE &CountyHeader_CountyHeader_CCOUNT.DECODE
+From  CCOUNT
+Where CCOUNT.CODE = [$_I101_CD_STAGE_CNTY]
+End-Select
+ Alter-Report Heading-Size=156    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'The reporting county is determined by the county of the stage, not the unit county of the primary case manager. When the county of the primary case manager differs from the stage county, the unit county displays in parentheses to the right of the case manager''s name.' (27,12,130) Wrap 130 3 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=48   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I101_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_I101_CD_STAGE_CNTY) or IsBlank($_I101_CD_STAGE_CNTY)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+If SubStr($_I101_CD_STAGE_CNTY, 1, 1) != ''''
+  Let $_I101_CD_STAGE_CNTY = '''' || $_I101_CD_STAGE_CNTY || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CD_STAGE_CNTY,'''',0) = 0 and instr($_I101_CD_STAGE_CNTY,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_STAGE_CNTY'
+   Let $where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I101_CD_STAGE_CNTY || '''' 
+ Else
+   If (instr($_I101_CD_STAGE_CNTY,'''',0) = 0 and instr($_I101_CD_STAGE_CNTY,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_STAGE_CNTY'
+     Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_CD_STAGE_CNTY
+   End-If
+ End-If
+!Let $where_clause102 = 'Code = ''' || $_I101_CD_COUNTY || '''' 
+End-Procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select
+(CAPS_RESOURCE.ADDR_RSRC_ST_LN_1 || ', ' ||  CAPS_RESOURCE.ADDR_RSRC_CITY  || ', ' ||   CAPS_RESOURCE.CD_RSRC_STATE || ', ' ||   CAPS_RESOURCE.ADDR_RSRC_ZIP) &Address
+(trunc(CAPS_RESOURCE.NBR_RSRC_INT_MA_AGE_MAX /12,0) ||' /') &MaxMaleYear
+(trunc(CAPS_RESOURCE.NBR_RSRC_INT_FE_AGE_MAX /12,0)  ||' /') &MaxFemaleYear
+(((caps_resource.NBR_RSRC_INT_MA_AGE_MAX/12 - TRUNC(caps_resource.NBR_RSRC_INT_MA_AGE_MAX/12,0)))*12) &MaxMaleMonth
+(TRUNC( CAPS_RESOURCE.NBR_RSRC_INT_MA_AGE_MIN /12,0) ||' /') &MinMaleYear
+(((CAPS_RESOURCE.NBR_RSRC_INT_MA_AGE_MIN /12) - trunc (CAPS_RESOURCE.NBR_RSRC_INT_MA_AGE_MIN /12,0))*12) &MinMaleMonth
+(((caps_resource.NBR_RSRC_INT_FE_AGE_MIN/12 - TRUNC(caps_resource.NBR_RSRC_INT_FE_AGE_MIN/12,0)))*12) &MInFemaleMonth
+(trunc( CAPS_RESOURCE.NBR_RSRC_INT_FE_AGE_MIN/12,0) || ' /') &MinFemaleYear
+((caps_resource.NBR_RSRC_INT_FE_AGE_MAX/12 - TRUNC(caps_resource.NBR_RSRC_INT_FE_AGE_MAX/12,0))*12) &MaxFemaleMonth
+PERSON.ID_PERSON &Master_Query_PERSON.ID_PERSON
+CD_RSRC_CATEGORY &Master_Query_CD_RSRC_CATEGORY
+ADDR_RSRC_ST_LN_1 &Master_Query_ADDR_RSRC_ST_LN_1
+ADDR_RSRC_ST_LN_2 &Master_Query_ADDR_RSRC_ST_LN_2
+ADDR_RSRC_CITY &Master_Query_ADDR_RSRC_CITY
+CD_RSRC_STATE &Master_Query_CD_RSRC_STATE
+ADDR_RSRC_ZIP &Master_Query_ADDR_RSRC_ZIP
+NBR_RSRC_PHONE_EXT &Master_Query_NBR_RSRC_PHONE_EXT
+(PERSON.ID_PERSON || '    ' ||  PERSON.NM_PERSON_FULL) &CaseWorkerNameID
+CD_STAGE_CNTY &Master_Query_CD_STAGE_CNTY
+CD_COUNTY &Master_Query_CD_COUNTY
+(decode( CCOUNT.DECODE, '-None-', 'Multi-County',  CCOUNT.DECODE  )) &unit_county_decode_masked
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+NM_PERSON_FULL &Master_Query_NM_PERSON_FULL () On-Break Set=1 Level=1 Print=Never Before=Master_QueryNM_PERSON_FULL_BeforeProc101 After=Master_QueryNM_PERSON_FULL_AfterProc101
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+NM_RESOURCE &Master_Query_NM_RESOURCE (14,16,15) Wrap 15 3 line-height=12 Keep-Top
+CAPS_RESOURCE.ID_RESOURCE &Master_Query_CAPS_RESOURCE.ID_RESOURCE (14,101) Edit 9999999999na
+DT_INQUIRY &Master_Query_DT_INQUIRY (14,161) Edit MM/DD/YYYY
+CFACATEG.DECODE &Master_Query_CFACATEG.DECODE (14,230,15) Wrap 15 2 line-height=12 Keep-Top
+NBR_RSRC_PHN &Master_Query_NBR_RSRC_PHN (14,460) Edit (xxx)bxxx-xxxx
+ Print &Address (14,316,25) Wrap 25 2 line-height=12 Keep-Top
+ Print &MaxMaleYear (14,583,4)
+ Print &MaxFemaleYear (14,685,4)
+ Print &MaxMaleMonth (14,604,2)
+ Print &MinMaleYear (14,543,3)
+ Print &MinMaleMonth (14,560,2)
+ Print &MInFemaleMonth (14,661,2)
+ Print &MinFemaleYear (14,644,3)
+ Print &MaxFemaleMonth (14,707,2)
+ Add 1 To #101ROW_COUNT
+ Next-Listing  Need=22
+From  CAPS_RESOURCE, HOME_APPLICANT_INFO
+,      PERSON, STAGE, UNIT
+,      WORKLOAD, CFACATEG, CCOUNT
+      Where HOME_APPLICANT_INFO.ID_RESOURCE = CAPS_RESOURCE.ID_RESOURCE
+            And UNIT.ID_UNIT = STAGE.ID_UNIT
+            And WORKLOAD.ID_WKLD_PERSON = PERSON.ID_PERSON
+            And WORKLOAD.ID_WKLD_STAGE = STAGE.ID_STAGE
+            And CFACATEG.CODE = CAPS_RESOURCE.CD_RSRC_CATEGORY
+            And CAPS_RESOURCE.ID_RSRC_FA_HOME_STAGE = STAGE.ID_STAGE
+            And UNIT.CD_COUNTY = CCOUNT.CODE
+ And CD_RSRC_FA_HOME_STATUS = 'INQ'
+ And CD_WKLD_STAGE_PERS_ROLE = 'PR'
+ And [$where_clause101]
+Order By NM_PERSON_FULL
+,      NM_RESOURCE
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryNM_PERSON_FULL_BeforeProc101
+ Next-Listing  Need=14
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Manager:'  (14,8) Bold 
+  Print &CaseWorkerNameID (14,91,34)
+  If &Master_Query_CD_STAGE_CNTY=&Master_Query_CD_COUNTY
+    ! do nothing
+ Else
+ Let $unit_county_dsp='( ' || &unit_county_decode_masked || ' )'
+ Print $unit_county_dsp (14,278,18)
+ End-If
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryNM_PERSON_FULL_AfterProc101
+ Next-Listing  Need=22
+ Graphic (5,4,712) Horz-Line 20 
+ Position (7,1)
+ let #CountResourceID = #101ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #CountResourceID (22,42) Edit 8888na
+ Print 'Total:'  (22,8) Bold 
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 48 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (13,651) edit 'MM/DD/YYYY'
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='sacwis\launcher\src\images\SHINES.bmp'
+	Image-size=(102,73)
+ Print 'Division of Family and Children Services' (13,274,0)
+ Print 'Produced On:' (13,581,12)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Foster Home Inquiry' (53,289,0) Bold 
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+Print &CountyHeader_CountyHeader_CCOUNT.DECODE (104,68,9)
+ Print 'County:' (104,15,7)
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+ Print $current-date (126,6) edit 'MM/DD/YYYY' Foreground=(255,255,255)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Resource ID' (124,97,11) Underline  Bold 
+ Print 'Category' (124,230,0) Underline  Bold 
+ Print 'Inquiry Date' (124,159,12) Underline  Bold 
+ Print 'Home Interests (Year/Month)' (124,555,28) Underline  Bold 
+ Print 'Phone ' (124,476,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top
+ Print 'Male' (137,562,0) Underline  Bold 
+ Print 'Female' (136,655,0) Underline  Bold 
+ Print 'Min' (149,544,3) Underline  Bold 
+ Print 'Max' (149,584,4) Underline  Bold 
+ Print 'Max' (149,683,4) Underline  Bold 
+ Print 'Min' (149,647,3) Underline  Bold 
+ Print 'Address' (124,354,0) Underline  Bold 
+ Print 'Resource Name' (124,16,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+ Print $current-date (15,6) edit 'MM/DD/YYYY' Foreground=(255,255,255)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Resource ID' (13,97,11) Underline  Bold 
+ Print 'Category' (13,230,0) Underline  Bold 
+ Print 'Inquiry Date' (13,159,12) Underline  Bold 
+ Print 'Home Interests (Year/Month)' (13,555,28) Underline  Bold 
+ Print 'Phone ' (13,476,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top
+ Print 'Male' (26,562,0) Underline  Bold 
+ Print 'Female' (26,655,0) Underline  Bold 
+ Print 'Min' (38,544,3) Underline  Bold 
+ Print 'Max' (38,584,4) Underline  Bold 
+ Print 'Max' (38,683,4) Underline  Bold 
+ Print 'Min' (38,647,3) Underline  Bold 
+ Print 'Address' (13,354,0) Underline  Bold 
+ Print 'Resource Name' (13,16,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (21,672) '' ' of'
+ Last-Page (21,694) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

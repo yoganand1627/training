@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.AddressPersonLink" table="ADDRESS_PERSON_LINK" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idAddrPersonLink" type="integer" unsaved-value="0">
+      <column name="ID_ADDR_PERSON_LINK" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_ADDRESS_PERSON_LINK</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="personAddress" class="gov.georgia.dhr.dfcs.sacwis.db.PersonAddress" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON_ADDR" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdPersAddrLinkType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_ADDR_LINK_TYPE" length="2" not-null="true"/>
+    </property>
+    <property name="indPersAddrLinkInvalid" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PERS_ADDR_LINK_INVALID" length="1" not-null="true"/>
+    </property>
+    <property name="indPersAddrLinkPrimary" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PERS_ADDR_LINK_PRIMARY" length="1"/>
+    </property>
+    <property name="txtPersAddrCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PERS_ADDR_CMNTS" length="300"/>
+    </property>
+    <property name="dtPersAddrLinkStart" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PERS_ADDR_LINK_START" length="7"/>
+    </property>
+    <property name="dtPersAddrLinkEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PERS_ADDR_LINK_END" length="7"/>
+    </property>
+    <property name="indRemovalHome" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_REMOVAL_HOME" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

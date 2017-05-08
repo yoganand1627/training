@@ -1,0 +1,15 @@
+--STGAP00017049 - Release(5.0) MR-092 Change SIBLING_EXTERNAL_LINK primary key
+
+ALTER TABLE caps.SIBLING_EXTERNAL_LINK
+DROP PRIMARY KEY;
+
+ALTER TABLE caps.SIBLING_EXTERNAL_LINK
+DROP CONSTRAINT UK_SIBLING_EXTERNAL;
+
+ALTER TABLE caps.SIBLING_EXTERNAL_LINK
+ADD CONSTRAINT PK_SIBLING_EXTERNAL_LINK PRIMARY KEY (ID_SIBLING_GROUP, ID_PERSON);
+
+insert into caps.schema_version(id_schema_version,application_version,comments)
+            values (1079, 'SacwisRev5', 'Release 5.0 - DBCR 17049');
+
+commit;

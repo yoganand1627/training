@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.IncomingFacility" table="INCOMING_FACILITY" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idStage" type="integer" unsaved-value="0">
+      <column name="ID_STAGE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_INCOMING_FACILITY</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="addrIncmgFacilCity" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_INCMG_FACIL_CITY" length="20"/>
+    </property>
+    <property name="addrIncmgFacilStLn1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_INCMG_FACIL_ST_LN_1" length="30"/>
+    </property>
+    <property name="addrIncmgFacilStLn2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_INCMG_FACIL_ST_LN_2" length="30"/>
+    </property>
+    <property name="addrIncmgFacilZip" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_INCMG_FACIL_ZIP" length="10"/>
+    </property>
+    <property name="cdIncmgFacilOperBy" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_FACIL_OPER_BY" length="3"/>
+    </property>
+    <property name="cdIncmgFacilCnty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_FACIL_CNTY" length="3"/>
+    </property>
+    <property name="cdIncmgFacilType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_FACIL_TYPE" length="3"/>
+    </property>
+    <property name="cdIncmgFacilState" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_FACIL_STATE" length="2"/>
+    </property>
+    <property name="indIncmgFacilOffGrnds" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCMG_FACIL_OFF_GRNDS" length="1"/>
+    </property>
+    <property name="indIncmgFacilSearch" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCMG_FACIL_SEARCH" length="1"/>
+    </property>
+    <property name="indIncmgFacilAbSupvd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCMG_FACIL_AB_SUPVD" length="1"/>
+    </property>
+    <property name="nbrIncmgFacilPhone" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INCMG_FACIL_PHONE" length="10"/>
+    </property>
+    <property name="nbrIncmgFacilPhoneExt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INCMG_FACIL_PHONE_EXT" length="8"/>
+    </property>
+    <property name="nmIncmgFacilAffiliated" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_INCMG_FACIL_AFFILIATED" length="40"/>
+    </property>
+    <property name="nmIncmgFacilName" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_INCMG_FACIL_NAME" length="40"/>
+    </property>
+    <property name="nmIncmgFacilSuprtdant" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_INCMG_FACIL_SUPRTDANT" length="40"/>
+    </property>
+    <property name="nmIncmgFacilUnitWard" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_INCMG_FACIL_UNIT_WARD" length="15"/>
+    </property>
+    <property name="txtIncomingFacilCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_INCOMING_FACIL_CMNTS" length="300"/>
+    </property>
+  </class>
+</hibernate-mapping>

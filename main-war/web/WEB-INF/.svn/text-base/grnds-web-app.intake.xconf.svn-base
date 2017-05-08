@@ -1,0 +1,503 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE grnds-web-app SYSTEM "grnds-web-app.dtd">
+
+<grnds-web-app>
+
+  <servlet mapping="intake">
+    <conversations>
+      <conversation>
+        <conversation-name>CallLog</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.intake.CallLogConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayCallLog</command-name>
+            <activity type="method">displayCallLog_xa</activity>
+            <presentation type="class" screen="CALL_LOG">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>searchCallLog</command-name>
+            <activity type="method">searchCallLog_xa</activity>
+            <presentation type="class" screen="CALL_LOG">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>newUsingIntake</command-name>
+            <activity type="method">newUsingIntake_xa</activity>
+            <presentation type="url">
+              /intake/CallInformation/newUsingIntake
+            </presentation>
+            <presentation branch="error" type="class" screen="CALL_LOG">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>callIntakeActionsSummary</command-name>
+            <activity type="method">callIntakeActionsSummary_xa</activity>
+            <presentation type="url">
+              /intake/IntakeActions/displayIntakeActions
+            </presentation>
+            <presentation branch="error" type="class" screen="CALL_LOG">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <!-- SPB This command is called by callLog for links w/o a Case ID -->
+          <command>
+            <command-name>displayEventListFromCallLog</command-name>
+            <activity type="method">displayEventListFromCallLog_xa</activity>
+            <presentation type="url">
+              <!-- SPB This command is called to allow for a different presentation of EventList in this case -->
+              /workload/EventSearch/displayEventListNoCaseId
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+      <conversation>
+        <conversation-name>IncomingPersonDetail</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.intake.IncomingPersonDetailConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayIncomingPersonDetail</command-name>
+            <activity type="method">displayIncomingPersonDetail_xa</activity>
+            <presentation type="class" screen="INCOMING_PERSON">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+      <conversation>
+        <conversation-name>CallInformation</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.intake.CallInformationConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayNewIntake</command-name>
+            <activity type="method">displayNewIntake_xa</activity>
+            <presentation type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>newUsingIntake</command-name>
+            <activity type="method">newUsingIntake_xa</activity>
+            <presentation type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>createNewIntake</command-name>
+            <activity type="method">createNewIntake_xa</activity>
+            <presentation type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>viewPersonSearch</command-name>
+            <activity type="method">viewPersonSearch_xa</activity>
+            <presentation type="url">
+              /person/PersonSearch/displayAsyncResults
+            </presentation>
+            <presentation branch="error" type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveInitialCallEntry</command-name>
+            <activity type="method">saveInitialCallEntry_xa</activity>
+            <presentation type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayCallInformation</command-name>
+            <activity type="method">displayCallInformation_xa</activity>
+            <presentation type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveCallInformation</command-name>
+            <activity type="method">saveCallInformation_xa</activity>
+            <presentation type="url">
+              /intake/IntakeActions/displayIntakeActions
+            </presentation>
+            <presentation branch="error" type="url">
+              /intake/CallInformation/displayCallInformation
+            </presentation>
+          </command>
+          <command>
+            <command-name>setFacilityResource</command-name>
+            <activity type="method">setFacilityResource_xa</activity>
+            <presentation type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>getFacilityResource</command-name>
+            <activity type="method">getFacilityResource_xa</activity>
+            <presentation type="url">
+              /resource/ResourceSearch/results
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAndSubmitIntake</command-name>
+            <activity type="method">saveAndSubmitIntake_xa</activity>
+            <presentation type="url">
+              /workload/ToDo/newApprovalToDo
+            </presentation>
+            <presentation branch="error" type="url">
+              /intake/CallInformation/displayCallInformation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAndAssignIntake</command-name>
+            <activity type="method">saveAndAssignIntake_xa</activity>
+            <presentation type="url">
+              /workload/Assign/displayAssign
+            </presentation>
+            <presentation branch="error" type="url">
+              /intake/CallInformation/displayCallInformation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAndCloseIntake</command-name>
+            <activity type="method">saveAndCloseIntake_xa</activity>
+            <presentation type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="url">
+              /intake/CallInformation/displayCallInformation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayCallPersonDetail</command-name>
+            <activity type="method">displayCallPersonDetail_xa</activity>
+            <presentation type="class" screen="CALL_PERSON_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAndStayCallPersonDetail</command-name>
+            <activity type="method">saveAndStayCallPersonDetail_xa</activity>
+            <presentation type="class" screen="CALL_PERSON_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="stay" type="class" screen="CALL_PERSON_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAndContinueCallPersonDetail</command-name>
+            <activity type="method">saveAndContinueCallPersonDetail_xa</activity>
+            <presentation type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="CALL_PERSON_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="stay" type="class" screen="CALL_PERSON_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>redisplayCallPersonDetail</command-name>
+            <activity type="method">redisplayCallPersonDetail_xa</activity>
+            <presentation type="class" screen="CALL_PERSON_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>newUsingCallPersonDetail</command-name>
+            <activity type="method">newUsingCallPersonDetail_xa</activity>
+            <presentation type="class" screen="CALL_PERSON_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAndAddCallPersonDetail</command-name>
+            <activity type="method">saveAndAddCallPersonDetail_xa</activity>
+            <presentation type="class" screen="CALL_PERSON_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="stay" type="class" screen="CALL_PERSON_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>deleteCallPersonFromList</command-name>
+            <activity type="method">deleteCallPerson_xa</activity>
+            <presentation type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <!-- Error branch is the same as success branch because the deleteCallPerson_xa
+is used for another method that does have a different error branch. -->
+            <presentation branch="error" type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>deleteCallPersonFromDetail</command-name>
+            <activity type="method">deleteCallPerson_xa</activity>
+            <presentation type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="CALL_PERSON_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveMultipleCallPersonDetail</command-name>
+            <activity type="method">saveMultipleCallPersonDetail_xa</activity>
+            <presentation type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="CALL_PERSON_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>relatePerson</command-name>
+            <activity type="method">relatePerson_xa</activity>
+            <presentation type="url">
+              /intake/CallInformation/displayCallInformation
+            </presentation>
+          </command>
+          <command>
+            <command-name>updateRelatedAddressPhoneInfo</command-name>
+            <activity type="method">updateRelatedAddressPhoneInfo_xa</activity>
+            <presentation type="class" screen="CALL_PERSON_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>unrelatePerson</command-name>
+            <activity type="method">unrelatePerson_xa</activity>
+            <presentation type="url">
+              /intake/CallInformation/displayCallInformation
+            </presentation>
+          </command>
+           <command>
+            <command-name>submitApproval</command-name>
+            <activity type="method">submitApproval_xa</activity>
+            <presentation type="url">
+              /workload/ApprovalStatus/displayStatus
+            </presentation>
+            <presentation branch="error" type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+           <command>
+            <command-name>deleteDisposition</command-name>
+            <activity type="method">deleteDisposition_xa</activity>
+            <presentation type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="CALL_INFORMATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+        
+      </conversation>
+      <conversation>
+        <conversation-name>IntakeActions</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.intake.IntakeActionsConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayIntakeActions</command-name>
+            <activity type="method">displayIntakeActions_xa</activity>
+            <presentation type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>setFacilityResource</command-name>
+            <activity type="method">setFacilityResource_xa</activity>
+            <presentation type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>getFacilityResource</command-name>
+            <activity type="method">getFacilityResource_xa</activity>
+            <presentation type="url">
+              /resource/ResourceSearch/results
+            </presentation>
+          </command>
+          <command>
+            <command-name>deleteIntake</command-name>
+            <activity type="method">deleteIntake_xa</activity>
+            <presentation type="url">
+              /intake/CallInformation/displayNewIntake
+            </presentation>
+            <presentation branch="error" type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>markIntakeForDeletion</command-name>
+            <activity type="method">markIntakeForDeletion_xa</activity>
+            <presentation type="url">
+              /intake/CallInformation/displayNewIntake
+            </presentation>
+            <presentation branch="error" type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveIntakeActions</command-name>
+            <activity type="method">saveIntakeActions_xa</activity>
+            <presentation branch="error" type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayAllegationDetail</command-name>
+            <activity type="method">displayAllegationDetail_xa</activity>
+            <presentation type="class" screen="ALLEGATION_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayLocOfMalHelp</command-name>
+            <presentation type="url">
+              /grnds-docs/common/LocationOfMaltreatmentHelpTxt.html
+            </presentation>
+          </command>
+          <command>
+            <command-name>deleteAllegationFromList</command-name>
+            <activity type="method">deleteAllegation_xa</activity>
+            <presentation type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <!-- Error branch is the same as success branch because the deleteAllegation_xa
+                   is used for another method that does have a different error branch. -->
+            <presentation branch="error" type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>deleteAllegationFromDetail</command-name>
+            <activity type="method">deleteAllegation_xa</activity>
+            <presentation type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="ALLEGATION_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAndAddAllegation</command-name>
+            <activity type="method">saveAndAddAllegation_xa</activity>
+            <presentation type="class" screen="ALLEGATION_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAndSubmitIntake</command-name>
+            <activity type="method">saveAndSubmitIntake_xa</activity>
+            <presentation type="url">
+              /workload/ToDo/newApprovalToDo
+            </presentation>
+            <presentation branch="warn" type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="url">
+              /intake/IntakeActions/displayIntakeActions
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAndAssignIntake</command-name>
+            <activity type="method">saveAndAssignIntake_xa</activity>
+            <presentation type="url">
+              /workload/Assign/displayAssign
+            </presentation>
+            <presentation branch="error" type="url">
+              /intake/IntakeActions/displayIntakeActions
+            </presentation>
+          </command>
+          <command>
+            <command-name>assignIntake</command-name>
+            <activity type="method">assignIntake_xa</activity>
+            <presentation type="url">
+              /workload/Assign/displayAssign
+            </presentation>
+            <presentation branch="error" type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>submitApproval</command-name>
+            <activity type="method">submitApproval_xa</activity>
+            <presentation type="url">
+              /workload/ApprovalStatus/displayStatus
+            </presentation>
+            <presentation branch="warn" type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAndContinueAllegation</command-name>
+            <activity type="method">saveAndContinueAllegation_xa</activity>
+            <presentation type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="ALLEGATION_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>searchResource</command-name>
+            <activity type="method">searchResource_xa</activity>
+            <presentation type="url">
+              /resource/ResourceSearch/
+            </presentation>
+          </command>
+          <command>
+            <command-name>setResource</command-name>
+            <activity type="method">setResource_xa</activity>
+            <presentation type="class" screen="INTAKE_ACTIONS">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+         <command>
+            <command-name>displayDetFaq</command-name>
+            <presentation type="url">
+              /grnds-docs/intake/DeterminationFactorQuestions.jsp
+            </presentation>
+          </command>
+          
+          <command>
+          <command-name>displayMICHelp</command-name>
+            <presentation type="url">
+              /grnds-docs/intake/MaltreatmentInCareHelp.html
+            </presentation>
+          </command>
+          
+        </commands>
+      </conversation>
+
+
+    </conversations>
+  </servlet>
+
+  <error-handling>
+    <domain>sacwis</domain>
+    <logger>grnds.syslog</logger>
+  </error-handling>
+
+</grnds-web-app>

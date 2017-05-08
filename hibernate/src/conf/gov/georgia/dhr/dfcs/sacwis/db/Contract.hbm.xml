@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Contract" table="CONTRACT" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idContract" type="integer" unsaved-value="0">
+      <column name="ID_CONTRACT" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_CONTRACT</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="resourceAddress" class="gov.georgia.dhr.dfcs.sacwis.db.ResourceAddress" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_RSRC_ADDRESS" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdCntrctWkr" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CNTRCT_WKR" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdCntrctManager" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_CNTRCT_MANAGER" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdCntrctFuncType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CNTRCT_FUNC_TYPE" length="3" not-null="true"/>
+    </property>
+    <property name="cdCntrctProgramType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CNTRCT_PROGRAM_TYPE" length="3" not-null="true"/>
+    </property>
+    <property name="cdCntrctProcureType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CNTRCT_PROCURE_TYPE" length="3" not-null="true"/>
+    </property>
+    <property name="cdCntrctRegion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CNTRCT_REGION" length="2" not-null="true"/>
+    </property>
+    <property name="indCntrctBudgLimit" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CNTRCT_BUDG_LIMIT" length="1"/>
+    </property>
+    <property name="indCntrctdRsrc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CNTRCTD_RSRC" length="1"/>
+    </property>
+    <bag name="contractPeriods" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CONTRACT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ContractPeriod" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="contractServices" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CONTRACT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ContractService" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="invoices" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CONTRACT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Invoice" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="serviceAuthorizations" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CONTRACT" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ServiceAuthorization" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="contractCounties" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CONTRACT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ContractCounty" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="placements" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PLCMT_CONTRACT" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Placement" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

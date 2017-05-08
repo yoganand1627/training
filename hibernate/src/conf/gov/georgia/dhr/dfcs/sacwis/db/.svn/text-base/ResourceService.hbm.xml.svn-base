@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ResourceService" table="RESOURCE_SERVICE" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idResourceService" type="integer" unsaved-value="0">
+      <column name="ID_RESOURCE_SERVICE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_RESOURCE_SERVICE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="indRsrcSvcShowRow" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RSRC_SVC_SHOW_ROW" length="1"/>
+    </property>
+    <property name="indRsrcSvcIncomeBsed" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RSRC_SVC_INCOME_BSED" length="1"/>
+    </property>
+    <property name="cdRsrcSvcCategRsrc" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_SVC_CATEG_RSRC" length="3"/>
+    </property>
+    <property name="cdRsrcSvcCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_SVC_CNTY" length="3"/>
+    </property>
+    <property name="cdRsrcSvcProgram" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_SVC_PROGRAM" length="2"/>
+    </property>
+    <property name="cdRsrcSvcRegion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_SVC_REGION" length="2"/>
+    </property>
+    <property name="cdRsrcSvcService" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_SVC_SERVICE" length="6"/>
+    </property>
+    <property name="cdRsrcSvcState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_SVC_STATE" length="2"/>
+    </property>
+    <property name="indRsrcSvcCntyPartial" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RSRC_SVC_CNTY_PARTIAL" length="1"/>
+    </property>
+    <property name="cdRsrcSvcServiceType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_SVC_SERVICE_TYPE" length="1"/>
+    </property>
+    <bag name="resourceChrctrs" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RESOURCE_SERVICE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ResourceChrctr" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.UasPrgCodeMtntAudit" table="UAS_PRG_CODE_MTNT_AUDIT" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idUasPrgCodeMtntAudit" type="integer" unsaved-value="0">
+            <column name="ID_UAS_PRG_CODE_MTNT_AUDIT" precision="16" scale="0"/>
+            <generator class="sequence">
+<param name="sequence">SEQ_UAS_PRG_CODE_MTNT_AUDIT</param>
+</generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="personUpdate" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+        	<column name="ID_PERSON_UPDATE" precision="16" scale="0"/>
+        </many-to-one>
+        <property name="idUasProgramCodeMtnt" type="integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ID_UAS_PROGRAM_CODE_MTNT" precision="16" scale="0" not-null="true"/>
+        </property>
+        <property name="cdUas" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_UAS" length="20" not-null="true"/>
+        </property>
+        <property name="cdProgramType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_PROGRAM_TYPE" length="370"/>
+        </property>
+        <property name="dtEffective" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_EFFECTIVE" length="7" not-null="true"/>
+        </property>
+        <property name="txtProgramDesc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_PROGRAM_DESC" length="370"/>
+        </property>
+        <property name="indCci" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_CCI" length="1"/>
+        </property>
+        <property name="indCpa" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_CPA" length="1"/>
+        </property>
+        <property name="indInvAddon" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_INV_ADDON" length="1"/>
+        </property>
+        <property name="indServAuth" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_SERV_AUTH" length="1"/>
+        </property>
+        <property name="indPssf" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_PSSF" length="1"/>
+        </property>
+        <property name="cdUpdateAction" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_UPDATE_ACTION" length="1"/>
+        </property>
+        <bag name="uasEntCodeMtntAudits" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+            <key on-delete="noaction" update="false">
+                <column name="ID_UAS_PRG_CODE_MTNT_AUDIT" precision="16" scale="0" not-null="true"/>
+            </key>
+            <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.UasEntCodeMtntAudit" not-found="exception" embed-xml="true"/>
+        </bag>
+    </class>
+</hibernate-mapping>

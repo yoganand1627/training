@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Ppt" table="PPT" mutable="true" polymorphism="implicit"
+         dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+    <id name="idPptEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_PPT_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="contactStandards" class="gov.georgia.dhr.dfcs.sacwis.db.ContactStandards" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CONTACT_STDS_EVENT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="addrPptCity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PPT_CITY" length="20"/>
+    </property>
+    <property name="addrPptCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PPT_CNTY" length="20"/>
+    </property>
+    <property name="addrPptStLn1" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PPT_ST_LN_1" length="30"/>
+    </property>
+    <property name="addrPptStLn2" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PPT_ST_LN_2" length="30"/>
+    </property>
+    <property name="addrPptState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PPT_STATE" length="2"/>
+    </property>
+    <property name="addrPptZip" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PPT_ZIP" length="10"/>
+    </property>
+    <property name="dtPptDate" type="timestamp" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PPT_DATE" length="7"/>
+    </property>
+    <property name="dtPptDocComp" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PPT_DOC_COMP" length="7"/>
+    </property>
+    <property name="nbrPptPhone" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_PPT_PHONE" length="10"/>
+    </property>
+    <property name="nbrPptPhoneExt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_PPT_PHONE_EXT" length="8"/>
+    </property>
+    <property name="txtPptAddrCmnt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_PPT_ADDR_CMNT" length="300"/>
+    </property>
+    <property name="cdPptType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PPT_TYPE" length="4"/>
+    </property>
+    <property name="indMdtPerm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_MDT_PERM" length="1"/>
+    </property>
+    <property name="indMdtSfty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_MDT_SFTY" length="1"/>
+    </property>
+    <property name="indMdtWlbng" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_MDT_WLBNG" length="1"/>
+    </property>
+    <property name="indFtmReqMet" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_FTM_REQ_MET" length="1"/>
+    </property>
+    <property name="dtUrBegin" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_UR_BEGIN" length="7"/>
+    </property>
+    <property name="dtUrEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_UR_END" length="7"/>
+    </property>
+    <property name="indAhAsstNeeded" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_AH_ASST_NEEDED" length="1"/>
+    </property>
+    <property name="dtAhRequested" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_AH_REQUESTED" length="7"/>
+    </property>
+    <property name="dtAhOutcome" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_AH_OUTCOME" length="7"/>
+    </property>
+    <property name="dtDatePrepIntvw" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PREP_INTVW" length="7"/>
+    </property>
+    <property name="dtPermRepComp" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PERM_REP_COMP" length="7"/>
+    </property>
+    <property name="indTranPlanComp" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_TRAN_PLAN_COMP" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

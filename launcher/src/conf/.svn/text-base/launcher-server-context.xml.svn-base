@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+       default-dependency-check="none">
+  <bean id="rmiRegistry" class="org.springframework.remoting.rmi.RmiRegistryFactoryBean">
+    <property name="port" value="${launcher.port}"/>
+  </bean>
+
+  <bean class="org.springframework.remoting.rmi.RmiServiceExporter">
+    <!-- does not necessarily have to be the same name as the bean to be exported -->
+    <property name="serviceName" value="ReportLauncherService"/>
+    <property name="service" ref="reportLauncherService"/>
+    <property name="serviceInterface" value="gov.georgia.dhr.dfcs.sacwis.launcher.ReportLauncher"/>
+    <property name="registry" ref="rmiRegistry"/>
+  </bean>
+
+  <bean class="org.springframework.remoting.rmi.RmiServiceExporter">
+    <!-- does not necessarily have to be the same name as the bean to be exported -->
+    <property name="serviceName" value="ReportLauncherControlService"/>
+    <property name="service" ref="reportLauncherControlService"/>
+    <property name="serviceInterface" value="gov.georgia.dhr.dfcs.sacwis.launcher.ReportLauncherControl"/>
+    <property name="registry" ref="rmiRegistry"/>
+  </bean>
+
+  <bean class="gov.georgia.dhr.dfcs.sacwis.launcher.main.ReportLauncherMain">
+  	<property name="reportLauncher" ref="reportLauncherService"></property>
+  </bean>
+
+  <bean id="reportLauncherService" class="gov.georgia.dhr.dfcs.sacwis.launcher.impl.ReportLauncherImpl">
+  	<property name="launcherDAO" ref="launcherDAO"></property>
+    <property name="outputDir" value="${launcher.outputDir}"/>
+	<property name="xlsOutputDir" value="${launcher.xlsOutputDir}"/>
+    <property name="taskExecutor" ref="taskExecutor"/>
+    <lookup-method name="createReportJob" bean="sqrJob"/>
+	<lookup-method name="createJXLSJob" bean="jxlsJob"/>
+	<lookup-method name="createJXLSNoParamJob" bean="jxlsNoParamJob"/>
+  </bean>
+
+  <bean id="sqrConfiguration" class="gov.georgia.dhr.dfcs.sacwis.launcher.impl.SQRConfiguration" init-method="init">
+    <property name="includeDir" value="${launcher.includeDir}"/>
+    <property name="logDir" value="${launcher.logDir}"/>
+    <property name="maximumsFile" value="${launcher.maximumsFile}"/>
+    <property name="outputDir" value="${launcher.outputDir}"/>
+    <property name="printerName" value="${launcher.printerName}"/>
+    <property name="reportDir" value="${launcher.reportDir}"/>
+    <!-- <property name="connectionString" value="${launcher.connectionString}"/> -->
+    <property name="connectionString" value="${launcher.execute.connectionString}"/>
+    <property name="perUserSchemaSupport" value="${perUserSchemaSupport}"/>
+    <property name="sqrCommand" value="${launcher.sqrCommand}"/>
+    <property name="workingDir" value="${launcher.workingDir}"/>
+    <property name="password" value="${launcher.jdbc.password}"/>
+    <!--<property name="sid" value="${install.jdbc.sid}"/> -->
+    <property name="sid" value="${launcher.execute.jdbc.sid}"/>
+  </bean>
+  
+  <bean id="reportLauncherControlService" class="gov.georgia.dhr.dfcs.sacwis.launcher.impl.ReportLauncherControlImpl"/>
+    
+  <bean  id="sqrJob" class="gov.georgia.dhr.dfcs.sacwis.launcher.impl.SQRJob" scope="prototype">
+    <property name="sqrConfiguration" ref="sqrConfiguration"/>
+    <property name="launcherDAO" ref="launcherDAO"/>
+  </bean>
+   
+  <bean id="taskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+    <!-- Create a fixed # of threads for execution. -->
+    <property name="corePoolSize" value="${launcher.concurrentJobs}"/>
+    <property name="maxPoolSize" value="${launcher.concurrentJobs}"/>
+    <!-- Requied because we want use a LinkedBlockingQueue, not a SynchronousQueue (which would block for every put.) -->
+    <property name="queueCapacity" value="0x7fffffff"/>
+  </bean>
+
+  <bean id="launcherDAO" class="gov.georgia.dhr.dfcs.sacwis.launcher.dao.impl.LauncherDAOImpl">
+  	<property name="dataSource" ref="dataSource"></property>
+  </bean>
+  
+  <bean id="rptLauncherDAO" class="gov.georgia.dhr.dfcs.sacwis.launcher.dao.impl.RptLauncherDAOImpl">
+  	<property name="dataSource" ref="rptDataSource"></property>
+  </bean>
+  <bean id="stagePersonLinkLnchrDAO" class="gov.georgia.dhr.dfcs.sacwis.launcher.dao.impl.StagePersonLinkLnchrDAOImpl">
+  	<property name="dataSource" ref="dataSource"></property>
+  </bean>
+  <bean id="faIndivTrainingLnchrDAO" class="gov.georgia.dhr.dfcs.sacwis.launcher.dao.impl.FaIndivTrainingLnchrDAOImpl">
+  	<property name="dataSource" ref="dataSource"></property>
+  </bean>
+  <bean id="resourceHistoryLnchrDAO" class="gov.georgia.dhr.dfcs.sacwis.launcher.dao.impl.ResourceHistoryLnchrDAOImpl">
+  	<property name="dataSource" ref="dataSource"></property>
+  </bean>
+	
+  <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}"/> 
+		<property name="url" value="${install.jdbc.url}"/>
+		<property name="username" value="${launcher.jdbc.username}"/>
+		<property name="password" value="${launcher.jdbc.password}"/>
+		<property name="initialSize" value="${launcher.concurrentJobs}"/>
+		<property name="maxActive" value="${launcher.concurrentJobs}"/>
+		<property name="maxIdle" value="${launcher.concurrentJobs}"/>
+  </bean>  
+
+  <bean id="rptDataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}"/> 
+		<property name="url" value="${launcher.udr.jdbc.url}"/>
+		<property name="username" value="${launcher.udr.jdbc.username}"/>
+		<property name="password" value="${launcher.udr.jdbc.password}" />
+		<property name="initialSize" value="${launcher.concurrentJobs}"/>
+		<property name="maxActive" value="${launcher.concurrentJobs}"/>
+		<property name="maxIdle" value="${launcher.concurrentJobs}"/>
+  </bean>  
+
+  <!-- This provides values for ${} variables above. -->
+  <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="location" value="launcher.properties"/>
+  </bean>
+  
+  <!-- jxls support  -->
+  <bean id="jxlsConfiguration" class="gov.georgia.dhr.dfcs.sacwis.launcher.impl.JXLSConfiguration" init-method="init">
+    <property name="logDir" value="${launcher.logDir}"/>
+    <property name="maximumsFile" value="${launcher.maximumsFile}"/>
+    <property name="outputDir" value="${launcher.xlsOutputDir}"/>
+    <property name="templateDir" value="${launcher.jxlsTemplateDir}"/>
+    <property name="perUserSchemaSupport" value="${perUserSchemaSupport}"/>
+  </bean>
+
+   <bean id="jxlsJob" class="gov.georgia.dhr.dfcs.sacwis.launcher.impl.JXLSJob" scope="prototype">
+    <property name="jxlsConfiguration" ref="jxlsConfiguration"/>
+    <property name="launcherDAO" ref="launcherDAO"/>
+    <property name="rptLauncherDAO" ref="rptLauncherDAO"/>
+    <property name="stagePersonLinkLnchrDAO" ref="stagePersonLinkLnchrDAO"/>
+    <property name="resourceHistoryLnchrDAO" ref="resourceHistoryLnchrDAO"/>
+    <property name="faIndivTrainingLnchrDAO" ref="faIndivTrainingLnchrDAO"/>
+  </bean>
+    <bean id="jxlsNoParamConfiguration" class="gov.georgia.dhr.dfcs.sacwis.launcher.impl.JXLSNoParamConfiguration" init-method="init">
+    <property name="logDir" value="${launcher.logDir}"/>
+    <property name="maximumsFile" value="${launcher.maximumsFile}"/>
+    <property name="outputDir" value="${launcher.xlsOutputDir}"/>
+    <property name="templateDir" value="${launcher.jxlsTemplateDir}"/>
+    <property name="perUserSchemaSupport" value="${perUserSchemaSupport}"/>
+  </bean>
+  
+  <bean id="jxlsNoParamJob" class="gov.georgia.dhr.dfcs.sacwis.launcher.impl.JXLSNoParamJob" scope="prototype">
+    <property name="jxlsNoParamConfiguration" ref="jxlsNoParamConfiguration"/>
+    <property name="launcherDAO" ref="launcherDAO"/>
+    <property name="rptLauncherDAO" ref="rptLauncherDAO"/>
+  </bean>
+</beans>

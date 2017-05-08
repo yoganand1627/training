@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.LicensingInvstDtl" table="LICENSING_INVST_DTL" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="true" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_LICNG_INVST_STAGE" precision="16" scale="0" unique="true"/>
+    </many-to-one>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdLicngInvstOvrallDisp" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_LICNG_INVST_OVRALL_DISP" length="3"/>
+    </property>
+    <property name="dtLicngInvstIntake" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_LICNG_INVST_INTAKE" length="7"/>
+    </property>
+    <property name="dtLicngInvstAssigned" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_LICNG_INVST_ASSIGNED" length="7"/>
+    </property>
+    <property name="dtLicngInvstBegun" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_LICNG_INVST_BEGUN" length="7"/>
+    </property>
+    <property name="dtLicngInvstComplt" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_LICNG_INVST_COMPLT" length="7"/>
+    </property>
+    <property name="txtLicngInvstNoncomp" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_LICNG_INVST_NONCOMP" length="300"/>
+    </property>
+    <property name="cdLicngInvstCoractn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_LICNG_INVST_CORACTN" length="2"/>
+    </property>
+    <property name="nmResource" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_RESOURCE" length="60"/>
+    </property>
+    <property name="nbrAcclaim" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_ACCLAIM" precision="8" scale="0"/>
+    </property>
+    <property name="cdRsrcFacilType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_FACIL_TYPE" length="2"/>
+    </property>
+    <property name="txtComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_COMMENTS" length="300"/>
+    </property>
+    <property name="nbrPhone" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_PHONE" length="10"/>
+    </property>
+    <property name="nbrPhoneExt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_PHONE_EXT" length="8"/>
+    </property>
+    <property name="addrAttn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_ATTN" length="45"/>
+    </property>
+    <property name="addrStLn1" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_ST_LN1" length="30"/>
+    </property>
+    <property name="addrStLn2" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_ST_LN2" length="30"/>
+    </property>
+    <property name="addrCity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_CITY" length="20"/>
+    </property>
+    <property name="addrCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_COUNTY" length="20"/>
+    </property>
+    <property name="addrState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_STATE" length="3"/>
+    </property>
+    <property name="addrZip" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_ZIP" length="10"/>
+    </property>
+    <property name="idAffilResource" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ID_AFFIL_RESOURCE" precision="16" scale="0"/>
+    </property>
+    <property name="nmAffilResource" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_AFFIL_RESOURCE" length="60"/>
+    </property>
+    <property name="txtAffilComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_AFFIL_COMMENTS" length="300"/>
+    </property>
+    <property name="nbrAffilPhone" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_AFFIL_PHONE" length="10"/>
+    </property>
+    <property name="nbrAffilPhoneExt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_AFFIL_PHONE_EXT" length="8"/>
+    </property>
+    <property name="addrAffilAttn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_AFFIL_ATTN" length="45"/>
+    </property>
+    <property name="addrAffilStLn1" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_AFFIL_ST_LN1" length="30"/>
+    </property>
+    <property name="addrAffilStLn2" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_AFFIL_ST_LN2" length="30"/>
+    </property>
+    <property name="addrAffilCity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_AFFIL_CITY" length="20"/>
+    </property>
+    <property name="addrAffilCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_AFFIL_COUNTY" length="20"/>
+    </property>
+    <property name="addrAffilState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_AFFIL_STATE" length="3"/>
+    </property>
+    <property name="addrAffilZip" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_AFFIL_ZIP" length="10"/>
+    </property>
+    <property name="idClassFclty" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ID_CLASS_FCLTY" precision="10" scale="0"/>
+    </property>
+    <property name="idClassAffilFclty" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ID_CLASS_AFFIL_FCLTY" precision="10" scale="0"/>
+    </property>
+    <property name="nbrAffilAcclaim" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_AFFIL_ACCLAIM" precision="8" scale="0"/>
+    </property>
+    <property name="nbrAgency" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_AGENCY" precision="5" scale="0"/>
+    </property>
+    <property name="nbrBranch" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_BRANCH" precision="4" scale="0"/>
+    </property>
+    <property name="nbrAffilAgency" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_AFFIL_AGENCY" precision="5" scale="0"/>
+    </property>
+    <property name="nbrAffilBranch" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_AFFIL_BRANCH" precision="4" scale="0"/>
+    </property>
+    <property name="cdAffilFacilType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_AFFIL_FACIL_TYPE" length="2"/>
+    </property>
+  </class>
+</hibernate-mapping>

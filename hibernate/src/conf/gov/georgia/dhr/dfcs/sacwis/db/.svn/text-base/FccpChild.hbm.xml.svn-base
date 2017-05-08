@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FccpChild" table="FCCP_CHILD" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+
+    <property name="txtEffrtsRem" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_EFFRTS_REM" length="500"/>
+    </property>
+    <property name="indDilgntSrch" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_DILGNT_SRCH" length="1"/>
+    </property>
+    <property name="dtDilgntComp" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_DILGNT_COMP" length="7"/>
+    </property>
+    <property name="indChildAdjCare" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CHILD_ADJ_CARE" length="1"/>
+    </property>
+    <property name="txtChildAdjComm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CHILD_ADJ_COMM" length="500"/>
+    </property>
+    <property name="txtAfsa" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_AFSA" length="1000"/>
+    </property>
+    <property name="indTpr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_TPR" length="1"/>
+    </property>
+    <property name="dtTpr" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_TPR" length="7"/>
+    </property>
+    <property name="txtTpr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_TPR" length="500"/>
+    </property>
+    <property name="txtSteps" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_STEPS" length="500"/>
+    </property>
+    <property name="txtAddtlInfo" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_ADDTL_INFO" length="500"/>
+    </property>
+    <property name="indImmUtd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_IMM_UTD" length="1"/>
+    </property>
+    <property name="txtImmUtd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_IMM_UTD" length="500"/>
+    </property>
+    <property name="indImmOnfile" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_IMM_ONFILE" length="1"/>
+    </property>
+    <property name="txtImmOnfile" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_IMM_ONFILE" length="500"/>
+    </property>
+    <property name="indOngoingProb" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_ONGOING_PROB" length="1"/>
+    </property>
+    <property name="txtOngoingProb" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_ONGOING_PROB" length="500"/>
+    </property>
+    <property name="indMedrecOnfile" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_MEDREC_ONFILE" length="1"/>
+    </property>
+    <property name="txtMedrecOnfile" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_MEDREC_ONFILE" length="500"/>
+    </property>
+    <property name="indPsychOnfile" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PSYCH_ONFILE" length="1"/>
+    </property>
+    <property name="txtPsychOnfile" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_PSYCH_ONFILE" length="500"/>
+    </property>
+    <property name="indPsychTreat" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PSYCH_TREAT" length="1"/>
+    </property>
+    <property name="indPsychDoc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PSYCH_DOC" length="1"/>
+    </property>
+    <property name="txtEvalDates" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_EVAL_DATES" length="500"/>
+    </property>
+    <property name="txtRelevantMed" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_RELEVANT_MED" length="500"/>
+    </property>
+    <property name="indPermPlan" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PERM_PLAN" length="1"/>
+    </property>
+    <bag name="fccpChildCbxes" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FccpChildCbx" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

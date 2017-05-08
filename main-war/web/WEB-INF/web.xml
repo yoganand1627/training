@@ -1,0 +1,691 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+  <!-- Context parameter for GRNDS. -->
+  <context-param>
+    <param-name>grnds.config.domain</param-name>
+    <param-value>sacwis</param-value>
+  </context-param>
+
+  <!-- Context parameters for Spring web context. -->
+  <context-param>
+    <param-name>contextClass</param-name>
+    <param-value>gov.georgia.dhr.dfcs.sacwis.core.spring.SJSASXmlWebApplicationContext</param-value>
+  </context-param>
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>
+      classpath:ejbs-client-context.xml
+      <!--classpath:ws-server-context.xml-->
+    </param-value>
+  </context-param>
+
+  <!-- Performance filter. -->
+  <filter>
+    <filter-name>JAMonFilter</filter-name>
+    <filter-class>com.jamonapi.JAMonFilter</filter-class>
+  </filter>
+
+  <!-- Track everything with the performance filter for now. -->
+  <filter-mapping>
+    <filter-name>JAMonFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!-- These listeners clean up class loader problems. -->
+  <listener>
+    <listener-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.LoggingListener</listener-class>
+  </listener>
+  <listener>
+    <listener-class>org.springframework.web.util.IntrospectorCleanupListener</listener-class>
+  </listener>
+
+  <!--
+    This section should never be uncommented in environments higher than devl.
+
+  <listener>
+    <listener-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.SerializableSessionAttributeListener</listener-class>
+  </listener>
+  -->
+
+  <!-- Load the Spring web context; should be loaded first. -->
+  <listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+
+  <!-- Load the SACWIS listener, which extends the GRNDS listener. -->
+  <listener>
+    <listener-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.SACWISContextListener</listener-class>
+  </listener>
+
+  <!--The XFire servlet-->
+  <servlet>
+    <servlet-name>xfire</servlet-name>
+    <servlet-class>org.codehaus.xfire.spring.XFireSpringServlet</servlet-class>
+  </servlet>
+
+  <!-- Servlets using BasePrsHttpServlet -->
+  <servlet>
+    <servlet-name>DocumentServlet</servlet-name>
+    <servlet-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.BasePrsHttpServlet</servlet-class>
+    <init-param>
+      <param-name>grnds.config.domain</param-name>
+      <param-value>sacwis</param-value>
+    </init-param>
+    <init-param>
+      <param-name>grnds.web.app.map</param-name>
+      <param-value>/WEB-INF/grnds-web-app.document.xconf</param-value>
+    </init-param>
+    <!-- Have all document requests go to separate document queue that is configured in weblogic console/config.xml-->
+    <!--
+    // FIXME: Create a separate queue in SJSAS.
+    <init-param>
+      <param-name>wl-dispatch-policy</param-name>
+      <param-value>DocumentsQueue</param-value>
+    </init-param>
+    -->
+  </servlet>
+
+  <servlet>
+    <servlet-name>ErrorServlet</servlet-name>
+    <servlet-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.BasePrsHttpServlet</servlet-class>
+    <init-param>
+      <param-name>grnds.config.domain</param-name>
+      <param-value>sacwis</param-value>
+    </init-param>
+    <init-param>
+      <param-name>grnds.web.app.map</param-name>
+      <param-value>/WEB-INF/grnds-web-app.error.xconf</param-value>
+    </init-param>
+  </servlet>
+
+  <servlet>
+    <servlet-name>LoginServlet</servlet-name>
+    <servlet-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.BasePrsHttpServlet</servlet-class>
+    <init-param>
+      <param-name>grnds.config.domain</param-name>
+      <param-value>sacwis</param-value>
+    </init-param>
+    <init-param>
+      <param-name>grnds.web.app.map</param-name>
+      <param-value>/WEB-INF/grnds-web-app.login.xconf</param-value>
+    </init-param>
+    <!-- Have all login requests go to separate login queue that is configured in weblogic console/config.xml-->
+    <!--
+    // FIXME: Create a separate queue in SJSAS.
+    <init-param>
+      <param-name>wl-dispatch-policy</param-name>
+      <param-value>LoginQueue</param-value>
+    </init-param>
+    -->
+  </servlet>
+
+  <servlet>
+    <servlet-name>TestServlet</servlet-name>
+    <servlet-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.BasePrsHttpServlet</servlet-class>
+    <init-param>
+      <param-name>grnds.config.domain</param-name>
+      <param-value>sacwis</param-value>
+    </init-param>
+    <init-param>
+      <param-name>grnds.web.app.map</param-name>
+      <param-value>/WEB-INF/grnds-web-app.test.xconf</param-value>
+    </init-param>
+  </servlet>
+  <!-- End servlets using BasePrsHttpServlet -->
+
+  <!-- Servlets using AuthenticatedPrsHttpServlet -->
+  
+  <servlet>
+    <servlet-name>AdminServlet</servlet-name>
+    <servlet-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.AuthenticatedPrsHttpServlet</servlet-class>
+    <init-param>
+      <param-name>grnds.config.domain</param-name>
+      <param-value>sacwis</param-value>
+    </init-param>
+    <init-param>
+      <param-name>grnds.web.app.map</param-name>
+      <param-value>/WEB-INF/grnds-web-app.admin.xconf</param-value>
+    </init-param>
+  </servlet>
+
+  <servlet>
+    <servlet-name>CommonServlet</servlet-name>
+    <servlet-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.AuthenticatedPrsHttpServlet</servlet-class>
+    <init-param>
+      <param-name>grnds.config.domain</param-name>
+      <param-value>sacwis</param-value>
+    </init-param>
+    <init-param>
+      <param-name>grnds.web.app.map</param-name>
+      <param-value>/WEB-INF/grnds-web-app.common.xconf</param-value>
+    </init-param>
+  </servlet>
+  <servlet>
+    <servlet-name>ContactsServlet</servlet-name>
+    <servlet-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.AuthenticatedPrsHttpServlet</servlet-class>
+    <init-param>
+      <param-name>grnds.config.domain</param-name>
+      <param-value>sacwis</param-value>
+    </init-param>
+    <init-param>
+      <param-name>grnds.web.app.map</param-name>
+      <param-value>/WEB-INF/grnds-web-app.contacts.xconf</param-value>
+    </init-param>
+  </servlet>
+  <servlet>
+    <servlet-name>ErrorListServlet</servlet-name>
+    <servlet-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.AuthenticatedPrsHttpServlet</servlet-class>
+    <init-param>
+      <param-name>grnds.config.domain</param-name>
+      <param-value>sacwis</param-value>
+    </init-param>
+    <init-param>
+      <param-name>grnds.web.app.map</param-name>
+      <param-value>/WEB-INF/grnds-web-app.errorlist.xconf</param-value>
+    </init-param>
+  </servlet>
+
+  <servlet>
+    <servlet-name>PersonServlet</servlet-name>
+    <servlet-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.AuthenticatedPrsHttpServlet</servlet-class>
+    <init-param>
+      <param-name>grnds.config.domain</param-name>
+      <param-value>sacwis</param-value>
+    </init-param>
+    <init-param>
+      <param-name>grnds.web.app.map</param-name>
+      <param-value>/WEB-INF/grnds-web-app.person.xconf</param-value>
+    </init-param>
+  </servlet>
+
+  <servlet>
+    <servlet-name>ResourceServlet</servlet-name>
+    <servlet-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.AuthenticatedPrsHttpServlet</servlet-class>
+    <init-param>
+      <param-name>grnds.config.domain</param-name>
+      <param-value>sacwis</param-value>
+    </init-param>
+    <init-param>
+      <param-name>grnds.web.app.map</param-name>
+      <param-value>/WEB-INF/grnds-web-app.resource.xconf</param-value>
+    </init-param>
+  </servlet>
+  <servlet>
+    <servlet-name>WorkloadServlet</servlet-name>
+    <servlet-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.AuthenticatedPrsHttpServlet</servlet-class>
+    <init-param>
+      <param-name>grnds.config.domain</param-name>
+      <param-value>sacwis</param-value>
+    </init-param>
+    <init-param>
+      <param-name>grnds.web.app.map</param-name>
+      <param-value>/WEB-INF/grnds-web-app.workload.xconf</param-value>
+    </init-param>
+  </servlet>
+  <!-- The Submodule servlet uses IncludeAuthenticatedPrsHttpServlet -->
+  <servlet>
+    <servlet-name>SubmoduleServlet</servlet-name>
+    <servlet-class>gov.georgia.dhr.dfcs.sacwis.web.core.web.IncludeAuthenticatedPrsHttpServlet</servlet-class>
+    <init-param>
+      <param-name>grnds.config.domain</param-name>
+      <param-value>sacwis</param-value>
+    </init-param>
+    <init-param>
+      <param-name>grnds.servlet.qname.factory</param-name>
+      <param-value>gov.georgia.dhr.dfcs.sacwis.web.core.web.IncludeQNameFactory</param-value>
+    </init-param>
+    <init-param>
+      <param-name>grnds.web.app.map</param-name>
+      <param-value>/WEB-INF/grnds-web-app.submodule.xconf</param-value>
+    </init-param>
+  </servlet>
+
+  <!-- A special servlet for display XML Value beans; should really only be used in development -->
+  <servlet>
+    <servlet-name>DisplayXMLValueBean</servlet-name>
+    <servlet-class>gov.georgia.dhr.dfcs.sacwis.web.test.DisplayXMLValueBeanServlet</servlet-class>
+  </servlet>
+
+  <!--The Xfire Servlet mapping. -->
+  <servlet-mapping>
+    <servlet-name>xfire</servlet-name>
+    <url-pattern>/ws/*</url-pattern>
+  </servlet-mapping>
+
+
+  <!-- Requests to these url patterns will go to BasePrsHttpServlet -->
+  <servlet-mapping>
+    <servlet-name>CommonServlet</servlet-name>
+    <url-pattern>/common/*</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>DocumentServlet</servlet-name>
+    <url-pattern>/document/*</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>ErrorServlet</servlet-name>
+    <url-pattern>/error/*</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>LoginServlet</servlet-name>
+    <url-pattern>/login/*</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>TestServlet</servlet-name>
+    <url-pattern>/test/*</url-pattern>
+  </servlet-mapping>
+  <!-- End requests that will go to BasePrsHttpServlet -->
+
+  <!-- Requests to these url patterns will go to AuthenticatedPrsHttpServlet -->
+  
+  <servlet-mapping>
+    <servlet-name>AdminServlet</servlet-name>
+    <url-pattern>/admin/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>ContactsServlet</servlet-name>
+    <url-pattern>/contacts/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>ErrorListServlet</servlet-name>
+    <url-pattern>/errorlist/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>PersonServlet</servlet-name>
+    <url-pattern>/person/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>ResourceServlet</servlet-name>
+    <url-pattern>/resource/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>WorkloadServlet</servlet-name>
+    <url-pattern>/workload/*</url-pattern>
+  </servlet-mapping>
+  <!-- End requests that will go to AuthenticatedPrsHttpServlet -->
+
+  <!-- Requests that start with /multipart/ will go to AuthenticatedMultipartHttpServlet -->
+  <!-- 
+  <servlet-mapping>
+    <servlet-name>MultipartServlet</servlet-name>
+    <url-pattern>/multipart/*</url-pattern>
+  </servlet-mapping>
+  -->
+  <!-- End requests that will go to AuthenticatedMultipartHttpServlet -->
+
+  <!-- Requests that start with /submodule/ will go to IncludeAuthenticatedPrsHttpServlet -->
+  <servlet-mapping>
+    <servlet-name>SubmoduleServlet</servlet-name>
+    <url-pattern>/submodule/*</url-pattern>
+  </servlet-mapping>
+
+  <!-- Requests that start with /DisplayXMLValueBean/ will go to the special DisplayXMLValueBeanServlet -->
+  <servlet-mapping>
+    <servlet-name>DisplayXMLValueBean</servlet-name>
+    <url-pattern>/DisplayXMLValueBean/*</url-pattern>
+  </servlet-mapping>
+
+  <session-config>
+    <session-timeout>30</session-timeout>
+  </session-config>
+
+  <welcome-file-list>
+    <welcome-file>grnds-docs/index.html</welcome-file>
+  </welcome-file-list>
+
+  <jsp-config>
+    <taglib>
+      <taglib-uri>/WEB-INF/impact.tld</taglib-uri>
+      <taglib-location>/WEB-INF/impact.tld</taglib-location>
+    </taglib>
+  </jsp-config>
+
+  <!-- Hibernate EJBs -->
+  <ejb-local-ref>
+    <description>Admin Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/AdminBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.admin.AdminHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.admin.AdminLocal</local>
+    <ejb-link>AdminBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Adoption Exchange Bean</description>
+    <ejb-ref-name>ejb/sacwis/AdoExchangeBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.adoexchange.AdoExchangeHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.adoexchange.AdoExchangeLocal</local>
+    <ejb-link>AdoExchangeBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Assessment Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/AssessmentBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.assessment.AssessmentHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.assessment.AssessmentLocal</local>
+    <ejb-link>AssessmentBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Case Management Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/CaseMgmtBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.casemgmt.CaseMgmtHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.casemgmt.CaseMgmtLocal</local>
+    <ejb-link>CaseMgmtBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Common Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/CommonBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.common.CommonHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.common.CommonLocal</local>
+    <ejb-link>CommonBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Court Process Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/CourtProcessBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.courtprocess.CourtProcessHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.courtprocess.CourtProcessLocal</local>
+    <ejb-link>CourtProcessBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Document Service Executor EJB</description>
+    <ejb-ref-name>ejb/sacwis/DocumentServiceExecutorBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.document.DocumentServiceExecutorHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.document.DocumentServiceExecutorLocal</local>
+    <ejb-link>DocumentServiceExecutorBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>External Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/ExternalBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.external.ExternalHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.external.ExternalLocal</local>
+    <ejb-link>ExternalBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Financials Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/FinancialsBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.financials.FinancialsHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.financials.FinancialsLocal</local>
+    <ejb-link>FinancialsBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Intake Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/IntakeBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.intake.IntakeHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.intake.IntakeLocal</local>
+    <ejb-link>IntakeBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Investigation Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/InvestigationBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.investigation.InvestigationHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.investigation.InvestigationLocal</local>
+    <ejb-link>InvestigationBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Non Compliance EJB</description>
+    <ejb-ref-name>ejb/sacwis/NonComplianceBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.fad.NonComplianceHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.fad.NonComplianceLocal</local>
+    <ejb-link>NonComplianceBean</ejb-link>
+  </ejb-local-ref>  
+  <ejb-local-ref>
+    <description>Person Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/PersonBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.person.PersonHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.person.PersonLocal</local>
+    <ejb-link>PersonBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Reports Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/ReportsBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.reports.ReportsHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.reports.ReportsLocal</local>
+    <ejb-link>ReportsBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Resource Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/ResourceBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.resource.ResourceHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.resource.ResourceLocal</local>
+    <ejb-link>ResourceBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Security Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/SecurityBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.security.SecurityHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.security.SecurityLocal</local>
+    <ejb-link>SecurityBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <description>Web Service EJB</description>
+    <ejb-ref-name>ejb/sacwis/WSBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.ws.WSHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.ws.WSLocal</local>
+    <ejb-link>WSBean</ejb-link>
+  </ejb-local-ref>
+
+  <!-- Traditional EJBs -->
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/AddressListBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.common.AddressListHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.common.AddressListLocal</local>
+    <ejb-link>AddressListBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/AdoptionAsstncBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.financials.AdoptionAsstncHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.financials.AdoptionAsstncLocal</local>
+    <ejb-link>AdoptionAsstncBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/AgeCitizenshipBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.fce.AgeCitizenshipHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.fce.AgeCitizenshipLocal</local>
+    <ejb-link>AgeCitizenshipBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/ApplicationBackgroundBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.fce.ApplicationBackgroundHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.fce.ApplicationBackgroundLocal</local>
+    <ejb-link>ApplicationBackgroundBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/CFMgmntListBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.admin.CFMgmntListHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.admin.CFMgmntListLocal</local>
+    <ejb-link>CFMgmntListBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/CfpBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.document.CfpHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.document.CfpLocal</local>
+    <ejb-link>CfpBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/DocumentSaveBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.document.DocumentSaveHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.document.DocumentSaveLocal</local>
+    <ejb-link>DocumentSaveBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/DomicileDeprivationBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.fce.DomicileDeprivationHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.fce.DomicileDeprivationLocal</local>
+    <ejb-link>DomicileDeprivationBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/EligibilityDeterminationBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.fce.EligibilityDeterminationHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.fce.EligibilityDeterminationLocal</local>
+    <ejb-link>EligibilityDeterminationBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/EligibilitySummaryBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.fce.EligibilitySummaryHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.fce.EligibilitySummaryLocal</local>
+    <ejb-link>EligibilitySummaryBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/EventUtilityBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.common.EventUtilityHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.common.EventUtilityLocal</local>
+    <ejb-link>EventUtilityBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/ExchangeChildSearchBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.adoexchange.ExchangeChildSearchHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.adoexchange.ExchangeChildSearchLocal</local>
+    <ejb-link>ExchangeChildSearchBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/ExchangeHomeSearchBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.adoexchange.ExchangeHomeSearchHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.adoexchange.ExchangeHomeSearchLocal</local>
+    <ejb-link>ExchangeHomeSearchBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/FAHomeListBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.resource.FAHomeListHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.resource.FAHomeListLocal</local>
+    <ejb-link>FAHomeListBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/FamilyPlanBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.casemgmt.FamilyPlanHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.casemgmt.FamilyPlanLocal</local>
+    <ejb-link>FamilyPlanBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/FceBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.fce.FceHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.fce.FceLocal</local>
+    <ejb-link>FceBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/FceInitializeBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.fce.FceInitializeHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.fce.FceInitializeLocal</local>
+    <ejb-link>FceInitializeBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/FosterCareReviewBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.fce.FosterCareReviewHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.fce.FosterCareReviewLocal</local>
+    <ejb-link>FosterCareReviewBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/IncomeExpendituresBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.fce.IncomeExpendituresHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.fce.IncomeExpendituresLocal</local>
+    <ejb-link>IncomeExpendituresBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/LegacyApplicationBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.fce.LegacyApplicationHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.fce.LegacyApplicationLocal</local>
+    <ejb-link>LegacyApplicationBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/PersonUtilityBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.common.PersonUtilityHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.common.PersonUtilityLocal</local>
+    <ejb-link>PersonUtilityBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/PhoneBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.common.PhoneHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.common.PhoneLocal</local>
+    <ejb-link>PhoneBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/PrincipalCaseHistoryBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.person.PrincipalCaseHistoryHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.person.PrincipalCaseHistoryLocal</local>
+    <ejb-link>PrincipalCaseHistoryBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/ResourceORSSearchBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.resource.ResourceORSSearchHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.resource.ResourceORSSearchLocal</local>
+    <ejb-link>ResourceORSSearchBean</ejb-link>
+  </ejb-local-ref>  
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/ResourceSearchBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.resource.ResourceSearchHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.resource.ResourceSearchLocal</local>
+    <ejb-link>ResourceSearchBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/RiskAssmtBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.investigation.RiskAssmtHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.investigation.RiskAssmtLocal</local>
+    <ejb-link>RiskAssmtBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/SemaphoreUtilityBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.fce.SemaphoreUtilityHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.fce.SemaphoreUtilityLocal</local>
+    <ejb-link>SemaphoreUtilityBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/ServiceAuthBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.financials.ServiceAuthorizationHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.financials.ServiceAuthorizationLocal</local>
+    <ejb-link>ServiceAuthorizationBean</ejb-link>
+  </ejb-local-ref>
+  <ejb-local-ref>
+    <ejb-ref-name>ejb/sacwis/ThirdPartyHealthInsuranceBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <local-home>gov.georgia.dhr.dfcs.sacwis.service.fce.ThirdPartyHealthInsuranceHome</local-home>
+    <local>gov.georgia.dhr.dfcs.sacwis.service.fce.ThirdPartyHealthInsuranceLocal</local>
+    <ejb-link>ThirdPartyHealthInsuranceBean</ejb-link>
+  </ejb-local-ref>
+</web-app>

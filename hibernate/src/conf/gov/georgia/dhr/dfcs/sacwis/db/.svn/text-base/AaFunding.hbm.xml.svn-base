@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.AaFunding" table="AA_FUNDING" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idAaFundingEvent" type="integer" unsaved-value="undefined">
+            <column name="ID_AA_FUNDING_EVENT" precision="16" scale="0"/>
+            <generator class="foreign">
+                <param name="property">event</param>
+            </generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+        <many-to-one name="eligibility" class="gov.georgia.dhr.dfcs.sacwis.db.Eligibility" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_ELIG_EVENT" precision="16" scale="0"/>
+        </many-to-one>
+        <many-to-one name="child" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_CHILD" precision="16" scale="0"/>
+        </many-to-one>
+        <many-to-one name="employee" class="gov.georgia.dhr.dfcs.sacwis.db.Employee" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_PERSON_LAST_UPDATED" precision="16" scale="0"/>
+        </many-to-one>
+        <many-to-one name="sibling" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_AC_SIBLING" precision="16" scale="0"/>
+        </many-to-one>
+        <property name="dtCreated" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_CREATED" length="7"/>
+        </property>
+        <property name="dtAaFundingValidated" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_AA_FUNDING_VALIDATED" length="7"/>
+        </property>
+        <property name="nbrFfy" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_FFY" precision="4" scale="0"/>
+        </property>
+        <property name="dtChildDob" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_CHILD_DOB" length="7"/>
+        </property>
+        <property name="nbrChildAge" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_CHILD_AGE" precision="3" scale="0"/>
+        </property>
+        <property name="indNonRecurringReq" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_NON_RECURRING_REQ" length="1"/>
+        </property>
+        <property name="cdAaFundingType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_AA_FUNDING_TYPE" length="3"/>
+        </property>
+        <property name="indAcAgeMet" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_AC_AGE_MET" length="1"/>
+        </property>
+        <property name="indAcTimeInFosterMet" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_AC_TIME_IN_FOSTER_MET" length="1"/>
+        </property>
+        <property name="nbrChildMthsInFoster" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_CHILD_MTHS_IN_FOSTER" precision="3" scale="0"/>
+        </property>
+        <property name="indAcSiblingMet" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_AC_SIBLING_MET" length="1"/>
+        </property>
+        <property name="nmAcSiblingFullName" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NM_AC_SIBLING_FULL_NAME" length="100"/>
+        </property>
+        <property name="dtAcSiblingDob" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_AC_SIBLING_DOB" length="7"/>
+        </property>
+        <property name="nbrAcSiblingAge" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_AC_SIBLING_AGE" precision="3" scale="0"/>
+        </property>
+        <property name="nbrAcSiblingMthsInFoster" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_AC_SIBLING_MTHS_IN_FOSTER" precision="3" scale="0"/>
+        </property>
+        <property name="indAcTprCtwVsMet" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_AC_TPR_CTW_VS_MET" length="1"/>
+        </property>
+        <property name="indAcSsiEligMet" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_AC_SSI_ELIG_MET" length="1"/>
+        </property>
+        <property name="indAcChildOfMinorMet" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_AC_CHILD_OF_MINOR_MET" length="1"/>
+        </property>
+        <property name="indAcIvePriorAdoptMet" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_AC_IVE_PRIOR_ADOPT_MET" length="1"/>
+        </property>
+        <property name="indNacAfdcMet" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_NAC_AFDC_MET" length="1"/>
+        </property>
+        <property name="indNacSsiEligMet" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_NAC_SSI_ELIG_MET" length="1"/>
+        </property>
+        <property name="indNacChildOfMinorMet" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_NAC_CHILD_OF_MINOR_MET" length="1"/>
+        </property>
+        <property name="indNacIvePriorAdoptMet" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_NAC_IVE_PRIOR_ADOPT_MET" length="1"/>
+        </property>
+        <property name="txtComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_COMMENTS" length="4000"/>
+        </property>
+        <bag name="aaFundingReasonEligs" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+            <key on-delete="noaction" update="false">
+                <column name="ID_AA_FUNDING_EVENT" precision="16" scale="0" not-null="true"/>
+            </key>
+            <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AaFundingReasonElig" not-found="exception" embed-xml="true"/>
+        </bag>
+        <bag name="specialNeedsDeterminations" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+            <key on-delete="noaction" update="false">
+                <column name="ID_AA_FUNDING_EVENT" precision="16" scale="0"/>
+            </key>
+            <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.SpecialNeedsDetermination" not-found="exception" embed-xml="true"/>
+        </bag>
+    </class>
+</hibernate-mapping>

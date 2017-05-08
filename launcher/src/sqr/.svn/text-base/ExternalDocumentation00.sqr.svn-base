@@ -1,0 +1,153 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Tue Jun 03 11:47:57 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\sacwis\launcher\src\sqr\ExternalDocumentation00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+Begin-Select Loops=1
+NM_CASE &Get_Case_Name_Get_Case_Name_NM_CASE
+From  CAPS_CASE
+Where CAPS_CASE.ID_CASE  = ($_I101_EXT_DOCUMENTATION_ID_CASE)
+End-Select
+ Alter-Report Heading-Size=180    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=96   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I101_EXT_DOCUMENTATION_ID_CASE 'Enter a value for ID_CASE' MaxLen=16  Type=Number
+If IsNull($_I101_EXT_DOCUMENTATION_ID_CASE) or IsBlank($_I101_EXT_DOCUMENTATION_ID_CASE)
+  Let $_I101_EXT_DOCUMENTATION_ID_CASE = '9002205'
+End-If
+Let $brb_tmp = 'EXT_DOCUMENTATION.ID_CASE'
+Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_EXT_DOCUMENTATION_ID_CASE
+End-Procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select
+(decode( EXT_DOCUMENTATION.IND_EXT_DOC_SIGNED, 'N', 'No', 'Y', 'Yes')) &Signed
+NM_CASE &CaseName
+CAPS_CASE.ID_CASE &CaseID
+CD_EXT_DOC_SORT &Master_Query_CD_EXT_DOC_SORT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CEXDOTYP.DECODE &Description (23,15,27) Wrap 27 2 line-height=12 Keep-Top on= 
+DT_EXT_DOC_OBTAINED &Date_Obtained (23,172) Edit MM/DD/YYYY
+TXT_EXT_DOC_DETAILS &Master_Query_TXT_EXT_DOC_DETAILS (23,421,49) Wrap 49 5 line-height=12 Keep-Top strip=|| on= 
+CODES_TABLES.DECODE &Master_Query_CODES_TABLES.DECODE (23,317,14)
+ Print &Signed (23,262,3)
+ Next-Listing   ! Close up the wrapped columns
+ If #page-count > #pageNum
+  Let #pageNum = #page-count
+  Let $CaseNameFirst = &CaseName
+  Let $CaseIDFirst = &CaseID
+ End-If
+ Next-Listing  Need=23
+From  CAPS_CASE, CEXDOTYP
+,      EXT_DOCUMENTATION, CODES_TABLES
+      Where EXT_DOCUMENTATION.ID_CASE = CAPS_CASE.ID_CASE
+            And EXT_DOCUMENTATION.CD_EXT_DOC_TYPE = CEXDOTYP.CODE
+            And EXT_DOCUMENTATION.TXT_EXT_DOC_LOCATION = CODES_TABLES.CODE
+ And CODE_TYPE = 'CITEMLOC'
+ And [$where_clause101]
+Order By CD_EXT_DOC_SORT
+,      DT_EXT_DOC_OBTAINED
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 96 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (10,634) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (10,569,12)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='C:\sacwis\launcher\src\sqr\SHINES.bmp'
+	Image-size=(102,73)
+ Print 'Division of Family and Children Services' (10,253,42)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'External Documentation Report' (41,231,42) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Description' (162,15,11) Underline  Bold 
+ Print 'Obtained' (162,175,8) Underline  Bold 
+ Print 'Details' (162,421,7) Underline  Bold 
+ Print 'Signed' (162,262,6) Underline  Bold 
+ Print 'Item Location' (162,317,13) Underline  Bold 
+ Let #ID_CASE=$_I101_EXT_DOCUMENTATION_ID_CASE
+ Print #ID_CASE (123,78) Edit 888888888
+Print &Get_Case_Name_Get_Case_Name_NM_CASE (110,78,32)
+ Print 'Case Name:' (110,15,11) Bold 
+ Print 'Case ID:' (123,15,10) Bold 
+ Else   ! put a non combined page header
+ Print 'Description' (75,15,11) Underline  Bold 
+ Print 'Obtained' (75,175,8) Underline  Bold 
+ Print 'Details' (75,421,7) Underline  Bold 
+ Print 'Signed' (75,262,6) Underline  Bold 
+ Print 'Item Location' (75,317,13) Underline  Bold 
+ Print #ID_CASE (36,78) Edit 888888888
+Print &Get_Case_Name_Get_Case_Name_NM_CASE (23,78,32)
+ Print 'Case Name:' (23,15,11) Bold 
+ Print 'Case ID:' (36,15,10) Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (10,666) '' ' of'
+ Last-Page (10,687) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

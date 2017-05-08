@@ -1,0 +1,412 @@
+!*****************************************************************************
+!  Contracted Foster Care Facilities and Level of Care Report                *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         crs01o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/parchmjw/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 05/01/97                                             *
+!                                                                            *
+! PROGRAMMER NAME:      John Parchman                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  Contracted Foster Care Facilities and Level of Care  *
+!                       Report will list all Foster Care Facilities that     *
+!                       have an active contract and the Level of Care that   *
+!                       the facility has. This report replaces the 509       * 
+!                       listing that was produced from the Legacy Systems.   * 
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 05/01/97   J.Parchman   Initial Programming                                *
+! 06/17/04   dickmaec     SIR 18289 - The SQR Report will return both Active *
+!                         or Pay Hold status types from the contract period  *
+!                         table.                                             *
+! 12/27/04   millersr	  SIR 24092 Convert LOC 1 and 2 to B, 3 and 4 to M   *
+!                         5 to S and 6 to I. For 1 - 4 if either is Active   *  
+!                         then A displays if both are on hold then H will dis*
+!                         play.                                              *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+                     
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup01b.sqc'                 ! control codes for Portrait Batch
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 6
+  
+    move 'crs01o00'                             to $ReportID
+    move 'Contracted Foster Care Facilities'    to $ReportTitle
+    move 'and Service Level'                    to $ReportSubHeading    
+
+    #INCLUDE 'header02.sqc'     ! Include file with header information     
+
+    print 'Facility Type & Address'	(+2,6)  bold
+    print 'Facility Numbers'		(+0,60) bold
+    print 'Service Level'		(+0,110) bold
+    print '='                       	(+1,1,131) fill bold
+
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS    : GET-PARSE                                                * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                    !Set printer environment
+   move '****END OF REPORT****'            to $end_of_report !***SIR 11230*
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-FACILITY-INFO                                      *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+  
+    do GET-FACILITY-INFO
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-FACILITY-INFO                                                       *
+!                                                                           *
+!       This procedure uses the cases retrieved from the input file and gets*
+!       the respective name, program, and location.  If the office type code*
+!       is 'P', another SQL is called to get info from the office and unit  *
+!       tables.                                                             * 
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-CASE-INFO                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-FACILITY-INFO
+
+    move 0                  		to #count1
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+CR.CD_RSRC_FACIL_TYPE
+    move &CR.CD_RSRC_FACIL_TYPE		    to $Facility_Code
+
+CFACTYP2.DECODE
+    move &CFACTYP2.DECODE		          to $Facility_Type 
+
+C.ID_CONTRACT
+    move &C.ID_CONTRACT			          to #Contract_ID
+
+RA.NBR_RSRC_ADDR_VID
+    move &RA.NBR_RSRC_ADDR_VID		    to $VID 
+
+CR.ID_RESOURCE
+    move &CR.ID_RESOURCE		          to #Resource_ID
+
+CR.NM_RESOURCE
+    move &CR.NM_RESOURCE		          to $Resource_Name
+
+RA.ADDR_RSRC_ADDR_ST_LN_1
+    move &RA.ADDR_RSRC_ADDR_ST_LN_1	  to $Address_Line_1
+
+RA.ADDR_RSRC_ADDR_ST_LN_2
+    move &RA.ADDR_RSRC_ADDR_ST_LN_2	to $Address_Line_2
+
+RA.ADDR_RSRC_ADDR_CITY
+    move &RA.ADDR_RSRC_ADDR_CITY	to $City
+
+RA.CD_RSRC_ADDR_STATE
+    move &RA.CD_RSRC_ADDR_STATE		to $State
+
+RA.ADDR_RSRC_ADDR_ZIP
+    move &RA.ADDR_RSRC_ADDR_ZIP		to $Zip
+
+RP.NBR_RSRC_PHONE
+    move &RP.NBR_RSRC_PHONE		to $Phone
+
+RP.NBR_RSRC_PHONE_EXT
+    move &RP.NBR_RSRC_PHONE_EXT		to #Ext
+
+FL.CD_FLOC_STATUS_1
+    move &FL.CD_FLOC_STATUS_1		to $FLOC_1
+
+FL.CD_FLOC_STATUS_2
+    move &FL.CD_FLOC_STATUS_2		to $FLOC_2
+
+FL.CD_FLOC_STATUS_3
+    move &FL.CD_FLOC_STATUS_3		to $FLOC_3
+
+FL.CD_FLOC_STATUS_4
+    move &FL.CD_FLOC_STATUS_4		to $FLOC_4
+
+FL.CD_FLOC_STATUS_5
+    move &FL.CD_FLOC_STATUS_5		to $FLOC_5
+
+FL.CD_FLOC_STATUS_6
+    move &FL.CD_FLOC_STATUS_6		to $FLOC_6
+
+FL.CD_FLOC_STATUS_7
+    move &FL.CD_FLOC_STATUS_7		to $FLOC_7
+
+FL.CD_FLOC_STATUS_8
+    move &FL.CD_FLOC_STATUS_8		to $FLOC_8
+
+FL.CD_FLOC_STATUS_9
+    move &FL.CD_FLOC_STATUS_9		to $FLOC_9
+
+FL.DT_FLOC_EFFECT
+    move &FL.DT_FLOC_EFFECT		to $Eff_Date
+
+CR.NBR_RSRC_FACIL_ACCLAIM
+    move &CR.NBR_RSRC_FACIL_ACCLAIM	to #ACCLAIM_ID
+
+	let #count1 = #count1 + 1
+	do PRINT-FACILITY-INFO
+
+FROM	CFACTYP2		CFACTYP2, 
+	FACILITY_LOC		FL,
+	CONTRACT_PERIOD		CP,
+	CONTRACT		C,
+	RESOURCE_PHONE		RP,
+	RESOURCE_ADDRESS	RA,
+	CAPS_RESOURCE		CR
+
+WHERE	CFACTYP2.CODE 		= CR.CD_RSRC_FACIL_TYPE
+AND	FL.DT_FLOC_END 		= '12/31/4712'
+AND	FL.ID_RESOURCE 		= C.ID_RESOURCE
+AND	(CP.CD_CNPER_STATUS = 'ACT'
+OR CP.CD_CNPER_STATUS = 'PYH') !SIR 18289
+AND	C.ID_RSRC_ADDRESS 	= RA.ID_RSRC_ADDRESS
+AND	C.ID_CONTRACT 		= CP.ID_CONTRACT
+AND	RP.CD_RSRC_PHONE_TYPE 	= '01'
+AND	RA.ID_RESOURCE 		= RP.ID_RESOURCE
+AND	CR.CD_RSRC_FACIL_TYPE IN
+		('25','32','37','38','39','52','57','58','59','60','63','64','65','66','67','68')
+AND	CR.CD_RSRC_TYPE 	= '06'
+AND	CR.ID_RESOURCE 		= FL.ID_RESOURCE
+
+ORDER BY 	CR.CD_RSRC_FACIL_TYPE, 
+		CR.NM_RESOURCE
+
+END-SELECT
+
+END-PROCEDURE GET-FACILITY-INFO
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-FACILITY-INFO                                                     *
+!                                                                           *
+!       This procedure prints the contracted facility information           *
+!       type 'P'.                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-FACILITY-INFO                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-FACILITY-INFO
+
+if #current-line >= 73
+   new-page
+end-if
+
+print $Facility_Code		(+1,6)
+print $Facility_Type		(+0,10)
+print '-'			(+1,6,25) fill
+
+print $Resource_Name            (+1,6)
+print 'Resource ID: '		(+0,45)
+print #Resource_ID              (+0,58)	edit 8888888888
+print 'ACCLAIM ID: '		(+0,73)
+print #ACCLAIM_ID               (+0,85)	edit b8888888888
+print 'B'			(+0,105)
+print 'M'			(+0,107)
+print 'S'			(+0,109)
+print 'I'			(+0,111)
+print 'E2 E3 3N'		(+0,115)
+
+if $Address_Line_1 <> ''
+print $Address_Line_1           (+1,6)
+end-if
+
+if $Address_Line_2 <> ''
+print ', '                      ()
+print $Address_Line_2           ()
+end-if
+
+print 'Contract ID: '		(+0,45)
+print #Contract_ID              (+0,58)	edit 8888888888
+print 'VID: '			(+0,73)
+print $VID                  	(+0,78)	edit xxxxxxxxxxxxxx
+if $FLOC_1 = 'A' or $FLOC_2 = 'A'
+   print 'A'                  	(+0,105)
+else 
+  if $FLOC_2 = 'H' and $FLOC_1 = 'H'
+    print 'H'                  	(+0,105)
+  end-if
+end-if
+
+if $FLOC_3 = 'A' or $FLOC_4 = 'A'
+ print 'A'                  	(+0,107)
+else 
+ if $FLOC_4 = 'H' and $FLOC_3 = 'H'
+   print 'H'                  	(+0,107)
+ end-if
+end-if
+print $FLOC_5                  	(+0,109)
+print $FLOC_6                  	(+0,111)
+print $FLOC_7                  	(+0,117)
+print $FLOC_8                  	(+0,120)
+print $FLOC_9                  	(+0,123)
+print $City	                (+1,6)
+print ', '                      ()
+print $State                  	()
+print '  '                      ()
+print $Zip                  	()
+
+if substr($Phone,8,1) = ''
+   let $phone = substr($Phone,1,3)||'-'||substr($Phone,4,4)
+else
+   let $phone = '('||substr($Phone,1,3)||') '||substr($Phone,4,3)||'-'||substr($Phone,7,4)
+end-if
+
+if $Phone <> ''
+   print 'Phone: '		(+0,45)
+   print $phone			(+0,52)
+end-if
+
+print 'Ext: '			(+0,68)
+print #Ext                  	(+0,73)	edit b8888
+print 'SL Effective: '		(+0,105)
+print $Eff_Date                 (+0,120)
+print ' '			(+1)
+
+END-PROCEDURE PRINT-FACILITY-INFO
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   print 'Total number of facilities: '		(+2,1)
+   print #count1				(+0,29) edit 88888
+   print 'Service Level: A = Active, H = Hold'	(+2,1)
+   print $end_of_report                		(+4) center
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************

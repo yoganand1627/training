@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+       default-dependency-check="none"
+       default-lazy-init="false">
+
+  <!-- These are defined here because these advisors are only appropriate for the J2EE container, not for testing. -->
+  <bean id="autoServiceProxyCreator" class="gov.georgia.dhr.dfcs.sacwis.service.spring.ServiceAutoProxyCreator">
+    <property name="interceptorNames">
+      <list>
+        <idref bean="batchLockInterceptor"/>
+        <idref bean="jamonInterceptor"/>
+        <idref bean="hibernateThrowsAdvice"/>
+        <idref bean="sessionFlushAdvisor"/>
+      </list>
+    </property>
+  </bean>
+  <bean id="autoDAOProxyCreator" class="gov.georgia.dhr.dfcs.sacwis.dao.spring.DAOAutoProxyCreator">
+    <property name="interceptorNames">
+      <list>
+        <idref bean="jamonInterceptor"/>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+    <property name="dataSource" ref="dataSource"/>
+    <property name="configLocation" value="classpath:hibernate.cfg.xml"/>
+    <property name="hibernateProperties">
+      <props>
+        <!-- SQL logging settings; only used in development. -->
+        <prop key="hibernate.show_sql">${development.mode}</prop>
+        <prop key="hibernate.format_sql">${development.mode}</prop>
+        <prop key="hibernate.use_sql_comments">${development.mode}</prop>
+        <!-- Flag to indicate if Hibernate statistics should be enabled. -->
+        <prop key="hibernate.generate_statistics">${hibernate.statistics}</prop>
+        <!-- The Oracle hibernate dialect -->
+        <prop key="hibernate.dialect">org.hibernate.dialect.Oracle9Dialect</prop>
+        <!-- Oracle performs best with this turned on becuase it does not correctly cache column name mappings. -->
+        <prop key="hibernate.jdbc.wrap_result_sets">true</prop>
+        <!-- This is here for clarity; the Oracle9Dialect supports generated keys in an unusual way that is not supported by Hibernate. -->
+        <prop key="hibernate.jdbc.use_get_generated_keys">false</prop>
+        <!-- // TODO: See if these actually improve performance. -->
+        <!--<prop key="hibernate.default_batch_fetch_size">16</prop>-->
+        <!--<prop key="hibernate.jdbc.batch_size">16</prop>-->
+        <!--<prop key="hibernate.jdbc.batch_versioned_data">true</prop>-->
+        <!-- // TODO: Should we use this instead of bytecode insturmentation????? -->
+        <!--<prop key="hibernate.max_fetch_depth">3</prop>-->
+        <!-- The correct transaction manager and lookup class for running with CMT under SJSAS. -->
+        <prop key="hibernate.current_session_context_class">org.hibernate.context.JTASessionContext</prop>
+        <prop key="hibernate.transaction.factory_class">org.hibernate.transaction.CMTTransactionFactory</prop>
+        <prop key="hibernate.transaction.manager_lookup_class">
+          org.hibernate.transaction.SunONETransactionManagerLookup
+        </prop>
+      </props>
+    </property>
+  </bean>
+
+  <!-- Statistics tracking; only used in development right now.  -->
+  <bean id="jmxExporter" class="org.springframework.jmx.export.MBeanExporter">
+    <property name="beans">
+      <map>
+        <entry key="Hibernate:name=statistics">
+          <bean id="statisticsBean" class="org.hibernate.jmx.StatisticsService">
+            <property name="statisticsEnabled" value="${development.mode}"/>
+            <property name="sessionFactory" ref="sessionFactory"/>
+          </bean>
+        </entry>
+      </map>
+    </property>
+  </bean>
+</beans>

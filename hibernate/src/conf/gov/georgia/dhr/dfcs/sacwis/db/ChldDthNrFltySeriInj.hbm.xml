@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.ChldDthNrFltySeriInj" table="CHLD_DTH_NR_FLTY_SERI_INJ" >
+        <id name="idEvent" type="integer">
+            <column name="ID_EVENT" precision="16" scale="0" />
+            <generator class="foreign">
+            <param name="property">event</param>
+             </generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="null" source="vm"/>
+        <property name="idChild" type="integer">   <column name="ID_CHILD" precision="16" scale="0" not-null="true" />
+        </property>
+        <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" update="false" insert="false" fetch="select">
+            <column name="ID_EVENT" precision="16" scale="0" not-null="true" unique="true" />
+        </many-to-one>
+        <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select">
+            <column name="ID_CASE" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="commentsCauseDeath" type="string">
+            <column name="COMMENTS_CAUSE_DEATH" length="500" />
+        </property>
+        <property name="countyOfDeath" type="string">
+            <column name="COUNTY_OF_DEATH" length="3" />
+        </property>
+        <property name="autopsyCompleted" type="string">
+            <column name="AUTOPSY_COMPLETED" length="1" />
+        </property>
+        <property name="commentsAutopsy" type="string">
+            <column name="COMMENTS_AUTOPSY" length="500" />
+        </property>
+        <property name="deathPreventable" type="string">
+            <column name="DEATH_PREVENTABLE" length="1" />
+        </property>
+        <property name="commentsDeathPreventable" type="string">
+            <column name="COMMENTS_DEATH_PREVENTABLE" length="500" />
+        </property>
+        <property name="reportSubmittedWithin24hrs" type="string">
+            <column name="REPORT_SUBMITTED_WITHIN_24HRS" length="1" />
+        </property>
+        <property name="commentsReportSubmitted" type="string">
+            <column name="COMMENTS_REPORT_SUBMITTED" length="500" />
+        </property>
+        <property name="reportType" type="string">
+            <column name="REPORT_TYPE" length="3" />
+        </property>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,1205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XML Spy v4.4 U (http://www.xmlspy.com) by Bradley Eilers (tdprs) -->
+
+
+<!-- READ BEFORE UPDATING
+
+We are no longer keeping the Constraints updated in a separate spreadsheet.  You only
+need to update this file to add or modify a constraint.
+
+That said, here are some special characters used in the patterns for constraints.
+\w   Match a "word" character ( alphanumeric & _ )  [A-Za-z0-9]
+\W   Match a non-word character [^A-Za-z0-9]
+\s   Match a whitespace character. ( Tab ( \t ), NewLine ( \n ), Return ( \r ) & space )
+\S   Match a non-whitespace character
+\d   Match a digit character. [0-9]
+\D   Match a non-digit character  [^0-9]
+
+
+ -->
+<xsd:schema targetNamespace="http://sacwis/constraints"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:con="http://sacwis/constraints"
+            elementFormDefault="unqualified"
+            attributeFormDefault="unqualified">
+
+  <xsd:attribute name="Name">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_NAME</xsd:appinfo>
+      <xsd:documentation>First letter an alpha charcter, followed by any letter, space, -, or .</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="50"/>
+        <xsd:pattern value="/^[A-Za-z\s\-\.',]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Email">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_EMAIL</xsd:appinfo>
+      <xsd:documentation>Any word,dash (-), or period (.) followed by @ followed by any word, dash(-), or period (.)
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="7"/>
+        <xsd:maxLength value="70"/>
+        <xsd:pattern value="/^[\w\-\.]+@[\w\-\.]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Phone">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_PHONE</xsd:appinfo>
+      <xsd:documentation>10 digits with optional separators. Valid patterns are 123-123-1234, (123)123-1234, (123)
+        123-1234, 1231231234, 123-1231234, and 123132-1234
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="10"/>
+        <xsd:maxLength value="14"/>
+        <xsd:pattern value="/^((\(\d{3}\) ?)|(\d{3}-?))\d{3}-?\d{4}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="PhoneExtension">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_PHONEEXT</xsd:appinfo>
+      <xsd:documentation>Up to 8 alphanumeric characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="8"/>
+        <xsd:pattern value="/^\w+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Address">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_ADDRESS</xsd:appinfo>
+      <xsd:documentation>Any numbers or letters with spaces ( ), periods (.), or apostrophes (')</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="30"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Address2">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_ADDRESS2</xsd:appinfo>
+      <xsd:documentation>Numbers or letters with periods (.), spaces ( ), hashes (#), and apostrophes (')
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="30"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="City">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_CITY</xsd:appinfo>
+      <xsd:documentation>Any alpha characters or spaces</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="20"/>
+        <xsd:pattern value="/^[A-Z,a-z,\s\-]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Apartment">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_APT</xsd:appinfo>
+      <xsd:documentation>Any alphanumberic characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="10"/>
+        <xsd:pattern value="/^\w+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Zip">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_ZIP</xsd:appinfo>
+      <xsd:documentation>5 digit zip</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="5"/>
+        <xsd:maxLength value="5"/>
+        <xsd:pattern value="/^\d{5}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="ZipSuff">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_ZIP_SUFF</xsd:appinfo>
+      <xsd:documentation>4 digit zip suffix</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="4"/>
+        <xsd:maxLength value="4"/>
+        <xsd:pattern value="/^\d{4}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="POBox">
+    <xsd:annotation>
+      <xsd:documentation>5 to 20 aphanumeric characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="5"/>
+        <xsd:maxLength value="20"/>
+        <xsd:pattern value="/^\w+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Date">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DATE</xsd:appinfo>
+      <xsd:documentation>Regular expression pattern string to validate dates in the format "m/d/y" from 1/1/1850 -
+        12/31/9999. Checks for valid days for a given month and the days are validated for the given month and year.
+        Validates Leap years for all 4 digits years from 1600-9999, and all 2... Note: Just uses basic features so is
+        fully compatible with any regular expression package.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="8"/>
+        <xsd:maxLength value="10"/>
+        <!--
+         Regular expression pattern string to validate dates in the format "m/d/y"
+          from 1/1/1600 - 12/31/9999.   Checks for valid days for a given month and
+          the days are validated for the given month and year. Validates Leap years
+          for all 4 digits years from 1600-9999, and all 2...
+          Note: Just uses basic features so is fully compatible with any regular
+          expression package.
+Pattern Breakdown
+/^(?:(0?[13578]|1[02])(\/)(31)\2  Matches all 31st day of month where possible
+|(0?[13-9]|1[0-2])(\/)(29|30)\5 Matches all 29th/30th day of month where possible
+|(0?[1-9]|1[0-2])(\/)(0?[1-9]|1\d|2[0-8])\8) Matches all day/month combos where day is 28 or less.
+((?:1[6-9]|[2-9]\d)
+? Makes first two digits of the year not required.
+\d{2})$ Matches all years between 1600 and 9999
+Begin next section for leap year.
+|^(0?2)(\/)(29)\12 Matches 2/29/ or 02/29/
+((?:1[6-9]|[2-9]\d) Matches any first two digits of year from 1600 to 9999.
+? Makes the first two digits of the year not required.
+(?:0[48]|[2468][048]|[13579][26]) Matches last two digits of leap years, where last two digits are not 00
+|(?:16|[2468][048]|[3579][26])00)$/  Matches all Leap Years with 00 as last two digits.
+
+EILERSBE, 5/8/03 SIR 16803: Made slashes not required and made 4 digit year required.
+        -->
+        <xsd:pattern
+                value="/^(?:(0?[13578]|1[02])(\/?)(31)\2|(0?[13-9]|1[0-2])(\/?)(29|30)\5|(0?[1-9]|1[0-2])(\/?)(0?[1-9]|1\d|2[0-8])\8)(?:(18[5-9]\d|19\d{2}|[2-9]\d\d{2}))$|^(0?2)(\/?)(29)\12((?:18(?:[579][26]|[68][048]))|(?:(?:19|[2-9]\d)(?:0[48]|[2468][048]|[13579][26])|(?:16|[2468][048]|[3579][26])00))$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Day">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DAY</xsd:appinfo>
+      <xsd:documentation>1 or 2 digits between 1 and 31</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="2"/>
+        <xsd:minInclusive value="1"/>
+        <xsd:maxInclusive value="31"/>
+        <xsd:pattern value="/^\d?\d$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Year">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_YEAR</xsd:appinfo>
+      <xsd:documentation>Exactly 4 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="4"/>
+        <xsd:maxLength value="4"/>
+        <xsd:minInclusive value="1835"/>
+        <xsd:maxInclusive value="4712"/>
+        <xsd:pattern value="/^\d{4}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="MonthNumber">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_MONTH</xsd:appinfo>
+      <xsd:documentation>Exactly two digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="2"/>
+        <xsd:minInclusive value="01"/>
+        <xsd:maxInclusive value="12"/>
+        <xsd:pattern value="/^\d?\d$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="MonthYear">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_MONTH_YEAR</xsd:appinfo>
+      <xsd:documentation>MM/YYYY Format</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="6"/>
+        <xsd:maxLength value="7"/>
+        <xsd:pattern value="/^([0]?[1-9]|1[0-2])[\/]?(\d{4}$)/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>  
+  <xsd:attribute name="Time">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_TIME</xsd:appinfo>
+      <xsd:documentation>12 hour time with optional AM/PM. allowed hour values are 1-12 with an optional leading zero
+        for one digit values. minute values are 00-59 with required leading zero for one digit values. a colon between
+        hour and minutes is required. a space is required before the AM/PM
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="3"/>
+        <xsd:maxLength value="5"/>
+        <xsd:pattern value="/^((1[0-2])|(0?[0-9])):?[0-5][0-9]( +[apAP][[Mm])?$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="NoShowPercent">
+    <xsd:annotation>
+      <xsd:appinfo>SSM_CON_INVALID_NO_SHOW</xsd:appinfo>
+      <xsd:documentation>Up to 3 digits between 0 and 100</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="3"/>
+        <!-- Pal code treats Score of 0 as non-existant -->
+        <xsd:minInclusive value="0"/>
+        <xsd:maxInclusive value="100"/>
+        <xsd:pattern value="/^\d?\d?\d$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Score">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_SCORE</xsd:appinfo>
+      <xsd:documentation>Up to 3 digits between 0 and 100</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="3"/>
+        <!-- Pal code treats Score of 0 as non-existant -->
+        <xsd:minInclusive value="0"/>
+        <xsd:maxInclusive value="100"/>
+        <xsd:pattern value="/^\d?\d?\d$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Numeric2">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_NUMERIC2</xsd:appinfo>
+      <xsd:documentation>Any two numeric digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="2"/>
+        <xsd:minInclusive value="0"/>
+        <xsd:maxInclusive value="99"/>
+        <xsd:pattern value="/^\d?\d$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="ID">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_ID</xsd:appinfo>
+      <xsd:documentation>Up to 10 digits with a max value of 2147483647</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="10"/>
+        <xsd:minInclusive value="1"/>
+        <xsd:maxInclusive value="2147483647"/>
+        <xsd:pattern value="/^\d?\d?\d?\d?\d?\d?\d?\d?\d?\d$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Numeric5">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_NUMERIC5</xsd:appinfo>
+      <xsd:documentation>Up to 5 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="5"/>
+        <xsd:pattern value="/^\d?\d?\d?\d?\d$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Numeric9">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_NUMERIC9</xsd:appinfo>
+      <xsd:documentation>Up to 9 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="9"/>
+        <xsd:pattern value="/^\d?\d?\d?\d?\d?\d?\d?\d?\d$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Units">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_UNITS_INTEGER_BTW_1_AND_99999</xsd:appinfo>
+      <xsd:documentation>Up to 5 digits with value between 1 and 99999</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="5"/>
+        <xsd:minInclusive value='1'/>
+        <xsd:maxInclusive value='99999'/>
+        <xsd:pattern value="/^\d?\d?\d?\d?\d$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Letter">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_LETTER</xsd:appinfo>
+      <xsd:documentation>One letter</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="1"/>
+        <xsd:pattern value="/^[A-Za-z]$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Digit5">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT5</xsd:appinfo>
+      <xsd:documentation>Exactly 5 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="5"/>
+        <xsd:maxLength value="5"/>
+        <xsd:pattern value="/^\d{5}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Digit10Less">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT10LESS</xsd:appinfo>
+      <xsd:documentation>Up to 10 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:maxLength value="10"/>
+        <xsd:pattern value="/^\d+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Digit5Less">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT4LESS</xsd:appinfo>
+      <xsd:documentation>Up to 5 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:maxLength value="5"/>
+        <xsd:pattern value="/^\d+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Digit4">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT4</xsd:appinfo>
+      <xsd:documentation>Exactly 4 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="4"/>
+        <xsd:maxLength value="4"/>
+        <xsd:pattern value="/^\d{4}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Digit4Less">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT4LESS</xsd:appinfo>
+      <xsd:documentation>Up to 4 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:maxLength value="4"/>
+        <xsd:pattern value="/^\d+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Digit3">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT3</xsd:appinfo>
+      <xsd:documentation>Exactly 3 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="3"/>
+        <xsd:maxLength value="3"/>
+        <xsd:pattern value="/^\d{3}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Digit2">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT2</xsd:appinfo>
+      <xsd:documentation>Exactly 2 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="2"/>
+        <xsd:maxLength value="2"/>
+        <xsd:pattern value="/^\d{2}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Digit1">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT1</xsd:appinfo>
+      <xsd:documentation>Exactly 1 digit</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="1"/>
+        <xsd:pattern value="/^\d$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Double">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DOUBLE</xsd:appinfo>
+      <xsd:documentation>Digit(s) with decimal followed by digit(s)</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:pattern value="/^-? *\d+\.\d+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="DoubleToHundredths">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DOUBLE_TO_HUNDREDTHS</xsd:appinfo>
+      <xsd:documentation>Digit(s) with decimal followed by exactly 2 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:pattern value="/^-? *\d+\.\d{2}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="GPA">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_GPA</xsd:appinfo>
+      <xsd:documentation>Any positive number of 1 digit with decimal up to 3 digits (eg. 3.475)</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:pattern value="/^\d\.\d{1,3}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+
+  <xsd:attribute name="Money">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_MONEY</xsd:appinfo>
+      <xsd:documentation>Any number with decimal and two digits (eg. 2134234.45)</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:pattern value="/^\$? *-? *\d+\.\d{2}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+
+  <xsd:attribute name="Money11">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_MONEY</xsd:appinfo>
+      <xsd:documentation>Any number with decimal and two digits (eg. 2134234.45) WITH a max length of 11
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="con:Money">
+        <xsd:minLength value="4"/>
+        <xsd:maxLength value="11"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+
+  <xsd:attribute name="Alpha">
+    <xsd:annotation>
+      <xsd:documentation>Any alpha character</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:pattern value="/^[A-Za-z]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Numeric">
+    <xsd:annotation>
+      <xsd:documentation>Any number</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:pattern value="/^\d+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="AlphaNumeric">
+    <xsd:annotation>
+      <xsd:documentation>Any alpha character or number</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:pattern value="/^[A-Za-z0-9]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Paragraph">
+    <xsd:annotation>
+      <xsd:documentation>Any kind of characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="LowerCase">
+    <xsd:annotation>
+      <xsd:documentation>Any string of lower case characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:pattern value="/^[a-z]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="UpperCase">
+    <xsd:annotation>
+      <xsd:documentation>Any string of upper case characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:pattern value="/^[A-Z]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Username">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_USERNAME</xsd:appinfo>
+      <xsd:documentation>Between 3 and 9 characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="3"/>
+        <xsd:maxLength value="9"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="NovellUsername">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_NOVELL_USERNAME</xsd:appinfo>
+      <xsd:documentation>Between 4 and 20 characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="4"/>
+        <xsd:maxLength value="20"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Password">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_PSWD</xsd:appinfo>
+      <xsd:documentation>Any number of characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="NameMultipleWords">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_NMW</xsd:appinfo>
+      <xsd:documentation>Name that allows spaces and has minimum of two characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="2"/>
+        <xsd:pattern value="/^[a-zA-Z0-9\s\-\.' ]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Any15">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_ANY15</xsd:appinfo>
+      <xsd:documentation>Any 15 characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="0"/>
+        <xsd:maxLength value="15"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Digit9">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT9</xsd:appinfo>
+      <xsd:documentation>Exactly 9 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="9"/>
+        <xsd:maxLength value="9"/>
+        <xsd:pattern value="/^\d{9}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+    <xsd:attribute name="Digit12">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT12</xsd:appinfo>
+      <xsd:documentation>Exactly 12 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="12"/>
+        <xsd:maxLength value="12"/>
+        <xsd:pattern value="/^\d{12}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="AlphaNumeric13">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_ALPHNUM13</xsd:appinfo>
+      <xsd:documentation>Exactly 13 alphanumeric characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="13"/>
+        <xsd:maxLength value="13"/>
+        <xsd:pattern value="/^[A-Za-z0-9]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="AlphaNumeric14">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_ALPHNUM14</xsd:appinfo>
+      <xsd:documentation>Exactly 14 alphanumeric characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="14"/>
+        <xsd:maxLength value="14"/>
+        <xsd:pattern value="/^[A-Za-z0-9]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="DriversLicense">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DRVLIC</xsd:appinfo>
+      <xsd:documentation>4-15 digits or letters.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="6"/>
+        <xsd:maxLength value="17"/>
+        <xsd:pattern value="/^[A-Za-z0-9]{6,17}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="MedicareNumber">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_MEDICARE</xsd:appinfo>
+      <xsd:documentation>Exactly 9 digits followed by exactly 2 alpha characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="10"/>
+        <xsd:maxLength value="11"/>
+        <xsd:pattern value="/^\d{9}[A-Za-z]{1,2}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="PaceProjectClientNumber">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_PACE</xsd:appinfo>
+      <xsd:documentation>A 'P' followed by any alphanumeric character, followed by 'C' and 'E'</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="4"/>
+        <xsd:maxLength value="4"/>
+        <xsd:pattern value="/^P\wCE$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="SocialSecurityNumber">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_SSN</xsd:appinfo>
+      <xsd:documentation>Between 9 and 11 digits with or without dashes</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="9"/>
+        <xsd:maxLength value="11"/>
+        <xsd:pattern value="/^((\d{3}-\d{2}-\d{4})|(\d{9}))$/"/>
+        <!--
+        SIR# 17068
+        DWW: 05/08/2003
+        All these values are excluded from being valid. This
+        is a modification from the normal schema semantics, which
+        dictate that anything in an enumeration is a valid value.
+        In this case, the ! indicates that these are invalid.
+        -->
+        <xsd:enumeration value="!123-45-6789"/>
+        <xsd:enumeration value="!987-65-4321"/>
+        <xsd:enumeration value="!000-00-0000"/>
+        <xsd:enumeration value="!111-11-1111"/>
+        <xsd:enumeration value="!222-22-2222"/>
+        <xsd:enumeration value="!333-33-3333"/>
+        <xsd:enumeration value="!444-44-4444"/>
+        <xsd:enumeration value="!555-55-5555"/>
+        <xsd:enumeration value="!666-66-6666"/>
+        <xsd:enumeration value="!777-77-7777"/>
+        <xsd:enumeration value="!888-88-8888"/>
+        <xsd:enumeration value="!999-99-9999"/>
+
+        <xsd:enumeration value="!123456789"/>
+        <xsd:enumeration value="!987654321"/>
+        <xsd:enumeration value="!000000000"/>
+        <xsd:enumeration value="!111111111"/>
+        <xsd:enumeration value="!222222222"/>
+        <xsd:enumeration value="!333333333"/>
+        <xsd:enumeration value="!444444444"/>
+        <xsd:enumeration value="!555555555"/>
+        <xsd:enumeration value="!666666666"/>
+        <xsd:enumeration value="!777777777"/>
+        <xsd:enumeration value="!888888888"/>
+        <xsd:enumeration value="!999999999"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Paragraph40">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_PARA40</xsd:appinfo>
+      <xsd:documentation>40 or less characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="0"/>
+        <xsd:maxLength value="40"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Paragraph50">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_PARA50</xsd:appinfo>
+      <xsd:documentation>50 or less characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="0"/>
+        <xsd:maxLength value="50"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Name12">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_NAME12</xsd:appinfo>
+      <xsd:documentation>between 1 and 12 characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="con:Name">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="12"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Name22">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_NAME22</xsd:appinfo>
+      <xsd:documentation>Between 1 and 22 characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="con:Name">
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="22"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Name20">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_NAME20</xsd:appinfo>
+      <xsd:documentation>20 or less characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="con:Name">
+        <xsd:minLength value="0"/>
+        <xsd:maxLength value="20"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Name25">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_NAME25</xsd:appinfo>
+      <xsd:documentation>25 or less alphanumeric characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="con:Name">
+        <xsd:minLength value="0"/>
+        <xsd:maxLength value="25"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Digit10">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT10</xsd:appinfo>
+      <xsd:documentation>Exactly 10 digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="10"/>
+        <xsd:maxLength value="10"/>
+        <xsd:pattern value="/^\d{10}$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Paragraph4000">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_PARA300</xsd:appinfo>
+      <xsd:documentation>Up to 4000 characters - You will need to verify how many your textarea field requires by
+        looking at the datasource size (in DAM or DB) and create the constraint for that size.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="0"/>
+        <xsd:maxLength value="4000"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Comments">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_PARA300</xsd:appinfo>
+      <xsd:documentation>Up to 300 characters - You will need to verify how many your textarea field requires by looking
+        at the datasource size (in DAM or DB) and create the constraint for that size.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="0"/>
+        <xsd:maxLength value="300"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="AlphaNumeric2">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_ALPHNUM2</xsd:appinfo>
+      <xsd:documentation>Exactly 2 alphanumeric characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="2"/>
+        <xsd:maxLength value="2"/>
+        <xsd:pattern value="/^[A-Za-z0-9]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Paragraph300">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_PARA300</xsd:appinfo>
+      <xsd:documentation>Any 300 characters or less</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="0"/>
+        <xsd:maxLength value="300"/>
+        <!-- notice I don't have $ in the pattern.  This allows the field to span multiple lines -->
+        <!-- deleted, not needed <xsd:pattern value="/^.+/"/> -->
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Paragraph500">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_PARA500</xsd:appinfo>
+      <xsd:documentation>Any 500 characters or less</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="0"/>
+        <xsd:maxLength value="500"/>
+        <!-- notice I don't have $ in the pattern.  This allows the field to span multiple lines -->
+        <!-- deleted, not needed <xsd:pattern value="/^.+/"/> -->
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Paragraph1000">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_PARA1000</xsd:appinfo>
+      <xsd:documentation>Any 1000 characters or less</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="0"/>
+        <xsd:maxLength value="1000"/>
+        <!-- notice I don't have $ in the pattern.  This allows the field to span multiple lines -->
+        <!-- deleted, not needed <xsd:pattern value="/^.+/"/> -->
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Paragraph30">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_PARA30</xsd:appinfo>
+      <xsd:documentation>Any 30 characters or less</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="0"/>
+        <xsd:maxLength value="30"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Paragraph80">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_PARA80</xsd:appinfo>
+      <xsd:documentation>Any 80 characters or less</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="0"/>
+        <xsd:maxLength value="80"/>
+        <!-- $ restricts the pattern to a single line.  you may see a javascript error if you use this pattern with a
+               textarea field and insert a newline -->
+        <!-- deleted, not needed <xsd:pattern value="/^.+$/"/> -->
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Income">
+    <xsd:annotation>
+      <xsd:documentation>Up to 13 digits or comma</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:maxLength value="13"/>
+        <xsd:pattern value="/^\d,+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="AlphaNumeric4">
+    <xsd:annotation>
+      <xsd:documentation>Any alphanumberic characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:maxLength value="4"/>
+        <xsd:pattern value="/^[A-Za-z0-9]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="AlphaNumeric8">
+    <xsd:annotation>
+      <xsd:documentation>Any alphanumberic characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:maxLength value="8"/>
+        <xsd:pattern value="/^[A-Za-z0-9]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Digit16Less">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT16LESS</xsd:appinfo>
+      <xsd:documentation>16 or less digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:maxLength value="16"/>
+        <xsd:pattern value="/^\d+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Digit2Less">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT2LESS</xsd:appinfo>
+      <xsd:documentation>2 or less digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:maxLength value="2"/>
+        <xsd:pattern value="/^\d+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Digit3Less">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_DIGIT3LESS</xsd:appinfo>
+      <xsd:documentation>3 or less digits</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:maxLength value="3"/>
+        <xsd:pattern value="/^\d+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Name50">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_NAME50</xsd:appinfo>
+      <xsd:documentation>Up to 50 alpha characters or dash or dot</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="con:Name">
+        <xsd:maxLength value="50"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Name30">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_NAME30</xsd:appinfo>
+      <xsd:documentation>Name with 30 or less characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="con:Name">
+        <xsd:maxLength value="30"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="Name40">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_NAME40</xsd:appinfo>
+      <xsd:documentation>Name with 40 or less characters</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="con:Name">
+        <xsd:maxLength value="40"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="AgeYear">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_RES_YEAR_INVALID</xsd:appinfo>
+      <xsd:documentation>Between 0 and 120</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base='xsd:string'>
+        <xsd:minInclusive value='0'/>
+        <xsd:maxInclusive value='120'/>
+        <xsd:pattern value='/^\d+$/'/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="AgeMonth">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_RES_MONTH_INVALID</xsd:appinfo>
+      <xsd:documentation>Between 0 and 11</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base='xsd:string'>
+        <xsd:minInclusive value='0'/>
+        <xsd:maxInclusive value='11'/>
+        <xsd:pattern value='/^\d+$/'/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="IdCode">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_IDCODE</xsd:appinfo>
+      <xsd:documentation>Any alpha numeric characters with spaces before or after but not in between.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base='xsd:string'>
+        <xsd:pattern value='/^[\s]*[A-Za-z0-9]+[\s]*$/'/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="LegalStatusCauseNumber">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_LGL_STAT_CAUSE_NBR_INVALID</xsd:appinfo>
+      <xsd:documentation>Any alphnumeric character with any number of dashes, but not two dashes together.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base='xsd:string'>
+        <xsd:pattern value='/^((-?(\w-?)*)|\w)$/'/>
+        <xsd:maxLength value='10'/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="VendorID">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_VENDORID</xsd:appinfo>
+      <xsd:documentation>A vendor id must be 8 characters.Other
+        restrictions are taken care of in AddressDetailValidation.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base='xsd:string'>
+        <xsd:minLength value="1"/>
+        <xsd:maxLength value="8"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <!--SIR 23529 -->
+  <xsd:attribute name="URL">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_ARC_CONSTR_URL</xsd:appinfo>
+      <xsd:documentation>Policy link should start with http://</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="7"/>
+        <xsd:maxLength value="300"/>
+        <xsd:pattern value="/^(http):\/\/([^/]+)(\/.*)?(\/.*)$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+  <xsd:attribute name="AlphaNumeric2Unit">
+    <xsd:annotation>
+      <xsd:appinfo>MSG_UNIT_MISFORMAT</xsd:appinfo>
+      <xsd:documentation>Exactly 2 alphanumeric characters for unit</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:minLength value="2"/>
+        <xsd:maxLength value="2"/>
+        <xsd:pattern value="/^[A-Za-z0-9]+$/"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+</xsd:schema>

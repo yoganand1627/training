@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="ejbs" default="info" basedir=".">
+  <!-- Project-specific overrides. -->
+  <property file="build.properties"/>
+
+  <!-- Common properties. -->
+  <import file="../build-common.xml"/>
+
+  <property name="ejbs.src.java.meta-inf" location="${ejbs.src.java}/META-INF"/>
+
+  <property name="ejbs.manifest" location="${ejbs.src.java.meta-inf}/MANIFEST.MF"/>
+
+  <path id="ejbs.exploded.path">
+    <path refid="app.base.path"/>
+    <dirset refid="hibernate.exploded.dirset"/>
+    <fileset refid="lib.service-ws.fileset"/>
+  </path>
+
+  <path id="ejbs.ear.path">
+    <path refid="app.base.path"/>
+    <fileset refid="hibernate.ear.fileset"/>
+    <fileset refid="lib.service-ws.fileset"/>
+  </path>
+
+  <path id="ejbs.build.path">
+    <path refid="app.base.path"/>
+    <path refid="lib.build.path"/>
+  </path>
+
+  <target name="clean" description="Removes files used to build the DAO layer.">
+    <!-- Do not delete the ejbs/build directory becuase IDEs use it.. -->
+    <delete dir="${ejbs.exploded}"/>
+    <delete file="${ejbs.manifest}"/>
+    <delete file="${ejbs.jar}"/>
+  </target>
+
+  <target name="clean.all" depends="clean" description="Removes all build artifacts.">
+    <delete dir="${ejbs.build}"/>
+  </target>
+
+  <target name="update.prepare">
+    <uptodate property="ejbs.uptodate" targetfile="${build.exploded}/ejbs.jar">
+      <srcfiles dir="${ejbs.src.java}"/>
+      <!-- The manifest is generated. -->
+      <srcfiles dir="${ejbs.src.java.meta-inf}" excludes="MANIFEST.MF"/>
+    </uptodate>
+  </target>
+
+  <target name="prepare" depends="common-prepare" unless="ejbs.uptodate"
+          description="Prepares for generation of structs classes">
+    <mkdir dir="${ejbs.exploded}"/>
+  </target>
+
+  <target name="compile" depends="prepare" unless="ejbs.uptodate" description="Compiles the dao classes.">
+    <javac source="1.5" target="1.5" debug="${build.debug}" srcdir="${ejbs.src.java}" destdir="${ejbs.exploded}"
+           classpathref="ejbs.build.path">
+      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation,unchecked"/>
+      <include name="**/*.java"/>
+    </javac>
+  </target>
+
+  <target name="package.exploded.per-user-datasource" depends="compile"
+          if="perUserSchemaSupport.flag" unless="ejbs.uptodate"
+          description="Packages the EJB in the exploded ear directory.">
+    <!-- Overwrite the datasource if we need per user schema support. -->
+    <copy tofile="${ejbs.exploded}/datasource-context.xml" file="${ejbs.src.conf}/per-user-datasource-context.xml"
+          preservelastmodified="true" overwrite="true"/>
+  </target>
+
+  <target name="package.exploded" depends="package.exploded.per-user-datasource" unless="ejbs.uptodate"
+          description="Packages the EJB in the exploded ear directory.">
+    <copy todir="${ejbs.exploded}">
+      <fileset dir="${ejbs.src.conf}">
+        <include name="*-context.xml"/>
+        <exclude name="datasource-context.xml" if="perUserSchemaSupport.flag"/>
+        <exclude name="per-user-datasource-context.xml"/>
+      </fileset>
+    </copy>
+    <pathconvert refid="ejbs.exploded.path" property="ejb-exploded-manifest-class-path" dirsep="/" pathsep=" ">
+      <mapper type="flatten"/>
+    </pathconvert>
+    <manifest file="${ejbs.manifest}">
+      <attribute name="Class-Path" value="${ejb-exploded-manifest-class-path}"/>
+    </manifest>
+    <mkdir dir="${ejbs.exploded}/META-INF"/>
+    <copy todir="${ejbs.exploded}/META-INF">
+      <fileset dir="${ejbs.src.java.meta-inf}"/>
+    </copy>
+  </target>
+
+  <target name="package.ear" depends="compile" unless="ejbs.uptodate"
+          description="Packages the EJB into a JAR in the ear directory.">
+    <pathconvert refid="ejbs.ear.path" property="ejb-ear-manifest-class-path" dirsep="/" pathsep=" ">
+      <mapper type="flatten"/>
+    </pathconvert>
+    <jar destfile="${ejbs.jar}" basedir="${ejbs.exploded}">
+      <metainf dir="${ejbs.src.java.meta-inf}" excludes="MANIFEST.MF"/>
+      <manifest>
+        <attribute name="Class-Path" value="${ejb-ear-manifest-class-path}"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="update" depends="package.exploded" description="Incremental build for development."/>
+
+  <target name="all" depends="clean, package.exploded"
+          description="Cleans, builds and packages to the exploded ear directory."/>
+
+  <target name="dist" depends="all, package.ear" description="Cleans, builds and packages to the ear directory."/>
+
+  <target name="info">
+    <echo message="This target is used as a generic build file used to build EJBs."/>
+  </target>
+</project>

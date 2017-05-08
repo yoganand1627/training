@@ -1,0 +1,696 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Mon Apr 18 09:16:55 2011 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2011\MR75\Home List\HomeFacilityList00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=204    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (15,1,0) Underline  Bold 
+ Print 'A list of DFCS or Non DFCS F/A homes in a category and/or status selected for a region and/or county. The report pulls the detail information of DFCS or Non-DFCS ' (42,1,179)
+ Page-Number (520,663) '' ' of '
+ Last-Page (520,699) 
+ Print 'Cap:' (176,1,4) Bold 
+ Print 'The capacity of the DFCS or Non-DFCS F/A home. The capacity number is pulled from the capacity field on the Home Information Page.' (176,95,177)
+ Print 'Open Slots:' (193,1,11) Bold 
+ Print 'The total number of open slots in the DFCS or Non-DFCS F/A homes. The Open Slots number is pulled from the Open Slot field on the Home Info ' (193,95,151)
+ Print 'Vendor ID:' (159,1,13) Bold 
+ Print 'The Vendor ID number for the resource used for payment. Vendor ID should match the Vendor ID assigned in SMILE for each resource.' (159,95,133)
+ Print 'The types of categories are as follows: Adoptive, Foster, Foster/Adopt (Legal Risk), ICPC Adopt, ICPC Foster, Relative Adopt, and Relative Foster. ' (77,1,183)
+ Print 'F/A homes such as the Resource Name, Resource ID, Vendor ID, Resource Address, Phone #, Category, Status, Capacity, Open Slots, Approval Begin and End dates.' (57,1,164)
+ Print 'The types of status are as follows: Applicant (Pre-Service Training), Approved (Full) - Active, Approved (Special) - Active, Pending Full Approval, Pending Special ' (100,1,173) Wrap 173 3 line-height=12 Keep-Top
+ Print 'Approval, Pending Closure, Waitlist, and Closed. ' (116,1,154) Wrap 154 3 line-height=12 Keep-Top
+ Print 'Information Page.' (244,95,104)
+ Print 'The Approval Begin Date is the date in which the current approval period begin. The date is pulled from the Approval Begin Date field on the Home ' (227,95,200)
+ Print 'Approval Begin:' (227,1,15) Bold 
+ Print 'Approval End:' (261,1,14) Bold 
+ Print 'Information Page.' (278,95,118)
+ Print 'The Approval End Date is the date in which the current approval period end. The date is pulled from the Approval End Date field on the Home ' (261,95,144)
+ Print 'Categ:' (295,1,14) Bold 
+ Print 'Effective Date:' (329,1,19) Bold 
+ Print 'IV-E Reim:' (311,1,14) Bold 
+ Print 'The category of a F/A home.' (295,95,79)
+ Print 'Indicator that displays a ''Y'' if the home is IV-E reimbursable or ''N'' if the home is not IV-E reimbursable.' (311,95,122)
+ Print 'The date when the home reimbursability status is effective.' (328,95,119)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Category:' (375,1,9) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Key' (358,1,14) Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'A - Adoptive' (389,1,23)
+ Print 'F - Foster' (403,1,18)
+ Print 'FA - Foster/Adopt (Legal Risk)' (418,1,30)
+ Print 'IA - ICPC Adopt' (433,1,26)
+ Print 'IF - ICPC Foster' (447,1,21)
+ Print 'RA - Relative Adopt' (462,1,23)
+ Print 'RC - Relative Care' (476,1,22)
+ Print 'Status:' (375,206,9) Underline  Bold 
+ Print 'APP - Applicant (Pre-Service Training)' (404,206,40)
+ Print 'AFA - Approved (Full) - Active' (388,206,37)
+ Print 'ASA - Approved (Special) - Active' (418,206,34)
+ Print 'CSD - Closed' (447,206,23)
+ Print 'FLG - Full Approval 30 Day Grace' (462,206,36)
+ Print 'INQ - Inquiry' (489,206,32)
+ Print 'AUN - Unapproved' (432,206,38)
+ Print 'FSG - Special Approval 30 Day Grace' (476,206,38)
+ Print 'PSA - Pending Special Approval' (432,402,44)
+ Print 'PCL - Pending Closure' (388,402,26)
+ Print 'PFA - Pending Full Approval' (403,402,39)
+ Print 'PFG - Pending Full Approval 30 Day grace' (418,402,45)
+ Print 'PSG - Pending Special Approval 30 Day Grace' (448,402,49)
+ Print 'PUN - Pending Unapproved' (462,402,37)
+ Print 'WTL - Waitlist' (476,402,31)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Page.' (210,95,119)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+Do Get-Input
+Do Get_Region_County
+Do CountForCateg('F',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#Fhomecategcount)
+Do CountForCateg('L',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#Lhomecategcount)
+Do CountForCateg('D',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#RAhomecategcount)
+Do CountForCateg('O',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#RFhomecategcount)
+Do CountForCateg('A',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#Ahomecategcount)
+Do CountForCateg('J',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#Jhomecategcount)
+Do CountForCateg('I',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#ICPChomecategcount)
+!Homes by Status Calculations 
+Do CountForStatus('INQ',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#INQhomestatcount)
+Do CountForStatus('APP',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#APPhomestatcount)
+Do CountForStatus('PFA',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#PFAhomestatcount)
+Do CountForStatus('PSA',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#PSAhomestatcount)
+Do CountForStatus('PTA',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#PTAhomestatcount)
+Do CountForStatus('AFA',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#AFAhomestatcount)
+Do CountForStatus('ASA',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#ASAhomestatcount)
+Do CountForStatus('ATA',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#ATAhomestatcount)
+Do CountForStatus('PCL',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#PCLhomestatcount)
+Do CountForStatus('CSD',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#CSDhomestatcount)
+Do CountForStatus('WTL',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#WTLhomestatcount)
+Do CountForStatus('FLG',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#FLGhomestatcount)
+Do CountForStatus('FSG',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#FSGhomestatcount)
+Do CountForStatus('PFG',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#PFGhomestatcount)
+Do CountForStatus('PSG',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#PSGhomestatcount)
+Do CountForStatus('PUN',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#PUNhomestatcount)
+Do CountForStatus('AUN',$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,#AUNhomestatcount)
+
+
+
+ Position (1,1)
+ Do Master_Query
+Do DisplayResult
+
+End-Program
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I1401_CD_RSRC_FACIL_TYPE 'Enter a value for HOMECODE' MaxLen=2  Type=Char
+If IsNull($_I1401_CD_RSRC_FACIL_TYPE) or IsBlank($_I1401_CD_RSRC_FACIL_TYPE)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+!Call to HomeTypeDecode Procedure to allow the Home type to print on the Header Page
+Let $Home_Type = $_I1401_CD_RSRC_FACIL_TYPE
+Do Get-HomeTypeDecode
+Let $where_clause1401 = 'HOMECODE = ''' || $_I1401_CD_RSRC_FACIL_TYPE || ''''
+!
+If SubStr($_I1401_CD_RSRC_FACIL_TYPE, 1, 1) != ''''
+  Let $_I1401_CD_RSRC_FACIL_TYPE = '''' || $_I1401_CD_RSRC_FACIL_TYPE || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I1401_CD_RSRC_FACIL_TYPE,'''',0) = 0 and instr($_I1401_CD_RSRC_FACIL_TYPE,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp1 = 'CAPS_RESOURCE00.CD_RSRC_FACIL_TYPE'
+   Let $_where_clause1401 = $brb_tmp1  || ' = ' ||  '''' || $_I1401_CD_RSRC_FACIL_TYPE || '''' 
+ Else
+   If (instr($_I1401_CD_RSRC_FACIL_TYPE,'''',0) = 0 and instr($_I1401_CD_RSRC_FACIL_TYPE,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp1 = 'CAPS_RESOURCE00.CD_RSRC_FACIL_TYPE'
+     Let $_where_clause1401 = $brb_tmp1  || ' = ' || $_I1401_CD_RSRC_FACIL_TYPE
+   End-If
+ End-If
+
+!----------------------------------------------------
+! Get Category Optional Parameter
+! ---------------------------------------------------
+Input $_I1402_CFACATEG_CODE 'Enter a value for CATEGORYCODE' MaxLen=20  Type=Char
+If IsNull($_I1402_CFACATEG_CODE) or IsBlank($_I1402_CFACATEG_CODE) or  ($_I1402_CFACATEG_CODE ='0')
+  Let $_where_clause_category = 'CFACATEG.CODE IS NOT NULL'
+  Let $_Categoryvar= 'All'
+ 
+Else 
+ Let $CategorySelectvar= $_I1402_CFACATEG_CODE
+  Let $_where_clause_category = 'CFACATEG.CODE = ' || '''' || $_I1402_CFACATEG_CODE || ''''
+  Do Get-Category-Type
+End-if
+
+!----------------------------------------------------
+! Begin Get Status Optional Parameter
+!----------------------------------------------------
+Input $_I1404_CFAHMSTA_CODE 'Enter a value for Status' MaxLen=20  Type=Char
+If IsNull($_I1404_CFAHMSTA_CODE) or IsBlank($_I1404_CFAHMSTA_CODE) or  ($_I1404_CFAHMSTA_CODE ='0')
+  Let $_where_clause_apprv_status = 'CFAHMSTA.CODE IS NOT NULL'
+  Let $_Statusvar= 'All'
+Else 
+ Let $Statusvar= $_I1404_CFAHMSTA_CODE
+ Let $_where_clause_apprv_status = 'CFAHMSTA.CODE = ' || '''' || $_I1404_CFAHMSTA_CODE || ''''
+ Do Get-Status-Type
+End-if
+
+End-Procedure  
+
+! -----------------------------
+! Get Region and County Optional Parameters
+Begin-Procedure Get_Region_County
+! Get region optional input
+Input $_I1402_CCNTYREG_DECODE 'Enter a value for CD_REGION' MaxLen=2  Type=Char
+If IsNull($_I1402_CCNTYREG_DECODE) or IsBlank($_I1402_CCNTYREG_DECODE) or ($_I1402_CCNTYREG_DECODE='0')
+  Let $where_clause_region = 'CCNTYREG.DECODE IS NOT NULL'
+  Let $regionSelected = 'N'
+Else 
+  Let $where_clause_region = 'CCNTYREG.DECODE = ' || '''' || $_I1402_CCNTYREG_DECODE|| ''''
+  Let $regionSelected = 'Y'
+End-If
+
+! Get county optional input
+Input $_I1403_CD_RSRC_CNTY 'Enter a value for CD_RSRC_CNTY' MaxLen=3  Type=Char
+If IsNull($_I1403_CD_RSRC_CNTY) or IsBlank($_I1403_CD_RSRC_CNTY) or ($_I1403_CD_RSRC_CNTY='0')
+  Let $where_clause_county = 'CD_RSRC_CNTY IS NOT NULL'
+  Let $countySelected = 'N'
+Else 
+  Let $where_clause_county = 'CD_RSRC_CNTY = ' || '''' || $_I1403_CD_RSRC_CNTY || ''''
+  Let $countySelected = 'Y'
+End-If
+! Create where clause for region, county and unit input
+Let $_where_clause_region_county = $where_clause_region || ' and ' || $where_clause_county 
+Do Make_Header
+End-Procedure
+
+!Make Region County Header
+Begin-Procedure Make_Header
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_I1403_CD_RSRC_CNTY || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_I1403_CD_RSRC_CNTY = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_I1402_CCNTYREG_DECODE
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_I1402_CCNTYREG_DECODE
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+Begin-Procedure CountForCateg($Categ,$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,:#homecategcount)
+Begin-Select 
+count(distinct CAPS_RESOURCE00.id_resource) &hmcategcount
+FROM 
+    CAPS_RESOURCE CAPS_RESOURCE00, 
+    CFACTYP4, 
+    CCNTYREG, 
+    CCOUNT, 
+    CFACATEG, 
+    CFAHMSTA
+WHERE
+    CAPS_RESOURCE00.CD_RSRC_FACIL_TYPE = CFACTYP4.CODE  AND 
+    CCNTYREG.CODE = CCOUNT.CODE  AND 
+    CAPS_RESOURCE00.CD_RSRC_CNTY = CCNTYREG.CODE  AND 
+    CAPS_RESOURCE00.CD_RSRC_CATEGORY = CFACATEG.CODE  AND 
+    CAPS_RESOURCE00.CD_RSRC_FA_HOME_STATUS = CFAHMSTA.CODE  AND 
+    CAPS_RESOURCE00.CD_RSRC_FACIL_TYPE IS NOT NULL  AND
+ 
+!    (CAPS_RESOURCE00.CD_RSRC_CATEGORY NOT IN ('A') OR  CAPS_RESOURCE00.CD_RSRC_CATEGORY IS NULL ) AND 
+    [$_where_clause1401] AND 
+    CAPS_RESOURCE00.CD_RSRC_CATEGORY = $Categ AND
+    CAPS_RESOURCE00.CD_RSRC_REGION(+) =  CCNTYREG.DECODE AND 
+!    ( CAPS_RESOURCE00.CD_RSRC_STATUS = '01' and  CAPS_RESOURCE00.cd_rsrc_fa_home_status <> 'CSD') AND 
+     CAPS_RESOURCE00.cd_rsrc_fa_home_status <> 'INQ' AND
+     CAPS_RESOURCE00.CD_RSRC_CATEGORY <> 'G' AND
+    [$_where_clause_region_county] AND 
+    [$_where_clause_category] AND 
+    [$_where_clause_apprv_status]
+End-select
+Move &hmcategcount to #homecategcount
+End-Procedure
+! FA Homes Status Count Procedure
+Begin-Procedure CountForStatus($Status,$_where_clause1401,$_where_clause_region_county,$_where_clause_category,$_where_clause_apprv_status,:#homestatcount)
+Begin-Select 
+count(distinct CAPS_RESOURCE00.id_resource) &hmstatcount
+FROM 
+    CAPS_RESOURCE CAPS_RESOURCE00, 
+    CFACTYP4, 
+    CCNTYREG, 
+    CCOUNT, 
+    CFACATEG, 
+    CFAHMSTA
+WHERE
+    CAPS_RESOURCE00.CD_RSRC_FACIL_TYPE = CFACTYP4.CODE  AND 
+    CCNTYREG.CODE = CCOUNT.CODE  AND 
+    CAPS_RESOURCE00.CD_RSRC_CNTY = CCNTYREG.CODE  AND 
+    CAPS_RESOURCE00.CD_RSRC_CATEGORY = CFACATEG.CODE  AND 
+    CAPS_RESOURCE00.CD_RSRC_FA_HOME_STATUS = CFAHMSTA.CODE  AND 
+    CAPS_RESOURCE00.CD_RSRC_FACIL_TYPE IS NOT NULL  AND 
+!    (CAPS_RESOURCE00.CD_RSRC_CATEGORY NOT IN ('A') OR  CAPS_RESOURCE00.CD_RSRC_CATEGORY IS NULL ) AND 
+    [$_where_clause1401] AND 
+ !   CAPS_RESOURCE00.CD_RSRC_CATEGORY = $Categ AND
+    CAPS_RESOURCE00.CD_RSRC_FA_HOME_STATUS = $Status AND
+    CAPS_RESOURCE00.CD_RSRC_REGION(+) =  CCNTYREG.DECODE AND 
+ !   ( CAPS_RESOURCE00.CD_RSRC_STATUS = '01' and  CAPS_RESOURCE00.cd_rsrc_fa_home_status <> 'CSD') AND 
+     CAPS_RESOURCE00.cd_rsrc_fa_home_status <> 'INQ' AND
+     CAPS_RESOURCE00.cd_rsrc_fa_home_status <> 'ATA' AND 
+    CAPS_RESOURCE00.CD_RSRC_CATEGORY <> 'G' AND
+    [$_where_clause_region_county] AND 
+    [$_where_clause_category] AND 
+    [$_where_clause_apprv_status]
+End-select
+Move &hmstatcount to #homestatcount
+End-Procedure
+
+!Procedure to Get Home Type to print on Header Page even when no data is returned
+Begin-Procedure Get-HomeTypeDecode
+Begin-Select
+Decode &HomeType1
+from CFACTYP4
+where code = $_I1401_CD_RSRC_FACIL_TYPE
+end-select
+ move &HomeType1 to $_Home_Type
+end-procedure
+
+Begin-Procedure Get-Category-Type
+Begin-Select 
+DECODE &CategoryType1 
+FROM CFACATEG 
+where CFACATEG.CODE =  $_I1402_CFACATEG_CODE
+End-Select
+ Move &CategoryType1 to $_Categoryvar
+End-Procedure
+
+! Procedure to Get Status to print on Header Page
+Begin-Procedure Get-Status-Type
+Begin-Select 
+DECODE &StatusType 
+FROM CFAHMSTA 
+where CFAHMSTA.CODE =  $_I1404_CFAHMSTA_CODE
+End-Select
+ Move &StatusType to $_Statusvar
+End-Procedure
+
+BEGIN-PROCEDURE RENAME_CATEGORY($CATEGORY2,:$VAR_CATEGORY)
+IF $CATEGORY2 = 'L'
+  LET $TEMP_CATEG = 'FA'
+ELSE 
+  IF $CATEGORY2 = 'J'
+  LET $TEMP_CATEG = 'IA'
+ELSE 
+  IF $CATEGORY2 = 'I'
+  LET $TEMP_CATEG = 'IF'
+ELSE 
+  IF $CATEGORY2 = 'D'
+  LET $TEMP_CATEG = 'RA'
+ELSE 
+  IF $CATEGORY2 = 'O'
+  LET $TEMP_CATEG = 'RC'
+ELSE
+  LET $TEMP_CATEG = $CATEGORY2
+END-IF
+END-IF
+END-IF
+END-IF
+END-IF
+ MOVE $TEMP_CATEG TO $VAR_CATEGORY
+END-PROCEDURE
+
+
+
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #14ROW_COUNT
+Begin-Select Distinct
+CAPS_RESOURCE00.CD_RSRC_CATEGORY &CATEGORY2
+
+ Do RENAME_CATEGORY(&CATEGORY2,$VAR_CATEGORY)
+
+
+(CAPS_RESOURCE00.ADDR_RSRC_ST_LN_1 || ' ' ||  CAPS_RESOURCE00.ADDR_RSRC_CITY || ',  ' ||  CAPS_RESOURCE00.CD_RSRC_STATE || ' , '| | CAPS_RESOURCE00.ADDR_RSRC_ZIP) &resource_address
+CAPS.CFACTYP4.DECODE &HomeType
+CAPS_RESOURCE00.NBR_RSRC_PHONE_EXT &Master_Query_CAPS_RESOURCE00.NBR_RSRC_PHONE_EXT
+(SELECT  (count(1))  FROM  CAPS.CAPS_RESOURCE CAPS_RESOURCE01,  CAPS.PLACEMENT,  CAPS.EVENT WHERE CAPS.PLACEMENT.ID_PLCMT_EVENT = CAPS.EVENT.ID_EVENT
+  AND  CAPS.PLACEMENT.ID_CASE = CAPS.EVENT.ID_CASE
+  AND  CAPS_RESOURCE01.ID_RESOURCE = CAPS.PLACEMENT.ID_RSRC_FACIL
+ AND  PLACEMENT.DT_PLCMT_END = to_date ('4712/12/31', 'YYYY/MM/DD') AND  CD_EVENT_STATUS = 'APRV' AND  PLACEMENT.CD_PLCMT_TYPE not in ('ADH') AND  CAPS_RESOURCE01.ID_RESOURCE = CAPS_RESOURCE00.ID_RESOURCE) &Master_Query_SubOpenSlots
+CAPS.CCOUNT.DECODE &CountyDecode
+CAPS_RESOURCE00.CD_RSRC_CATEGORY &Master_Query_CAPS_RESOURCE00.CD_RSRC_CATEGORY
+CAPS.CFACATEG.DECODE &Category
+CAPS.CFAHMSTA.DECODE &ApprovalType
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CAPS.CCNTYREG.DECODE &Master_Query_CAPS.CCNTYREG.DECODE () On-Break Set=14 Level=1 Print=Never Before=Master_QueryDECODE_BeforeProc1401 After=Master_QueryDECODE_AfterProc1401
+CAPS_RESOURCE00.CD_RSRC_CNTY &Master_Query_CAPS_RESOURCE00.CD_RSRC_CNTY () On-Break Set=14 Level=2 Print=Never Before=Master_QueryCD_RSRC_CNTY_BeforeProc1402 After=Master_QueryCD_RSRC_CNTY_AfterProc1402
+ Alter-Printer Font=4 Point-Size=9    ! [SQR.INI] 4=Arial,proportional
+CAPS_RESOURCE00.ID_RESOURCE &Master_Query_CAPS_RESOURCE00.ID_RESOURCE (16,95) Edit 888888888na
+ Print &resource_address (16,194,25) Wrap 25 3 line-height=11 Keep-Top on= 
+CAPS_RESOURCE00.NBR_RSRC_PHN &Master_Query_CAPS_RESOURCE00.NBR_RSRC_PHN (16,334) Edit (xxx)bxxx-xxxx
+ Let #opslots=&Master_Query_CAPS_RESOURCE00.NBR_RSRC_FACIL_CAPACITY -  &Master_Query_SubOpenSlots
+ Print #opslots (16,601) Edit 888
+CAPS_RESOURCE00.DT_LIC_END &Master_Query_CAPS_RESOURCE00.DT_LIC_END (16,675) Edit MM/DD/YYYY
+CAPS_RESOURCE00.NBR_RSRC_VID &Master_Query_CAPS_RESOURCE00.NBR_RSRC_VID (16,148,8)
+CAPS_RESOURCE00.DT_LIC_BEGIN &Master_Query_CAPS_RESOURCE00.DT_LIC_BEGIN (16,622) Edit MM/DD/YYYY
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CAPS_RESOURCE00.IND_HOME_IVE_REIMBURSABLE &Master_Query_CAPS_RESOURCE00.IND_HOME_IVE_REIMBURSABLE (16,480,2)
+ Alter-Printer Font=4 Point-Size=9    ! [SQR.INI] 4=Arial,proportional
+CAPS_RESOURCE00.NBR_RSRC_FACIL_CAPACITY &Master_Query_CAPS_RESOURCE00.NBR_RSRC_FACIL_CAPACITY (16,574) Edit 888na
+CAPS_RESOURCE00.NM_RESOURCE &Master_Query_CAPS_RESOURCE00.NM_RESOURCE (17,1,18) Wrap 18 2 line-height=11 Keep-Top on= 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CAPS_RESOURCE00.CD_RSRC_FA_HOME_STATUS &Master_Query_CAPS_RESOURCE00.CD_RSRC_FA_HOME_STATUS (17,436,3)
+ Let $VAR_CATEGORY=$VAR_CATEGORY
+ Print $VAR_CATEGORY (17,409,3)
+CAPS_RESOURCE00.DT_REIMBURSABLE_EFFECTIVE &Master_Query_CAPS_RESOURCE00.DT_REIMBURSABLE_EFFECTIVE (17,513) Edit MM/DD/YYYY
+ Add 1 To #14ROW_COUNT
+ Add 1 To #1401ROW_COUNT
+ Add 1 To #1402ROW_COUNT
+ Next-Listing  Need=22
+From  CAPS.CAPS_RESOURCE CAPS_RESOURCE00, CAPS.CFACTYP4
+,      CAPS.CCNTYREG, CAPS.CCOUNT, CAPS.CFACATEG
+,      CAPS.CFAHMSTA
+      Where CAPS_RESOURCE00.CD_RSRC_FACIL_TYPE = CAPS.CFACTYP4.CODE
+            And CAPS.CCNTYREG.CODE = CAPS.CCOUNT.CODE
+            And CAPS_RESOURCE00.CD_RSRC_CNTY = CAPS.CCNTYREG.CODE
+            And CAPS_RESOURCE00.CD_RSRC_CATEGORY = CAPS.CFACATEG.CODE
+            And CAPS_RESOURCE00.CD_RSRC_FA_HOME_STATUS = CAPS.CFAHMSTA.CODE
+ And CAPS_RESOURCE00.CD_RSRC_FACIL_TYPE IS NOT NULL 
+ And [$_where_clause1401]
+ And CAPS_RESOURCE00.CD_RSRC_REGION(+) =  CCNTYREG.DECODE
+ And [$_where_clause_region_county]
+ And [$_where_clause_category]
+ And [$_where_clause_apprv_status]
+ And CAPS_RESOURCE00.cd_rsrc_fa_home_status <> 'INQ'
+ And CAPS_RESOURCE00.CD_RSRC_CATEGORY <> 'G'
+Order By CAPS.CCNTYREG.DECODE
+,      CAPS_RESOURCE00.CD_RSRC_CNTY
+,      CAPS_RESOURCE00.NM_RESOURCE
+,      CAPS_RESOURCE00.ID_RESOURCE
+End-Select
+ Next-Listing
+ Next-Listing  Need=262
+ If #14ROW_COUNT > 0
+ Graphic (3,1,719) Horz-Line 20 
+ Position (5,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Report Total:'  (16,1) Bold 
+ let #countResource = #14ROW_COUNT
+  Print #countResource (17,73) Bold  Edit 88888888na
+   Let #FosterHCount=#Fhomecategcount
+ Print #FosterHCount (52,121) Edit 99999999
+  Print 'Number of Homes by Category'  (35,1) Underline  Bold 
+   Let #LegalHomeCount=#Lhomecategcount
+ Print #LegalHomeCount (69,121) Edit 99999999
+  Print 'Foster:'  (52,1)
+  Print 'Foster/Adopt (Legal Risk):'  (69,1)
+  Print 'Relative Adopt:'  (87,1)
+  Print 'Relative Foster:'  (105,1)
+   Let #RAHomeCount=#RAhomecategcount
+ Print #RAHomeCount (88,121) Edit 99999999
+   Let #RFHomeCount=#RFhomecategcount
+ Print #RFHomeCount (105,121) Edit 99999999
+   Let #ICPCAdoptHCount=#Jhomecategcount
+ Print #ICPCAdoptHCount (122,121) Edit 99999999
+   Let #ICPCHCount=#ICPChomecategcount
+ Print #ICPCHCount (139,121) Edit 99999999
+  Print 'ICPC Adopt:'  (122,1)
+  Print 'ICPC Foster:'  (139,1)
+   Let #AHomeCount=#ahomecategcount
+ Print #AHomeCount (157,121) Edit 99999999
+  Print 'Adoptive:'  (157,1)
+   Let #APPstatuscount=#APPhomestatcount
+ Print #APPstatuscount (52,414) Edit 99999999
+   Let #PFAstatuscount=#PFAhomestatcount
+ Print #PFAstatuscount (68,414) Edit 99999999
+   Let #PSAhomestatcount=#PSAhomestatcount
+ Print #PSAhomestatcount (84,414) Edit 99999999
+   Let #AFAstatuscount=#AFAhomestatcount
+ Print #AFAstatuscount (165,414) Edit 99999999
+   Let #ASAstatuscount=#ASAhomestatcount
+ Print #ASAstatuscount (181,414) Edit 99999999
+  Print 'Applicant Pre-Service Training:'  (52,226)
+  Print 'Pending Full Approval:'  (68,226)
+  Print 'Pending Special Approval:'  (84,226)
+  Print 'Pending Full Approval 30 Day Grace: '  (100,226)
+  Print 'Approved (Full) - Active:'  (165,226)
+  Print 'Approved (Special) - Active:'  (181,226)
+  Print 'Number of Homes by Status'  (35,226) Underline  Bold 
+   Let #CSDstatuscount=#CSDhomestatcount
+ Print #CSDstatuscount (262,414) Edit 99999999
+  Print 'Closed:'  (262,226)
+  Print 'Waitlist:'  (246,226)
+   Let #WTLstatuscount=#WTLhomestatcount
+ Print #WTLstatuscount (246,414) Edit 99999999
+  Print 'Full Approval 30 Day Grace:'  (197,226)
+  Print 'Special Approval 30 Day Grace:'  (214,226)
+  Print 'Unapproved:'  (230,226)
+   Let #FLGstatuscount=#FLGhomestatcount
+ Print #FLGstatuscount (197,414) Edit 99999999
+   Let #FSGstatuscount=#FSGhomestatcount
+ Print #FSGstatuscount (214,414) Edit 99999999
+   Let #AUNstatuscount=#AUNhomestatcount
+ Print #AUNstatuscount (230,414) Edit 99999999
+  Print 'Pending Special Approval 30 Day Grace: '  (116,226)
+  Print 'Pending Closure: '  (149,226)
+   Let #PCLstatuscount=#PCLhomestatcount
+ Print #PCLstatuscount (149,414) Edit 99999999
+  Print 'Pending Unapproved: '  (133,226)
+   Let #PFGstatuscount=#PFGhomestatcount
+ Print #PFGstatuscount (100,414) Edit 99999999
+   Let #PSGstatuscount=#PSGhomestatcount
+ Print #PSGstatuscount (116,414) Edit 99999999
+   Let #PUNstatuscount=#PUNhomestatcount
+ Print #PUNstatuscount (133,414) Edit 99999999
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+!Display no data message on page header
+Begin-procedure DisplayResult
+if #14ROW_COUNT = 0
+ Let $textdisp = 'No results matching the report parameter are available'
+end-if
+Move $textdisp to $outText
+end-procedure
+
+
+Begin-Procedure Master_QueryDECODE_BeforeProc1401
+if $regionSelected = 'N' and $countySelected = 'N'
+! DO NOTHING
+ Next-Listing  Need=19
+ Graphic (2,1,719) Horz-Line 30 
+ Position (5,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CAPS.CCNTYREG.DECODE (19,43,25) Bold 
+ Print 'Region:'  (18,1) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+END-IF
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc1401
+if $regionSelected = 'N' and $countySelected = 'N'
+!DO NOTHING
+ Next-Listing  Need=20
+ Graphic (1,1,719) Horz-Line 10 
+ Position (2,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region Total:'  (20,1) Bold 
+ let #RegionCounty = #1401ROW_COUNT
+ Print #RegionCounty (20,73) Bold  Edit 88888888na
+   Position (+12,)
+ Move 0 To #1401ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+END-IF
+End-Procedure
+
+Begin-Procedure Master_QueryCD_RSRC_CNTY_BeforeProc1402
+if $countySelected = 'N'
+!DO NOTHING
+ Next-Listing  Need=26
+ Graphic (2,1,719) Horz-Line 20 
+ Position (4,1)
+ Graphic (27,1,719) Horz-Line 10 
+ Position (28,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &CountyDecode (18,1,26) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_RSRC_CNTY_AfterProc1402
+if $countySelected = 'N'
+!DO NOTHING
+ Next-Listing  Need=18
+ Graphic (1,1,719) Horz-Line 10 
+ Position (2,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'County Total:'  (18,1) Bold 
+ let #CountyCount = #1402ROW_COUNT
+ Print #CountyCount (18,73) Bold  Edit 88888888na
+   Position (+12,)
+ Move 0 To #1402ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+END-IF
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (26,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Home List' (46,324,12) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (22,582,0)
+ Print $current-date (22,652) edit 'MM/DD/YYYY'
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'Home Type:' (120,1,0) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Let $Region_header=$Region_header
+ Print $Region_header (80,300,15) Bold 
+ Let $Region_county_header=$Region_County_Header
+ Print $Region_county_header (64,312,15) Bold 
+ Let $Home_Type=$_Home_Type
+ Print $Home_Type (120,76,25) Bold 
+ Let $CategoryType=$_Categoryvar
+ Print $CategoryType (139,76,25) Bold 
+ Print 'Category:' (138,1,0) Bold 
+ Print 'Status:' (158,1,0) Bold 
+ Let $StatusType=$_Statusvar
+ Print $StatusType (158,76,25) Bold 
+ Let $outText=$outText
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $outText (100,229,55)
+ Alter-Printer Font=4 Point-Size=9    ! [SQR.INI] 4=Arial,proportional
+ Print 'Resource Name' (183,1,14) Underline  Bold 
+ Print 'Resource ID' (183,95,11) Underline  Bold 
+ Print 'Resource Address' (183,195,12) Underline  Bold  Wrap 12 2 line-height=11 Keep-Top
+ Print 'Phone' (183,334,0) Underline  Bold 
+ Print 'Cap.' (183,571,8) Underline  Bold 
+ Print 'Open Slots' (183,596,5) Underline  Bold  Wrap 5 2 line-height=11 Keep-Top on= 
+ Print 'Categ' (183,400,6) Underline  Bold 
+ Print 'Status' (183,432,0) Underline  Bold 
+ Print 'Approval End' (183,675,10) Underline  Bold  Wrap 10 2 line-height=11 Keep-Top
+ Print 'Vendor ID' (183,150,9) Underline  Bold 
+ Print 'Approval Begin' (183,623,10) Underline  Bold  Wrap 10 2 line-height=11 Keep-Top
+ Print 'IV-E Reim' (183,473,5) Underline  Bold  Wrap 5 2 line-height=11 Keep-Top on= 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Effective Date' (183,513,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on= 
+ Else   ! put a non combined page header
+ Alter-Printer Font=4 Point-Size=9    ! [SQR.INI] 4=Arial,proportional
+ Print 'Resource Name' (12,1,14) Underline  Bold 
+ Print 'Resource ID' (12,95,11) Underline  Bold 
+ Print 'Resource Address' (12,195,12) Underline  Bold  Wrap 12 2 line-height=11 Keep-Top
+ Print 'Phone' (12,334,0) Underline  Bold 
+ Print 'Cap.' (12,571,8) Underline  Bold 
+ Print 'Open Slots' (12,596,5) Underline  Bold  Wrap 5 2 line-height=11 Keep-Top on= 
+ Print 'Categ' (12,400,6) Underline  Bold 
+ Print 'Status' (12,432,0) Underline  Bold 
+ Print 'Approval End' (12,675,10) Underline  Bold  Wrap 10 2 line-height=11 Keep-Top
+ Print 'Vendor ID' (12,150,9) Underline  Bold 
+ Print 'Approval Begin' (12,623,10) Underline  Bold  Wrap 10 2 line-height=11 Keep-Top
+ Print 'IV-E Reim' (12,473,5) Underline  Bold  Wrap 5 2 line-height=11 Keep-Top on= 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Effective Date' (12,513,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on= 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (16,663) '' ' of '
+ Last-Page (16,696) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

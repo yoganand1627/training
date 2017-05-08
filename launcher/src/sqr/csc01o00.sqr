@@ -1,0 +1,353 @@
+!*****************************************************************************
+!  APS LEGAL LOG                                                             *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         csc01o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 09/27/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brad McCleary                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This report lists the current and previous           *
+!                       legal actions and outcomes for a person.             *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 09/27/95   B. McCleary  Initial Programming                                *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'            ! control codes for Portrait 
+                       ! On Demand Reports              
+
+    ask ID_PERSON                      ! input parameter
+    ask ID_CASE                        ! input parameter  
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 4 
+
+  #INCLUDE 'header04.sqc'               !Include file with Header Information
+  
+  print 'APS LEGAL LOG'                  (+2) center
+                           
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                            !Set printer environment
+
+    move {ID_PERSON}            to #input_id_person    
+    move {ID_CASE}              to #input_id_case    
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-CASE-NAME-NUMBER, GET-ACTION                       *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+    
+    do GET-CASE-NAME-NUMBER
+    do GET-ACTION
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-CASE-NAME-NUMBER                                                    *
+!                                                                           *
+!       This procedure will select the case name and number.                *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CASE-NAME-NUMBER
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.NM_CASE
+    move &A.NM_CASE                             to $Case_Name
+    
+A.ID_CASE
+    move &A.ID_CASE                             to #Case_Number
+    
+FROM    CAPS_CASE   A
+
+WHERE   A.ID_CASE  =  #input_id_case   
+
+END-SELECT
+
+END-PROCEDURE GET-CASE-NAME-NUMBER
+
+!****************************************************************************
+!                                                                           *
+!   GET-ACTION                                                              *
+!                                                                           *
+!       This procedure will select the legal action needed for the report.  *
+!       It calls DYNAMIC after each row found in order to select the        * 
+!       appropriate and needed decodes.                                     *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : DYNAMIC, PRINT-ACTION                                  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ACTION
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.CD_LEGAL_ACT_ACTION
+    move &A.CD_LEGAL_ACT_ACTION                  to $legal_action
+    
+A.CD_LEGAL_ACT_ACTN_SUBTYPE
+    move &A.CD_LEGAL_ACT_ACTN_SUBTYPE            to $action_subtype
+    
+to_char(A.DT_LEGAL_ACT_DATE_FILED, 'MM/DD/YYYY') &date1
+    move &date1                                  to $date_filed
+    
+to_char(A.DT_LEGAL_ACT_OUTCOME_DT, 'MM/DD/YYYY') &date2
+    move &date2                                  to $outcome_date
+    
+A.IND_LEGAL_ACT_DOCS_N_CASE 
+    move &A.IND_LEGAL_ACT_DOCS_N_CASE            to $doc_n_case_file
+    
+A.TXT_LEGAL_ACT_COMMENT 
+    move &A.TXT_LEGAL_ACT_COMMENT                to $comments
+    
+CLEGAPS.decode
+    move &CLEGAPS.decode                         to $legal_action_decode
+   
+CLEGLOUT.decode 
+    move &CLEGLOUT.decode                        to $outcome   
+
+       if rtrim($legal_action, ' ') != ''
+          do DYNAMIC
+       end-if
+       do PRINT-ACTION 
+
+FROM  LEGAL_ACTION      A,
+      EVENT             E,
+      CLEGAPS           CLEGAPS,
+      CLEGLOUT          CLEGLOUT
+
+WHERE   A.ID_PERSON    = #input_id_person
+AND     A.ID_LEGAL_ACT_EVENT = E.ID_EVENT
+AND     E.CD_EVENT_STATUS <> 'NEW'
+AND     CLEGAPS.CODE(+) = A.CD_LEGAL_ACT_ACTION
+AND     CLEGLOUT.CODE(+) = A.CD_LEGAL_ACT_OUTCOME
+
+ORDER BY    A.DT_LEGAL_ACT_DATE_FILED DESC 
+
+END-SELECT
+    
+END-PROCEDURE GET-ACTION
+
+!****************************************************************************
+!                                                                           *
+!   DYNAMIC                                                                 *
+!                                                                           *
+!       This procedure calls the DECODE from the codes table.               *
+!                                                                           * 
+!       CALLED BY  : GET-ACTION                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE DYNAMIC
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+DECODE
+    move &DECODE                    to $subtype_decode
+
+FROM    [$legal_action]  
+
+WHERE   CODE = $action_subtype
+
+END-SELECT
+
+END-PROCEDURE DYNAMIC
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ACTION                                                            *
+!                                                                           *
+!       This procedure prints the action.                                   *
+!                                                                           * 
+!       CALLED BY  : GET-ACTION                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ACTION
+
+if #current-line > 43
+    NEW-PAGE
+end-if
+
+print 'DATE FILED: '                (+2,1)
+print $date_filed                   (+0,17)
+print 'OUTCOME DATE: '              (+0,52)
+print $outcome_date                 (+0,66)
+print 'LEGAL ACTION: '              (+1,1)
+print $legal_action_decode          (+0,17)
+print 'OUTCOME: '                   (+0,52)
+print $outcome                      (+0,61)
+print 'ACTION SUBTYPE: '            (+1,1)
+print $subtype_decode               (+0,17)
+print 'DOCUMENT IN CASE FILE: '     (+0,52)
+print $doc_n_case_file              (+0,75)
+print 'COMMENTS: '                  (+1,1)  
+print $comments                     (+1,1)  wrap 76 4
+
+END-PROCEDURE PRINT-ACTION
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+
+
+#INCLUDE 'cfpstamp.sqc'

@@ -1,0 +1,60 @@
+package gov.georgia.dhr.dfcs.sacwis.core.lookup.codestables;
+
+public interface Crelcol2 {
+
+  public static final String CRELCOL2 = "CRELCOL2";
+  public static final String CRELCOL2_AC = "AC";
+  public static final String CRELCOL2_AF = "AF";
+  public static final String CRELCOL2_AP = "AP";
+  public static final String CRELCOL2_AS = "AS";
+  public static final String CRELCOL2_AT = "AT";
+  public static final String CRELCOL2_AU = "AU";
+  public static final String CRELCOL2_AV = "AV";
+  public static final String CRELCOL2_AW = "AW";
+  public static final String CRELCOL2_AX = "AX";
+  public static final String CRELCOL2_BA = "BA";
+  public static final String CRELCOL2_CA = "CA";
+  public static final String CRELCOL2_CO = "CO";
+  public static final String CRELCOL2_CR = "CR";
+  public static final String CRELCOL2_CT = "CT";
+  public static final String CRELCOL2_DA = "DA";
+  public static final String CRELCOL2_DR = "DR";
+  public static final String CRELCOL2_FL = "FL";
+  public static final String CRELCOL2_FM = "FM";
+  public static final String CRELCOL2_FN = "FN";
+  public static final String CRELCOL2_FO = "FO";
+  public static final String CRELCOL2_FP = "FP";
+  public static final String CRELCOL2_FQ = "FQ";
+  public static final String CRELCOL2_FR = "FR";
+  public static final String CRELCOL2_GC = "GC";
+  public static final String CRELCOL2_GD = "GD";
+  public static final String CRELCOL2_GE = "GE";
+  public static final String CRELCOL2_GF = "GF";
+  public static final String CRELCOL2_GG = "GG";
+  public static final String CRELCOL2_GU = "GU";
+  public static final String CRELCOL2_GV = "GV";
+  public static final String CRELCOL2_GW = "GW";
+  public static final String CRELCOL2_GX = "GX";
+  public static final String CRELCOL2_LA = "LA";
+  public static final String CRELCOL2_MH = "MH";
+  public static final String CRELCOL2_NE = "NE";
+  public static final String CRELCOL2_NN = "NN";
+  public static final String CRELCOL2_PB = "PB";
+  public static final String CRELCOL2_PD = "PD";
+  public static final String CRELCOL2_PO = "PO";
+  public static final String CRELCOL2_PP = "PP";
+  public static final String CRELCOL2_PR = "PR";
+  public static final String CRELCOL2_SB = "SB";
+  public static final String CRELCOL2_SC = "SC";
+  public static final String CRELCOL2_SF = "SF";
+  public static final String CRELCOL2_SG = "SG";
+  public static final String CRELCOL2_SH = "SH";
+  public static final String CRELCOL2_SO = "SO";
+  public static final String CRELCOL2_SP = "SP";
+  public static final String CRELCOL2_SR = "SR";
+  public static final String CRELCOL2_ST = "ST";
+  public static final String CRELCOL2_UH = "UH";
+  public static final String CRELCOL2_VO = "VO";
+  public static final String CRELCOL2_XX = "XX";
+
+}

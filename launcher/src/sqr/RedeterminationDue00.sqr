@@ -1,0 +1,557 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Tue Jun 02 13:08:31 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\RedetermnDue\RedeterminationDue005.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=156    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (18,5,0) Underline  Bold 
+ Print 'Days Until Due:' (96,4,0) Bold 
+ Print 'Current MES Assigned:' (116,3,0) Bold 
+ Print 'This report lists the children in foster care with a IV-E redetermination due with in the next 45 days or stages with IV-E redetermination past due. Report includes cases that don''t have an eligibility review date entered. The reporting county is determined by the county of the stage, not the unit county of the primary case manager. When the county of the primary case manager differs from the stage county, the unit county displays in parentheses to the right of the unit supervisor''s name.' (38,4,140) Wrap 140 4 line-height=12 Keep-Top on=   
+ Print 'The most recently assigned secondary Case Manager on the stage as Medicaid Eligibility Specialist.' (116,119,0)
+ Page-Number (440,669) '' ' of '
+ Last-Page (440,693) 
+ Print 'The total number of days in which the child''s IV-E Redetermination will be due or the total number of days past due.' (96,119,120)
+ Print 'Keys' (144,5,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Multi-County:' (158,5,0) Underline  Bold 
+ Print 'these are cases when the primary case manager assigned is in a non-county specific unit.' (158,67,0)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Region
+ Do Get-Input-County
+ Do Get-Unit
+ Position (1,1)
+ Do Master_Query
+End-Program
+Begin-Procedure Get-Region
+! -----------------------------
+Input $_I201_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I201_CD_STAGE_REGION) or IsBlank($_I201_CD_STAGE_REGION) or ($_I201_CD_STAGE_REGION) = '0' 
+  Let $where_clause201 = 'CD_STAGE_REGION is not null'
+  Let $regVar = 'All'
+  Let $regSelected = 'N'
+Else
+  Let $regSelected = 'Y'
+
+Let $regVar = $_I201_CD_STAGE_REGION
+Let $_region = $_I201_CD_STAGE_REGION
+ 
+If SubStr($_I201_CD_STAGE_REGION, 1, 1) != ''''
+  Let $_I201_CD_STAGE_REGION = '''' || $_I201_CD_STAGE_REGION || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I201_CD_STAGE_REGION,'''',0) = 0 and instr($_I201_CD_STAGE_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_STAGE_REGION'
+   Let $where_clause201 = $brb_tmp  || ' = ' ||  '''' || $_I201_CD_STAGE_REGION || '''' 
+ Else
+   If (instr($_I201_CD_STAGE_REGION,'''',0) = 0 and instr($_I201_CD_STAGE_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_STAGE_REGION'
+     Let $where_clause201 = $brb_tmp  || ' = ' || $_I201_CD_STAGE_REGION
+   End-If
+ End-If
+End-If
+End-Procedure
+
+Begin-Procedure Get-Input-County 
+! County Code Parameter
+Input $_I101_CD_COUNTY 'Enter a value for CD_COUNTY' MaxLen=3  Type=Text
+If IsNull($_I101_CD_COUNTY) or IsBlank($_I101_CD_COUNTY) or ($_I101_CD_COUNTY) = '0' 
+  Let $where_clause101 = 'CD_STAGE_CNTY is not null'
+  Let $countyVar = 'All'
+  Let $cntySelected = 'N'
+Else
+ Let $cntySelected = 'Y'
+
+If SubStr($_I101_CD_COUNTY, 1, 1) != ''''
+  Let $_I101_CD_COUNTY = '''' || $_I101_CD_COUNTY || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CD_COUNTY,'''',0) = 0 and instr($_I101_CD_COUNTY,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_STAGE_CNTY'
+   Let $where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I101_CD_COUNTY || '''' 
+ Else
+   If (instr($_I101_CD_COUNTY,'''',0) = 0 and instr($_I101_CD_COUNTY,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_STAGE_CNTY'
+     Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_CD_COUNTY
+   End-If
+ End-If
+End-If
+
+If $cntySelected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From  CCOUNT
+Where CCOUNT.CODE = [$_I101_CD_COUNTY]
+End-Select
+  Move &_County_Decode to $_header_disp
+Else
+  If $regSelected = 'Y'
+    Let $_header_disp = 'Region ' || $_region
+  Else 
+    Let $_header_disp = 'Statewide'
+  End-If
+End-If
+
+End-Procedure
+
+
+Begin-Procedure Get-Unit
+Input $_I201_NBR_UNIT 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If ($_I201_NBR_UNIT) = '0' 
+ Let $where_clause102 = 'NBR_UNIT is not null'
+ Let $unitSelected = 'N'
+
+
+Else
+ Let $unitSelected = 'Y'
+ Let $unitVar = $_I201_NBR_UNIT
+
+
+
+If SubStr($_I201_NBR_UNIT, 1, 1) != ''''
+  Let $_I201_NBR_UNIT = '''' || $_I201_NBR_UNIT || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I201_NBR_UNIT,'''',0) = 0 and instr($_I201_NBR_UNIT,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'NBR_UNIT'
+   Let $where_clause102 = $brb_tmp  || ' = ' ||  '''' || $_I201_NBR_UNIT || '''' 
+ Else
+   If (instr($_I201_NBR_UNIT,'''',0) = 0 and instr($_I201_NBR_UNIT,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'NBR_UNIT'
+     Let $where_clause102 = $brb_tmp  || ' = ' || $_I201_NBR_UNIT
+   End-If
+ End-If 
+End-If
+End-Procedure
+
+! Get current MES assigned to the stage, if there are more than one MES currently assigned to the stage as appeared mostly in converted data, concatenate the names
+Begin-Procedure Get_MES(#stage_id)
+ Let $_nm_mes_all = ''
+Begin-Select !Loops=1
+(( PERSON_SE.NM_PERSON_FULL )) &_nm_mes_se
+ Move &_nm_mes_se to $nm_var
+ If IsBlank($_nm_mes_all)
+  Let $_nm_mes_all = $nm_var
+ Else
+  Let $_nm_mes_all = $_nm_mes_all || '; ' || $nm_var
+ End-If
+From  STAGE_ASSIGN_HISTORY STAGE_SE, PERSON PERSON_SE
+,      EMPLOYEE EMPLOYEE_SE
+      Where PERSON_SE.ID_PERSON = EMPLOYEE_SE.ID_PERSON
+            And STAGE_SE.ID_PERSON = PERSON_SE.ID_PERSON
+ And EMPLOYEE_SE.CD_EMPLOYEE_CLASS = 'G1008'
+ And STAGE_SE.CD_ROLE = 'SE'
+ and STAGE_SE.ID_STAGE = #stage_id
+and STAGE_SE.DT_UNASSGND is null 
+and STAGE_SE.DT_ASSGND = (
+select max(stage_assign_history.DT_ASSGND)
+from employee, stage_assign_history
+where employee.ID_PERSON = stage_assign_history.ID_PERSON
+and employee.CD_EMPLOYEE_CLASS = 'G1008' 
+and stage_assign_history.CD_ROLE = 'SE' 
+and stage_assign_history.id_stage = STAGE_SE.ID_STAGE
+group by stage_assign_history.id_stage)
+End-Select
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #2ROW_COUNT
+Begin-Select
+ Do Get_MES(&StageID)
+
+(to_char(( ELIGIBILITY.DT_ELIG_REVIEW  - sysdate),'FM999999')) &days_until_due
+CD_ELIG_SELECTED &Master_Query_CD_ELIG_SELECTED
+PERSON_Supervisor.NM_PERSON_FULL &Master_Query_PERSON_Supervisor.NM_PERSON_FULL
+STAGE.ID_STAGE &StageID
+CD_COUNTY &Master_Query_CD_COUNTY
+NBR_UNIT &Master_Query_NBR_UNIT
+(DECODE( CCOUNT_UNIT.DECODE, '-None-', 'Multi-County',  CCOUNT_UNIT.DECODE  )) &Unit_County_Decode_Masked
+CCOUNT_UNIT.DECODE &Master_Query_CCOUNT_UNIT.DECODE
+CCOUNT_STAGE.DECODE &stagecntydecode
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_STAGE_REGION &Region () On-Break Set=2 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc201 After=Master_QueryCD_STAGE_REGION_AfterProc201
+CD_STAGE_CNTY &Master_Query_CD_STAGE_CNTY () On-Break Set=2 Level=2 Print=Never Before=Master_QueryCD_STAGE_CNTY_BeforeProc202 After=Master_QueryCD_STAGE_CNTY_AfterProc202
+UNIT.ID_UNIT &Master_Query_UNIT.ID_UNIT () On-Break Set=2 Level=3 Print=Never Before=Master_QueryID_UNIT_BeforeProc203 After=Master_QueryID_UNIT_AfterProc203
+PERSON_CaseManager.NM_PERSON_FULL &Master_Query_PERSON_CaseManager.NM_PERSON_FULL () On-Break Set=2 Level=4 Print=Never Before=Master_QueryNM_PERSON_FULL_BeforeProc204 After=Master_QueryNM_PERSON_FULL_AfterProc204
+ If 0> to_number(&days_until_due) 
+ Print &days_until_due (14,547,9) Bold  Foreground=(153,0,51)
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &days_until_due (14,547,9)
+ End-If
+ Let $mes_name=$nm_mes_all
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $mes_name (14,615,17) Wrap 17 8 line-height=12 Keep-Top
+NM_STAGE &Master_Query_NM_STAGE (14,72,17)
+PERSON.ID_PERSON &Master_Query_PERSON.ID_PERSON (14,184) Edit 8888888888na
+PERSON.DT_PERSON_BIRTH &Master_Query_PERSON.DT_PERSON_BIRTH (14,253) Edit MM/DD/YYYY
+DT_ELIG_START &Master_Query_DT_ELIG_START (14,393) Edit MM/DD/YYYY
+DT_ELIG_REVIEW &Master_Query_DT_ELIG_REVIEW (14,469) Edit MM/DD/YYYY
+CELIGIBI.DECODE &Master_Query_CELIGIBI.DECODE (14,315,12)
+STAGE.ID_CASE &Master_Query_STAGE.ID_CASE (14,17) Edit 888888888na
+ Add 1 To #2ROW_COUNT
+ Add 1 To #201ROW_COUNT
+ Add 1 To #202ROW_COUNT
+ Add 1 To #203ROW_COUNT
+ Add 1 To #204ROW_COUNT
+ Next-Listing  Need=22
+From  PERSON, PERSON PERSON_CaseManager
+,      PERSON PERSON_Supervisor, STAGE, STAGE_PERSON_LINK
+,      WORKLOAD, EVENT, ELIGIBILITY
+,      UNIT, CELIGIBI, CCOUNT CCOUNT_UNIT
+,      CCOUNT CCOUNT_STAGE
+      Where CELIGIBI.CODE = ELIGIBILITY.CD_ELIG_SELECTED
+            And STAGE_PERSON_LINK.ID_STAGE = STAGE.ID_STAGE
+            And PERSON.ID_PERSON = STAGE_PERSON_LINK.ID_PERSON
+            And UNIT.ID_PERSON = PERSON_Supervisor.ID_PERSON
+            And UNIT.ID_UNIT = STAGE.ID_UNIT
+            And WORKLOAD.ID_WKLD_PERSON = PERSON_CaseManager.ID_PERSON
+            And WORKLOAD.ID_WKLD_STAGE = STAGE.ID_STAGE
+            And ELIGIBILITY.ID_ELIG_EVENT = EVENT.ID_EVENT
+            And UNIT.CD_COUNTY = CCOUNT_UNIT.CODE
+            And STAGE.ID_STAGE = EVENT.ID_EVENT_STAGE
+            And STAGE.CD_STAGE_CNTY = CCOUNT_STAGE.CODE
+ And CD_STAGE_PERS_ROLE = 'PC'
+ And CD_WKLD_STAGE_PERS_ROLE = 'PR'
+ And CD_STAGE IN ('SUB','ADO')
+ And DT_STAGE_CLOSE IS NULL 
+ And EVENT.ID_EVENT = (SELECT MAX(event.id_event) FROM event WHERE event.cd_event_type = 'FCD' AND event.cd_event_status = 'APRV' AND event.id_event_stage
+    =stage.id_stage)
+ And (( ELIGIBILITY.DT_ELIG_REVIEW - sysdate) <= 45 Or DT_ELIG_REVIEW IS NULL )
+ And [$where_clause101]
+ And [$where_clause102]
+ And (ELIGIBILITY.DT_ELIG_START <= sysdate
+ And ELIGIBILITY.DT_ELIG_END >= sysdate)
+ And [$where_clause201]
+Order By CD_STAGE_REGION
+,      CCOUNT_UNIT.DECODE
+,      NBR_UNIT
+,      PERSON_CaseManager.NM_PERSON_FULL
+,      STAGE.ID_CASE
+,      NM_STAGE
+End-Select
+ Next-Listing
+ Next-Listing  Need=20
+ If #2ROW_COUNT > 0
+ Graphic (4,2,705) Horz-Line 12 
+ Position (5,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Report Total:'  (20,2) Bold 
+ let #Total = #2ROW_COUNT
+  Print #Total (20,69) Bold  Edit 88888888na
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_BeforeProc202
+If $cntySelected = 'Y'
+    ! do nothing
+Else
+ Next-Listing  Need=20
+ Graphic (4,2,707) Horz-Line 12 
+ Position (5,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CD_STAGE_CNTY (20,50,4) Foreground=(255,255,255)
+ Print 'County:'  (20,3) Bold 
+  Print &Master_Query_CCOUNT_UNIT.DECODE (20,46,19)
+   Position (+12,)
+ Next-Listing  Need=22
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_AfterProc202
+If $cntySelected = 'Y'
+    ! do nothing
+Else
+ Next-Listing  Need=14
+ let #countyTot = #202ROW_COUNT
+ If $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #countyTot (14,71) Bold  Edit 88888888na
+ End-If
+  If $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Let $cntyTotallbl='County Total: '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $cntyTotallbl (14,3,15) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #202ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryNM_PERSON_FULL_BeforeProc204
+ Next-Listing  Need=15
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_PERSON_CaseManager.NM_PERSON_FULL (15,90,25)
+ Print 'Case Manager:'  (15,9) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryNM_PERSON_FULL_AfterProc204
+ Next-Listing  Need=26
+ Graphic (4,9,701) Horz-Line 10 
+ Position (5,1)
+ Graphic (27,9,701) Horz-Line 10 
+ Position (28,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Manager Total:'  (19,9) Bold 
+ let #cntStageID = #204ROW_COUNT
+ Print #cntStageID (19,114) Bold  Edit 888888888888na
+   Position (+12,)
+ Move 0 To #204ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc201
+If $cntySelected = 'Y' or $regSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=21
+ Graphic (1,1,710) Horz-Line 13 
+ Position (2,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Region (21,46,4) Bold 
+ Print 'Region:'  (21,1) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc201
+If $cntySelected = 'Y' or $regSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=13
+ let #regTot = #201ROW_COUNT
+ If $cntySelected = 'Y' or $regSelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #regTot (13,79) Bold  Edit 88888888na
+ End-If
+  If $cntySelected = 'Y' or $regSelected = 'Y'
+    ! do nothing
+ Else
+ Let $regTotallbl='Region Total: '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $regTotallbl (13,1,15) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #201ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_BeforeProc203
+If $unitSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=14
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_UNIT.ID_UNIT (13,414) Edit 9999999999999999na Foreground=(255,255,255)
+ Print 'Unit # and Supervisor:'  (13,5) Bold 
+  Print &Master_Query_NBR_UNIT (13,116,3)
+  Print &Master_Query_PERSON_Supervisor.NM_PERSON_FULL (13,140,25)
+  If &Master_Query_CD_STAGE_CNTY=&Master_Query_CD_COUNTY
+    ! do nothing
+ Else
+ Let $unit_county_dsp='( ' ||  &Unit_County_Decode_Masked || ' )'
+ Print $unit_county_dsp (14,285,20)
+ End-If
+   Position (+12,)
+ Next-Listing  Need=22
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_AfterProc203
+If $unitSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=17
+ Graphic (18,5,706) Horz-Line 11 
+ Position (19,1)
+ let #unitTot = #203ROW_COUNT
+ If $unitSelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #unitTot (12,58) Bold  Edit 88888888na
+ End-If
+  If $unitSelected = 'Y'
+    ! do nothing
+ Else
+ Let $unitLbl='Unit Total: '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $unitLbl (12,5,15) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #203ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (12,652) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (12,586,12)
+ Print 'Division of Family and Children Services' (12,274,41)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Re-Determinations Due Within 45 Days' (52,226,40) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ If $unitSelected = 'N'
+    ! do nothing
+ Else
+ Let $unitVar=$unitVar
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $unitVar (104,42,15)
+ End-If
+ Let $headerDisplay=$_header_disp
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $headerDisplay (69,323,13) Bold 
+ If $unitSelected = 'N'
+    ! do nothing
+ Else
+ Let $unitLbl='Unit: '
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $unitLbl (104,6,6) Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case ID' (136,17,0) Underline  Bold 
+ Print 'Stage Name' (136,72,0) Underline  Bold 
+ Print 'Person ID' (136,184,10) Underline  Bold 
+ Print 'DOB' (136,253,5) Underline  Bold 
+ Print 'Eligibility' (136,315,0) Underline  Bold 
+ Print 'Eligibility Start Date' (136,393,11) Underline  Bold  Wrap 11 3 line-height=12 Keep-Top on= 
+ Print 'Eligibility Review Date' (136,469,11) Underline  Bold  Wrap 11 3 line-height=12 Keep-Top on= 
+ Print 'Days Until Due' (136,547,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'Current MES Assigned' (136,615,11) Underline  Bold  Wrap 11 2 line-height=12 Keep-Top on= 
+ Else   ! put a non combined page header
+ Print 'Case ID' (14,17,0) Underline  Bold 
+ Print 'Stage Name' (14,72,0) Underline  Bold 
+ Print 'Person ID' (14,184,10) Underline  Bold 
+ Print 'DOB' (14,253,5) Underline  Bold 
+ Print 'Eligibility' (14,315,0) Underline  Bold 
+ Print 'Eligibility Start Date' (14,393,11) Underline  Bold  Wrap 11 3 line-height=12 Keep-Top on= 
+ Print 'Eligibility Review Date' (14,469,11) Underline  Bold  Wrap 11 3 line-height=12 Keep-Top on= 
+ Print 'Days Until Due' (14,547,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'Current MES Assigned' (14,615,11) Underline  Bold  Wrap 11 2 line-height=12 Keep-Top on= 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Last-Page (18,694) 
+ Page-Number (18,670) '' ' of '
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

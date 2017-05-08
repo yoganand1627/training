@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="hibernate" default="all" basedir=".">
+  <!-- Project-specific overrides. -->
+  <property file="build.properties"/>
+
+  <!-- Common properties. -->
+  <import file="../build-common.xml"/>
+
+  <path id="path.hibernatetool">
+    <fileset dir="${hibernate.lib}" includes="*"/>
+    <fileset dir="${core.lib}">
+      <include name="hibernate3.jar"/>
+      <include name="asm-attrs.jar"/>
+      <include name="asm.jar"/>
+      <include name="commons-collections.jar"/>
+      <include name="dom4j.jar"/>
+      <include name="ehcache-1.2.jar"/>
+      <include name="ojdbc14.jar"/>
+    </fileset>
+    <fileset refid="lib.commons-logging.fileset"/>
+  </path>
+
+  <taskdef name="hibernatetool" classname="org.hibernate.tool.ant.HibernateToolTask" classpathref="path.hibernatetool"/>
+  <taskdef name="instrument" classname="org.hibernate.tool.instrument.cglib.InstrumentTask"
+           classpathref="path.hibernatetool"/>
+
+  <target name="info">
+    <echo message="Under most circumstances, all that needs to be done is to rebuild the Hibernate POJOs;"/>
+    <echo message="  use &quot;ant all&quot; to do this.  If you make a change to the *.hbm.xml files by hand,"/>
+    <echo message="  you will need to do this."/>
+    <echo message=" "/>
+    <echo message="If you need to make changes to the reverse engineering, do the following:"/>
+    <echo message="1) Use the dbToXml target to create hibernate *.hbm.xml files from the DB."/>
+    <echo message="2) Manually diff, copy, and edit the generated hbm.xml files to the src directory;"/>
+    <echo message="   note that many files are hand-edited so be VERY careful doing this."/>
+    <echo message="3) Use the all target to generate and build the POJOs."/>
+  </target>
+
+  <target name="clean" unless="hibernate.uptodate" description="Cleans all files created by the generation process.">
+    <delete dir="${hibernate.build}"/>
+    <delete dir="${build.exploded}/dbs.jar"/>
+    <delete file="${build.ear}/dbs.jar"/>
+  </target>
+
+  <target name="clean.all" depends="clean" description="Removes all build artifacts.">
+    <!-- Nothing else needed. -->
+  </target>
+
+  <target name="prepare" depends="common-prepare" unless="hibernate.uptodate">
+    <mkdir dir="${hibernate.build}"/>
+    <mkdir dir="${hibernate.build.classes}"/>
+    <mkdir dir="${hibernate.build.conf}"/>
+    <mkdir dir="${hibernate.build.xslt}"/>
+    <mkdir dir="${hibernate.build.java}"/>
+    <mkdir dir="${hibernate.build.docs}"/>
+  </target>
+
+  <target name="dbToXml" depends="prepare" description="Creates Hibernate *.hbm.xml files from the database.">
+    <javac source="1.5" target="1.5" debug="${build.debug}"
+           srcdir="${hibernate.src.java}" destdir="${hibernate.build.classes}" classpathref="path.hibernatetool">
+      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation,unchecked"/>
+    </javac>
+    <hibernatetool destdir="${hibernate.build.conf}" classpath="${hibernate.build.classes}">
+      <jdbcconfiguration propertyfile="${hibernate.src.conf}/hibernate.properties"
+                         packagename="gov.georgia.dhr.dfcs.sacwis.db"
+                         revengfile="${hibernate.src.conf}/hibernate.reveng.xml"
+                         reversestrategy="SACWISReverseEngineeringStrategy"/>
+      <hbm2hbmxml/>
+      <hbm2cfgxml/>
+    </hibernatetool>
+    <!-- Remove the generated comment. -->
+    <replaceregexp match="&lt;!--.*--&gt;" replace="">
+      <fileset dir="${hibernate.build.conf}" includes="**/*.hbm.xml"/>
+    </replaceregexp>
+    <!-- Remove the explicit schema information. -->
+    <replaceregexp match="\s+schema=&quot;\w+&quot;\s*" replace=" ">
+      <fileset dir="${hibernate.build.conf}" includes="**/*.hbm.xml"/>
+    </replaceregexp>
+    <!-- Need to update sequences with the correct sequence name parameter. -->
+    <replaceregexp match="&quot;sequence-(\w+)&quot; /"
+                   replace="&quot;sequence&quot;&gt;&lt;param name=&quot;sequence&quot;&gt;\1&lt;/param&gt;&lt;/generator">
+      <fileset dir="${hibernate.build.conf}" includes="**/*.hbm.xml"/>
+    </replaceregexp>
+    <!-- Need to update version tags to timestamp tags. -->
+    <replaceregexp flags="s"
+                   match="&lt;version name=&quot;([^&quot;]*)&quot; type=&quot;date&quot;&gt;.*?&lt;column name=&quot;([^&quot;]*)&quot;.*?&lt;/version&gt;"
+                   replace="&lt;timestamp name=&quot;\1&quot; column=&quot;\2&quot; generated=&quot;always&quot; unsaved-value=&quot;null&quot; source=&quot;vm&quot;/&gt;">
+      <fileset dir="${hibernate.build.conf}" includes="**/*.hbm.xml"/>
+    </replaceregexp>
+    <!-- Update primary keys that should be foriegn keys. -->
+    <xslt basedir="${hibernate.build.conf}" destdir="${hibernate.build.xslt}" includes="**/*.hbm.xml"
+          style="${hibernate.src.conf}/fix-foreign-keys.xsl" extension=".xml">
+      <xmlcatalog classpathref="path.hibernatetool">
+        <dtd publicid="-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+             location="org/hibernate/hibernate-mapping-3.0.dtd"/>
+      </xmlcatalog>
+    </xslt>
+    <!-- The stage many-to-one relationship in AdminReview.hbm.xml needs to be updated. -->
+    <replaceregexp match="many-to-one name=&quot;stage&quot;"
+                   replace="many-to-one name=&quot;stageByIdStageRelated&quot;">
+      <fileset dir="${hibernate.build.xslt}" includes="**/AdminReview.hbm.xml"/>
+    </replaceregexp>
+    <!-- Replace set's with bag's to prevent initial values in collections. -->
+    <replaceregexp flags="sg"
+                   match='&lt;set ([^&gt;]*) sort="unsorted"'
+                   replace="&lt;bag \1">
+      <fileset dir="${hibernate.build.xslt}" includes="**/*.hbm.xml"/>
+    </replaceregexp>
+    <replaceregexp flags="g" match="&lt;/set&gt;"
+                   replace="&lt;/bag&gt;">
+      <fileset dir="${hibernate.build.xslt}" includes="**/*.hbm.xml"/>
+    </replaceregexp>
+    <replaceregexp flags="sg" match="&lt;key on-delete=&quot;noaction&quot;&gt;"
+                   replace="&lt;key on-delete=&quot;noaction&quot; update=&quot;false&quot;&gt;">
+      <fileset dir="${hibernate.build.xslt}" includes="**/*.hbm.xml"/>
+    </replaceregexp>
+    <!-- Set unsaved id values. -->
+    <replaceregexp flags="s"
+                   match="&lt;id name=&quot;(\w+)&quot; type=&quot;(?:int\w*|java.lang.Integer)&quot;&gt;(.*)class=&quot;(assigned|foreign)&quot;(.*)&lt;/id&gt;"
+                   replace="&lt;id name=&quot;\1&quot; type=&quot;integer&quot; unsaved-value=&quot;undefined&quot;&gt;\2class=&quot;\3&quot;\4&lt;/id&gt;">
+      <fileset dir="${hibernate.build.xslt}" includes="**/*.hbm.xml"/>
+    </replaceregexp>
+    <replaceregexp flags="s"
+                   match="&lt;id name=&quot;(\w+)&quot; type=&quot;int\w*&quot;&gt;(.*)class=&quot;(sequence)&quot;(.*)&lt;/id&gt;"
+                   replace="&lt;id name=&quot;\1&quot; type=&quot;integer&quot; unsaved-value=&quot;0&quot;&gt;\2class=&quot;\3&quot;\4&lt;/id&gt;">
+      <fileset dir="${hibernate.build.xslt}" includes="**/*.hbm.xml"/>
+    </replaceregexp>
+    <replaceregexp flags="s"
+                   match="&lt;timestamp name=&quot;dtLastUpdate&quot; column=&quot;DT_LAST_UPDATE&quot; generated=&quot;always&quot; unsaved-value=&quot;null&quot; source=&quot;vm&quot;/&gt;"
+                   replace="&lt;timestamp name=&quot;dtLastUpdate&quot; column=&quot;DT_LAST_UPDATE&quot; generated=&quot;always&quot; unsaved-value=&quot;undefined&quot; source=&quot;vm&quot;/&gt;">
+      <fileset dir="${hibernate.build.xslt}" includes="**/*.hbm.xml"/>
+    </replaceregexp>
+    <!-- Report what was done. -->
+    <echo message="!!!!!!! IMPORTANT !!!!!!!"/>
+    <echo message="HBM files were created in build/xslt.  They should NOT be copied directly to src/conf!"/>
+    <echo message="  The reverse engineering process cannot account for manual adjustments made to each file,"/>
+    <echo message="  so each file should be edited manually as it is copied over."/>
+    <echo message="Use a tool such as BeyondCompare to compare build/xslt and src/conf and copy over appropriate changes."/>
+  </target>
+
+  <target name="xmlToJava" depends="prepare" unless="hibernate.uptodate"
+          description="Creates POJOs from Hibernate *.hbm.xml files.">
+    <hibernatetool destdir="${hibernate.build.java}" classpath="${hibernate.src.conf}">
+      <configuration configurationfile="${hibernate.src.conf}/hibernate.cfg.xml"/>
+      <hbm2java ejb3="false" jdk5="true"/>
+    </hibernatetool>
+  </target>
+
+  <target name="xmlToDocs" depends="prepare" description="Creates POJOs from Hibernate *.hbm.xml files.">
+    <hibernatetool destdir="${hibernate.build.docs}" classpath="${hibernate.src.conf}">
+      <configuration configurationfile="${hibernate.src.conf}/hibernate.cfg.xml"/>
+      <hbm2doc/>
+    </hibernatetool>
+  </target>
+
+  <target name="compile" depends="xmlToJava" unless="hibernate.uptodate" description="Compiles generated POJOs.">
+    <javac source="1.5" target="1.5" debug="${build.debug}"
+           srcdir="${hibernate.build.java}" destdir="${hibernate.build.classes}">
+      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation,unchecked"/>
+    </javac>
+    <instrument verbose="false">
+      <fileset dir="${hibernate.build.classes}">
+        <include name="**/*.class"/>
+      </fileset>
+    </instrument>
+  </target>
+
+  <target name="jar" depends="compile" unless="hibernate.uptodate"
+          description="Creates dbs.jar in the Hibernate build dir for uptodate check.">
+    <!-- Need to use a custom name for the jar because hibernate.jar points to hibernate.jar. -->
+    <jar basedir="${hibernate.build.classes}" destfile="${hibernate.build}/dbs.jar">
+      <fileset dir="${hibernate.src.conf}" includes="hibernate.cfg.xml ehcache.xml **/*.hbm.xml"/>
+    </jar>
+  </target>
+
+
+  <target name="package.exploded" depends="jar" description="Copies dbs.jar to the exploded ear directory">
+    <copy todir="${build.exploded}/dbs.jar" failonerror="true">
+      <fileset dir="${hibernate.build.classes}"/>
+      <fileset dir="${hibernate.src.conf}" includes="hibernate.cfg.xml ehcache.xml **/*.hbm.xml"/>
+    </copy>
+  </target>
+
+  <target name="package.ear" depends="jar" description="Copies dbs.jar to the ear directory">
+    <!-- Need to use a custom name for the jar because hibernate.jar points to hibernate.jar. -->
+    <copy file="${hibernate.build}/dbs.jar" todir="${build.ear}" preservelastmodified="true" failonerror="true"/>
+  </target>
+
+  <target name="update.prepare" description="Determines if hibernate.jar should be rebuilt">
+    <uptodate property="hibernate.uptodate" targetfile="${hibernate.build}/dbs.jar">
+      <srcfiles dir="${hibernate.src.conf}" includes="hibernate.cfg.xml ehcache.xml **/*.hbm.xml"/>
+    </uptodate>
+  </target>
+
+  <target name="update" depends="update.prepare, clean, package.exploded"
+          description="Conditionally generates builds Hibernate POJOs."/>
+
+  <target name="all" depends="update" description="Same as update for this project."/>
+
+  <target name="dist" depends="all, package.ear" description="Copies generated jar to build dir.">
+    <copy file="${hibernate.build}/dbs.jar" todir="${build.ear}" preservelastmodified="true" failonerror="true"/>
+  </target>
+
+</project>

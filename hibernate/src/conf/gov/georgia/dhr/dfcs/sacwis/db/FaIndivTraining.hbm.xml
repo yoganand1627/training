@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FaIndivTraining" table="FA_INDIV_TRAINING" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idIndivTraining" type="integer" unsaved-value="0">
+      <column name="ID_INDIV_TRAINING" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_FA_INDIV_TRAINING</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="txtIndivTrnTitle" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_INDIV_TRN_TITLE" length="50" not-null="true"/>
+    </property>
+    <property name="cdIndivTrnType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INDIV_TRN_TYPE" length="4"/>
+    </property>
+    <property name="dtIndivTrn" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INDIV_TRN" length="7"/>
+    </property>
+    <property name="indIndivTrnEc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_INDIV_TRN_EC" length="1"/>
+    </property>
+    <property name="nbrIndivTrnHrs" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INDIV_TRN_HRS" precision="4" scale="1"/>
+    </property>
+    <property name="nbrIndivTrnSession" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INDIV_TRN_SESSION" precision="2" scale="0"/>
+    </property>
+    <property name="nmAgency" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_AGENCY" length="40"/>
+    </property>
+    <property name="indCoTrain" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CO_TRAIN" length="1"/>
+    </property>
+    <property name="nmTrain1" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_TRAIN1" length="30"/>
+    </property>
+    <property name="cdTrain1Role" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_TRAIN1_ROLE" length="3"/>
+    </property>
+    <property name="nmTrain2" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_TRAIN2" length="30"/>
+    </property>
+    <property name="cdTrain2Role" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_TRAIN2_ROLE" length="3"/>
+    </property>
+    <property name="nmTrain3" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_TRAIN3" length="30"/>
+    </property>
+    <property name="cdTrain3Role" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_TRAIN3_ROLE" length="3"/>
+    </property>
+    <property name="nmTrain4" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_TRAIN4" length="30"/>
+    </property>
+    <property name="cdTrain4Role" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_TRAIN4_ROLE" length="3"/>
+    </property>
+  </class>
+</hibernate-mapping>

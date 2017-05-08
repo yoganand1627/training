@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<wsdl:definitions name="SHINES_CRS_Svcs_processCRSScreening" targetNamespace="http://167.192.98.180/"
+			xmlns:wsdns1="SHINES.CRS.Svcs.processCRSScreening"
+			xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+			xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+			xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
+			xmlns:tns="http://167.192.98.180/"
+			xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/"
+			xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+			xmlns:wsdns2="http://eiss.gta.ga.gov/shines/crs/CRSScreening">
+	<wsdl:types>
+        <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://eiss.gta.ga.gov/shines/crs/CRSScreening" xmlns:eiss="http://eiss.gta.ga.gov/shines/crs/CRSScreening">
+          <xsd:element name="ShinesScreeningResponseList">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="szLName" nillable="true" type="xsd:string"/>
+                <xsd:element name="InIrnClientId" nillable="true" type="xsd:string"/>
+                <xsd:element name="InCrsReturnValue" nillable="true" type="xsd:string"/>
+                <xsd:element name="szFName" nillable="true" type="xsd:string"/>
+                <xsd:element name="szMName" nillable="true" type="xsd:string"/>
+                <xsd:element name="uDob" nillable="true" type="xsd:string"/>
+                <xsd:element name="szSexCode" nillable="true" type="xsd:string"/>
+                <xsd:element name="uSsn" nillable="true" type="xsd:string"/>
+                <xsd:element name="szRaceCode" nillable="true" type="xsd:string"/>
+                <xsd:element name="szBInNtvAmerican" nillable="true" type="xsd:string"/>
+                <xsd:element name="szBInAsian" nillable="true" type="xsd:string"/>
+                <xsd:element name="szBInAfAmerican" nillable="true" type="xsd:string"/>
+                <xsd:element name="szBInPcfcislander" nillable="true" type="xsd:string"/>
+                <xsd:element name="szBInWhite" nillable="true" type="xsd:string"/>
+                <xsd:element name="szRacfid" nillable="true" type="xsd:string"/>
+                <xsd:element name="szEthnCode" nillable="true" type="xsd:string"/>
+                <xsd:element name="szSuffix" nillable="true" type="xsd:string"/>
+                <xsd:element name="uNoRows" nillable="true" type="xsd:string"/>
+                <xsd:element name="ulSsnErrInd" nillable="true" type="xsd:string"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="ShinesScreeningResponse">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element ref="eiss:ShinesScreeningResponseList" maxOccurs="unbounded"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+
+        <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="SHINES.CRS.Svcs.processCRSScreening" xmlns:s="SHINES.CRS.Svcs.processCRSScreening">
+          <xsd:element name="processCRSScreening">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="clientID" nillable="true" type="xsd:string"/>
+                <xsd:element name="clientLastName" nillable="true" type="xsd:string"/>
+                <xsd:element name="clientMiddleName" nillable="true" type="xsd:string"/>
+                <xsd:element name="clientFirstName" nillable="true" type="xsd:string"/>
+                <xsd:element name="clientSuffix" nillable="true" type="xsd:string"/>
+                <xsd:element name="clientSSN" nillable="true" type="xsd:string"/>
+                <xsd:element name="clientdateOfBirth" nillable="true" type="xsd:string"/>
+                <xsd:element name="clientSex" nillable="true" type="xsd:string"/>
+                <xsd:element name="MainframeRACFID" nillable="true" type="xsd:string"/>
+                <xsd:element name="UserID" nillable="true" type="xsd:string"/>
+                <xsd:element name="africanAmerican" nillable="true" type="xsd:string"/>
+                <xsd:element name="white" nillable="true" type="xsd:string"/>
+                <xsd:element name="asian" nillable="true" type="xsd:string"/>
+                <xsd:element name="pacificislander" nillable="true" type="xsd:string"/>
+                <xsd:element name="AmericanIndian" nillable="true" type="xsd:string"/>
+                <xsd:element name="ethnicity" nillable="true" type="xsd:string"/>
+                <xsd:element name="ResultsreturnedfromCRS" nillable="true" type="xsd:string"/>
+                <xsd:element name="returnCode" nillable="true" type="xsd:string"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:schema>
+
+        <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://localhost/SHINES/CRS/Svcs/processCRSScreening/processCRSScreening" xmlns:tns="http://localhost/SHINES/CRS/Svcs/processCRSScreening/processCRSScreening" xmlns:s="SHINES.CRS.Svcs.processCRSScreening" xmlns:eiss="http://eiss.gta.ga.gov/shines/crs/CRSScreening">
+          <xsd:import namespace="SHINES.CRS.Svcs.processCRSScreening"/>
+          <xsd:import namespace="http://eiss.gta.ga.gov/shines/crs/CRSScreening"/>
+          <xsd:complexType name="CRSScreeningInput">
+            <xsd:sequence>
+              <xsd:element ref="s:processCRSScreening"/>
+              <xsd:any processContents="lax"/>
+            </xsd:sequence>
+            <xsd:anyAttribute processContents="lax"/>
+          </xsd:complexType>
+          <xsd:complexType name="ShinesScreeningResponse">
+            <xsd:sequence>
+              <xsd:element ref="eiss:ShinesScreeningResponse"/>
+              <xsd:any processContents="lax"/>
+            </xsd:sequence>
+            <xsd:anyAttribute processContents="lax"/>
+          </xsd:complexType>
+        </xsd:schema>
+
+	</wsdl:types>
+	
+	<wsdl:message name="Shines_CRSScreening">
+		<wsdl:part name="processCRSScreening" element="wsdns1:processCRSScreening"/>
+	</wsdl:message>
+	
+	<wsdl:message name="Shines_CRSScreeningOutput">
+		<wsdl:part name="ShinesScreeningResponse" element="wsdns2:ShinesScreeningResponse"/>
+	</wsdl:message>
+	<wsdl:portType name="SHINES_CRS_Svcs_processCRSScreeningPortType">
+		<wsdl:operation name="Shines_CRSScreening">
+			<wsdl:input message="tns:Shines_CRSScreening"/>
+			<wsdl:output message="tns:Shines_CRSScreeningOutput"/>
+		</wsdl:operation>
+	</wsdl:portType>
+	<wsdl:binding name="SHINES_CRS_Svcs_processCRSScreeningBinding" type="tns:SHINES_CRS_Svcs_processCRSScreeningPortType">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<wsdl:operation name="Shines_CRSScreening">
+			<soap:operation soapAction=""/>
+			<wsdl:input>
+				<soap:body use="literal"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal"/>
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+	<wsdl:service name="SHINES_CRS_Svcs_processCRSScreeningService">
+		<wsdl:port name="SHINES_CRS_Svcs_processCRSScreeningPort0" binding="tns:SHINES_CRS_Svcs_processCRSScreeningBinding">
+			<soap:address location="http://167.192.98.180:5018/soap/default"/>
+		</wsdl:port>
+	</wsdl:service>
+	</wsdl:definitions>

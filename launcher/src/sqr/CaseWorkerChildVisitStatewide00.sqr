@@ -1,0 +1,318 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Tue Jun 09 13:57:05 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\CWCVStatewide\missingLogo\CaseWorkerChildVisitStatewide00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=168    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,2,0) Underline  Bold 
+ Print 'This report lists the number of Announced/UnAnnounced face to face contacts made with the primary child during the reporting month either Statewide or in a Region. The reporting county is determined by the county of the stage, not the unit county of the primary case manager.' (28,2,140) Wrap 140 2 line-height=12 Keep-Top on=  
+ Print 'Contacts made in the Home:' (63,2,0) Bold 
+ Print 'The number of Announced/UnAnnounced face to face contacts with the child occured in the home during the reporting month. The contact location must be Foster Home. Adoptive Home, Residence, or Facility for a contact to be considered made in the home.' (63,152,99) Wrap 99 4 line-height=12 Keep-Top on= 
+ Print 'Face-To-Face Contacts made:' (103,2,23) Bold  Wrap 23 2 line-height=12 Keep-Top on= 
+ Print 'The number of Announced/UnAnnounced face to face contacts with the child during the reporting month irrespective of the location of contact.' (103,152,98) Wrap 98 2 line-height=12 Keep-Top on=   
+ Print 'Percentage of Contacts made in the Home:' (133,2,24) Bold  Wrap 24 4 line-height=12 Keep-Top on= 
+ Print 'This is calculated as (The number of Announced/UnAnnounced face to face contacts with the child occured in the home during the reporting month / The number of Announced/UnAnnounced face to face contacts with the child during the reporting month irrespective of the location of contact) * 100' (133,152,90) Wrap 90 4 line-height=12 Keep-Top on= 
+ Page-Number (489,660) '' ' of '
+ Last-Page (489,687) 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+Do Get-Input-Region
+ Position (1,1)
+ Do Master_Query
+ Do Master_Query_2
+ !Do Cal_Percentage_County_Total
+!Let #cntyPerTot = #perCntyTotalvar
+
+End-Program
+Begin-Procedure Get-Input-Region
+Input $dt_report 'Enter a value for Month and Year(MM/YYYY)' MaxLen=7 Type=Date Format='MM/YYYY'
+Input $_I102_CD_UNIT_REGION 'Enter a value for CD_UNIT_REGION' MaxLen=3  Type=Char
+If ($_I102_CD_UNIT_REGION) = '0'
+  Let $where_clause106 = 'STAGE00.CD_STAGE_REGION is not null'
+  !Let $where_clause106 = 'UNIT00.CD_UNIT_REGION is not null'
+Let $header2 = 'Statewide View'
+Let $statevar = 'Statewide Totals'
+Else
+Let $header2 = 'Region View'
+Let $statevar = 'Region Totals'
+!If SubStr($_I102_CD_UNIT_REGION, 1, 1) != ''''
+!  Let $_I102_CD_UNIT_REGION = '''' || '0' || $_I102_CD_UNIT_REGION || ''''
+!End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I102_CD_UNIT_REGION,'''',0) = 0 and instr($_I102_CD_UNIT_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_STAGE_REGION'
+   Let $where_clause106 = $brb_tmp  || ' = ' ||  '''' || $_I102_CD_UNIT_REGION || '''' 
+ Else
+   If (instr($_I102_CD_UNIT_REGION,'''',0) = 0 and instr($_I102_CD_UNIT_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_STAGE_REGION'
+     Let $where_clause106 = $brb_tmp  || ' = ' || $_I102_CD_UNIT_REGION
+   End-If
+ End-If
+End-If
+End-Procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+ Move 0 To #sumHome_Query
+ Move 0 To #sumAnywhere_Query
+Begin-Select
+(SELECT  (count( CONTACT_2.ID_EVENT ))  FROM  CONTACT CONTACT_2,  EVENT_PERSON_LINK EVENT_PERSON_LINK_2,  STAGE STAGE_2,  STAGE_PERSON_LINK STAGE_PERSON_LINK_2 WHERE STAGE_2.ID_STAGE = STAGE_PERSON_LINK_2.ID_STAGE
+  AND  EVENT_PERSON_LINK_2.ID_PERSON = STAGE_PERSON_LINK_2.ID_PERSON
+  AND  CONTACT_2.ID_EVENT = EVENT_PERSON_LINK_2.ID_EVENT
+  AND  CONTACT_2.ID_CASE = STAGE_2.ID_CASE
+ AND  STAGE_2.CD_STAGE IN ('ADO','SUB') AND  CONTACT_2.CD_CONTACT_METHOD IN ('ATF','UTF') AND  STAGE_PERSON_LINK_2.CD_STAGE_PERS_ROLE = 'PC' AND  (CONTACT_2.DT_CONTACT_OCCURRED >= to_date($dt_report, 'MM/YYYY') AND  CONTACT_2.DT_CONTACT_OCCURRED < (last_day(to_date($dt_report, 'MM/YYYY'))+1)) AND  STAGE_2.CD_STAGE_REGION = STAGE00.CD_STAGE_REGION) &Master_Query_Anywhere_Query
+(decode( STAGE00.CD_STAGE_REGION, '97', 'OUT OF STATE', '99', 'STATE OFFICE',  STAGE00.CD_STAGE_REGION  )) &region_decode
+(SELECT  (count( CONTACT_1.ID_EVENT ))  FROM  EVENT_PERSON_LINK EVENT_PERSON_LINK_1,  STAGE STAGE_1,  STAGE_PERSON_LINK STAGE_PERSON_LINK_1,  CONTACT CONTACT_1 WHERE EVENT_PERSON_LINK_1.ID_EVENT = CONTACT_1.ID_EVENT
+  AND  EVENT_PERSON_LINK_1.ID_PERSON = STAGE_PERSON_LINK_1.ID_PERSON
+  AND  STAGE_PERSON_LINK_1.ID_STAGE = STAGE_1.ID_STAGE
+  AND  CONTACT_1.ID_CASE = STAGE_1.ID_CASE
+ AND  STAGE_1.CD_STAGE IN ('SUB','ADO') AND  STAGE_PERSON_LINK_1.CD_STAGE_PERS_ROLE = 'PC' AND  CONTACT_1.CD_CONTACT_METHOD IN ('ATF','UTF') AND  CONTACT_1.CD_CONTACT_LOCATION IN ('FHO','ADO','RES','FAC') AND  (CONTACT_1.DT_CONTACT_OCCURRED >= to_date($dt_report, 'MM/YYYY') AND  CONTACT_1.DT_CONTACT_OCCURRED < (last_day(to_date($dt_report, 'MM/YYYY'))+1)) AND  STAGE_1.CD_STAGE_REGION = STAGE00.CD_STAGE_REGION) &Master_Query_Home_Query
+STAGE00.CD_STAGE_REGION &stage_region
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Do Cal_Percentage
+ Let #perRegvar2 = #perRegvar
+
+ Print &Master_Query_Anywhere_Query (14,282) Edit 9999999999na
+ Let #perRegvar2=#perRegvar
+ Print #perRegvar2 (14,419) Edit 9999
+ Print '%' (14,446,0)
+ Print &region_decode (14,66,18)
+ Print &Master_Query_Home_Query (14,164) Edit 999999999na
+ Add &Master_Query_Home_Query To #sumHome_Query
+ Add &Master_Query_Anywhere_Query To #sumAnywhere_Query
+ Add 1 To #1ROW_COUNT
+ Next-Listing  Need=14
+From  STAGE STAGE00
+Where [$where_clause106]
+Group By STAGE00.CD_STAGE_REGION
+Order By STAGE00.CD_STAGE_REGION
+End-Select
+ Next-Listing
+ Next-Listing  Need=37
+ If #1ROW_COUNT > 0
+ Graphic (9,49,528) Horz-Line 15 
+ Position (10,1)
+ Graphic (39,49,528) Horz-Line 20 
+ Position (41,1)
+   Let $statevar=$statevar
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $statevar (27,54,15) Bold 
+  Print #sumHome_Query (27,169) Edit 99999999na
+  Print #sumAnywhere_Query (27,282) Edit 9999999999na
+   Let #perHmCntcts=(#sumHome_Query /  #sumAnywhere_Query ) * 100
+ Print #perHmCntcts (27,419) Edit 9999
+  Print '%'  (27,445)
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+Begin-Procedure Cal_Percentage
+If &Master_Query_Anywhere_Query = 0
+Let #perReg = 0
+Else
+Let #perReg = (&Master_Query_Home_Query / &Master_Query_Anywhere_Query) * 100
+End-If
+Move #perReg to #perRegvar
+End-Procedure
+
+Begin-Procedure Master_Query_2
+Begin-Select
+(SELECT  (count( CONTACT_Cnty1.ID_EVENT ))  FROM  CONTACT CONTACT_Cnty1,  EVENT_PERSON_LINK EVENT_PERSON_LINK_Cnty1,  STAGE STAGE_Cnty1,  STAGE_PERSON_LINK STAGE_PERSON_LINK_Cnty1 WHERE CONTACT_Cnty1.ID_CASE = STAGE_Cnty1.ID_CASE
+  AND  EVENT_PERSON_LINK_Cnty1.ID_PERSON = STAGE_PERSON_LINK_Cnty1.ID_PERSON
+  AND  CONTACT_Cnty1.ID_EVENT = EVENT_PERSON_LINK_Cnty1.ID_EVENT
+  AND  STAGE_Cnty1.ID_STAGE = STAGE_PERSON_LINK_Cnty1.ID_STAGE
+ AND  STAGE_Cnty1.CD_STAGE IN ('SUB','ADO') AND  STAGE_PERSON_LINK_Cnty1.CD_STAGE_PERS_ROLE = 'PC' AND  CONTACT_Cnty1.CD_CONTACT_METHOD IN ('ATF','UTF') AND  CONTACT_Cnty1.CD_CONTACT_LOCATION IN ('FHO','ADO','RES','FAC') AND  (CONTACT_Cnty1.DT_CONTACT_OCCURRED >= to_date($dt_report, 'MM/YYYY') AND  CONTACT_Cnty1.DT_CONTACT_OCCURRED < last_day(to_date($dt_report, 'MM/YYYY'))+1) AND  STAGE_Cnty1.CD_STAGE_CNTY = STAGE00.CD_STAGE_CNTY AND  STAGE_Cnty1.CD_STAGE_REGION = STAGE00.CD_STAGE_REGION) &Master_Query_2_HomeCounty_Q
+(SELECT  (count( CONTACT_AnyCnty2.ID_EVENT ))  FROM  CONTACT CONTACT_AnyCnty2,  EVENT_PERSON_LINK EVENT_PERSON_LINK_AnyCnty2,  STAGE STAGE_AnyCnty2,  STAGE_PERSON_LINK STAGE_PERSON_LINK_Any WHERE CONTACT_AnyCnty2.ID_EVENT = EVENT_PERSON_LINK_AnyCnty2.ID_EVENT
+  AND  CONTACT_AnyCnty2.ID_CASE = STAGE_AnyCnty2.ID_CASE
+  AND  STAGE_AnyCnty2.ID_STAGE = STAGE_PERSON_LINK_Any.ID_STAGE
+  AND  EVENT_PERSON_LINK_AnyCnty2.ID_PERSON = STAGE_PERSON_LINK_Any.ID_PERSON
+ AND  CONTACT_AnyCnty2.CD_CONTACT_METHOD IN ('ATF','UTF') AND  STAGE_AnyCnty2.CD_STAGE IN ('SUB','ADO') AND  STAGE_PERSON_LINK_Any.CD_STAGE_PERS_ROLE = 'PC' AND  (CONTACT_AnyCnty2.DT_CONTACT_OCCURRED >= to_date($dt_report, 'MM/YYYY') AND  CONTACT_AnyCnty2.DT_CONTACT_OCCURRED < last_day(to_date($dt_report, 'MM/YYYY'))+1) AND  STAGE_AnyCnty2.CD_STAGE_CNTY = STAGE00.CD_STAGE_CNTY AND  STAGE_AnyCnty2.CD_STAGE_REGION = STAGE00.CD_STAGE_REGION) &Master_Query_2_AnywhereCounty_Q
+STAGE00.CD_STAGE_CNTY &stage_county_2
+(decode( STAGE00.CD_STAGE_REGION, '97', 'OUT OF STATE', '99', 'STATE OFFICE',  STAGE00.CD_STAGE_REGION  )) &region_decode2
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Do Cal_Percentage_County_Total
+ Let #cntyPerTot = #perCntyTotalvar
+
+STAGE00.CD_STAGE_REGION &stage_region_2 () On-Break Set=4 Level=1 Print=Never Before=Master_Query_2CD_STAGE_REGION_BeforeProc401 After=Master_Query_2CD_STAGE_REGION_AfterProc401
+ Print &Master_Query_2_HomeCounty_Q (15,185) Edit 999999na
+ Print &Master_Query_2_AnywhereCounty_Q (15,288) Edit 99999999na
+DECODE &Master_Query_2_DECODE (15,99,14)
+ Let #_cntyPerTot=#perCntyTotalvar
+ Print #_cntyPerTot (15,419) Edit 9999
+ Print '%' (15,447,0)
+ Add &Master_Query_2_AnywhereCounty_Q To #sumAnywhereCounty_Q
+ Add &Master_Query_2_HomeCounty_Q To #sumHomeCounty_Q2
+ Next-Listing  Need=15
+From  CONTACT CONTACT_M, EVENT_PERSON_LINK EVENT_PERSON_LINK_M
+,      STAGE STAGE00, STAGE_PERSON_LINK STAGE_PERSON_LINK_M, CCOUNT
+      Where STAGE00.ID_STAGE = STAGE_PERSON_LINK_M.ID_STAGE
+            And STAGE_PERSON_LINK_M.ID_PERSON = EVENT_PERSON_LINK_M.ID_PERSON
+            And CONTACT_M.ID_EVENT = EVENT_PERSON_LINK_M.ID_EVENT
+            And STAGE00.CD_STAGE_CNTY = CCOUNT.CODE
+            And CONTACT_M.ID_CASE = STAGE00.ID_CASE
+ And [$where_clause106]
+ And STAGE00.CD_STAGE IN ('SUB','ADO')
+ And CONTACT_M.CD_CONTACT_METHOD IN ('ATF','UTF')
+ And STAGE_PERSON_LINK_M.CD_STAGE_PERS_ROLE = 'PC'
+ And (CONTACT_M.DT_CONTACT_OCCURRED >= to_date($dt_report,'MM/YYYY')
+ And CONTACT_M.DT_CONTACT_OCCURRED < last_day(to_date($dt_report,'MM/YYYY'))+1)
+Group By STAGE00.CD_STAGE_REGION
+,      STAGE00.CD_STAGE_CNTY
+,      DECODE
+Order By STAGE00.CD_STAGE_REGION
+,      STAGE00.CD_STAGE_CNTY
+,      DECODE
+End-Select
+ Next-Listing
+End-Procedure
+Begin-Procedure Cal_Percentage_County_Total
+If &Master_Query_2_AnywhereCounty_Q = 0
+Let #perCntyTotal = 0
+Else
+Let #perCntyTotal = (&Master_Query_2_HomeCounty_Q / &Master_Query_2_AnywhereCounty_Q) * 100
+End-If
+Move #perCntyTotal to #perCntyTotalvar
+End-Procedure
+
+Begin-Procedure Master_Query_2CD_STAGE_REGION_BeforeProc401
+ Next-Listing  Need=39
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &region_decode2 (39,63,20)
+   Position (+12,)
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Query_2CD_STAGE_REGION_AfterProc401
+ Next-Listing  Need=31
+ Graphic (5,63,414) Horz-Line 15 
+ Position (6,1)
+ Graphic (33,63,414) Horz-Line 20 
+ Position (35,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region Totals'  (23,63) Bold 
+ Print #sumAnywhereCounty_Q (23,277) Edit 9999999999na
+  Let #_cntyCntcts=(#sumHomeCounty_Q2 / #sumAnywhereCounty_Q)  * 100
+ Print #_cntyCntcts (23,419) Edit 9999
+ Print '%'  (23,447)
+ Print #sumHomeCounty_Q2 (23,163) Edit 9999999999na
+   Position (+12,)
+ Move 0 To #sumAnywhereCounty_Q
+ Move 0 To #sumHomeCounty_Q2
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (13,652) edit 'MM/DD/YYYY'
+ Print 'Division of Family and Children Services' (14,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Worker Child Visit Statewide Report' (51,218,43) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (13,586,0)
+ Let $Month_Parameter=$dt_report
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $Month_Parameter (109,47,15)
+ Print 'Month:' (109,1,6)
+ Print-Image (5,5)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Let $header2=$header2
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $header2 (74,319,15)
+ Print 'ooo' (146,1,0) Underline  Bold  Foreground=(255,255,255)
+ Print 'eee' (157,12,3) Underline  Bold  Foreground=(255,255,255)
+ Print 'Region' (152,58,0) Underline  Bold 
+ Print 'Contacts Made in the Home ' (152,171,14) Underline  Bold  Wrap 14 3 line-height=12 Keep-Top on=  
+ Print 'Face-To-Face Contacts Made ' (152,290,14) Underline  Bold  Wrap 14 2 line-height=12 Keep-Top on=  
+ Print 'Percentage of Contacts Made in the Home' (152,399,24) Underline  Bold  Wrap 24 2 line-height=12 Keep-Top on=  
+ Else   ! put a non combined page header
+ Print 'ooo' (11,1,0) Underline  Bold  Foreground=(255,255,255)
+ Print 'eee' (22,12,3) Underline  Bold  Foreground=(255,255,255)
+ Print 'Region' (18,58,0) Underline  Bold 
+ Print 'Contacts Made in the Home ' (18,171,14) Underline  Bold  Wrap 14 3 line-height=12 Keep-Top on=  
+ Print 'Face-To-Face Contacts Made ' (18,290,14) Underline  Bold  Wrap 14 2 line-height=12 Keep-Top on=  
+ Print 'Percentage of Contacts Made in the Home' (18,399,24) Underline  Bold  Wrap 24 2 line-height=12 Keep-Top on=  
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (16,665) '' ' of'
+ Last-Page (16,692) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

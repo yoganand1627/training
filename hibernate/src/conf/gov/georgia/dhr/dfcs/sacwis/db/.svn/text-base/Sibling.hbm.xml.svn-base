@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.Sibling" table="SIBLING" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+		    <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.SiblingId">
+		        <key-many-to-one 
+		            name="siblingGroup" 
+		            class="gov.georgia.dhr.dfcs.sacwis.db.SiblingGroup" 
+		            column="ID_SIBLING_GROUP"/>
+		        <key-many-to-one 
+		            name="person" 
+		            class="gov.georgia.dhr.dfcs.sacwis.db.Person" 
+		            column="ID_PERSON"/>
+		    </composite-id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    </class>
+</hibernate-mapping>

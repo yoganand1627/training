@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.PalFollowUp" table="PAL_FOLLOW_UP" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idPalFollowUp" type="integer" unsaved-value="0">
+      <column name="ID_PAL_FOLLOW_UP" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_PAL_FOLLOW_UP</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true" unique="true"/>
+    </many-to-one>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PAL_FOLLUP_STAGE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="dtPalFollupDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PAL_FOLLUP_DATE" length="7" not-null="true"/>
+    </property>
+    <property name="cdPalFollupEducStat" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PAL_FOLLUP_EDUC_STAT" length="3"/>
+    </property>
+    <property name="cdPalFollupEmployed" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PAL_FOLLUP_EMPLOYED" length="3"/>
+    </property>
+    <property name="cdPalFollupHighestEdu" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PAL_FOLLUP_HIGHEST_EDU" length="3"/>
+    </property>
+    <property name="cdPalFollupLivArr" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PAL_FOLLUP_LIV_ARR" length="3"/>
+    </property>
+    <property name="cdPalFollupMarital" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PAL_FOLLUP_MARITAL" length="3"/>
+    </property>
+    <property name="cdPalFollupReunified" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PAL_FOLLUP_REUNIFIED" length="3"/>
+    </property>
+    <property name="indPalFollupNoPubAst" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PAL_FOLLUP_NO_PUB_AST" length="1"/>
+    </property>
+    <property name="indPalFollupNotLocate" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PAL_FOLLUP_NOT_LOCATE" length="1"/>
+    </property>
+    <property name="nbrPalFollupNumChldrn" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PAL_FOLLUP_NUM_CHLDRN" precision="2" scale="0"/>
+    </property>
+    <property name="indCaringAdult" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CARING_ADULT" length="1"/>
+    </property>
+    <property name="cdNonReport" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_NON_REPORT" length="2"/>
+    </property>
+    <property name="cdInternship" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INTERNSHIP" length="1"/>
+    </property>
+    <property name="cdHomeless" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_HOMELESS" length="1"/>
+    </property>
+    <property name="cdReferralAbuse" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_REFERRAL_ABUSE" length="1"/>
+    </property>
+    <property name="cdIncarcerated" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INCARCERATED" length="1"/>
+    </property>
+    <bag name="palPublicAssists" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PAL_FOLLOW_UP" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.PalPublicAssist" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

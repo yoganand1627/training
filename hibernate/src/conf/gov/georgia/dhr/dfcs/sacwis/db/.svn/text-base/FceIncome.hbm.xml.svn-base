@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FceIncome" table="FCE_INCOME" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idFceIncome" type="integer" unsaved-value="0">
+      <column name="ID_FCE_INCOME" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_FCE_INCOME</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="fcePerson" class="gov.georgia.dhr.dfcs.sacwis.db.FcePerson" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_FCE_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="fceEligibility" class="gov.georgia.dhr.dfcs.sacwis.db.FceEligibility" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_FCE_ELIGIBILITY" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="idIncRsrc" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ID_INC_RSRC" precision="16" scale="0"/>
+    </property>
+    <property name="amtIncome" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_INCOME" precision="10"/>
+    </property>
+    <property name="cdType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_TYPE" length="3"/>
+    </property>
+    <property name="indIncomeSource" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_INCOME_SOURCE" length="1"/>
+    </property>
+    <property name="indResourceSource" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RESOURCE_SOURCE" length="1"/>
+    </property>
+    <property name="indCountable" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_COUNTABLE" length="1"/>
+    </property>
+    <property name="indEarned" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_EARNED" length="1"/>
+    </property>
+    <property name="indNotAccessible" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_NOT_ACCESSIBLE" length="1"/>
+    </property>
+    <property name="indChild" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CHILD" length="1"/>
+    </property>
+    <property name="indFamily" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_FAMILY" length="1"/>
+    </property>
+    <property name="indNone" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_NONE" length="1"/>
+    </property>
+    <property name="txtVerificationMethod" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_VERIFICATION_METHOD" length="20"/>
+    </property>
+    <property name="txtComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_COMMENTS" length="300"/>
+    </property>
+    <property name="txtSource" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_SOURCE" length="20"/>
+    </property>
+  </class>
+</hibernate-mapping>

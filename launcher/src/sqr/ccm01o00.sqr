@@ -1,0 +1,620 @@
+!******************* **********************************************************
+!  ON-CALL REPORT                                                            *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccm01o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/heardtd/work/sqr                         *
+!                                                                            *
+! DATE:                 10/9/95                                              *
+!                                                                            *
+! PROGRAMMER NAME:      Tony Heard                                           *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The On_Call Report allows a user to view the on-call *
+!                       coverage for a particular county by selected start   * 
+!                       and end dates/times.                                 *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 10/09/95   T. Heard     Initial Programming                                *
+! 03/21/96   B. McCleary  SIR 3289 - Changed sort for on_call start date.    *
+! 11/05/96   K. Cys       ENH - Name Person Full Enhancement (including      *
+!                         suffix).                                           *
+!  10/26/98  Hadjimh      SIR #13420 This SIR was enhancement to On_Call and *
+!			                    On_Call_Detail windows functionality. There has    *
+!                         been changes to SQL due to adding a table called   *
+!			                    On_Call_County which is a many side of the On_Call *
+!			                    table.                                             *
+! 03/23/99   C.Berry      SIR #15133 - Add region code and incorporate func- *
+!                         tionality of enhancement which includes multiple   *
+!                         counties on one report.                            *
+! 06/10/04   E. Dickman   SIR 15158 - Added two new paramater that as passed *
+!                         from the jsp and those fields are INPUT_REGION and *
+!                         INPUT_COUNTY_DECODE.  I updated the SQL to handle  *
+!                         multiple counties.                								 *
+!                                                                            *
+! 06/10/04   E. Dickman   SIR 22868 - Updated the header to DFPS.            *
+! 02/14/05   E. Dickman   SIR 23287 - Fixed the designation column for the   *
+!                         type of Program Director.                          *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+	do HOUSEKEEPING
+
+	do PROCESS-REPORT        
+
+	do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+	#ifdef ORACLE                           !compiler directive
+		ask dbname 'Database Name'
+		use {dbname}
+	#endif
+
+	#INCLUDE 'setup02a.sqc'            ! control codes for landscape   
+					   ! on demand reports             
+
+	ask INPUT_COUNTY                  
+	ask INPUT_PROGRAM                        
+	ask INPUT_DT_START                      
+	ask INPUT_TM_START                   
+  ask INPUT_DT_END                    
+  ask INPUT_TM_END
+  !SIR 15168 - New input parameters.
+  ask INPUT_REGION
+  ask INPUT_COUNTY_DECODE 
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. Five lines are reserved to print the heading at the  *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 6
+!SIR 22868 - Updated the header. to DFPS
+print 'Texas Department of Family and Protective Services (DFPS)' 	(+1) center
+print 'PAGE: '							                                        (+0,92)
+page-number                                                         (+0,98)
+print 'ON-CALL REPORT'			    			                              (+1,44)
+print 'DATE: '							                                        (+0,92)
+        date-time () 'MM/DD/YY'     &date
+print &date                                                         (+0,98)
+if $input_county_decode != 'STATEWIDE'
+  print 'REGION '                                                   (+1,45)
+  print $input_region                                               (+0)
+  print ' '                                                         (+0)
+else 
+  print 'ALL REGIONS '                                              (+1,45)
+end-if  
+print $input_program                                              	(+0) 
+print 'TIME: '							                                        (+0,92)
+        date-time () 'HH12:MI AM'   &time
+print &time                                                         (+0,98)
+print 'FROM'                                           	      			(+1,22)
+print $input_dt_start                                               (+0,27)
+print 'at'                                                          (+0,38)
+print $input_tm_start                                               (+0,41)
+print 'THROUGH'                                                     (+0,50)
+print $input_dt_end                                                 (+0,58)
+print 'at'                                                          (+0,69)
+print $input_tm_end                                               	(+0,72)
+print $input_county_decode                                          (+2,1)
+if $input_county_decode != 'STATEWIDE'
+print ' COUNTY(IES)'                                                (+0)
+end-if
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+print  'For Internal PRS Use Only'     	(+1) center
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+  !************************************************
+  ! Variables and Constants                       *
+  !************************************************
+   
+   !SIr 15168 - Translates a String in a acceptable format for the SQL to handle.
+   
+   
+   let $input_county_decode = '{INPUT_COUNTY_DECODE}'
+   
+   if $input_county_decode != 'STATEWIDE'
+     let $input_county = translate('{INPUT_COUNTY}',' ',',')
+     let $input_county_decode  = translate( '{INPUT_COUNTY_DECODE}' , '|' , ',' )
+     let $input_county_decode = ltrim($input_county_decode,',')
+   else 
+     let $input_county = '{INPUT_COUNTY}'
+	   !let $input_county_decode  = '{INPUT_COUNTY_DECODE}'
+   end-if
+   
+     
+   if $input_county_decode != 'STATEWIDE'
+	   let $B.CD_ON_CALL_COUNTY = 'AND B.CD_ON_CALL_COUNTY in (' || $input_county || ')'
+	 else
+ 	   let $B.CD_ON_CALL_COUNTY = ''
+	 end-if
+   
+   !SIR 15168 - Removed as part of SIR 15168
+   move '{INPUT_PROGRAM}'        to $input_program 
+   move '{INPUT_DT_START}'       to $input_dt_start            
+   move '{INPUT_TM_START}'       to $input_tm_start
+   move '{INPUT_DT_END}'         to $input_dt_end
+   move '{INPUT_TM_END}'         to $input_tm_end
+   !SIR 15168 - Input parameters added as part.
+   move '{INPUT_REGION}' 	    	 to $input_region
+      
+   !SIR 15168 - Removed as part of SIR 15168
+   let $input_program = ltrim($input_program,' ')
+   let $input_dt_start = ltrim($input_dt_start,' ')
+   let $input_tm_start = ltrim($input_tm_start,' ')
+   let $input_dt_end = ltrim($input_dt_end,' ')
+   let $input_tm_end = ltrim($input_tm_end,' ')
+   let $input_region = ltrim($input_region,' ')
+   
+   if rtrim($input_dt_start,'') = ''
+      move '01/01/0001' to $input_dt_start
+   end-if
+   
+   if rtrim($input_dt_end,'') = ''
+      move '12/31/4712' to $input_dt_end
+   end-if
+
+   if rtrim($input_tm_start,'') = ''
+      move '12:00 AM' to $input_tm_start
+   end-if
+
+   if rtrim($input_tm_end,'') = ''
+      move '11:59 PM' to $input_tm_end
+   end-if
+   
+      
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-COUNTY-PROGRAM                                     *
+!       CALLS      : GET-INFO                                               *  
+!       CALLS      : GET-WORKERS                                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+	!Removed as part of SIR 15168 
+	!do GET-COUNTY-REGION-PROGRAM
+	do GET-INFO
+	
+END-PROCEDURE PROCESS-REPORT                   
+
+!SIR 15168 - Removed as part of SIR 15168.  This function is no longer need 
+!because the values the SQL would return are now passed in from the Jsp
+!****************************************************************************
+!                                                                           *
+!   GET-COUNTY-REGION-PROGRAM                                               *  
+!                                                                           *
+!      Retrieves decodes for the county and program.                        *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+!BEGIN-PROCEDURE GET-COUNTY-REGION-PROGRAM
+
+!BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                  
+!DECODE  &DECODE
+!	move &DECODE                       to $county_decode	
+
+!FROM	CCOUNT		CCOUNT
+
+!WHERE   CCOUNT.CODE in (025,026);
+
+!END-SELECT
+
+
+!BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                  
+!DECODE  &DEC1
+!	move &DEC1                       to $program_decode	
+
+!FROM	CCLASS		CCLASS
+
+!WHERE   CCLASS.CODE(+) = $input_program
+
+!END-SELECT
+
+!BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+!DECODE  &DEC2
+!	move &DEC2     to $input_region
+
+
+!FROM    CCNTYREG        CCNTYREG
+
+!where CCNTYREG.CODE in  ([$input_county])
+
+!END-SELECT
+
+!END-PROCEDURE GET-COUNTY-REGION-PROGRAM
+
+!****************************************************************************
+!                                                                           *
+!   GET-INFO                                                                *
+!                                                                           *
+!   Gets on call information, including the county and program decodes      *
+!   for the header and dates in proper format.  It also calls GET-WORKERS   *
+!   in order to fill each list of names after each begin and end date.      *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-GET-INFO, GET-WORKERS                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-INFO
+
+    move 0		to #count1		
+
+    let $input_dt_tm_start = $input_dt_start||' '||$input_tm_start
+    let $input_dt_tm_end   = $input_dt_end||' '||$input_tm_end
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle 
+
+A.ID_ON_CALL
+	move &A.ID_ON_CALL		to #id_on_call
+
+to_char(A.DT_ON_CALL_START, 'DY MM/DD HH:MI PM') &date1
+    move &date1                         to $call_start_date_time
+
+    let $call_start_date = substr($call_start_date_time, 1, 10)
+    let $call_start_time = substr($call_start_date_time, 11, 8)
+
+to_char(A.DT_ON_CALL_END,   'DY MM/DD HH:MI PM') &date2
+    move &date2                          to $call_end_date_time
+
+Y.DECODE
+    move &Y.DECODE 			 to $shift_block
+
+    let $call_end_date = substr($call_end_date_time, 1, 10)
+    let $call_end_time = substr($call_end_date_time, 11, 8)
+
+       do PRINT-GET-INFO
+       do GET-WORKERS
+
+FROM   ON_CALL		A,
+       ON_CALL_COUNTY   B,
+       CONCLTYP         Y
+WHERE  A.ID_ON_CALL = B.ID_ON_CALL  
+!SIR 15168 added [] this will allow the SQL to handle more than one county 
+[$B.CD_ON_CALL_COUNTY]
+AND    A.CD_ON_CALL_PROGRAM = $input_program
+AND    A.CD_ON_CALL_TYPE    = Y.CODE(+)
+AND  ((A.DT_ON_CALL_START  >= to_date($input_dt_tm_start, 'MM/DD/YYYY HH:MI AM')
+AND    A.DT_ON_CALL_START  <= to_date($input_dt_tm_end, 'MM/DD/YYYY HH:MI AM'))
+ OR   (A.DT_ON_CALL_END    <= to_date($input_dt_tm_end, 'MM/DD/YYYY HH:MI AM')  
+AND A.DT_ON_CALL_END    >= to_date($input_dt_tm_start, 'MM/DD/YYYY HH:MI AM'))  
+ OR   (A.DT_ON_CALL_START  <= to_date($input_dt_tm_start, 'MM/DD/YYYY HH:MI AM')
+AND  A.DT_ON_CALL_END    >= to_date($input_dt_tm_end, 'MM/DD/YYYY HH:MI AM')))  
+
+GROUP BY A.ID_ON_CALL, A.DT_ON_CALL_START, A.DT_ON_CALL_END, Y.DECODE
+ORDER BY A.DT_ON_CALL_START ASC,  !SIR 3289 - Changes the sort from DESC to ASC 
+         A.DT_ON_CALL_END ASC
+
+
+END-SELECT
+
+END-PROCEDURE GET-INFO
+
+!****************************************************************************
+!                                                                           *
+!   GET-WORKERS                                                             *
+!                                                                           *
+!   Retrieves all workers with designations and phone numbers for a         *
+!   given ID_ON_CALL. Done for each ID_ON_CALL returned from SQL #2.        *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-WORKERS-TITLE, PRINT-WORKERS                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WORKERS 
+
+    move 0		to #count2		!initialize a counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                            
+A.NBR_EMP_ON_CALL_PHONE1
+    move &A.NBR_EMP_ON_CALL_PHONE1  	        to $on_call_phone
+
+A.NBR_EMP_ON_CALL_EXT1
+    move &A.NBR_EMP_ON_CALL_EXT1		to $on_call_ext
+
+A.NBR_EMP_ON_CALL_PHONE2
+    move &A.NBR_EMP_ON_CALL_PHONE2		to $other_phone
+
+A.NBR_EMP_ON_CALL_EXT2  
+    move &A.NBR_EMP_ON_CALL_EXT2   		to $other_ext   
+
+COCDESGN.decode
+    move &COCDESGN.decode          		to $designation_decode
+
+C.NM_NAME_FIRST                                 !***ENH***
+    move &C.NM_NAME_FIRST                       to $name_first
+
+C.NM_NAME_MIDDLE                                !***ENH***
+    move &C.NM_NAME_MIDDLE                      to $name_middle
+
+C.NM_NAME_LAST                                  !***ENH***
+    move &C.NM_NAME_LAST                        to $name_last
+
+CSUFFIX2.decode                                 !***ENH***
+    move &CSUFFIX2.decode                       to $name_suffix
+
+D.NBR_PERSON_PHONE
+    move &D.NBR_PERSON_PHONE			to $home_phone
+     
+    let #count2 = #count2 + 1
+
+    if #count2 = 1
+	do PRINT-WORKERS-TITLE
+    	do PRINT-WORKERS
+    else
+	do PRINT-WORKERS
+    end-if
+	
+FROM EMP_ON_CALL_LINK    	A,		
+     COCDESGN		        COCDESGN,
+     CSUFFIX2                   CSUFFIX2, !***ENH***
+     NAME 		 	C,
+     PERSON_PHONE               D 
+
+WHERE C.ID_PERSON = A.ID_PERSON
+AND   C.IND_NAME_PRIMARY = 'Y' !***ENH***
+AND   C.DT_NAME_END_DATE = '12/31/4712'
+AND   D.ID_PERSON(+) = A.ID_PERSON
+AND   D.DT_PERSON_PHONE_END(+) = TO_DATE ('12/31/4712', 'MM/DD/YYYY')
+AND   D.CD_PERSON_PHONE_TYPE(+) = 'RS'  !SIR  3103  Residence address only.
+AND   COCDESGN.CODE(+) = A.CD_EMP_ON_CALL_DESIG
+AND   CSUFFIX2.CODE(+) = C.CD_NAME_SUFFIX !***ENH***
+AND   A.ID_ON_CALL = #id_on_call  
+
+ORDER BY A.NBR_EMP_ON_CALL_CNTCT_ORD
+
+END-SELECT
+
+END-PROCEDURE GET-WORKERS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-GET-INFO                                                          *
+!                                                                           *
+!       This procedure prints all beginning information, including the      *
+!       dates and times.                                                    *
+!                                                                           * 
+!       CALLED BY  : GET-INFO                                               *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-GET-INFO
+
+print 'START DATE: '			           (+2,1)   !SIR 2999: left justify start
+print $call_start_date		           (+0,13)  !and right justify end dates.  
+print 'TIME: '				               (+0,24)  !Insert line between date 
+print $call_start_time			         (+0,30)  !and designation.
+
+print $shift_block                   (+0,52)  !SIR 3011   Add designation
+						                                  ! of shift or block to report
+print 'END DATE: '          	       (+0,72)  
+print $call_end_date			           (+0,82)
+print 'TIME: '				               (+0,93)
+print $call_end_time			           (+0,99)
+
+
+END-PROCEDURE PRINT-GET-INFO
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-WORKERS-TITLE                                                     *
+!                                                                           *
+!       This procedure prints the titles for each worker column.            *
+!       to the next page                                                    *
+!                                                                           * 
+!       CALLED BY  : GET-WORKERS                                            *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-WORKERS-TITLE
+
+print  'DESIGNATION'         				 (+2,1)
+print  'NAME'        			    			 (+0,15)
+print  'HOME PHONE' 	  					   (+0,43)
+print  'ON CALL PHONE'  		     	   (+0,59)
+print  'EXT'                         (+0,74)  
+print  'OTHER PHONE'                 (+0,85)
+print  'EXT'							           (+0,100)
+
+END-PROCEDURE PRINT-WORKERS-TITLE
+
+!****************************************************************************
+!                                                                           *
+!    PRINT-WORKERS                                                          *
+!                                                                           *
+!       This procedure prints the worker info including the designation     *
+!       decode.                                                             *
+!                                                                           * 
+!       CALLED BY  : GET-WORKERS                                            *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-WORKERS
+
+!SIR 23287
+if $designation_decode = 'Program Director'                       
+  print  $designation_decode                  (+1,1) wrap 9 2
+else
+	print  $designation_decode                  (+1,1) 
+end-if
+
+!***ENH***
+if $name_suffix <> ''
+    let $nm_suff_act = ', ' || $name_suffix
+end-if
+
+if $name_middle = ''
+   let $name_full = $name_first || ' ' || $name_last || $name_suff_act
+else
+   let $name_full = $name_first || ' ' || $name_middle || ' ' || $name_last || $nm_suff_act
+end-if
+
+move '' to $nm_suff_act  !***ENH***
+
+print $name_full                                        (+0,15) wrap 25 3
+
+if substr($home_phone,8,1) = ''
+  let $home_print = substr($home_phone,1,3)||'-'||substr($home_phone,4,4)
+else
+  let $home_print = '('||substr($home_phone,1,3)||') '||substr($home_phone,4,3)||'-'||substr($home_phone,7,4)
+end-if
+
+print  $home_print 	    				(+0,43)
+
+if substr($on_call_phone,8,1) = ''
+  let $on_call_print = substr($on_call_phone,1,3)||'-'||substr($on_call_phone,4,4)
+else
+  let $on_call_print = '('||substr($on_call_phone,1,3)||') '||substr($on_call_phone,4,3)||'-'||substr($on_call_phone,7,4)
+end-if
+
+print  $on_call_print     	                	(+0,59)
+print  $on_call_ext  					(+0,74)  edit 88888888
+
+if substr($other_phone,8,1) = ''
+  let $other_print = substr($other_phone,1,3)||'-'||substr($other_phone,4,4)
+else
+  let $other_print = '('||substr($other_phone,1,3)||') '||substr($other_phone,4,3)||'-'||substr($other_phone,7,4)
+end-if
+
+print  $other_print					(+0,85)
+print  $other_ext               	     	        (+0,100) edit 88888888
+
+
+
+END-PROCEDURE PRINT-WORKERS
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *       
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!  	Include all files that contain common modules or procedures that        *
+!	will be used in the report                                  					    *
+!****************************************************************************

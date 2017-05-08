@@ -1,0 +1,344 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Jan 18 10:09:14 2012 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2012\5.1 Release\Statewide Reports\Completed Statewide Files\RBWOActivePlacements00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=168    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Description' (11,1,0) Underline  Bold 
+ Print 'The reporting county is determined by the county of the stage, not the unit county of the primary case manager. ' (27,6,112)
+ Page-Number (270,652) '' '   of  '
+ Last-Page (270,687) 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+Do Get_Input
+ Do RBWOQuery
+ Do DisplayResult
+End-Program
+! Get region optional input
+Begin-procedure Get_Input
+Input $_cd_stage_region 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_cd_stage_region) or IsBlank($_cd_stage_region) or ($_cd_stage_region='0')
+  Let $where_clause_region = 'CD_STAGE_REGION IS NOT NULL'
+  Let $regionSelected = 'N'
+Else 
+  Let $where_clause_region = 'CD_STAGE_REGION = ' || '''' || $_cd_stage_region || ''''
+  Let $regionSelected = 'Y'
+End-If
+
+! Get county optional input
+Input $_cd_stage_county 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_cd_stage_county) or IsBlank($_cd_stage_county) or ($_cd_stage_county='0')
+  Let $where_clause_county = 'CD_STAGE_CNTY IS NOT NULL'
+  Let $countySelected = 'N'
+Else 
+  Let $where_clause_county = 'CD_STAGE_CNTY = ' || '''' || $_cd_stage_county || ''''
+  Let $countySelected = 'Y'
+End-If
+! Create where clause for region, county and unit input
+Let $_where_clause_region_county = $where_clause_region || ' and ' || $where_clause_county
+!
+Do Make_Header
+
+END-PROCEDURE
+
+!
+Begin-Procedure Make_Header
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_cd_stage_county || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_cd_stage_county = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_cd_stage_region
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_cd_stage_region
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+
+Begin-Procedure RBWOQuery
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select
+(to_char(((SYSDATE- PLACEMENT.DT_PLCMT_START)/30),'FM999999')) &MonthsInPlacement
+CAPS.CCOUNT.DECODE &RBWOQuery_CAPS.CCOUNT.DECODE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_STAGE_REGION &RBWOQuery_CD_STAGE_REGION () On-Break Set=1 Level=1 Print=Never Before=RBWOQueryCD_STAGE_REGION_BeforeProc101 After=RBWOQueryCD_STAGE_REGION_AfterProc101
+CD_STAGE_CNTY &RBWOQuery_CD_STAGE_CNTY () On-Break Set=1 Level=2 Print=Never Before=RBWOQueryCD_STAGE_CNTY_BeforeProc102 After=RBWOQueryCD_STAGE_CNTY_AfterProc102
+CAPS.CODES_TABLES.DECODE &Placement_Type () On-Break Set=1 Level=3 Print=Never Before=RBWOQueryDECODE_BeforeProc103 After=RBWOQueryDECODE_AfterProc103
+CAPS.STAGE.ID_CASE &Case_ID (14,202) Edit 888888888na
+NM_STAGE &Stage_Name (14,25,30) Wrap 30 2 line-height=12 Keep-Top on= 
+NM_PLCMT_FACIL &Placement_Name (14,259,35) Wrap 35 2 line-height=12 Keep-Top on= 
+DT_PLCMT_START &Start_Date (14,465) Edit MM/DD/YYYY
+NM_PERSON_FULL &RBWOQuery_NM_PERSON_FULL (14,593,22) Wrap 22 2 line-height=12 Keep-Top on= 
+ Print &MonthsInPlacement (14,535,7)
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Add 1 To #103ROW_COUNT
+ Next-Listing  Need=14
+From  CAPS.PLACEMENT, CAPS.EVENT
+,      CAPS.STAGE, CAPS.CODES_TABLES, CAPS.WORKLOAD
+,      CAPS.PERSON, CAPS.UNIT, CAPS.CCOUNT
+      Where CAPS.PLACEMENT.ID_PLCMT_EVENT = CAPS.EVENT.ID_EVENT
+            And CAPS.EVENT.ID_EVENT_STAGE = CAPS.STAGE.ID_STAGE
+            And CAPS.PLACEMENT.CD_PLCMT_TYPE = CAPS.CODES_TABLES.CODE
+            And CAPS.STAGE.ID_STAGE = CAPS.WORKLOAD.ID_WKLD_STAGE
+            And CAPS.PERSON.ID_PERSON = CAPS.WORKLOAD.ID_WKLD_PERSON
+            And CAPS.WORKLOAD.ID_WKLD_UNIT = CAPS.UNIT.ID_UNIT
+            And CAPS.STAGE.CD_STAGE_CNTY = CAPS.CCOUNT.CODE
+ And DT_PLCMT_END > sysdate
+ And CD_PLCMT_TYPE IN ('CFH','IFH','EMS','GRH','CCI','SFH')
+ And CD_PLCMT_ACT_PLANNED = 'A'
+ And CODE_TYPE = 'CPLMNTYP'
+ And CD_WKLD_STAGE_PERS_ROLE = 'PR'
+ And [$_where_clause_region_county]
+Order By CD_STAGE_REGION
+,      CAPS.CCOUNT.DECODE
+,      CAPS.CODES_TABLES.DECODE
+,      NM_STAGE
+,      CAPS.STAGE.ID_CASE
+End-Select
+ Next-Listing
+ Next-Listing  Need=23
+ If #1ROW_COUNT > 0
+ Graphic (5,1,717) Horz-Line 20 
+ Position (7,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Report Total:'  (23,1) Bold 
+ let #ReportTotal = #1ROW_COUNT
+  Print #ReportTotal (23,63) Bold  Edit 999999na
+ End-If
+ Next-Listing
+
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+!Display no data message on page header
+Begin-procedure DisplayResult
+if #1ROW_COUNT = 0
+ Let $textdisp = 'No results matching the report parameter are available'
+end-if
+Move $textdisp to $outText
+end-procedure
+
+
+Begin-Procedure RBWOQueryDECODE_BeforeProc103
+ Next-Listing  Need=27
+ Graphic (1,2,717) Horz-Line 10 
+ Position (2,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Placement Type:'  (27,1) Bold 
+  Print &Placement_Type (27,97,128) Bold 
+   Position (+12,)
+ Next-Listing  Need=14
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure RBWOQueryDECODE_AfterProc103
+
+ Next-Listing  Need=22
+ Graphic (5,1,717) Horz-Line 10 
+ Position (6,1)
+ let #PlcmtTotal = #103ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #PlcmtTotal (21,84) Bold  Edit 999999na
+ Print 'Placement Total:'  (22,1) Bold 
+   Position (+12,)
+ Move 0 To #103ROW_COUNT
+ Next-Listing  Need=14
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure RBWOQueryCD_STAGE_REGION_BeforeProc101
+If $regionSelected = 'N' and $countySelected = 'N'
+! Do Nothing
+
+ Next-Listing  Need=23
+ Graphic (5,1,717) Horz-Line 20 
+ Position (7,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &RBWOQuery_CD_STAGE_REGION (23,43,2) Bold 
+ Print 'Region:'  (23,1) Bold 
+   Position (+12,)
+ Next-Listing  Need=14
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure RBWOQueryCD_STAGE_REGION_AfterProc101
+If $regionSelected = 'N' and $countySelected = 'N'
+! Do Nothing
+
+ Next-Listing  Need=20
+ Graphic (3,1,717) Horz-Line 15 
+ Position (4,1)
+ let #RegTotal = #101ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #RegTotal (20,63) Bold  Edit 999999na
+ Print 'Region Total:'  (20,1) Bold 
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=14
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure RBWOQueryCD_STAGE_CNTY_BeforeProc102
+If $countySelected = 'N'
+! Do Nothing
+
+ Next-Listing  Need=18
+ Graphic (1,2,717) Horz-Line 15 
+ Position (2,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &RBWOQuery_CAPS.CCOUNT.DECODE (18,1,30) Bold 
+   Position (+12,)
+ Next-Listing  Need=14
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure RBWOQueryCD_STAGE_CNTY_AfterProc102
+If $countySelected = 'N'
+! Do Nothing
+
+ Next-Listing  Need=23
+ Graphic (6,1,717) Horz-Line 10 
+ Position (7,1)
+ let #CntyTotal = #102ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #CntyTotal (23,63) Bold  Edit 999999na
+ Print 'County Total:'  (23,1) Bold 
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  Need=14
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (13,259,40)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Room, Board, and Watchful Oversight Active Placements' (51,164,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (13,660) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (13,593,0)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Let $region_county_header=$region_county_header
+ Print $region_county_header (70,310,15) Bold 
+ Let $region_header=$region_header
+ Print $region_header (88,298,20) Bold 
+ Let $outText=$outText
+ Print $outText (106,207,55) Bold 
+ Print 'Case ID' (163,202,7) Underline  Bold 
+ Print 'Stage Name' (163,25,0) Underline  Bold 
+ Print 'Placement Name' (163,259,0) Underline  Bold 
+ Print 'Start Date' (163,465,0) Underline  Bold 
+ Print 'Case Manager' (163,593,0) Underline  Bold 
+ Print 'In Plcmt' (163,535,0) Underline  Bold 
+ Print 'Months' (150,535,0) Bold 
+ Else   ! put a non combined page header
+ Print 'Case ID' (28,202,7) Underline  Bold 
+ Print 'Stage Name' (28,25,0) Underline  Bold 
+ Print 'Placement Name' (28,259,0) Underline  Bold 
+ Print 'Start Date' (28,465,0) Underline  Bold 
+ Print 'Case Manager' (28,593,0) Underline  Bold 
+ Print 'In Plcmt' (28,535,0) Underline  Bold 
+ Print 'Months' (15,535,0) Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 36 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (22,652) '' '   of  '
+ Last-Page (22,687) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

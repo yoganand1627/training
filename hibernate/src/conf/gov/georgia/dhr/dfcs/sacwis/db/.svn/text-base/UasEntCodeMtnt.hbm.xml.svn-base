@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.UasEntCodeMtnt" table="UAS_ENT_CODE_MTNT" mutable="true" polymorphism="implicit" 
+    dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idUasEntCodeMtnt" type="integer" unsaved-value="0">
+            <column name="ID_UAS_ENT_CODE_MTNT" precision="16" scale="0"/>
+            <generator class="sequence">
+				<param name="sequence">SEQ_UAS_ENT_CODE_MTNT</param>
+			</generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="uasProgramCodeMtnt" class="gov.georgia.dhr.dfcs.sacwis.db.UasProgramCodeMtnt" fetch="select" unique="false" update="false" 
+        			insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_UAS_PROGRAM_CODE_MTNT" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <many-to-one name="equivalency" class="gov.georgia.dhr.dfcs.sacwis.db.Equivalency" fetch="select" unique="false" update="true" 
+        			insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_EQUIV" precision="16" scale="0"/>
+        </many-to-one>
+        <property name="cdEntCode" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_ENT_CODE" length="3" not-null="true"/>
+        </property>
+        <property name="cdAlpha" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_ALPHA" length="1"/>
+        </property>
+        <property name="txtEntDesc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_ENT_DESC" length="370"/>
+        </property>
+        <property name="dtEffective" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_EFFECTIVE" length="7" not-null="true"/>
+        </property>
+        <property name="amtUnitRate" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="AMT_UNIT_RATE" precision="11"/>
+        </property>
+        <property name="cdPaymentType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_PAYMENT_TYPE" length="3"/>
+        </property>
+        <property name="cdUnitType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_UNIT_TYPE" length="3"/>
+        </property>
+        <property name="indMileage" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_MILEAGE" length="1"/>
+        </property>
+        <property name="amtCaseBudgetLimit" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="AMT_CASE_BUDGET_LIMIT" precision="13"/>
+        </property>
+        <property name="amtLineItemLimit" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="AMT_LINE_ITEM_LIMIT" precision="13"/>
+        </property>
+        <property name="indEntHeader" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_ENT_HEADER" length="1"/>
+        </property>
+        <property name="cdSvcCode" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_SVC_CODE" length="7"/>
+        </property>
+    </class>
+</hibernate-mapping>

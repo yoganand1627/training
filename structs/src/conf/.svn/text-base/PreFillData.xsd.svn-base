@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+  <xs:element name="bookmarkName" type="xs:string"/>
+  <xs:element name="bookmarkData" type="xs:string"/>
+  <xs:element name="blobId" type="xs:string"/>
+  <xs:element name="blobTableName" type="xs:string"/>
+  <xs:element name="formDataGroupBookmark" type="xs:string"/>
+  <xs:attribute name="subGroupTemplate" type="xs:string"/>
+
+  <xs:element name="bookmark">
+    <xs:complexType>
+      <xs:all>
+        <xs:element ref="bookmarkName" minOccurs="0"/>
+        <xs:element ref="bookmarkData" minOccurs="0"/>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="blobData">
+    <xs:complexType>
+      <xs:all>
+        <xs:element ref="bookmarkName" minOccurs="0"/>
+        <xs:element ref="blobId" minOccurs="0"/>
+        <xs:element ref="blobTableName" minOccurs="0"/>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="formDataGroup">
+    <xs:complexType>
+      <xs:all>
+        <xs:element ref="bookmark" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="blobData" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="formDataGroup" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="formDataGroupBookmark" minOccurs="0" maxOccurs="1"/>
+      </xs:all>
+      <xs:attribute ref="subGroupTemplate" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="preFillData">
+    <xs:complexType>
+      <xs:all>
+        <xs:element ref="bookmark" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="blobData" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="formDataGroup" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="formDataGroupBookmark" minOccurs="0" maxOccurs="1"/>
+      </xs:all>
+      <xs:attribute ref="subGroupTemplate" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

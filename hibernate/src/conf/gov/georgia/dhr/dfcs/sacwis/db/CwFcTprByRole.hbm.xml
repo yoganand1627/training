@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.CwFcTprByRole" table="CW_FC_TPR_BY_ROLE" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idCwFcTprByRole" type="integer" unsaved-value="0">
+            <column name="ID_CW_FC_TPR_BY_ROLE" precision="16" scale="0"/>
+            <generator class="sequence">
+<param name="sequence">SEQ_CW_FC_TPR_BY_ROLE</param>
+</generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_PARENT" precision="16" scale="0"/>
+        </many-to-one>
+        <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <property name="txtTprRole" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_TPR_ROLE" length="7"/>
+        </property>
+        <property name="cdRelationship" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_RELATIONSHIP" length="3"/>
+        </property>
+        <property name="dtTprFiled" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_TPR_FILED" length="7"/>
+        </property>
+        <property name="dtTprVsGranted" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_TPR_VS_GRANTED" length="7"/>
+        </property>
+        <property name="dtDeath" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_DEATH" length="7"/>
+        </property>
+        <property name="indTprError" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_TPR_ERROR" length="1"/>
+        </property>
+    </class>
+</hibernate-mapping>

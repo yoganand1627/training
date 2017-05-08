@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.PortalUserVendorLink" table="PORTAL_USER_VENDOR_LINK" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idPortalUserVendorLink" type="integer" unsaved-value="0">
+      <column name="ID_PORTAL_USER_VENDOR_LINK" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_PORTAL_USER_VENDOR_LINK</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="cdAccessType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ACCESS_TYPE" length="3"/>
+    </property>
+    <property name="cdStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STATUS" length="4"/>
+    </property>
+    <property name="dtStart" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_START" length="7" not-null="false"/>
+    </property>
+    <property name="dtEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_END" length="7" not-null="false"/>
+    </property>             
+    <many-to-one name="employee" class="gov.georgia.dhr.dfcs.sacwis.db.Employee" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_SHINES_PERSON_MODIFIED_BY" precision="16" scale="0" not-null="false"/>
+    </many-to-one>
+    <many-to-one name="portalUserModifiedBy" class="gov.georgia.dhr.dfcs.sacwis.db.PortalUser" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PORTAL_PERSON_MODIFIED_BY" precision="16" scale="0" not-null="false"/>
+    </many-to-one>    
+    <many-to-one name="portalUser" class="gov.georgia.dhr.dfcs.sacwis.db.PortalUser" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_USER" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" length="15" not-null="true"/>
+    </many-to-one>    
+  </class>
+</hibernate-mapping>

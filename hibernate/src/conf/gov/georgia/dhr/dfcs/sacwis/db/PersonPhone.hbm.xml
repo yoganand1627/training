@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.PersonPhone" table="PERSON_PHONE" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idPersonPhone" type="integer" unsaved-value="0">
+      <column name="ID_PERSON_PHONE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_PERSON_PHONE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="txtPersonPhoneComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PERSON_PHONE_COMMENTS" length="300"/>
+    </property>
+    <property name="nbrPersonPhoneExtension" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PERSON_PHONE_EXTENSION" length="8"/>
+    </property>
+    <property name="nbrPersonPhone" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_PERSON_PHONE" length="10"/>
+    </property>
+    <property name="dtPersonPhoneStart" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PERSON_PHONE_START" length="7"/>
+    </property>
+    <property name="dtPersonPhoneEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PERSON_PHONE_END" length="7"/>
+    </property>
+    <property name="indPersonPhoneInvalid" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PERSON_PHONE_INVALID" length="1" not-null="true"/>
+    </property>
+    <property name="indPersonPhonePrimary" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PERSON_PHONE_PRIMARY" length="1"/>
+    </property>
+    <property name="cdPersonPhoneType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERSON_PHONE_TYPE" length="2"/>
+    </property>
+  </class>
+</hibernate-mapping>

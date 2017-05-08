@@ -1,0 +1,690 @@
+!*****************************************************************************
+! Eligibility Data                                                           *
+!*****************************************************************************
+
+!*****************************************************************************
+! PROGRAM NAME:         civ33o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/dicufftw/work/sqr                        *
+!                                                                            *
+! DATE:                 12/17/97                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Tony DiCuffa                                         *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The Eligibility Data Report allows the user to       *
+!           produce a hardcopy of the eligibility information                *
+!           for each person.  This includes Type of eligibility,             *
+!           Start Date, Deny Date and End Date, and which unit opened the    *
+!           eligibility, CAPS or STARS or both.                              * 
+!*****************************************************************************
+
+!*****************************************************************************
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ------------   -----------------------------------------------  *
+! 12/22/97   Tony DiCuffa   Coded original program.                          *
+! 07/03/98   John Parchman  SIR 14773 - Modified code to sort by eligibility *
+!                           (within an eligibility type) and eligibility     *
+!                           start date. Removed old unnecessary code.        *
+!                           Removed paragraphs and calls to: CREATE-ARRAYS,  *
+!                           PERSON-ELIG-ARRAY, ELIGIBILITY-ARRAY, ADOPTION-  *
+!                           SUBSIDY-ARRAY, PRINT-ALL-ARRAY, GET-PERS-ELIG-   *
+!                           ARRAY-DATA, GET-ELIGIBILITY-ARRAY-DATA, GET-     *
+!                           ADOPTION-ARRAY-DATA. Rearranged paragraph order  *
+!                           for a more structured/sequential flow.           *
+! 07/17/98   John Parchman  SIR 14814 - Moved code that inserts blanks into  *
+!                           $pers_elig_end if it is 12/31/4712 to after the  *
+!                           code that checks to see if $pers_elig_deny is    *
+!                           less than $pers_elig_end.                        *
+!                                                                            *
+! 05/3/04    Eric Dickman   SIR 22664 - Added the new column (EA Deny Date)  *                                                                         *
+!                                       and updated the EA Program code leg- *
+!                                       end.  Removed the logic that would   *
+!                                       place the EA Deny Date in the End    *
+!                                       Date column, if the EA Deny Date     *
+!                                        column was less than one year from  * 
+!                                       the Start Date.                      *
+!                                                                            *
+!                                                                            *
+!                                                                            *
+!                                                                            *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!   This procedure defines the beginning and end of the report processing.   *
+!   Housekeeping initializes all report values, Processing processes the     *
+!   body of the report, and Wrap-Up prints the end of report message and     *
+!   other wrap up functions.                                                 *
+!*****************************************************************************
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+! SETUP-SECTION                                                              *
+!                                                                            *
+!   This section sets up common parameters including page size and printer   *
+!   as well as input parameters                                              *
+!*****************************************************************************
+BEGIN-SETUP
+
+   #ifdef ORACLE                           !compiler directive
+      ask dbname 'Database Name'
+      use {dbname}
+   #endif
+
+   #INCLUDE 'setup02b.sqc'                 ! control codes for Portrait 
+
+   ask ID_PERSON                           !input parameter         
+    
+END-SETUP
+
+!*****************************************************************************
+! HEADER                                                                     *
+!                                                                            *
+!   These commands will be processed every time SQR writes a page. They      *
+!   include the report title, date, time, page number, report id, and        *
+!   column headers. XXX lines are reserved to print the heading at the       *
+!   top of each page. This includes blank lines. A common setup header       *
+!   has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait    *
+!   reports.                                                                 *
+!*****************************************************************************
+BEGIN-HEADING 4
+
+   print 'civ33o00'                     (1,1)
+   print 'CLIENT ELIGIBILITY REPORT'    (1) center
+
+   do GET-SYSDATE
+
+   print 'Time:'                        (1,+10)
+   print $systime                       (1,+1)
+   print 'Client Name: '                (+2,1)
+
+
+   if rtrim($full_name, ' ') = ''
+      print 'UNKNOWN'                   (+0,14)
+   else 
+      print $full_name                  (+0,14) wrap 38 2
+   end-if
+
+   print 'Client ID#: '                 (+1,1)
+   print $id_person                     (+0,14) edit 8888888888888888
+
+END-HEADING   
+
+!*****************************************************************************
+! FOOTER                                                                     *
+!                                                                            *
+!   These commands will be processed every time SQR writes a page. They      *
+!   include a footer that must be in place in all pages of some reports      *
+!*****************************************************************************
+BEGIN-FOOTING 9
+
+  #INCLUDE 'footer05.sqc'       ! Include file with footer information
+                                ! specific to portrait on demand report
+
+END-FOOTING
+
+!*****************************************************************************
+! HOUSEKEEPING                                                               *
+!                                                                            *
+!   Set environment variables, initialize report id, initialize title        *
+!   id, initialize date and time, initialize variables, and define           *
+!   constants                                                                *
+!                                                                            *
+! CALLED BY: BEGIN-REPORT                                                    *
+!*****************************************************************************
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'        !Set printer environment
+
+   move {ID_PERSON}             to #input_id_person
+
+END-PROCEDURE HOUSEKEEPING
+
+!*****************************************************************************
+! PROCESS-REPORT                                                             *
+!                                                                            *
+!   This procedure includes the main processing logic of the report.         *
+!                                                                            *
+! CALLED BY  : BEGIN-REPORT                                                  *
+! CALLS      : GET-CURRENT-FISCAL-YEAR, GET-FISCAL-START-YEAR,               *
+!          GET-PERSON-DATA, GET-PERSON-ELIGIBILITY-DATA,                     *
+!          GET-ELIGIBILITY-DATA, GET-ADOPTION-SUBSIDY-DATA,                  *
+!              PRINT-NONE-FOUND                                              *
+!*****************************************************************************
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+   do GET-CURRENT-FISCAL-YEAR
+   do GET-FISCAL-START-YEAR
+   do GET-PERSON-DATA
+   do GET-ELIGIBILITY-DATA
+   do GET-ADOPTION-SUBSIDY-DATA
+   do GET-PERSON-ELIGIBILITY-DATA
+
+   if $elig_start = '' and $effective = '' and $pers_elig_start = ''   !* SIR 14773
+      do PRINT-NONE-FOUND
+   end-if
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!*****************************************************************************
+! GET-SYSDATE                                                                *
+!                                                                            *
+!   This procedure will select the system date in order to replace the       *
+!   closed date when it is equal to NULL                                     *
+!                                                                            *
+! CALLED BY  : HEADING                                                       *
+! CALLS      : NONE                                                          *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-SYSDATE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+    
+to_char(SYSDATE,'MM/DD/YYYY') &sysdate
+   move &sysdate            to $sysdate
+
+to_char(SYSDATE,'HH:MI AM') &systime
+   move &systime            to $systime
+
+to_char(SYSDATE,'MM/DD') &sys_month_day
+   move &sys_month_day      to $sysmonthday 
+
+to_char(SYSDATE,'YYYY') &sysyear
+   move &sysyear            to $sysyear
+
+FROM DUAL
+
+END-SELECT              
+
+END-PROCEDURE GET-SYSDATE             
+
+!*****************************************************************************
+! GET-CURRENT-FISCAL-YEAR                                                    *
+!                                                                            *
+!   This procedure will select the current fiscal year and store it in       *
+!   the var $fiscyear                                                        *
+!                                                                            *
+! CALLED BY  : PROCESS-REPORT                                                *
+! CALLS      : NONE                                                          *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-CURRENT-FISCAL-YEAR
+
+BEGIN-SELECT
+
+add_months(SYSDATE,12) &fiscdate
+   move &fiscdate       to $fiscdate
+
+   let $fiscyear = substr($fiscdate,7,4)
+
+FROM DUAL
+
+END-SELECT
+
+   if $sysmonthday >= '09/01'
+      let $fiscyear = $fiscyear
+   else
+      let $fiscyear = $sysyear
+   end-if       
+
+END-PROCEDURE GET-CURRENT-FISCAL-YEAR   
+
+!*****************************************************************************
+! GET-FISCAL-START-YEAR                                                      *
+!                                                                            *
+!   This procedure will calculate the fiscal year when eligibilities         *
+!   started for the person (persons are eligible for 3 fiscal years)         *
+!   and assigns the date (MM/DD/YYYY) to the var $fiscalstart.               *
+!                                                                            *
+! CALLED BY  : PROCESS-REPORT                                                *
+! CALLS      : GET-ADJUSTED-FISCAL-YEAR                                      *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-FISCAL-START-YEAR
+
+BEGIN-SELECT
+
+add_months(SYSDATE,-36) &fiscal_start_date
+   move &fiscal_start_date  to $fiscalstartdate
+
+   let $fiscalstartyear = substr($fiscalstartdate,7,4)
+   let $fiscalstart= '09/01/' || $fiscalstartyear
+    
+FROM DUAL
+END-SELECT
+
+   if $fiscyear > $sysyear
+      do GET-ADJUSTED-FISCAL-START-YEAR
+   end-if
+
+END-PROCEDURE GET-FISCAL-YEAR
+
+!*****************************************************************************
+! GET-ADJUSTED-FISCAL-START-YEAR                                             *
+!                                                                            *
+!   This procedure will calculate the fiscal year when eligibilities         *
+!   started for the person (persons are eligible for 3 fiscal years).        *
+!   This procedure works for dates after 09/01, when the fiscal year         *
+!   does not equal the system year.  It calculates the correct date          * 
+!   and assigns the date (MM/DD/YYYY) to the var $fiscalstart.               *
+!                                                                            *
+! CALLED BY  : GET-FISCAL-YEAR                                               *
+! CALLS      : NONE                                                          *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-ADJUSTED-FISCAL-START-YEAR
+
+BEGIN-SELECT
+
+add_months(SYSDATE,-24) &adj_fiscal_start_date
+   move &adj_fiscal_start_date  to $adjfiscalstartdate
+
+   let $fiscalstartyear  = substr($adjfiscalstartdate,7,4)
+   let $fiscalstart= '09/01/' || $fiscalstartyear
+     
+FROM DUAL
+END-SELECT
+
+END-PROCEDURE GET-ADJUSTED-FISCAL-YEAR
+
+!*****************************************************************************
+! GET-PERSON-DATA                                                            *
+!                                                                            *
+!   This procedure pulls the proper Identification info from PERSON Table    *
+!                                                                            *
+! CALLED BY  : PROCESS-REPORT                                                *
+! CALLS      : NONE                                                          *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-PERSON-DATA
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+    
+NM_PERSON_FULL
+   move &NM_PERSON_FULL     to $full_name
+ID_PERSON
+   move &ID_PERSON          to $id_person
+
+FROM    PERSON              
+
+WHERE   ID_PERSON = #input_id_person
+
+END-SELECT
+    
+END-PROCEDURE GET-PERSON-DATA
+
+!*****************************************************************************
+!   GET-ELIGIBILITY-DATA                                                     *
+!                                                                            *
+!      This procedure pulls the proper Eligibility info from the             *
+!      ELIGIBLITY Table                                                      *
+!                                                                            *
+!       CALLED BY  : PROCESS-REPORT                                          *
+!       CALLS      : ELIGIBILITY ARRAY                                       *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-ELIGIBILITY-DATA  
+   move 0                   to #elig_count
+
+BEGIN-SELECT    
+
+CELIGIBI.decode
+   move &CELIGIBI.decode    to $elig_dec
+
+E.DT_ELIG_START
+   move &E.DT_ELIG_START    to $elig_start
+
+E.DT_ELIG_END
+   move &E.DT_ELIG_END      to $elig_end
+
+   do PRINT-ELIGIBILITY-DATA                                    !* SIR 14773
+   let #elig_count = #elig_count +1
+
+FROM    ELIGIBILITY E,
+        CELIGIBI    CELIGIBI   
+    
+
+WHERE   ID_PERSON         = $id_person
+AND     DT_ELIG_END      >= $fiscalstart
+AND     CELIGIBI.CODE(+)  = E.CD_ELIG_SELECTED
+
+ORDER BY CELIGIBI.decode, E.DT_ELIG_START                       !* SIR 14773
+
+END-SELECT
+
+   if $elig_end = '12/31/4712'
+      let $elig_end = '          '
+   end-if
+
+END-PROCEDURE GET-ELIGIBILITY-DATA   
+
+!*****************************************************************************
+! GET-ADOPTION-SUBSIDY-DATA                                                  *
+!                                                                            *
+!   This procedure pulls the proper Eligibility info from the                *
+!   ADOPTION_SUBSIDY table.                                                  *
+!                                                                            *
+! CALLED BY  : PROCESS-REPORT                                                *
+! CALLS      : NONE                                                          *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-ADOPTION-SUBSIDY-DATA  
+   move 0                   to #adopt_subsidy_count
+
+BEGIN-SELECT
+
+CSUBTYPE.decode
+   move &CSUBTYPE.decode            to $determ_dec
+
+A.DT_ADPT_SUB_EFFECTIVE
+   move &A.DT_ADPT_SUB_EFFECTIVE    to $effective
+
+A.DT_ADPT_SUB_END
+   move &A.DT_ADPT_SUB_END          to $end
+                                
+   do PRINT-ADOPTION-SUBSIDY-DATA                               !* SIR 14773
+   let #adopt_subsidy_count = #adopt_subsidy_count +1
+
+FROM    ADOPTION_SUBSIDY    A,
+        CSUBTYPE        CSUBTYPE
+ 
+WHERE   CD_ADPT_SUB_DETERM != '17'
+AND     ID_ADPT_SUB_PERSON  = $id_person
+AND     DT_ADPT_SUB_END    >= $fiscalstart
+AND     CSUBTYPE.CODE(+)    = A.CD_ADPT_SUB_DETERM
+
+ORDER BY A.DT_ADPT_SUB_EFFECTIVE
+
+END-SELECT
+
+   if $end = '12/31/4712'
+      let $end = '          '
+   end-if
+
+END-PROCEDURE GET-ADOPTION-SUBSIDY-DATA
+
+!*****************************************************************************
+!   GET-PERSON-ELIGIBILITY-DATA                                              *
+!                                                                            *
+!      This procedure pulls the proper Eligibility info from                 *
+!      PERSON_ELIGIBLITY                                                     *
+!                                                                            *
+!       CALLED BY  : PROCESS-REPORT                                          *
+!       CALLS      : NONE                                                    *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-PERSON-ELIGIBILITY-DATA
+
+   move 0   to #pers_elig_count
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CCLIELIG.decode
+   move &CCLIELIG.decode            to $elig_type_dec    
+
+PE.DT_PERS_ELIG_START
+   move &PE.DT_PERS_ELIG_START      to $pers_elig_start
+
+PE.DT_PERS_ELIG_END
+   move &PE.DT_PERS_ELIG_END        to $pers_elig_end      
+
+!SIR 22664              
+PE.DT_PERS_ELIG_EA_DENY
+   move &PE.DT_PERS_ELIG_EA_DENY    to $pers_elig_deny
+
+CPRGDISTS.decode    
+   move &CPRGDISTS.decode           to $elig_prg_start_dec
+
+CPRGDISTO.decode
+   move &CPRGDISTO.decode           to $elig_prg_open_dec
+
+CPRGDISTC.decode
+   move &CPRGDISTC.decode           to $elig_prg_closed_dec
+
+   do PRINT-PERSON-ELIGIBILITY-DATA                             !* SIR 14773
+   let #pers_elig_count = #pers_elig_count +1
+
+FROM    PERSON_ELIGIBILITY  PE,
+        CCLIELIG            CCLIELIG,
+        CPRGDIST            CPRGDISTS,
+        CPRGDIST            CPRGDISTO,
+        CPRGDIST            CPRGDISTC
+
+WHERE   CD_PERS_ELIG_ELIG_TYPE != 'MED'
+AND     ID_PERS_ELIG_PERSON     = $id_person
+AND     DT_PERS_ELIG_END       >= $fiscalstart
+AND     CCLIELIG.CODE(+)        = PE.CD_PERS_ELIG_ELIG_TYPE
+AND     CPRGDISTS.CODE(+)       = PE.CD_PERS_ELIG_PRG_START
+AND     CPRGDISTO.CODE(+)       = PE.CD_PERS_ELIG_PRG_OPEN
+AND     CPRGDISTC.CODE(+)       = PE.CD_PERS_ELIG_PRG_CLOSED
+
+ORDER BY CCLIELIG.decode, PE.DT_PERS_ELIG_START                 !* SIR 14773
+
+END-SELECT
+
+END-PROCEDURE GET-PERSON-ELIGIBILITY-DATA
+
+!*****************************************************************************
+! PRINT-HEADER                                                               *
+!                                                                            *
+!   This procedure will print the report headers.                            *
+!                                                                            * 
+! CALLED BY  : GET-PERSON-ELIGIBILITY-DATA, GET-ELIGIBILITY-DATA,            *
+!              GET-ADOPTION-SUBSIDY-DATA                                     *
+! CALLS      : None                                                          *
+!*****************************************************************************
+BEGIN-PROCEDURE PRINT-HEADER
+
+   print 'PROGRAM'         (+2,64) 
+   print 'ELIGIBILITY'     (+1,1)  
+   print 'START DATE'      (0,20)
+   print 'EA DENY DATE'    (0,33)
+   print 'END DATE'        (0,47)
+   print 'START'           (0,59)
+   print 'OPEN'            (0,66)
+   print 'CLOSE'           (0,72)
+   print '-----------'     (+1,1)
+   print '----------'      (0,20)
+   print '------------'    (0,33)
+   print '----------'      (0,47)
+   print '-----'           (0,59)
+   print '----'            (0,66)
+   print '-----    '       (0,72)
+
+END-PROCEDURE PRINT-HEADER
+                            
+!*****************************************************************************
+! PRINT-ELIGIBILITY-DATA                                                     *
+!                                                                            *
+!   This procedure prints the Eligibility info from GET-ELIGIBILITY-DATA     *
+!                                                                            *
+!       CALLED BY  : GET-ELIGIBILITY-DATA                                    *
+!       CALLS      : NONE                                                    *
+!*****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ELIGIBILITY-DATA
+
+   if $elig_start <> '' and #elig_count = 0                     !SIR 14773 begin
+      do PRINT-HEADER
+   else
+      if #elig_count = 0
+         position (+1)
+      else
+         if $elig_dec_old <> $elig_dec
+            position (+1)
+         end-if
+      end-if
+   end-if
+   let $elig_dec_old = $elig_dec                                !SIR 14773 end
+
+!************ Prints a blank instead of 12/31/4712 ******************   
+   if $elig_end = '12/31/4712'
+      let $elig_end = '          '
+   end-if   
+	
+   position               (+1)
+   print $elig_dec        (,1)
+   print $elig_start      (,20)
+   print '         '      (,33)
+   print $elig_end        (,47)
+   print '     '          (,59)
+   print '     '          (,66)
+   print '     '          (,72)
+
+END-PROCEDURE PRINT-ELIGIBILITY-DATA
+
+!*****************************************************************************
+! PRINT-ADOPTION-SUBSIDY-DATA                                                *
+!                                                                            *
+!   This procedure prints the Eligibility info from GET-ADOPTION-SUBSIDY-DATA*                      *
+!                                                                            *
+! CALLED BY  : GET-ADOPTION-SUBSIDY-DATA                                     *
+! CALLS      : NONE                                                          *
+!*****************************************************************************
+BEGIN-PROCEDURE PRINT-ADOPTION-SUBSIDY-DATA
+                                                                !begin SIR 14773
+   if $elig_start = '' and $effective = '' and #adopt_subsidy_count = 0      
+      do PRINT-HEADER        
+   else
+     if #adopt_subsidy_count = 0
+         position (+1)
+     end-if
+   end-if                                                       !end SIR 14773
+
+   !*** prints a blank date instead of 12/31/4712 *** 
+   if $elig_end = '12/31/4712'
+      let $elig_end = '          '
+   end-if
+
+   position               (+1)
+   print $determ_dec      (,1)  
+   print $effective       (,20)
+   print '          '     (,33)
+   print $end             (,47) 
+   print '     '          (,59)
+   print '     '          (,66)
+   print '     '          (,72)
+
+END-PROCEDURE PRINT-ADOPTION-SUBSIDY-DATA
+
+!****************************************************************************
+!      PRINT-PERSON-ELIGIBILITY-DATA                                        *
+!                                                                           *
+!      This procedure prints the Eligibility info from                      *
+!      GET-PERSON-ELIGIBILITY-DATA                                          *
+!                                                                           *
+!      CALLED BY  : GET-PERSON-ELIGIBILITY-DATA                             *
+!      CALLS      : NONE                                                    *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PERSON-ELIGIBILITY-DATA
+                                                                !*begin SIR 14773
+   if $elig_start = '' and $effective = '' and $pers_elig_start <> '' and #pers_elig_count = 0
+      do PRINT-HEADER
+   else
+      if $elig_type_dec_old <> $elig_type_dec
+         position (+1)
+      end-if
+   end-if
+   let $elig_type_dec_old = $elig_type_dec                      !*end SIR 14773
+
+	 !SIR 22664 	
+   !*** sets the ending eligibility date to the eligibility denial date 
+   !SIR 14773 dates need to be converted to YYYYMMDD format to compare correctly     
+   !let $deny_date = substr($pers_elig_deny,7,4)||substr($pers_elig_deny,1,2)||substr($pers_elig_deny,4,2)
+   !let $end_date = substr($pers_elig_end,7,4)||substr($pers_elig_end,1,2)||substr($pers_elig_end,4,2)
+
+   !if $deny_date < $end_date and $deny_date !=''
+   !   let $pers_elig_end = $pers_elig_deny
+   !   let $pers_elig_deny = ''
+   !end-if
+    
+   !*** prints a blank date instead of 12/31/4712 ***           !***SIR 14814 
+   if $pers_elig_end = '12/31/4712'
+      let $pers_elig_end = '          '
+   end-if   
+
+   if $pers_elig_deny = '12/31/4712'
+      let $pers_elig_deny = '          '
+   end-if   
+	
+   position                     (+1)
+   print $elig_type_dec         (,1)
+   print $pers_elig_start       (,20)
+   print $pers_elig_deny        (,33)
+   print $pers_elig_end         (,47)    
+   print $elig_prg_start_dec    (,59)
+   print $elig_prg_open_dec     (,66)
+   print $elig_prg_closed_dec   (,72)
+
+END-PROCEDURE PRINT-PERSON-ELIGIBILITY-DATA
+
+!*****************************************************************************
+! PRINT-NONE-FOUND                                                           *
+!                                                                            *
+!   This procedure will print 'NO ELIGIBILITY FOUND' when the query returns  *
+!   no information.                                                          *
+!                                                                            * 
+! CALLED BY  : PRINT-DATA                                                    *
+! CALLS      : None                                                          *
+!*****************************************************************************
+BEGIN-PROCEDURE PRINT-NONE-FOUND
+    
+   position                         (+2)
+   print 'No Eligibility found.'    (,0)
+        
+END-PROCEDURE PRINT-NONE-FOUND
+                            
+!*****************************************************************************
+! WRAP-UP                                                                    *
+!                                                                            *
+!   This procedure prints the messages for the end of the report as well     *
+!   as over all totals.                                                      *
+!                                                                            *
+! CALLED BY  : BEGIN-REPORT                                                  *
+! CALLS      : NONE                                                          *
+!*****************************************************************************
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!*****************************************************************************
+! SqlErrorHandle                                                             *
+!                                                                            *
+!   This section handles formatting of messages for SQL errors.              *
+!   When an SQL error is encounterd, the program will write to               *                                                                      
+!   the log file, program processing does not stop for SQL errors.           *
+!                                                                            *
+! CALLS:  None                                                               *
+!*****************************************************************************
+BEGIN-PROCEDURE SqlErrorHandle 
+
+   print 'SQL error - Processing Terminated'            (+1,2)
+   print $error                                         (+1,2)
+   print 'ERROR: SQL error halted loader processing'    (+0)
+   print $error                                         (+1,2)
+   print 'SQL Error: '                                  (+0)
+   print $sql-error                                     (+0)
+   print $error                                         (+1,2)
+   print 'SQL Status: '                                 (+0)
+   print #sql-status                                    (+0)
+
+   STOP
+
+END-PROCEDURE SqlErrorHandle
+
+!*****************************************************************************
+! INCLUDE SECTION                                                            *
+!                                                                            *
+!   Include all files that contain common modules or procedures that         *
+!   will be used in the report                                               *
+!*****************************************************************************
+
+#INCLUDE 'cfpstamp.sqc'

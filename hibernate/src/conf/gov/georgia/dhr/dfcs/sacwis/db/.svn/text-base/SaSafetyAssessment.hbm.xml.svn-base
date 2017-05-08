@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.SaSafetyAssessment" table="SA_SAFETY_ASSESSMENT" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdOvSfDecision" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_OV_SF_DECISION" length="2"/>
+    </property>
+    <property name="txtWyRps" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_WY_RPS" length="300"/>
+    </property>
+    <property name="otherSafetyFactor" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="OTHER_SAFETY_FACTOR" length="300"/>
+    </property>
+    <property name="txtAddtnlComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_ADDTNL_COMMENTS" length="300"/>
+    </property>
+    <bag name="saReasonableEffortses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.SaReasonableEfforts" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="saSafetyFactors" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.SaSafetyFactor" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="saDrugExposedNewbornses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.SaDrugExposedNewborns" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

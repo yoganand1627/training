@@ -1,0 +1,859 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Tue Aug 12 17:16:46 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\Initital IV-E\IV-ETimeliness00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Text $dt_submitted_to_pa 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=168    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Descriptions' (11,1,0) Underline  Bold 
+ Print 'Removal Date:' (82,9,0) Bold 
+ Print 'The date of the earliest custody removal for the child on the case. This date is documented on the Custody page and marks the beginning of the child''s Foster Care Child (FCC) stage.' (82,110,120) Wrap 120 2 line-height=12 Keep-Top
+ Print 'SHINES Date:' (111,9,0) Bold 
+ Print 'The date the child''s earliest custody removal event is documented in SHINES. Case managers are responsible for timely data entry into SHINES following a custody removal.  ' (110,110,120) Wrap 120 2 line-height=12 Keep-Top
+ Print 'FCEA to PA Date:' (139,9,0) Bold 
+ Print 'The date the FCEA is submitted to the RevMax Program Assistant (PA). This is the date the first PA is assigned to the child''s FCC stage.' (139,110,120) Wrap 120 2 line-height=12 Keep-Top
+ Print 'PA Name:' (167,9,0) Bold 
+ Print 'The name of the first PA assigned to the child''s FCC stage. The PA is identified using the MES_PROG_ASST security profile.' (167,110,122)
+ Print 'FCEA to RMS Date:' (185,9,17) Bold 
+ Print 'The date the FCEA is submitted to the RevMax Specialist (RMS). This is the date the first RMS is assigned to the child''s FCC stage. ' (185,110,0)
+ Print 'The date the child''s initial IV-E Determination is approved. This information is documented on the Eligibility Summary page.' (231,110,0)
+ Print 'Approval Date:' (231,9,0) Bold 
+ Print 'Keys' (466,1,0) Underline  Bold 
+ Print 'This report tracks the progress of the initial Foster Care Eligibility Application (FCEA) for a child from the child''s earliest date of removal on the case to the approval of the initial IV-E Determination. This report is sorted by region, county, then ascending removal date. The reporting region and county are determined by the region and county of the stage, not the unit region and county of the primary case manager. The date range is left and right inclusive, i.e. it includes full day of the from and to date. ' (28,1,155) Wrap 155 4 line-height=12 Keep-Top
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'A: Actual Eligibility' (483,1,0) Underline  Bold 
+ Print 'R: Reimbursability (Selected Eligibility)' (497,1,0) Underline  Bold 
+ Print '040 - Not Eligible' (513,110,0)
+ Print '010 - Title IV-E' (513,1,0)
+ Print '050 - Not Elig - County Pd' (526,110,0)
+ Print '020 - Title IV-B' (526,1,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Last-Page (537,695) 
+ Page-Number (537,668) '' ' of '
+ Print 'RMS Name:' (202,9,0) Bold 
+ Print 'The name of the first RMS assigned to the child''s FCC stage. The RMS is identified using the REG_FAM_IND_STF or REG_FAM_IND_MGT security profile.' (202,110,120) Wrap 120 2 line-height=12 Keep-Top
+ Print 'Approver Name:' (248,9,0) Bold 
+ Print 'The person who approved the child''s initial IV-E Determination. If the initial IV-E Determination has not been approved then this field is blank. Note, this field will display the last person who updates the Eligibility Summary post approval.' (248,110,120) Wrap 120 2 line-height=12 Keep-Top
+ Print 'SSCM (Days):' (277,9,0) Bold 
+ Print 'The number of full days from the time of the Removal Date to the time of the FCEA to PA Date defined above. Case managers are responsible for timely submission of the FCEA to the PA.' (277,110,120) Wrap 120 2 line-height=12 Keep-Top
+ Print 'RMS (Days):' (306,9,0) Bold 
+ Print 'Total (Days):' (336,9,0) Bold 
+ Print 'The number of full days from the time of the FCEA to PA Date to the time of the Approval Date defined above. RMSs are responsible for timely completion of the initial IV-E Determination for the child.' (306,110,120) Wrap 120 2 line-height=12 Keep-Top
+ Print 'SSCM Average:' (353,9,0) Bold 
+ Print 'RevMax Average:' (370,9,0) Bold 
+ Print 'Total Average:' (386,9,0) Bold 
+ Print 'Completed within / after 45 days:' (404,9,19) Bold  Wrap 19 2 line-height=12 Keep-Top
+ Print 'The average total number of days for SSCM to complete the Initial FCEA and submit it to the PA.' (353,110,0)
+ Print 'The average total number of days to complete the initial determination.' (387,110,0)
+ Print 'The number of initial determinations completed within (less than or equal) / in excess of 45 calendar days.' (404,110,0)
+ Print 'The average total number of days for the RMS to approve the Initial FCEA.' (370,110,0)
+ Print 'The number of full days from the time of the Removal Date to the time of the Approval Date defined above.' (336,110,0)
+ Print 'In-Progress within / after 45 days:' (432,9,20) Bold  Wrap 20 3 line-height=12 Keep-Top
+ Print 'The number of initial determinations in progress but within (less than or equal) / in excess of 45 calendar days.' (432,110,113)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Multi-County:' (483,286,0) Underline  Bold 
+ Print 'these are cases where the primary casemanager assigned is in a non-county specific unit' (483,347,50) Wrap 50 2 line-height=10 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=48   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Date-Input
+ Do Get-Region-County-Input
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Region-County-Input
+
+! -----------------------------
+Input $_I102_CD_UNIT_REGION 'Enter a value for CD_UNIT_REGION' MaxLen=3  Type=Char
+If IsNull($_I102_CD_UNIT_REGION) or IsBlank($_I102_CD_UNIT_REGION) or ($_I102_CD_UNIT_REGION = '0')
+  Let $where_clause_region = ' CD_STAGE_REGION IS NOT NULL '
+Else
+  Let $region_selected = 'Y'
+  !Let $_I102_CD_UNIT_REGION = '''' || '0' || $_I102_CD_UNIT_REGION || ''''
+  Let $where_clause_region = 'CD_STAGE_REGION'  || ' = ' || $_I102_CD_UNIT_REGION
+End-If
+! -----------------------------
+Input $_I101_CD_COUNTY 'Enter a value for CD_COUNTY' MaxLen=3  Type=Char
+If IsNull($_I101_CD_COUNTY) or IsBlank($_I101_CD_COUNTY) or ($_I101_CD_COUNTY = '0')
+  Let $where_clause_county = ' CD_STAGE_CNTY IS NOT NULL '
+Else
+  If SubStr($_I101_CD_COUNTY, 1, 1) != ''''
+   Let $_I101_CD_COUNTY = '''' || $_I101_CD_COUNTY || ''''
+  End-If
+  Let $county_selected = 'Y'
+  Let $where_clause_county = 'CD_STAGE_CNTY'  || ' = ' || $_I101_CD_COUNTY
+End-If
+! -----------------------------
+Let $where_clause = $where_clause_region || ' and ' || $where_clause_county
+
+End-Procedure
+
+
+Begin-Procedure Get-Date-Input
+Input $dt_begin 'From Date' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+Input $dt_end 'To Date' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+Let $dt_end_full = datetostr(dateadd(strtodate($dt_end, 'mm/dd/yyyy'), 'day', 1), 'mm/dd/yyyy')
+End-Procedure
+
+! If FCEA has not been submitted, get the most recent CM on the stage
+! Else, get the last CM assigned on the stage before FCEA submitted - keep the time stamp on date for cases CM assigned and complete FCEA (submitted it) in the same day
+! truncate the FCEA submission date will make it 12 midnite and less than the assign date(whnen this date is timestamped)
+Begin-Procedure Get_Case_Manager (#id_stage_id, $dt_fcea_submitted, :$nm_case_mgr)
+If isnull($dt_fcea_submitted) or isblank($dt_fcea_submitted)
+Begin-Select
+pe.nm_person_full &nm_person_full_1
+  Move &nm_person_full_1 to $nm_case_mgr
+from person_enc pe, stage_assign_history sah
+where pe.id_person = sah.id_person and sah.id_stage = #id_stage_id
+and sah.ID_STG_ASSGN_HSTRY= (select max(sah2.ID_STG_ASSGN_HSTRY) from stage_assign_history sah2 where sah2.id_stage = #id_stage_id and sah2.cd_role = 'PR')
+End-Select
+Else
+Begin-Select 
+pe.nm_person_full &nm_person_full_2
+  Move &nm_person_full_2 to $nm_case_mgr
+from person_enc pe, stage_assign_history sah
+where pe.id_person = sah.id_person and sah.id_stage = #id_stage_id
+and sah.DT_ASSGND <= to_date($dt_fcea_submitted, 'mm/dd/yyyy hh24:mi:ss') 
+and (sah.DT_UNASSGND is null or sah.DT_UNASSGND >= to_date($dt_fcea_submitted, 'mm/dd/yyyy hh24:mi:ss') )
+and sah.cd_role = 'PR'
+End-Select
+End-If
+End-Procedure
+
+Begin-Procedure Get_PA_Info(#id_child, #id_stage, :$dt_pa_assgnd, :$nm_pa_full)
+Begin-Select 
+sah.DT_ASSGND &dt_assgnd  
+p.NM_PERSON_FULL &nm_person_full
+from STAGE_ASSIGN_HISTORY sah, emp_sec_class_link sec_class, fce_application fcea, person_enc p, event e
+where sah.DT_ASSGND >= to_date($_dt_begin, 'MM/DD/YYYY') and sah.CD_ROLE ='SE' and sec_class.CD_SECURITY_CLASS_NAME = 'MES_PROG_ASST'
+   and sah.id_person = sec_class.id_person and sah.id_person = p.id_person
+   and fcea.ID_STAGE = sah.id_stage and fcea.id_person = #id_child and sah.id_stage = #id_stage
+   and fcea.CD_APPLICATION = 'A' 
+   and e.ID_EVENT = fcea.ID_EVENT 
+   and sah.DT_ASSGND in (
+   select min(sah1.DT_ASSGND) from STAGE_ASSIGN_HISTORY sah1, emp_sec_class_link sec_class1, fce_application fcea1
+   where sah1.DT_ASSGND >= to_date($_dt_begin, 'MM/DD/YYYY') and sah1.CD_ROLE ='SE' and sec_class1.CD_SECURITY_CLASS_NAME = 'MES_PROG_ASST'
+   and sah1.id_person = sec_class1.id_person 
+   and fcea1.ID_STAGE = sah1.id_stage and fcea1.id_person = #id_child and sah1.id_stage = #id_stage 
+   and fcea1.CD_APPLICATION = 'A' 
+   )
+End-Select
+Let $dt_pa_assgnd = datetostr(&dt_assgnd,'mm/dd/yyyy hh24:mi:ss')! preserve the time fo r accurate calculatiopn n in getting CM, likes.
+Move &nm_person_full to $nm_pa_full  
+End-Procedure
+
+Begin-Procedure Get_RevMax_Info(#id_child, #id_stage, :$dt_rms_assgnd, :$nm_rms_full)
+Begin-Select 
+sah.DT_ASSGND &dt_assgnd  
+p.NM_PERSON_FULL &nm_person_full
+from STAGE_ASSIGN_HISTORY sah, emp_sec_class_link sec_class, fce_application fcea, person_enc p, event e
+where sah.DT_ASSGND >= to_date($_dt_begin, 'MM/DD/YYYY') and sah.CD_ROLE ='SE' and sec_class.CD_SECURITY_CLASS_NAME in ('REG_FAM_IND_STF', 'REG_FAM_IND_MGT')
+   and sah.id_person = sec_class.id_person and sah.id_person = p.id_person
+   and fcea.ID_STAGE = sah.id_stage and fcea.id_person = #id_child and sah.id_stage = #id_stage
+   and fcea.CD_APPLICATION = 'A' 
+   and e.ID_EVENT = fcea.ID_EVENT 
+   and sah.DT_ASSGND in (
+   select min(sah1.DT_ASSGND) from STAGE_ASSIGN_HISTORY sah1, emp_sec_class_link sec_class1, fce_application fcea1
+   where sah1.DT_ASSGND >= to_date($_dt_begin, 'MM/DD/YYYY') and sah1.CD_ROLE ='SE' and sec_class1.CD_SECURITY_CLASS_NAME in ('REG_FAM_IND_STF', 'REG_FAM_IND_MGT')
+   and sah1.id_person = sec_class1.id_person 
+   and fcea1.ID_STAGE = sah1.id_stage and fcea1.id_person = #id_child and sah1.id_stage = #id_stage 
+   and fcea1.CD_APPLICATION = 'A' 
+   )
+End-Select
+Let $dt_rms_assgnd = datetostr(&dt_assgnd,'mm/dd/yyyy hh24:mi:ss')
+Move &nm_person_full to $nm_rms_full  
+End-Procedure
+
+Begin-Procedure Get_Approver_Info(#id_child, #id_stage_id, :$dt_fcd_approved, :$nm_fcd_approver, :$cd_elig, :$cd_reimburs)
+Let #id_fcea_event = 0
+Let #id_fcd_approver = 0
+Begin-Select 
+min(fce_event.id_event) &id_fce_event
+from fce_application fcea, event fce_event, stage fcc_stage
+where fce_event.id_event = fcea.ID_EVENT and fce_event.id_event_stage = fcc_stage.id_stage
+and fcea.CD_APPLICATION = 'A' and fce_event.cd_event_type = 'FCA'
+and fce_event.DT_EVENT_OCCURRED >= fcc_stage.DT_STAGE_START
+and fce_event.id_event_stage = #id_stage_id and fcea.id_person = #id_child
+End-Select
+
+If (0 = IsNull(&id_fce_event) and &id_fce_event != 0)
+  Move &id_fce_event to #id_fcea_event
+Begin-Select distinct
+elg_event.DT_EVENT_OCCURRED &dt_elg_event_occurred
+elg_event.CD_EVENT_STATUS   &cd_elg_event_status
+elg_event.ID_EVENT_PERSON   &id_elg_person
+elg.cd_elig_actual          &cd_elig_actual
+elg.cd_elig_selected        &cd_elig_selected
+p.nm_person_full            &nm_person_full
+from fce_application fcea, fce_eligibility fcee, eligibility elg, event elg_event, person p
+where fcea.ID_FCE_APPLICATION = fcee.ID_FCE_APPLICATION 
+and fcee.ID_ELIGIBILITY_EVENT = elg.ID_ELIG_EVENT and elg.ID_ELIG_EVENT = elg_event.ID_EVENT
+and elg_event.ID_EVENT_PERSON = p.id_person
+and fcea.ID_EVENT = #id_fcea_event
+and elg.ID_ELIG_EVENT = (select(min(elg2.ID_ELIG_EVENT))! to avoid geetitting Redetermination which does not create a new FCEA but shares the same Initial FCEA id in FCE_ELIGIBILITY table 
+ from fce_application fcea2, fce_eligibility fcee2, eligibility elg2, event elg_event2
+ where fcea2.ID_FCE_APPLICATION = fcee2.ID_FCE_APPLICATION
+ and fcee2.ID_ELIGIBILITY_EVENT = elg2.ID_ELIG_EVENT and elg2.ID_ELIG_EVENT = elg_event2.ID_EVENT
+ and fcea2.ID_EVENT = #id_fcea_event)
+
+End-Select
+Move &cd_elig_actual to $cd_elig
+Move &cd_elig_selected to $cd_reimburs
+If (0 = IsNull(&cd_elg_event_status)) or (0 = IsBlank(&cd_elg_event_status)) 
+  Move &nm_person_full to $nm_fcd_approver
+  Move &id_elg_person to #id_fcd_approver
+  If (&cd_elg_event_status = 'APRV')
+    Let $dt_fcd_approved = datetostr(&dt_elg_event_occurred,'mm/dd/yyyy hh24:mi:ss')
+  End-If
+    ! Find assign date for the person
+Else ! FCEA not made to FCD yet, get the id person last update from FCEA
+! Logic changed - code removed
+End-If
+End-If
+End-Procedure
+
+Begin-Procedure Calc_Completion
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Let $_TOTAL_STAGES = 'Total Stages'
+ Let $_SSCM_AVERAGE = 'SSCM Average'
+ Let $_RMS_AVERAGE = 'RevMax Average'
+ Let $_APPROVAL_AVERAGE = 'Total Average'
+ Let $_IP_WITHIN_45_DAYS = 'In-Progress within 45 days'
+ Let $_IP_AFTER_45_DAYS = 'In-Progress after 45 days'
+ Let $_COMP_WITHIN_45_DAYS = 'Completed within 45 days'
+ Let $_COMP_AFTER_45_DAYS = 'Completed after 45 days'
+ Let $_REGION_SUMMARY = 'Region Summary'
+ lET $_STATE_SUMMARY = 'Statewide Summary'
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select Distinct
+ Let $dt_submitted_to_pa = ''
+ Let $dt_submitted_to_revmax = ''
+ Let $nm_full_pa = ''
+ Let $nm_fcd_approver = ''
+ Let $nm_full_revmax_revmax = ''
+ Let $dt_fcd_aprv = ''
+ Let $cd_elig = ''
+ Let $cd_reimburs = ''
+ Let #removal_pa_interval = -1
+ Let #revmax_aprv_interval= -1
+ Let #removal_aprv_interval= -1
+
+(SPL_PRIM_CHILD.ID_PERSON) &id_child
+SPL_PRIM_CHILD.ID_PERSON &Master_Query_SPL_PRIM_CHILD.ID_PERSON
+(SPL_PRIM_CHILD.ID_STAGE) &id_stage_id
+(decode(CCOUNT.DECODE, '-None-', ' Multi-County ',  CCOUNT.DECODE)) &county_decode
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Do Get_PA_Info(&id_child, &id_stage_id, $dt_submitted_to_pa, $nm_full_pa)
+  Do Get_RevMax_Info(&id_child, &id_stage_id, $dt_submitted_to_revmax, $nm_full_revmax_revmax)
+  Do Get_Approver_Info(&id_child, &id_stage_id, $dt_fcd_aprv, $nm_fcd_approver, $cd_elig, $cd_reimburs)
+  Do Get_Case_Manager(&id_stage_id, $dt_submitted_to_pa, $nm_case_mgr)
+
+CD_STAGE_REGION &Master_Query_CD_STAGE_REGION () On-Break Set=1 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc101 After=Master_QueryCD_STAGE_REGION_AfterProc101
+CD_STAGE_CNTY &Master_Query_CD_STAGE_CNTY () On-Break Set=1 Level=2 Print=Never Before=Master_QueryCD_STAGE_CNTY_BeforeProc102 After=Master_QueryCD_STAGE_CNTY_AfterProc102
+ Graphic (1,719,45) Vert-Line 15 
+ Graphic (2,403,241) Box 45 0 25 
+ Graphic (2,1,402) Box 45 0 15 
+ Graphic (2,643,77) Box 45 0 40 
+ Graphic (2,380,45) Vert-Line 15 
+ Graphic (2,643,45) Vert-Line 15 
+ Graphic (2,403,45) Vert-Line 15 
+ Graphic (2,670,45) Vert-Line 15 
+ Graphic (2,696,45) Vert-Line 15 
+ Graphic (2,619,45) Vert-Line 15 
+ Let $dt_submitted_to_revmax=$dt_submitted_to_revmax
+ Print $dt_submitted_to_revmax (16,407,10)
+DT_EVENT_OCCURRED &Master_Query_DT_EVENT_OCCURRED (17,137) Edit MM/DD/YYYY
+ Let $dt_submitted_to_pa=$dt_submitted_to_pa
+ Print $dt_submitted_to_pa (17,258,10)
+ If isnull(&Master_Query_DT_REMOVAL) or isnull($dt_fcd_aprv)
+    ! do nothing
+ Else
+ Let #removal_aprv_interval=datediff( strtodate( $dt_fcd_aprv, 'mm/dd/yyyy hh24:mi:ss' ) ,  &Master_Query_DT_REMOVAL , 'day' )
+ Print #removal_aprv_interval (17,648) Edit 999 Bold 
+ End-If
+ Let $dt_fcd_aprv=$dt_fcd_aprv
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $dt_fcd_aprv (17,515,10)
+SPL_PRIM_CHILD.ID_CASE &Master_Query_SPL_PRIM_CHILD.ID_CASE (17,1) Edit 888888888na
+DT_REMOVAL &Master_Query_DT_REMOVAL (17,79) Edit MM/DD/YYYY
+ If isnull(&Master_Query_DT_REMOVAL) or isnull($dt_submitted_to_pa)
+    ! do nothing
+ Else
+ Let $dt_submitted_to_pa=$dt_submitted_to_pa
+ Let #removal_pa_interval=datediff( strtodate( $dt_submitted_to_pa , 'mm/dd/yyyy hh24:mi:ss') ,   &Master_Query_DT_REMOVAL  , 'day'  )
+ Print #removal_pa_interval (17,382) Edit 999
+ End-If
+ Let $cd_elig=$cd_elig
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $cd_elig (17,674,3) Bold 
+ Let $cd_reimburs=$cd_reimburs
+ Print $cd_reimburs (17,700,3) Bold 
+ If  isnull($dt_submitted_to_revmax) or isnull( $dt_fcd_aprv)
+    ! do nothing
+ Else
+ Let #revmax_aprv_interval=abs( datediff(   strtodate($dt_fcd_aprv, 'mm/dd/yyyy hh24:mi:ss') ,  strtodate($dt_submitted_to_revmax, 'mm/dd/yyyy hh24:mi:ss')  , 'day')  )
+ Print #revmax_aprv_interval (17,622) Edit 999
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ ! Interval exists: it can be 0 if FCEA changes hand in the same day
+ !If (#removal_pa_interval)!= 0 or ((#removal_pa_interval= 0) and 0 = isnull($dt_submitted_to_pa) and 0 = isblank($dt_submitted_to_pa))
+ If #removal_pa_interval != -1
+   Add #removal_pa_interval to #sscm_sum_county
+   Add 1 to #sscm_counter_county
+   Add #removal_pa_interval to #sscm_sum_region
+   Add 1 to #sscm_counter_region
+   Add #removal_pa_interval to #sscm_sum_state
+   Add 1 to #sscm_counter_state
+ End-If
+ !If (#revmax_aprv_interval)!= 0 or ((#revmax_aprv_interval = 0) and 0 = isnull($dt_submitted_to_pa) and 0 = isblank($dt_submitted_to_pa) and 0 = isnull($dt_submitted_to_revmax) and 0 = isblank($dt_submitted_to_revmax))
+ If #revmax_aprv_interval != -1
+   Add #revmax_aprv_interval to #revmax_sum_county
+   Add 1 to #revmax_counter_county
+   Add #revmax_aprv_interval to #revmax_sum_region
+   Add 1 to #revmax_counter_region
+   Add #revmax_aprv_interval to #revmax_sum_state
+   Add 1 to #revmax_counter_state
+ End-If
+ If #removal_aprv_interval = -1 or isnull($dt_fcd_aprv)
+  Let #aprv_range = datediff(datenow() ,   &Master_Query_DT_REMOVAL  , 'day')
+  If #aprv_range <= 45
+   Add 1 to #ip_lt_eq_45_county_cnt
+   Add 1 to #ip_lt_eq_45_region_cnt
+   Add 1 to #ip_lt_eq_45_state_cnt
+  Else
+   Add 1 to #ip_gt_45_county_cnt
+   Add 1 to #ip_gt_45_region_cnt
+   Add 1 to #ip_gt_45_state_cnt
+  End-If
+ Else
+   Add #removal_aprv_interval to #aprv_sum_county
+   Add 1 to #aprv_counter_county
+   Add #removal_aprv_interval to #aprv_sum_region
+   Add 1 to #aprv_counter_region
+   Add #removal_aprv_interval to #aprv_sum_state
+   Add 1 to #aprv_counter_state
+
+  If #removal_aprv_interval <= 45
+    Add 1 to #comp_lt_eq_45_county_cnt
+    Add 1 to #comp_lt_eq_45_region_cnt
+    Add 1 to #comp_lt_eq_45_state_cnt
+  Else
+    Add 1 to #comp_gt_45_county_cnt
+    Add 1 to #comp_gt_45_region_cnt
+    Add 1 to #comp_gt_45_state_cnt
+  End-If
+ End-If
+
+NM_STAGE &nm_child (31,1,25)
+ Let $nm_full_pa=$nm_full_pa
+ Print $nm_full_pa (31,258,22) Wrap 22 2 line-height=12 Keep-Top
+ Next-Listing   ! Close up the wrapped columns
+ Let $nm_case_mgr=$nm_case_mgr
+ Print $nm_case_mgr (,137,22) Wrap 22 2 line-height=12 Keep-Top
+ Let $nm_full_rms=$nm_full_revmax_revmax
+ Print $nm_full_rms (,407,20) Wrap 20 2 line-height=12 Keep-Top
+ Next-Listing   ! Close up the wrapped columns
+ Let $nm_fcd_approver=$nm_fcd_approver
+ Print $nm_fcd_approver (,515,18) Wrap 18 3 line-height=12 Keep-Top
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Next-Listing  SkipLines=15 Need=70
+From  STAGE, STAGE_PERSON_LINK SPL_PRIM_CHILD
+,      CNSRVTRSHP_REMOVAL, EVENT, STAGE_LINK
+,      CCOUNT
+      Where STAGE.ID_STAGE = SPL_PRIM_CHILD.ID_STAGE
+            And EVENT.ID_EVENT_STAGE = STAGE_LINK.ID_PRIOR_STAGE
+            And STAGE.ID_STAGE = STAGE_LINK.ID_STAGE
+            And CNSRVTRSHP_REMOVAL.ID_REMOVAL_EVENT = EVENT.ID_EVENT
+            And SPL_PRIM_CHILD.ID_PERSON = CNSRVTRSHP_REMOVAL.ID_VICTIM
+            And STAGE.CD_STAGE_CNTY = CCOUNT.CODE
+ And CD_STAGE IN ('SUB')
+ And SPL_PRIM_CHILD.CD_STAGE_PERS_ROLE = 'PC'
+ And DT_REMOVAL >= to_date($dt_begin, 'MM/DD/YYYY')
+ And DT_REMOVAL < to_date($dt_end_full, 'MM/DD/YYYY')
+ And [$where_clause]
+ And DT_REMOVAL = DT_STAGE_START
+Order By CD_STAGE_REGION
+,      (decode(CCOUNT.DECODE, '-None-', ' Multi-County ',  CCOUNT.DECODE))
+,      DT_REMOVAL
+,      NM_STAGE
+End-Select
+ Next-Listing
+ Next-Listing  Need=41
+ If #1ROW_COUNT > 0
+ Graphic (2,2,716) Horz-Line 20 
+ Position (4,1)
+   If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let $sscm_average_state_label=$_SSCM_AVERAGE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $sscm_average_state_label (22,245,12) Bold 
+ End-If
+   If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let $state_tot_label=$_TOTAL_STAGES
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $state_tot_label (22,102,12) Bold 
+ End-If
+   If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let $revmax_average_state_label=$_RMS_AVERAGE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $revmax_average_state_label (41,245,14) Bold 
+ End-If
+ let #state_num_stages = #1ROW_COUNT
+ If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #state_num_stages (22,190) Bold  Edit 99999na
+ End-If
+   If (#revmax_counter_state = 0) or ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let #revmax_average_state=#revmax_sum_state / #revmax_counter_state
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #revmax_average_state (41,327) Edit 9999 Bold 
+ End-If
+   If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let $aprv_average_state=$_APPROVAL_AVERAGE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $aprv_average_state (41,102,16) Bold 
+ End-If
+   If (#aprv_counter_state = 0) or ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let #aprv_average_state=#aprv_sum_state / #aprv_counter_state
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #aprv_average_state (41,195) Edit 9999 Bold 
+ End-If
+   If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let #ip_lt_eq_45_state_cnt=#ip_lt_eq_45_state_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #ip_lt_eq_45_state_cnt (22,682) Edit 9999 Bold 
+ End-If
+   If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let #comp_lt_eq_45_state_cnt=#comp_lt_eq_45_state_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #comp_lt_eq_45_state_cnt (22,506) Edit 9999 Bold 
+ End-If
+   If #sscm_counter_state = 0 or ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let #sscm_average_state=#sscm_sum_state / #sscm_counter_state
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #sscm_average_state (22,327) Edit 9999 Bold 
+ End-If
+   If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let #ip_gt_45_state_cnt=#ip_gt_45_state_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #ip_gt_45_state_cnt (41,682) Edit 9999 Bold 
+ End-If
+   If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let #comp_gt_45_state_cnt=#comp_gt_45_state_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #comp_gt_45_state_cnt (41,506) Edit 9999 Bold 
+ End-If
+   If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let $comp_lt_eq_45_state_label=$_COMP_WITHIN_45_DAYS
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $comp_lt_eq_45_state_label (22,383,24) Bold 
+ End-If
+   If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let $comp_gt_45_state_label=$_COMP_AFTER_45_DAYS
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $comp_gt_45_state_label (41,383,24) Bold 
+ End-If
+   If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let $ip_lt_eq_45_state_label=$_IP_WITHIN_45_DAYS
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $ip_lt_eq_45_state_label (22,556,26) Bold 
+ End-If
+   If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let $ip_gt_45_state_label=$_IP_AFTER_45_DAYS
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $ip_gt_45_state_label (41,556,26) Bold 
+ End-If
+   If ($county_selected='Y') or ($region_selected='Y')
+    ! do nothing
+ Else
+ Let $state_summary_label=$_STATE_SUMMARY
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $state_summary_label (22,1,17) Underline  Bold 
+ End-If
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+!! Get MES Detail
+!  pprover, $cd_elig, $cd_reimburs)
+!  Do Get_Case_Manager(&id_stage_id, $dt_submitted_to_pa, $nm_case_mgr)
+!
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc101
+Let #sscm_sum_region = 0
+Let #sscm_counter_region = 0
+Let #revmax_sum_region = 0
+Let #revmax_counter_region = 0
+Let #aprv_sum_region = 0
+Let #aprv_counter_region = 0
+Let #ip_lt_eq_45_region_cnt = 0
+Let #ip_gt_45_region_cnt = 0
+Let #comp_lt_eq_45_region_cnt = 0
+Let #comp_gt_45_region_cnt = 0
+
+ Next-Listing  Need=19
+ Graphic (2,1,717) Horz-Line 20 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CD_STAGE_REGION (19,48,2) Bold 
+ Print 'REGION'  (19,1) Bold 
+   Position (+12,)
+ Next-Listing  Need=70
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc101
+ Next-Listing  Need=42
+ Graphic (2,2,716) Horz-Line 20 
+ Position (4,1)
+  If ($county_selected='Y')
+    ! do nothing
+ Else
+ Let $region_summary_label=$_REGION_SUMMARY
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $region_summary_label (20,1,15) Underline  Bold 
+ End-If
+  If ($county_selected='Y')
+    ! do nothing
+ Else
+ Let $region_tot_label=$_TOTAL_STAGES
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $region_tot_label (21,102,15) Bold 
+ End-If
+  If (#aprv_counter_region = 0) or ($county_selected='Y')
+    ! do nothing
+ Else
+ Let #aprv_average_region=#aprv_sum_region / #aprv_counter_region
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #aprv_average_region (40,195) Edit 9999 Bold 
+ End-If
+  If ($county_selected='Y')
+    ! do nothing
+ Else
+ Let $aprv_average_region=$_APPROVAL_AVERAGE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $aprv_average_region (40,102,15) Bold 
+ End-If
+  If ($county_selected='Y')
+    ! do nothing
+ Else
+ Let $sscm_average_region_label=$_SSCM_AVERAGE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $sscm_average_region_label (22,245,15) Bold 
+ End-If
+  If ($county_selected='Y')
+    ! do nothing
+ Else
+ Let $revmax_average_region_label=$_RMS_AVERAGE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $revmax_average_region_label (42,245,15) Bold 
+ End-If
+  If #revmax_counter_region = 0 or ($county_selected='Y')
+    ! do nothing
+ Else
+ Let #revmax_average_region=#revmax_sum_region / #revmax_counter_region
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #revmax_average_region (42,327) Edit 9999 Bold 
+ End-If
+  If #sscm_counter_region = 0 or ($county_selected='Y')
+    ! do nothing
+ Else
+ Let #sscm_average_region=#sscm_sum_region / #sscm_counter_region
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #sscm_average_region (22,327) Edit 9999 Bold 
+ End-If
+  If ($county_selected='Y')
+    ! do nothing
+ Else
+ Let #comp_lt_eq_45_region_cnt=#comp_lt_eq_45_region_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #comp_lt_eq_45_region_cnt (22,506) Edit 9999 Bold 
+ End-If
+  If ($county_selected='Y')
+    ! do nothing
+ Else
+ Let $comp_lt_eq_45_region_label=$_COMP_WITHIN_45_DAYS
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $comp_lt_eq_45_region_label (22,383,24) Bold 
+ End-If
+  If ($county_selected='Y')
+    ! do nothing
+ Else
+ Let $comp_gt_45_region_label=$_COMP_AFTER_45_DAYS
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $comp_gt_45_region_label (42,383,24) Bold 
+ End-If
+  If ($county_selected='Y')
+    ! do nothing
+ Else
+ Let #comp_gt_45_region_cnt=#comp_gt_45_region_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #comp_gt_45_region_cnt (42,506) Edit 9999 Bold 
+ End-If
+  If ($county_selected='Y')
+    ! do nothing
+ Else
+ Let $ip_gt_45_region_label=$_IP_AFTER_45_DAYS
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $ip_gt_45_region_label (42,556,24) Bold 
+ End-If
+  If ($county_selected='Y')
+    ! do nothing
+ Else
+ Let #ip_gt_45_region_cnt=#ip_gt_45_region_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #ip_gt_45_region_cnt (42,682) Edit 9999 Bold 
+ End-If
+  If ($county_selected='Y')
+    ! do nothing
+ Else
+ Let $ip_lt_eq_45_region_label=$_IP_WITHIN_45_DAYS
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $ip_lt_eq_45_region_label (22,556,26) Bold 
+ End-If
+  If ($county_selected='Y')
+    ! do nothing
+ Else
+ Let #ip_lt_eq_45_region_cnt=#ip_lt_eq_45_region_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #ip_lt_eq_45_region_cnt (22,682) Edit 9999 Bold 
+ End-If
+ let #region_num_stages = #101ROW_COUNT
+ If ($county_selected='Y')
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #region_num_stages (22,190) Bold  Edit 99999na
+ End-If
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=70
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_BeforeProc102
+Let #sscm_sum_county = 0
+Let #sscm_counter_county = 0
+Let #revmax_sum_county = 0
+Let #revmax_counter_county = 0
+Let #aprv_sum_county = 0
+Let #aprv_counter_county = 0
+Let #ip_lt_eq_45_county_cnt = 0 
+Let #ip_gt_45_county_cnt = 0
+Let #comp_lt_eq_45_county_cnt = 0 
+Let #comp_gt_45_county_cnt = 0
+
+ Next-Listing  Need=19
+ Graphic (2,1,719) Horz-Line 10 
+ Position (3,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &county_decode (19,1,53) Bold 
+   Position (+12,)
+ Next-Listing  Need=70
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_AfterProc102
+ Next-Listing  Need=34
+ Graphic (4,1,717) Horz-Line 20 
+ Position (6,1)
+  If #revmax_counter_county = 0
+    ! do nothing
+ Else
+ Let #revmax_average_county=#revmax_sum_county / #revmax_counter_county
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #revmax_average_county (34,328) Edit 9999
+ End-If
+  If #sscm_counter_county = 0
+    ! do nothing
+ Else
+ Let #sscm_average_county=#sscm_sum_county / #sscm_counter_county
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #sscm_average_county (17,327) Edit 9999
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'County Summary'  (17,1) Underline  Bold 
+ Print 'Total Stages'  (17,102)
+ Print 'Total Average'  (34,102)
+ Print 'SSCM Average'  (17,245)
+ Print 'RevMax Average'  (34,245)
+ Print 'Completed within 45 days'  (17,383)
+ Print 'In-progress within 45 days'  (17,556)
+ Print 'In-progress after 45 days'  (34,556)
+ let #county_num_stages = #102ROW_COUNT
+ Print #county_num_stages (17,191) Edit 99999na
+  If #aprv_counter_county = 0  
+    ! do nothing
+ Else
+ Let #aprv_average_county=#aprv_sum_county / #aprv_counter_county
+ Print #aprv_average_county (34,196) Edit 9999
+ End-If
+  Let #comp_lt_eq_45_county_cnt=#comp_lt_eq_45_county_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #comp_lt_eq_45_county_cnt (17,507) Edit 9999
+  Let #comp_gt_45_county_cnt=#comp_gt_45_county_cnt
+ Print #comp_gt_45_county_cnt (34,507) Edit 9999
+  Let #ip_lt_eq_45_county_cnt=#ip_lt_eq_45_county_cnt
+ Print #ip_lt_eq_45_county_cnt (17,683) Edit 9999
+  Let #ip_gt_45_county_cnt=#ip_gt_45_county_cnt
+ Print #ip_gt_45_county_cnt (34,683) Edit 9999
+ Print 'Completed after 45 days'  (34,383)
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  Need=70
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 48 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Initial IV-E Timeliness' (47,286,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (22,652) edit 'MM/DD/YYYY'
+ Print 'Produced On: ' (22,587,0)
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'From Date: ' (97,1,0) Bold 
+ Print 'To Date:' (116,1,0) Bold 
+ Let $dt_from=$dt_begin
+ Print $dt_from (98,70,15)
+ Let $dt_to=$dt_end
+ Print $dt_to (116,70,15)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (22,274,0)
+ Print 'Removal Date' (140,79,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'SHINES Date /$Case Manager Name' (140,137,20) Underline  Bold  Wrap 20 2 line-height=12 Keep-Top on=$
+ Print 'FCEA to PA Date /$PA Name' (140,258,20) Underline  Bold  Wrap 20 2 line-height=12 Keep-Top on=$
+ Print 'FCEA to RMS Date /$RMS Name' (140,405,22) Underline  Bold  Wrap 22 2 line-height=12 Keep-Top on=$
+ Print 'SSCM$(Days) ' (140,374,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top on=$
+ Print 'RMS$(Days)' (140,613,5) Underline  Bold  Wrap 5 2 line-height=12 Keep-Top on=$
+ Print 'Total$(Days)' (140,644,6) Underline  Bold  Wrap 6 4 line-height=12 Keep-Top on=$
+ Print 'Approval Date /$Approver Name' (140,515,15) Underline  Bold  Wrap 15 2 line-height=12 Keep-Top on=$
+ Print 'Case ID /$Child Name' (140,1,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'A' (140,677,0) Underline  Bold 
+ Print 'R' (140,699,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Removal Date' (18,79,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'SHINES Date /$Case Manager Name' (18,137,20) Underline  Bold  Wrap 20 2 line-height=12 Keep-Top on=$
+ Print 'FCEA to PA Date /$PA Name' (18,258,20) Underline  Bold  Wrap 20 2 line-height=12 Keep-Top on=$
+ Print 'FCEA to RMS Date /$RMS Name' (18,405,22) Underline  Bold  Wrap 22 2 line-height=12 Keep-Top on=$
+ Print 'SSCM$(Days) ' (18,374,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top on=$
+ Print 'RMS$(Days)' (18,613,5) Underline  Bold  Wrap 5 2 line-height=12 Keep-Top on=$
+ Print 'Total$(Days)' (18,644,6) Underline  Bold  Wrap 6 4 line-height=12 Keep-Top on=$
+ Print 'Approval Date /$Approver Name' (18,515,15) Underline  Bold  Wrap 15 2 line-height=12 Keep-Top on=$
+ Print 'Case ID /$Child Name' (18,1,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'A' (18,677,0) Underline  Bold 
+ Print 'R' (17,699,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (14,668) '' ' of '
+ Last-Page (14,695) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

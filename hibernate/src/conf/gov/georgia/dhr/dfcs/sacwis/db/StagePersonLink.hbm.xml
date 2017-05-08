@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.StagePersonLink" table="STAGE_PERSON_LINK" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idStagePersonLink" type="integer" unsaved-value="0">
+      <column name="ID_STAGE_PERSON_LINK" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_STAGE_PERSON_LINK</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdStagePersRole" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STAGE_PERS_ROLE" length="2"/>
+    </property>
+    <property name="indStagePersInLaw" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_STAGE_PERS_IN_LAW" length="1"/>
+    </property>
+    <property name="cdStagePersType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STAGE_PERS_TYPE" length="3"/>
+    </property>
+    <property name="cdStagePersSearchInd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_STAGE_PERS_SEARCH_IND" length="1"/>
+    </property>
+    <property name="txtStagePersNotes" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_STAGE_PERS_NOTES" length="300"/>
+    </property>
+    <property name="dtStagePersLink" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_STAGE_PERS_LINK" length="7"/>
+    </property>
+    <property name="cdStagePersRelInt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_STAGE_PERS_REL_INT" length="2"/>
+    </property>
+    <property name="indStagePersReporter" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_STAGE_PERS_REPORTER" length="1"/>
+    </property>
+    <property name="indStagePersPrSecAsgn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_STAGE_PERS_PR_SEC_ASGN" length="1"/>
+    </property>
+    <property name="indStagePersEmpNew" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_STAGE_PERS_EMP_NEW" length="1"/>
+    </property>
+    <property name="cdStagePersLstSort" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_STAGE_PERS_LST_SORT" length="3"/>
+    </property>
+    <property name="indNmStage" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_NM_STAGE" precision="1" scale="0"/>
+    </property>
+    <property name="indStagePersSftyResource" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_STAGE_PERS_SFTY_RESOURCE" length="1"/>
+    </property>
+    <property name="idPersScndaryCaretaker" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ID_PERS_SCNDARY_CARETAKER" precision="16" scale="0"/>
+    </property>
+    <property name="txtStagePersOthRelations" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_STAGE_PERS_OTH_RELATIONS" length="300"/>
+    </property>
+    <property name="cdPersonSideOfFamily" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERSON_SIDE_OF_FAMILY" length="2"/>
+    </property>
+    <property name="cdPKHshdMember" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PK_HSHD_MEMBER" length="3"/>
+    </property>
+    <property name="dtPersonAddedOrRelated" type="timestamp" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PERSON_ADDED_OR_RELATED" length="7"/>
+    </property>
+  </class>
+</hibernate-mapping>

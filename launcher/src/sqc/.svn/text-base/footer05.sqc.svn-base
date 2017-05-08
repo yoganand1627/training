@@ -1,0 +1,24 @@
+!******************************************************
+!        /opt/impact/sys/prod/sqc/footer05.sqc
+!                                                     *
+!   Standard Footer for Printed Reports               *
+!   For Portrait On Demand Reports with Legend        *
+!******************************************************
+
+!**********************
+! Print Footer Row #1 *
+!**********************
+  do GET-CFP-STAMP
+  if #cfp_stamp = 0
+    print '' (1)
+    print 'Department of Family and Protective Services' (+8,20)
+    print 'Printed: '       (+0,1)
+    date-time () 'MM/DD/YY'  &date_printed
+    print &date_printed           ()
+    print 'PAGE: '          (+0,69)
+    page-number             ()
+    print 'Emergency Assistance (EA) Program Code Legend' (-5,1)
+    print 'E - Continued service needs arise from the same emergency.' (+1,1)
+    print 'F - End of Federal Fiscal Year.' (+1,1)
+    print 'T - Twelve month time frame has expired.' (+1,1)
+  end-if

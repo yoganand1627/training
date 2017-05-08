@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.PortalMetaphor" table="PORTAL_METAPHOR" mutable="false"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idTab" type="integer" unsaved-value="undefined">
+      <column name="ID_TAB" precision="4" scale="0"/>
+      <generator class="assigned"/>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="txtTabUrl" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_TAB_URL" length="90"/>
+    </property>
+    <property name="txtTabConstant" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_TAB_CONSTANT" length="90"/>
+    </property>
+    <property name="txtTab" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_TAB" length="40"/>
+    </property>
+    <property name="txtL1ImgInactive" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_L1_IMG_INACTIVE" length="40"/>
+    </property>
+    <property name="txtL1ImgActive" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_L1_IMG_ACTIVE" length="40"/>
+    </property>
+    <property name="txtFilterPath" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_FILTER_PATH" length="200"/>
+    </property>
+    <bag name="errorLists" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_TAB" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ErrorList" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

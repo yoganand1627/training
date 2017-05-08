@@ -1,0 +1,985 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Fri Feb 05 14:59:52 2010 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Reports\SQR\APPLASummary00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=156    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (648,484) '' ' of '
+ Last-Page (648,517) 
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'This report works in conjunction with the APPLA Exception report to support DFCS in meeting the PIP item 10. Whereas the exception report displays cases that are eligible for APPLA but have not met all APPLA requirements, this report provides statistical data of where the state is at regarding APPLA compliance.' (28,12,110) Wrap 110 4 line-height=12 Keep-Top
+ Print 'APPLA children are foster children whose current permanency goal is Another Planned Permanent Living Arrangement (APPLA) either through Emancipation (EMAN) or Long Term Foster Care (LTFC). Current permanency goal is derived from the child''s most recent approved Foster Care Case Plan''s Permanency Plan. The most recent case plan is one where the Date Current Review is most recent as of the reporting month. In case of multiple case plans that share the same Date Current Review, the case plan with the greatest Event ID is the most recent. The child should also be under 18 years old and in DFCS custody as of the first day of the reporting month.' (128,12,111) Wrap 111 7 line-height=12 Keep-Top
+ Print 'Case Manager:' (311,12,0) Bold 
+ Print 'The current case manager assigned to the most recent FC stage.' (311,113,0)
+ Print 'Assigned Cases:' (329,12,0) Bold 
+ Print 'The number of unique FC children assigned.' (329,113,0)
+ Print 'Eligible Cases:' (347,12,0) Bold 
+ Print '% Connected Met: ' (378,12,18) Bold 
+ Print '% Commitment Met: ' (515,12,18) Bold 
+ Print '% APPLA Met: ' (605,12,18) Bold 
+ Print '% ILP Met: ' (446,12,18) Bold 
+ Print 'The number of APPLA children - unique FC children in DFCS custody, under 18 years of age, whose current permanency goal as of the reporting month is APPLA. ' (347,113,80) Wrap 80 2 line-height=12 Keep-Top
+ Print 'The percentage of APPLA children (LTFC or EMAN) with connection to an adult. This is indicated on the child''s most recent approved placement on the case. It is calculated as the number of APPLA children where the answer to the question ''''Does this child have a connection to an adult? '''' in the APPLA section is Yes divided by the number of APPLA children and multiplied by a hundred. ' (378,113,80) Wrap 80 5 line-height=12 Keep-Top
+ Print 'The percentage of APPLA children (LTFC or EMAN) provided with training(s) indicated in the current Youth Report Detail as of the reporting month, under Support/Training Provided Within Reporting Period section. It is calculated as the number of APPLA children where at least one training selection is Yes divided by the number of APPLA children and multiplied by a hundred.' (446,113,80) Wrap 80 5 line-height=12 Keep-Top
+ Print 'The percentage of APPLA children whose permanency goal is EMAN or LTFC with parent agreement dated and signed (required for LTFC only). Parent agreement is recorded on the child''s most recent approved placement on the case by means of the question ''''Is this a long term foster care placement? '''' and Date Agreement Signed. The percentage is calculated as the total number of LTFC children where the answer is Yes with Date Agreement Signed by the reporting month and EMAN children divided by the number of APPLA children and multiplied by a hundred.' (515,113,80) Wrap 80 7 line-height=12 Keep-Top
+ Print 'The percentage of APPLA children where permanency goal is LTFC and Commitment = Yes and ILP Services = Yes or where permanency goal is EMAN and ILP = Yes and Connection to Adult = Yes.' (605,113,80) Wrap 80 3 line-height=12 Keep-Top
+ Print 'The report displays the number of Foster Care (FC) cases assigned, of which the number of cases eligible for APPLA and the percentage of cases that are eligible and have met APPLA and each of the APPLA components. FC refers to Foster Care Child (FCC) and Adoption (ADO) stage. The number of FC cases is the number of unique children in FCC and/or ADO.' (71,12,110) Wrap 110 4 line-height=12 Keep-Top
+ Print 'Connection to Adult and Commitment are recorded on the child''s most recent approved placement on the case as of the reporting month. It is under expandable section Another Planned Permanent Living Arrangement (APPLA). ' (207,12,110) Wrap 110 2 line-height=12 Keep-Top
+ Print 'ILP is recorded on the child''s current Youth Report Detail (YRD) of which date end is greater than or equal to the last day of the reporting month but less than 6 months from the last day of the reporting month. For example, an YRD ending on 3/31/YYYY is current for any reporting months from October to December of the prior year and January to March of the same year. An YRD ending on 9/30/YYYY covers any reporting months from April to September of the same year.' (239,12,110) Wrap 110 5 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+ Do Get_Month_Region_County_Unit
+ Do Master_Query
+ Do Rollback_Inserts
+End-Program
+Begin-Procedure Get_Month_Region_County_Unit
+! -----------------------------
+! Get month and year- this is required parameter,; validation is done in the launch page
+Input $dt_report 'Month/Year (MM/YYYY)' MaxLen=10 Type=Date Format='MM/YYYY'
+! -----------------------------
+! Get region optional input
+Input $_cd_stage_region 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_cd_stage_region) or IsBlank($_cd_stage_region) or ($_cd_stage_region='0')
+  Let $where_clause_region = 'CD_STAGE_REGION IS NOT NULL'
+  Let $regionSelected = 'N'
+Else 
+  Let $where_clause_region = 'CD_STAGE_REGION = ' || '''' || $_cd_stage_region || ''''
+  Let $regionSelected = 'Y'
+End-If
+
+! Get county optional input
+Input $_cd_stage_county 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_cd_stage_county) or IsBlank($_cd_stage_county) or ($_cd_stage_county='0')
+  Let $where_clause_county = 'CD_STAGE_CNTY IS NOT NULL'
+  Let $countySelected = 'N'
+Else 
+  Let $where_clause_county = 'CD_STAGE_CNTY = ' || '''' || $_cd_stage_county || ''''
+  Let $countySelected = 'Y'
+End-If
+
+! Get unit optional input
+Input $_nbr_unit 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If IsNull($_nbr_unit) or IsBlank($_nbr_unit) or ($_nbr_unit='0')
+  Let $where_clause_unit = 'NBR_UNIT IS NOT NULL'
+  Let $unitSelected = 'N'
+Else 
+  Let $where_clause_unit = 'NBR_UNIT = ' || '''' || $_nbr_unit || ''''
+  Let $unitSelected = 'Y'
+End-If
+
+! Create where clause for region, county and unit input
+Let $where_clause_region_county = $where_clause_region || ' and ' || $where_clause_county || ' and ' || $where_clause_unit
+!
+Do Make_Header
+Do Populate_Param_Table
+End-Procedure
+
+Begin-Procedure Make_Header
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_cd_stage_county || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_cd_stage_county = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_cd_stage_region
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_cd_stage_region
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+Begin-Procedure Populate_Param_Table
+!------------------
+begin-sql
+ delete from report_work
+end-sql
+!------------------
+begin-sql
+ insert into report_work (key, TextParm) values ('dt_report', $dt_report)
+end-sql
+!------------------
+if $regionSelected = 'Y'
+begin-sql
+ insert into report_work (key, TextParm) values ('cd_region', $_cd_stage_region)
+end-sql
+else 
+begin-sql
+ insert into report_work (key) values ('cd_region')
+end-sql
+end-if
+!------------------
+if $countySelected = 'Y'
+begin-sql
+ insert into report_work (key, TextParm) values ('cd_county', $_cd_stage_county)
+end-sql
+else 
+begin-sql
+ insert into report_work (key) values ('cd_county')
+end-sql
+end-if
+!----------------
+if $unitSelected = 'Y'
+begin-sql
+ insert into report_work (key, TextParm) values ('nbr_unit', $_nbr_unit)
+end-sql
+else
+begin-sql
+ insert into report_work (key) values ('nbr_unit')
+end-sql
+end-if
+End-Procedure
+
+Begin-Procedure Rollback_Inserts
+begin-sql
+ rollback
+end-sql
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #3ROW_COUNT
+ Move 0 To #report_assigned_cnt
+Begin-Select Distinct
+                   
+(SELECT COUNT(DISTINCT STAGE_FC.ID_STAGE) FROM STAGE STAGE_FC, STAGE_PERSON_LINK STAGE_PERSON_LINK_CM, STAGE_PERSON_LINK STAGE_PERSON_LINK_CHILD
+            , PERSON_ENC PERSON_CHILD,  FCCP_FAMILY FCCP_FAMILY_CHILD, EVENT_PERSON_LINK EVENT_PERSON_LINK_FCCP
+        WHERE     STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CM.ID_STAGE  AND 
+        STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CHILD.ID_STAGE  AND 
+        STAGE_FC.CD_STAGE IN ( 'SUB' , 'ADO' ) AND 
+        STAGE_FC.DT_STAGE_START < last_day(to_date( $dt_report ,  'mm/yyyy' ))+1 AND 
+        ( STAGE_FC.DT_STAGE_CLOSE is null OR  STAGE_FC.DT_STAGE_CLOSE >=  to_date( $dt_report ,  'mm/yyyy' )) AND 
+        STAGE_FC.ID_STAGE = (SELECT  (max ( S1.ID_STAGE ))  FROM  STAGE S1,  STAGE_PERSON_LINK SPL1 WHERE S1.ID_STAGE = SPL1.ID_STAGE ! current FC stage
+                         AND  S1.CD_STAGE IN ( 'ADO' , 'SUB' ) AND  SPL1.CD_STAGE_PERS_ROLE =  'PC'  
+                         AND  S1.DT_STAGE_START < last_day(to_date( $dt_report , 'mm/yyyy' ))+1 
+                         AND  ( S1.DT_STAGE_CLOSE IS NULL OR  S1.DT_STAGE_CLOSE >= to_date ( $dt_report , 'mm/yyyy' ) ) 
+                         AND  SPL1.ID_PERSON = STAGE_PERSON_LINK_CHILD.ID_PERSON 
+                         AND  SPL1.ID_CASE = STAGE_PERSON_LINK_CHILD.ID_CASE) AND
+      STAGE_PERSON_LINK_CHILD.CD_STAGE_PERS_ROLE =  'PC'  AND 
+      STAGE_PERSON_LINK_CM.CD_STAGE_PERS_ROLE IN ( 'HP' , 'PR' ) AND
+      STAGE_FC.CD_STAGE_REGION = STAGE_FC_M.CD_STAGE_REGION AND  ! JOIN BACK TO MASTER M
+      STAGE_FC.CD_STAGE_CNTY = STAGE_FC_M.CD_STAGE_CNTY AND  
+      STAGE_FC.ID_UNIT = STAGE_FC_M.ID_UNIT AND  
+      STAGE_PERSON_LINK_CM.ID_PERSON = SPL_CM_M.ID_PERSON
+      AND ! ELIGIBLE CONDITIONS START HERE
+      STAGE_PERSON_LINK_CHILD.ID_PERSON = PERSON_CHILD.ID_PERSON  AND 
+      EVENT_PERSON_LINK_FCCP.ID_EVENT = FCCP_FAMILY_CHILD.ID_EVENT  AND 
+      EVENT_PERSON_LINK_FCCP.ID_PERSON = PERSON_CHILD.ID_PERSON  AND 
+      STAGE_FC.ID_CASE = FCCP_FAMILY_CHILD.ID_CASE  AND       
+      add_months ( PERSON_CHILD.DT_PERSON_BIRTH , 12*18) >= to_date( $dt_report ,  'mm/yyyy' ) AND ! CHILD under 18or turns 18 in the reporting month
+      (PERSON_CHILD.DT_PERSON_DEATH is null OR PERSON_CHILD.DT_PERSON_DEATH >= last_day(to_date( $dt_report , 'mm/yyyy' ))) AND ! living
+      EXISTS (SELECT  *  FROM  LEGAL_STATUS_VIEW LSV_CHILD WHERE LSV_CHILD.IN_DFCS_CUSTODY =  'Y'  ! in DFCS
+            AND LSV_CHILD.DT_LEGAL_STAT_END >= to_date( $dt_report , 'mm/yyyy' ) 
+            AND LSV_CHILD.DT_LEGAL_STAT_STATUS_DT < last_day(to_date( $dt_report , 'mm/yyyy' ))+1 
+            AND LSV_CHILD.ID_CASE =  STAGE_FC.ID_CASE  AND  LSV_CHILD.ID_PERSON =  PERSON_CHILD.ID_PERSON ) AND 
+      (FCCP_FAMILY_CHILD.cd_prim_perm_plan in ('FCO','LAE') or FCCP_FAMILY_CHILD.cd_secnd_perm_plan in ('FCO','LAE')) and ! currently APPLA
+      FCCP_FAMILY_CHILD.ID_EVENT = 
+              (select max(e_fccp2.id_event) from event e_fccp2, fccp_family fccp_family_child2, event_person_link epl_fccp2 
+              where e_fccp2.id_event = fccp_family_child2.id_event 
+              and e_fccp2.id_event = epl_fccp2.id_event 
+              and epl_fccp2.id_person = stage_person_link_child.id_person 
+              and epl_fccp2.id_case = stage_person_link_child.id_case 
+              and e_fccp2.cd_event_status =             'APRV'           
+              and fccp_family_child2.dt_curr_rev =  ! multiple plans with the dsame current review date - updated plans, eg.
+                       (select max(fccp_family_child3.dt_curr_rev) from event e_fccp3, fccp_family fccp_family_child3, event_person_link epl_fccp3   
+                        where e_fccp3.id_event = fccp_family_child3.id_event  
+                        and e_fccp3.id_event = epl_fccp3.id_event  
+                        and epl_fccp3.id_person = epl_fccp2.id_person   ! is also spl_child.id_person
+                        and epl_fccp3.id_case = epl_fccp2.id_case   ! is also spl_child.id_case
+                        and e_fccp3.cd_event_status =             'APRV'         
+                        and fccp_family_child3.dt_curr_rev < last_day(to_date($dt_report ,  'mm/yyyy'  ))+1 
+                        )       
+              ) 
+) &eligible_cnt
+(SELECT COUNT(DISTINCT STAGE_FC.ID_STAGE)  FROM STAGE STAGE_FC, STAGE_PERSON_LINK STAGE_PERSON_LINK_CM, STAGE_PERSON_LINK STAGE_PERSON_LINK_CHILD
+            , PERSON_ENC PERSON_CHILD,  FCCP_FAMILY FCCP_FAMILY_CHILD, EVENT_PERSON_LINK EVENT_PERSON_LINK_FCCP
+            , most_recent_placement_by_month pla_view
+        WHERE     STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CM.ID_STAGE  AND 
+        STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CHILD.ID_STAGE  AND 
+        STAGE_FC.CD_STAGE IN ( 'SUB' , 'ADO' ) AND 
+        STAGE_FC.DT_STAGE_START < last_day(to_date( $dt_report ,  'mm/yyyy' ))+1 AND 
+        ( STAGE_FC.DT_STAGE_CLOSE is null OR  STAGE_FC.DT_STAGE_CLOSE >=  to_date( $dt_report ,  'mm/yyyy' )) AND 
+        STAGE_FC.ID_STAGE = (SELECT  (max ( S1.ID_STAGE ))  FROM  STAGE S1,  STAGE_PERSON_LINK SPL1 WHERE S1.ID_STAGE = SPL1.ID_STAGE ! current FC stage
+                         AND  S1.CD_STAGE IN ( 'ADO' , 'SUB' ) AND  SPL1.CD_STAGE_PERS_ROLE =  'PC'  
+                         AND  S1.DT_STAGE_START < last_day(to_date( $dt_report , 'mm/yyyy' ))+1 
+                         AND  ( S1.DT_STAGE_CLOSE IS NULL OR  S1.DT_STAGE_CLOSE >= to_date ( $dt_report , 'mm/yyyy' ) ) 
+                         AND  SPL1.ID_PERSON = STAGE_PERSON_LINK_CHILD.ID_PERSON 
+                         AND  SPL1.ID_CASE = STAGE_PERSON_LINK_CHILD.ID_CASE) AND
+      STAGE_PERSON_LINK_CHILD.CD_STAGE_PERS_ROLE =  'PC'  AND 
+      STAGE_PERSON_LINK_CM.CD_STAGE_PERS_ROLE IN ( 'HP' , 'PR' ) AND
+      STAGE_FC.CD_STAGE_REGION = STAGE_FC_M.CD_STAGE_REGION AND  ! JOIN BACK TO MASTER M
+      STAGE_FC.CD_STAGE_CNTY = STAGE_FC_M.CD_STAGE_CNTY AND  
+      STAGE_FC.ID_UNIT = STAGE_FC_M.ID_UNIT AND  
+      STAGE_PERSON_LINK_CM.ID_PERSON = SPL_CM_M.ID_PERSON
+      AND ! ELIGIBLE CONDITIONS START HERE
+      STAGE_PERSON_LINK_CHILD.ID_PERSON = PERSON_CHILD.ID_PERSON  AND 
+      EVENT_PERSON_LINK_FCCP.ID_EVENT = FCCP_FAMILY_CHILD.ID_EVENT  AND 
+      EVENT_PERSON_LINK_FCCP.ID_PERSON = PERSON_CHILD.ID_PERSON  AND 
+      STAGE_FC.ID_CASE = FCCP_FAMILY_CHILD.ID_CASE  AND       
+      add_months ( PERSON_CHILD.DT_PERSON_BIRTH , 12*18) >= to_date( $dt_report ,  'mm/yyyy' ) AND ! CHILD under 18or tunrns 18 in the reporting month
+      (PERSON_CHILD.DT_PERSON_DEATH is null OR PERSON_CHILD.DT_PERSON_DEATH >= last_day(to_date( $dt_report , 'mm/yyyy' ))) AND ! living
+      EXISTS (SELECT  *  FROM  LEGAL_STATUS_VIEW LSV_CHILD WHERE LSV_CHILD.IN_DFCS_CUSTODY =  'Y'  ! in DFCS
+            AND LSV_CHILD.DT_LEGAL_STAT_END >= to_date( $dt_report , 'mm/yyyy' ) 
+            AND LSV_CHILD.DT_LEGAL_STAT_STATUS_DT < last_day(to_date( $dt_report , 'mm/yyyy' ))+1 
+            AND LSV_CHILD.ID_CASE =  STAGE_FC.ID_CASE  AND  LSV_CHILD.ID_PERSON =  PERSON_CHILD.ID_PERSON ) AND 
+      (FCCP_FAMILY_CHILD.cd_prim_perm_plan in ('FCO', 'LAE') or FCCP_FAMILY_CHILD.cd_secnd_perm_plan in ('FCO','LAE') ) and ! APPLA
+      FCCP_FAMILY_CHILD.ID_EVENT = (select max(e_fccp2.id_event)  from event e_fccp2, fccp_family fccp_family_child2, event_person_link epl_fccp2 !
+              where e_fccp2.id_event = fccp_family_child2.id_event 
+              and e_fccp2.id_event = epl_fccp2.id_event 
+              and epl_fccp2.id_person = stage_person_link_child.id_person 
+              and epl_fccp2.id_case = stage_person_link_child.id_case 
+              and e_fccp2.cd_event_status =             'APRV'           
+              and fccp_family_child2.dt_curr_rev =  ! when multiple plans with same date current review - updated plans, eg.
+                       (select max(fccp_family_child3.dt_curr_rev) from event e_fccp3, fccp_family fccp_family_child3, event_person_link epl_fccp3   
+                        where e_fccp3.id_event = fccp_family_child3.id_event  
+                        and e_fccp3.id_event = epl_fccp3.id_event  
+                        and epl_fccp3.id_person = epl_fccp2.id_person   ! is also spl_child.id_person
+                        and epl_fccp3.id_case = epl_fccp2.id_case   ! is also spl_child.id_case
+                        and e_fccp3.cd_event_status =             'APRV'         
+                        and fccp_family_child3.dt_curr_rev < last_day(to_date($dt_report ,  'mm/yyyy'  ))+1 
+                        )       
+              ) 
+      AND ! CONNECTED TO ADULT met conditions start here
+      pla_view.id_person_child = stage_person_link_child.id_person and pla_view.id_case_placement = stage_person_link_child.id_case and
+      ind_conn_adult = 'Y'  
+) &conn_met_cnt 
+(SELECT COUNT(DISTINCT STAGE_FC.ID_STAGE) FROM STAGE STAGE_FC, STAGE_PERSON_LINK STAGE_PERSON_LINK_CM, STAGE_PERSON_LINK STAGE_PERSON_LINK_CHILD            
+      , PERSON_ENC PERSON_CHILD,  FCCP_FAMILY FCCP_FAMILY_CHILD, EVENT_PERSON_LINK EVENT_PERSON_LINK_FCCP            
+      , YOUTH_REPORT_DTL YRD        
+    WHERE     STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CM.ID_STAGE  AND         
+      STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CHILD.ID_STAGE  AND         
+      STAGE_FC.CD_STAGE IN ( 'SUB' , 'ADO' ) AND         
+      STAGE_FC.DT_STAGE_START < last_day(to_date( $dt_report ,  'mm/yyyy' ))+1 AND 
+      ( STAGE_FC.DT_STAGE_CLOSE is null OR  STAGE_FC.DT_STAGE_CLOSE >=  to_date( $dt_report ,  'mm/yyyy' )) AND 
+      STAGE_FC.ID_STAGE = (SELECT  (max ( S1.ID_STAGE ))  FROM  STAGE S1,  STAGE_PERSON_LINK SPL1 WHERE S1.ID_STAGE = SPL1.ID_STAGE ! current FC stage
+                         AND  S1.CD_STAGE IN ( 'ADO' , 'SUB' ) AND  SPL1.CD_STAGE_PERS_ROLE =  'PC'  
+                         AND  S1.DT_STAGE_START < last_day(to_date( $dt_report , 'mm/yyyy' ))+1 
+                         AND  ( S1.DT_STAGE_CLOSE IS NULL OR  S1.DT_STAGE_CLOSE >= to_date ( $dt_report , 'mm/yyyy' ) ) 
+                         AND  SPL1.ID_PERSON = STAGE_PERSON_LINK_CHILD.ID_PERSON 
+                         AND  SPL1.ID_CASE = STAGE_PERSON_LINK_CHILD.ID_CASE) AND
+      STAGE_PERSON_LINK_CHILD.CD_STAGE_PERS_ROLE =  'PC'  AND 
+      STAGE_PERSON_LINK_CM.CD_STAGE_PERS_ROLE IN ( 'HP' , 'PR' ) AND
+      STAGE_FC.CD_STAGE_REGION = STAGE_FC_M.CD_STAGE_REGION AND  ! JOIN BACK TO MASTER M
+      STAGE_FC.CD_STAGE_CNTY = STAGE_FC_M.CD_STAGE_CNTY AND  
+      STAGE_FC.ID_UNIT = STAGE_FC_M.ID_UNIT AND  
+      STAGE_PERSON_LINK_CM.ID_PERSON = SPL_CM_M.ID_PERSON
+      AND ! ELIGIBLE CONDITIONS START HERE
+      STAGE_PERSON_LINK_CHILD.ID_PERSON = PERSON_CHILD.ID_PERSON  AND 
+      EVENT_PERSON_LINK_FCCP.ID_EVENT = FCCP_FAMILY_CHILD.ID_EVENT  AND 
+      EVENT_PERSON_LINK_FCCP.ID_PERSON = PERSON_CHILD.ID_PERSON  AND 
+      STAGE_FC.ID_CASE = FCCP_FAMILY_CHILD.ID_CASE  AND       
+      add_months ( PERSON_CHILD.DT_PERSON_BIRTH , 12*18) >= to_date( $dt_report ,  'mm/yyyy' ) AND ! CHILD under 18
+      (PERSON_CHILD.DT_PERSON_DEATH is null OR PERSON_CHILD.DT_PERSON_DEATH >= last_day(to_date( $dt_report , 'mm/yyyy' ))) AND ! living
+      EXISTS (SELECT  *  FROM  LEGAL_STATUS_VIEW LSV_CHILD WHERE LSV_CHILD.IN_DFCS_CUSTODY =  'Y'  ! in DFCS
+            AND LSV_CHILD.DT_LEGAL_STAT_END >= to_date( $dt_report , 'mm/yyyy' ) 
+            AND LSV_CHILD.DT_LEGAL_STAT_STATUS_DT < last_day(to_date( $dt_report , 'mm/yyyy' ))+1 
+            AND LSV_CHILD.ID_CASE =  STAGE_FC.ID_CASE  AND  LSV_CHILD.ID_PERSON =  PERSON_CHILD.ID_PERSON ) AND 
+      (FCCP_FAMILY_CHILD.cd_prim_perm_plan in ('FCO','LAE') or FCCP_FAMILY_CHILD.cd_secnd_perm_plan in ('FCO','LAE') ) and ! currently APPLA
+      FCCP_FAMILY_CHILD.ID_EVENT = (select max(e_fccp2.id_event) from event e_fccp2, fccp_family fccp_family_child2, event_person_link epl_fccp2 
+              where e_fccp2.id_event = fccp_family_child2.id_event 
+              and e_fccp2.id_event = epl_fccp2.id_event 
+              and epl_fccp2.id_person = stage_person_link_child.id_person 
+              and epl_fccp2.id_case = stage_person_link_child.id_case 
+              and e_fccp2.cd_event_status =             'APRV'           
+              and fccp_family_child2.dt_curr_rev =  
+                       (select max(fccp_family_child3.dt_curr_rev) from event e_fccp3, fccp_family fccp_family_child3, event_person_link epl_fccp3   
+                        where e_fccp3.id_event = fccp_family_child3.id_event  
+                        and e_fccp3.id_event = epl_fccp3.id_event  
+                        and epl_fccp3.id_person = epl_fccp2.id_person   ! is also spl_child.id_person
+                        and epl_fccp3.id_case = epl_fccp2.id_case   ! is also spl_child.id_case
+                        and e_fccp3.cd_event_status =             'APRV'         
+                        and fccp_family_child3.dt_curr_rev < last_day(to_date($dt_report ,  'mm/yyyy'  ))+1 
+                        )       
+              ) 
+      AND ! ILP met conditions start here
+      STAGE_PERSON_LINK_CHILD.ID_PERSON = YRD.ID_PERSON AND
+      YRD.DT_RPT_PERIOD_END > to_date($dt_report, 'mm/yyyy') AND 
+      months_between( YRD.DT_RPT_PERIOD_END , to_date($dt_report, 'mm/yyyy') ) < 6 AND! there are 2 reporting periods end in on 3/31/yyyy and 9/30/yyyy
+      (YRD.IND_ACAD_SUPPORT = 'Y' or  YRD.IND_BDGT_FIN_MGT = 'Y' or   YRD.IND_CAREER_PREP = 'Y' or   
+       YRD.IND_EDU_FINANCE = 'Y' or   YRD.IND_EMP_PROG_VOC = 'Y' or   YRD.IND_FAM_MARR_EDU = 'Y' or   
+       YRD.IND_HEALTH_EDU = 'Y' or   YRD.IND_HOUSING_EDU = 'Y' or  YRD.IND_MENTORING = 'Y' or  
+       YRD.IND_OTH_FINANCE = 'Y' or   YRD.IND_PS_EDU_SUPPORT = 'Y' or  YRD.IND_ROOM_BRD_FIN = 'Y' or   
+       YRD.IND_SUPER_IL = 'Y' ) 
+) &ilp_met_cnt
+(SELECT COUNT(DISTINCT STAGE_FC.ID_STAGE)  FROM STAGE STAGE_FC, STAGE_PERSON_LINK STAGE_PERSON_LINK_CM, STAGE_PERSON_LINK STAGE_PERSON_LINK_CHILD
+            , PERSON_ENC PERSON_CHILD,  FCCP_FAMILY FCCP_FAMILY_CHILD, EVENT_PERSON_LINK EVENT_PERSON_LINK_FCCP
+            , most_recent_placement_by_month pla_view
+    WHERE     STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CM.ID_STAGE  AND 
+      STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CHILD.ID_STAGE  AND 
+      STAGE_FC.CD_STAGE IN ( 'SUB' , 'ADO' ) AND 
+      STAGE_FC.DT_STAGE_START < last_day(to_date( $dt_report ,  'mm/yyyy' ))+1 AND 
+      ( STAGE_FC.DT_STAGE_CLOSE is null OR  STAGE_FC.DT_STAGE_CLOSE >=  to_date( $dt_report ,  'mm/yyyy' )) AND 
+      STAGE_FC.ID_STAGE = (SELECT  (max ( S1.ID_STAGE ))  FROM  STAGE S1,  STAGE_PERSON_LINK SPL1 WHERE S1.ID_STAGE = SPL1.ID_STAGE ! current FC stage
+                         AND  S1.CD_STAGE IN ( 'ADO' , 'SUB' ) AND  SPL1.CD_STAGE_PERS_ROLE =  'PC'  
+                         AND  S1.DT_STAGE_START < last_day(to_date( $dt_report , 'mm/yyyy' ))+1 
+                         AND  ( S1.DT_STAGE_CLOSE IS NULL OR  S1.DT_STAGE_CLOSE >= to_date ( $dt_report , 'mm/yyyy' ) ) 
+                         AND  SPL1.ID_PERSON = STAGE_PERSON_LINK_CHILD.ID_PERSON 
+                         AND  SPL1.ID_CASE = STAGE_PERSON_LINK_CHILD.ID_CASE) AND
+      STAGE_PERSON_LINK_CHILD.CD_STAGE_PERS_ROLE =  'PC'  AND 
+      STAGE_PERSON_LINK_CM.CD_STAGE_PERS_ROLE IN ( 'HP' , 'PR' ) AND
+      STAGE_FC.CD_STAGE_REGION = STAGE_FC_M.CD_STAGE_REGION AND  ! JOIN BACK TO MASTER M
+      STAGE_FC.CD_STAGE_CNTY = STAGE_FC_M.CD_STAGE_CNTY AND  
+      STAGE_FC.ID_UNIT = STAGE_FC_M.ID_UNIT AND  
+      STAGE_PERSON_LINK_CM.ID_PERSON = SPL_CM_M.ID_PERSON
+      AND ! ELIGIBLE CONDITIONS START HERE
+      STAGE_PERSON_LINK_CHILD.ID_PERSON = PERSON_CHILD.ID_PERSON  AND 
+      EVENT_PERSON_LINK_FCCP.ID_EVENT = FCCP_FAMILY_CHILD.ID_EVENT  AND 
+      EVENT_PERSON_LINK_FCCP.ID_PERSON = PERSON_CHILD.ID_PERSON  AND 
+      STAGE_FC.ID_CASE = FCCP_FAMILY_CHILD.ID_CASE  AND       
+      add_months ( PERSON_CHILD.DT_PERSON_BIRTH , 12*18) >= to_date( $dt_report ,  'mm/yyyy' ) AND ! CHILD under 18,or turns 18 in the reporting month
+      (PERSON_CHILD.DT_PERSON_DEATH is null OR PERSON_CHILD.DT_PERSON_DEATH >= last_day(to_date( $dt_report , 'mm/yyyy' ))) AND ! living
+      EXISTS (SELECT  *  FROM  LEGAL_STATUS_VIEW LSV_CHILD WHERE LSV_CHILD.IN_DFCS_CUSTODY =  'Y'  ! in DFCS
+            AND LSV_CHILD.DT_LEGAL_STAT_END >= to_date( $dt_report , 'mm/yyyy' ) 
+            AND LSV_CHILD.DT_LEGAL_STAT_STATUS_DT < last_day(to_date( $dt_report , 'mm/yyyy' ))+1 
+            AND LSV_CHILD.ID_CASE =  STAGE_FC.ID_CASE  AND  LSV_CHILD.ID_PERSON =  PERSON_CHILD.ID_PERSON ) AND 
+      FCCP_FAMILY_CHILD.ID_EVENT = (select max(e_fccp2.id_event) from event e_fccp2, fccp_family fccp_family_child2, event_person_link epl_fccp2 
+              where e_fccp2.id_event = fccp_family_child2.id_event 
+              and e_fccp2.id_event = epl_fccp2.id_event 
+              and epl_fccp2.id_person = stage_person_link_child.id_person 
+              and epl_fccp2.id_case = stage_person_link_child.id_case 
+              and e_fccp2.cd_event_status =             'APRV'           
+              and fccp_family_child2.dt_curr_rev =  
+                       (select max(fccp_family_child3.dt_curr_rev) from event e_fccp3, fccp_family fccp_family_child3, event_person_link epl_fccp3   
+                        where e_fccp3.id_event = fccp_family_child3.id_event  
+                        and e_fccp3.id_event = epl_fccp3.id_event  
+                        and epl_fccp3.id_person = epl_fccp2.id_person   ! is also spl_child.id_person
+                        and epl_fccp3.id_case = epl_fccp2.id_case   ! is also spl_child.id_case
+                        and e_fccp3.cd_event_status =             'APRV'         
+                        and fccp_family_child3.dt_curr_rev < last_day(to_date($dt_report ,  'mm/yyyy'  ))+1 
+                        )       
+              ) 
+      AND ! COMMITMENT met conditions start here
+      pla_view.id_person_child = stage_person_link_child.id_person and pla_view.id_case_placement = stage_person_link_child.id_case  and
+      ( ( ( (FCCP_FAMILY_CHILD.cd_prim_perm_plan in ('FCO') and NVL(FCCP_FAMILY_CHILD.cd_secnd_perm_plan, 'NVL') not in ('LAE'))
+             or (FCCP_FAMILY_CHILD.cd_secnd_perm_plan in ('FCO') and NVL(FCCP_FAMILY_CHILD.cd_prim_perm_plan, 'NVL') not in ('LAE')))
+          and ind_ltfc = 'Y' and dt_ltfc_signed < last_day(to_date( $dt_report ,  'mm/yyyy' )) + 1
+        )
+        or ((FCCP_FAMILY_CHILD.cd_prim_perm_plan in ('LAE') and NVL(FCCP_FAMILY_CHILD.cd_secnd_perm_plan, 'NVL') not in ('FCO') and nvl(ind_ltfc, 'N') = 'N' and nvl(dt_ltfc_signed, to_date('12/31/4712', 'mm/dd/yyyy')) >= last_day(to_date( $dt_report ,  'mm/yyyy' )) + 1)
+            or (FCCP_FAMILY_CHILD.cd_secnd_perm_plan in ('LAE') and NVL(FCCP_FAMILY_CHILD.cd_prim_perm_plan, 'NVL') not in ('FCO') and nvl(ind_ltfc, 'N') = 'N' and nvl(dt_ltfc_signed, to_date('12/31/4712', 'mm/dd/yyyy')) >= last_day(to_date( $dt_report ,  'mm/yyyy' )) + 1)
+           )! EMAN does not concern about commiment, it counts as Yes to be used in percentage calculation
+      )
+) &commitment_met_cnt
+(SELECT COUNT(DISTINCT STAGE_FC.ID_STAGE) FROM STAGE STAGE_FC, STAGE_PERSON_LINK STAGE_PERSON_LINK_CM, STAGE_PERSON_LINK STAGE_PERSON_LINK_CHILD
+            , PERSON_ENC PERSON_CHILD,  FCCP_FAMILY FCCP_FAMILY_CHILD, EVENT_PERSON_LINK EVENT_PERSON_LINK_FCCP
+            , YOUTH_REPORT_DTL YRD, most_recent_placement_by_month pla_view
+      WHERE     STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CM.ID_STAGE  AND 
+      STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CHILD.ID_STAGE  AND 
+      STAGE_FC.CD_STAGE IN ( 'SUB' , 'ADO' ) AND 
+      STAGE_FC.DT_STAGE_START < last_day(to_date( $dt_report ,  'mm/yyyy' ))+1 AND 
+      ( STAGE_FC.DT_STAGE_CLOSE is null OR  STAGE_FC.DT_STAGE_CLOSE >=  to_date( $dt_report ,  'mm/yyyy' )) AND 
+      STAGE_FC.ID_STAGE = (SELECT  (max ( S1.ID_STAGE ))  FROM  STAGE S1,  STAGE_PERSON_LINK SPL1 WHERE S1.ID_STAGE = SPL1.ID_STAGE ! current FC stage
+                         AND  S1.CD_STAGE IN ( 'ADO' , 'SUB' ) AND  SPL1.CD_STAGE_PERS_ROLE =  'PC'  
+                         AND  S1.DT_STAGE_START < last_day(to_date( $dt_report , 'mm/yyyy' ))+1 
+                         AND  ( S1.DT_STAGE_CLOSE IS NULL OR  S1.DT_STAGE_CLOSE >= to_date ( $dt_report , 'mm/yyyy' ) ) 
+                         AND  SPL1.ID_PERSON = STAGE_PERSON_LINK_CHILD.ID_PERSON 
+                         AND  SPL1.ID_CASE = STAGE_PERSON_LINK_CHILD.ID_CASE) AND
+      STAGE_PERSON_LINK_CHILD.CD_STAGE_PERS_ROLE =  'PC'  AND 
+      STAGE_PERSON_LINK_CM.CD_STAGE_PERS_ROLE IN ( 'HP' , 'PR' ) AND
+      STAGE_FC.CD_STAGE_REGION = STAGE_FC_M.CD_STAGE_REGION AND  ! JOIN BACK TO MASTER M
+      STAGE_FC.CD_STAGE_CNTY = STAGE_FC_M.CD_STAGE_CNTY AND  
+      STAGE_FC.ID_UNIT = STAGE_FC_M.ID_UNIT AND  
+      STAGE_PERSON_LINK_CM.ID_PERSON = SPL_CM_M.ID_PERSON
+      AND ! ELIGIBLE CONDITIONS START HERE
+      STAGE_PERSON_LINK_CHILD.ID_PERSON = PERSON_CHILD.ID_PERSON  AND 
+      EVENT_PERSON_LINK_FCCP.ID_EVENT = FCCP_FAMILY_CHILD.ID_EVENT  AND 
+      EVENT_PERSON_LINK_FCCP.ID_PERSON = PERSON_CHILD.ID_PERSON  AND 
+      STAGE_FC.ID_CASE = FCCP_FAMILY_CHILD.ID_CASE  AND       
+      add_months ( PERSON_CHILD.DT_PERSON_BIRTH , 12*18) >= to_date( $dt_report ,  'mm/yyyy' ) AND ! CHILD under 18, or turns 18 in reporting month
+      (PERSON_CHILD.DT_PERSON_DEATH is null OR PERSON_CHILD.DT_PERSON_DEATH >= last_day(to_date( $dt_report , 'mm/yyyy' ))) AND ! living
+      EXISTS (SELECT  *  FROM  LEGAL_STATUS_VIEW LSV_CHILD WHERE LSV_CHILD.IN_DFCS_CUSTODY =  'Y'  ! in DFCS
+            AND LSV_CHILD.DT_LEGAL_STAT_END >= to_date( $dt_report , 'mm/yyyy' ) 
+            AND LSV_CHILD.DT_LEGAL_STAT_STATUS_DT < last_day(to_date( $dt_report , 'mm/yyyy' ))+1 
+            AND LSV_CHILD.ID_CASE =  STAGE_FC.ID_CASE  AND  LSV_CHILD.ID_PERSON =  PERSON_CHILD.ID_PERSON ) AND 
+      (FCCP_FAMILY_CHILD.cd_prim_perm_plan in ('FCO','LAE') or FCCP_FAMILY_CHILD.cd_secnd_perm_plan in ('FCO','LAE') ) and ! currently APPLA
+      FCCP_FAMILY_CHILD.ID_EVENT = (select max(e_fccp2.id_event) from event e_fccp2, fccp_family fccp_family_child2, event_person_link epl_fccp2 
+              where e_fccp2.id_event = fccp_family_child2.id_event 
+              and e_fccp2.id_event = epl_fccp2.id_event 
+              and epl_fccp2.id_person = stage_person_link_child.id_person 
+              and epl_fccp2.id_case = stage_person_link_child.id_case 
+              and e_fccp2.cd_event_status =             'APRV'           
+              and fccp_family_child2.dt_curr_rev =  !multiple plans with same date current review - updated plans, eg.
+                       (select max(fccp_family_child3.dt_curr_rev) from event e_fccp3, fccp_family fccp_family_child3, event_person_link epl_fccp3   
+                        where e_fccp3.id_event = fccp_family_child3.id_event  
+                        and e_fccp3.id_event = epl_fccp3.id_event  
+                        and epl_fccp3.id_person = epl_fccp2.id_person   ! is also spl_child.id_person
+                        and epl_fccp3.id_case = epl_fccp2.id_case   ! is also spl_child.id_case
+                        and e_fccp3.cd_event_status =             'APRV'         
+                        and fccp_family_child3.dt_curr_rev < last_day(to_date($dt_report ,  'mm/yyyy'  ))+1 
+                        )       
+              ) 
+      AND ! APPLA met conditions start here
+      STAGE_PERSON_LINK_CHILD.ID_PERSON = YRD.ID_PERSON AND
+      YRD.DT_RPT_PERIOD_END > to_date($dt_report, 'mm/yyyy') AND 
+      months_between( YRD.DT_RPT_PERIOD_END , to_date($dt_report, 'mm/yyyy') ) < 6 AND
+      (YRD.IND_ACAD_SUPPORT = 'Y' or  YRD.IND_BDGT_FIN_MGT = 'Y' or   YRD.IND_CAREER_PREP = 'Y' or   YRD.IND_EDU_FINANCE = 'Y' or   
+      YRD.IND_EMP_PROG_VOC = 'Y' or   YRD.IND_FAM_MARR_EDU = 'Y' or   YRD.IND_HEALTH_EDU = 'Y' or   YRD.IND_HOUSING_EDU = 'Y' or  
+      YRD.IND_MENTORING = 'Y' or  YRD.IND_OTH_FINANCE = 'Y' or   YRD.IND_PS_EDU_SUPPORT = 'Y' or  YRD.IND_ROOM_BRD_FIN = 'Y' or   
+      YRD.IND_SUPER_IL = 'Y' ) AND
+      pla_view.id_person_child = stage_person_link_child.id_person and pla_view.id_case_placement = stage_person_link_child.id_case AND
+      ((( FCCP_FAMILY_CHILD.cd_prim_perm_plan = 'FCO' or FCCP_FAMILY_CHILD.cd_secnd_perm_plan = 'FCO' ) ! LTFC
+                                and pla_view.ind_ltfc = 'Y' and pla_view.dt_ltfc_signed < last_day(to_date( $dt_report ,  'mm/yyyy' )) + 1
+        ) or 
+       (( FCCP_FAMILY_CHILD.cd_prim_perm_plan = 'LAE' or FCCP_FAMILY_CHILD.cd_secnd_perm_plan = 'LAE' ) ! EMAN
+                                and pla_view.ind_conn_adult = 'Y') 
+      )
+) &appla_met_cnt
+
+(SELECT DISTINCT  (COUNT(DISTINCT  STAGE_FC.ID_STAGE ))  FROM  STAGE STAGE_FC,  STAGE_PERSON_LINK STAGE_PERSON_LINK_CM,  STAGE_PERSON_LINK STAGE_PERSON_LINK_CHILD WHERE STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CM.ID_STAGE
+  AND  STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CHILD.ID_STAGE
+ AND  STAGE_FC.CD_STAGE IN ('ADO','SUB') AND  STAGE_FC.DT_STAGE_START < last_day(to_date( $dt_report ,  'mm/yyyy' ))+1 AND  ( STAGE_FC.DT_STAGE_CLOSE IS NULL OR  STAGE_FC.DT_STAGE_CLOSE >= to_date( $dt_report ,  'mm/yyyy' ) ) AND  STAGE_PERSON_LINK_CHILD.CD_STAGE_PERS_ROLE = 'PC' AND  STAGE_PERSON_LINK_CM.CD_STAGE_PERS_ROLE IN ('HP','PR') AND  STAGE_FC.ID_STAGE = (SELECT  (max ( S1.ID_STAGE ))  FROM  STAGE S1,  STAGE_PERSON_LINK SPL1 WHERE S1.ID_STAGE = SPL1.ID_STAGE
+                         AND  S1.CD_STAGE IN ( 'ADO' , 'SUB' ) AND  SPL1.CD_STAGE_PERS_ROLE =  'PC'  
+                         AND  S1.DT_STAGE_START < last_day(to_date( $dt_report , 'mm/yyyy' ))+1 
+                         AND  ( S1.DT_STAGE_CLOSE IS NULL OR  S1.DT_STAGE_CLOSE >= to_date ( $dt_report , 'mm/yyyy' ) ) 
+                         AND  SPL1.ID_PERSON = STAGE_PERSON_LINK_CHILD.ID_PERSON 
+                         AND  SPL1.ID_CASE = STAGE_PERSON_LINK_CHILD.ID_CASE) AND  STAGE_FC.CD_STAGE_REGION = STAGE_FC_M.CD_STAGE_REGION AND  STAGE_FC.CD_STAGE_CNTY = STAGE_FC_M.CD_STAGE_CNTY AND  STAGE_FC.ID_UNIT = STAGE_FC_M.ID_UNIT AND  STAGE_PERSON_LINK_CM.ID_PERSON = SPL_CM_M.ID_PERSON) &Master_Query_Assigned
+CCOUNT_STAGE_M.DECODE &Master_Query_CCOUNT_STAGE_M.DECODE
+UNIT_STAGE_M.NBR_UNIT &Master_Query_UNIT_STAGE_M.NBR_UNIT
+UNIT_STAGE_M.ID_UNIT &Master_Query_UNIT_STAGE_M.ID_UNIT
+CCOUNT_UNIT_M.DECODE &Master_Query_CCOUNT_UNIT_M.DECODE
+('( ' || decode (  CCOUNT_UNIT_M.DECODE  , '-None-', '-Multi-County-',   CCOUNT_UNIT_M.DECODE  ) || ' )') &sup_cnty_decode
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+('Region   ' ||  STAGE_FC_M.CD_STAGE_REGION) &region_header_label () On-Break Set=3 Level=1 Save=$prev_stage_region Print=Never Before=Master_Queryregion_header_label_BeforeProc301 After=Master_Queryregion_header_label_AfterProc301
+(decode ( CCOUNT_STAGE_M.DECODE , '-None-', '-Multi-County-',  CCOUNT_STAGE_M.DECODE )) &county_header_label () On-Break Set=3 Level=2 Save=$prev_stage_cnty Print=Never Before=Master_Querycounty_header_label_BeforeProc302 After=Master_Querycounty_header_label_AfterProc302
+('Unit  ' ||  UNIT_STAGE_M.NBR_UNIT || '     -     Supervisor:  ' ||  PERSON_SUP_M.NM_PERSON_FULL) &unit_header_label () On-Break Set=3 Level=3 Print=Never Before=Master_Queryunit_header_label_BeforeProc303 After=Master_Queryunit_header_label_AfterProc303
+PERSON_CM_M.ID_PERSON &Master_Query_PERSON_CM_M.ID_PERSON () On-Break Set=3 Level=4 Print=Never After=Master_QueryID_PERSON_AfterProc304
+PERSON_CM_M.NM_PERSON_FULL &Master_Query_PERSON_CM_M.NM_PERSON_FULL (14,26,25)
+ Let #cm_eligible_cnt=&eligible_cnt
+ Print #cm_eligible_cnt (14,212) Edit 9999
+ If 1=1
+    ! do nothing
+ Else
+ Let #cm_conn_met_cnt=&conn_met_cnt
+ Print #cm_conn_met_cnt (14,245) Edit 9999
+ End-If
+ If 1=1
+    ! do nothing
+ Else
+ Let #cm_ilp_met_cnt=&ilp_met_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #cm_ilp_met_cnt (14,324) Edit 9999
+ End-If
+ If 1=1
+    ! do nothing
+ Else
+ Let #cm_commitment_met_cnt=&commitment_met_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #cm_commitment_met_cnt (14,395) Edit 9999
+ End-If
+ If 1=1
+    ! do nothing
+ Else
+ Let #cm_appla_met_cnt=&appla_met_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #cm_appla_met_cnt (14,466) Edit 9999
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_Assigned (14,170) Edit 9999na
+ Let #cm_eligible_cnt=&eligible_cnt
+ Let #cm_ilp_met_cnt=&ilp_met_cnt
+ Let #cm_eligible_cnt=&eligible_cnt
+ Let #cm_eligible_cnt=&eligible_cnt
+ Let $cm_percent_ILP_met=cond( #cm_eligible_cnt  !=0, EDIT(  #cm_ilp_met_cnt   / cond( #cm_eligible_cnt  != 0,  #cm_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $cm_percent_ILP_met (14,349,8)
+ Let #cm_eligible_cnt=&eligible_cnt
+ Let #cm_commitment_met_cnt=&commitment_met_cnt
+ Let #cm_eligible_cnt=&eligible_cnt
+ Let #cm_eligible_cnt=&eligible_cnt
+ Let $cm_percent_commitment_met=cond( #cm_eligible_cnt  !=0, EDIT(  #cm_commitment_met_cnt   / cond( #cm_eligible_cnt  != 0,  #cm_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $cm_percent_commitment_met (14,420,8)
+ Let #cm_eligible_cnt=&eligible_cnt
+ Let #cm_appla_met_cnt=&appla_met_cnt
+ Let #cm_eligible_cnt=&eligible_cnt
+ Let #cm_eligible_cnt=&eligible_cnt
+ Let $cm_percent_appla_met=cond( #cm_eligible_cnt  !=0, EDIT(  #cm_appla_met_cnt / cond( #cm_eligible_cnt  != 0,  #cm_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $cm_percent_appla_met (14,494,8)
+ Let #cm_eligible_cnt=&eligible_cnt
+ Let #cm_conn_met_cnt=&conn_met_cnt
+ Let #cm_eligible_cnt=&eligible_cnt
+ Let #cm_eligible_cnt=&eligible_cnt
+ Let $cm_percent_conn_met=cond( #cm_eligible_cnt  !=0, EDIT( #cm_conn_met_cnt  / cond( #cm_eligible_cnt  != 0,  #cm_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $cm_percent_conn_met (14,280,8)
+ Add &Master_Query_Assigned To #report_assigned_cnt
+ Add 1 To #3ROW_COUNT
+ Add &Master_Query_Assigned To #region_assigned_cnt
+ Add &Master_Query_Assigned To #cnty_assigned_cnt
+ Add &Master_Query_Assigned To #unit_assigned_cnt
+ Next-Listing  Need=14
+From  STAGE STAGE_FC_M, STAGE_PERSON_LINK SPL_CM_M
+,      PERSON_ENC PERSON_CM_M, UNIT UNIT_STAGE_M, CCOUNT CCOUNT_STAGE_M
+,      CCOUNT CCOUNT_UNIT_M, PERSON_ENC PERSON_SUP_M, STAGE_PERSON_LINK SPL_CHILD_M
+      Where STAGE_FC_M.ID_STAGE = SPL_CM_M.ID_STAGE
+            And SPL_CM_M.ID_PERSON = PERSON_CM_M.ID_PERSON
+            And STAGE_FC_M.ID_UNIT = UNIT_STAGE_M.ID_UNIT
+            And UNIT_STAGE_M.CD_COUNTY = CCOUNT_UNIT_M.CODE
+            And STAGE_FC_M.CD_STAGE_CNTY = CCOUNT_STAGE_M.CODE
+            And UNIT_STAGE_M.ID_PERSON = PERSON_SUP_M.ID_PERSON
+            And STAGE_FC_M.ID_STAGE = SPL_CHILD_M.ID_STAGE
+ And SPL_CM_M.CD_STAGE_PERS_ROLE IN ('PR','HP')
+ And STAGE_FC_M.CD_STAGE IN ('SUB','ADO')
+ And STAGE_FC_M.DT_STAGE_START < LAST_DAY(TO_DATE($dt_report, 'mm/yyyy')) + 1
+ And (STAGE_FC_M.DT_STAGE_CLOSE IS NULL  Or STAGE_FC_M.DT_STAGE_CLOSE >= TO_DATE($dt_report, 'mm/yyyy'))
+ And [$where_clause_region_county]
+ And STAGE_FC_M.ID_STAGE = (SELECT  (max ( STAGE_MAX.ID_STAGE ))  FROM  STAGE STAGE_MAX,  STAGE_PERSON_LINK SPL_MAX WHERE STAGE_MAX.ID_STAGE
+     = SPL_MAX.ID_STAGE
+ AND  SPL_MAX.CD_STAGE_PERS_ROLE = 'PC' AND  STAGE_MAX.CD_STAGE IN ('ADO','SUB') AND  STAGE_MAX.DT_STAGE_START <
+     LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+ 1 AND  (STAGE_MAX.DT_STAGE_CLOSE IS NULL  OR  STAGE_MAX.DT_STAGE_CLOSE >= TO_DATE($dt_report
+    ,'mm/yyyy')) AND  SPL_MAX.ID_PERSON = SPL_CHILD_M.ID_PERSON AND  SPL_MAX.ID_CASE = SPL_CHILD_M.ID_CASE)
+ And SPL_CHILD_M.CD_STAGE_PERS_ROLE = 'PC'
+ And (SELECT DISTINCT  (COUNT(DISTINCT  STAGE_FC.ID_STAGE ))  FROM  STAGE STAGE_FC,  STAGE_PERSON_LINK STAGE_PERSON_LINK_CM,  STAGE_PERSON_LINK
+     STAGE_PERSON_LINK_CHILD WHERE STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CM.ID_STAGE
+  AND  STAGE_FC.ID_STAGE = STAGE_PERSON_LINK_CHILD.ID_STAGE
+
+     AND  STAGE_FC.CD_STAGE IN ('ADO','SUB') AND  STAGE_FC.DT_STAGE_START < last_day(to_date( $dt_report ,  'mm/yyyy' ))+1 AND  ( STAGE_FC.DT_STAGE_CLOSE
+     IS NULL OR  STAGE_FC.DT_STAGE_CLOSE >= to_date( $dt_report ,  'mm/yyyy' ) ) AND  STAGE_PERSON_LINK_CHILD.CD_STAGE_PERS_ROLE = 'PC' AND
+      STAGE_PERSON_LINK_CM.CD_STAGE_PERS_ROLE IN ('HP','PR') AND  STAGE_FC.ID_STAGE = (SELECT  (max ( S1.ID_STAGE ))  FROM  STAGE S1,  STAGE_PERSON_LINK
+     SPL1 WHERE S1.ID_STAGE = SPL1.ID_STAGE
+                         AND  S1.CD_STAGE IN ( 'ADO' , 'SUB' ) AND  SPL1.CD_STAGE_PERS_ROLE 
+    =  'PC'  
+                         AND  S1.DT_STAGE_START < last_day(to_date( $dt_report , 'mm/yyyy' ))+1 
+                        
+     AND  ( S1.DT_STAGE_CLOSE IS NULL OR  S1.DT_STAGE_CLOSE >= to_date ( $dt_report , 'mm/yyyy' ) ) 
+                         AND  SPL1.ID_PERSON
+     = STAGE_PERSON_LINK_CHILD.ID_PERSON 
+                         AND  SPL1.ID_CASE = STAGE_PERSON_LINK_CHILD.ID_CASE) AND  STAGE_FC.CD_STAGE_REGION
+     = STAGE_FC_M.CD_STAGE_REGION AND  STAGE_FC.CD_STAGE_CNTY = STAGE_FC_M.CD_STAGE_CNTY AND  STAGE_FC.ID_UNIT = STAGE_FC_M.ID_UNIT AND  STAGE_PERSON_LINK_CM.ID_PERSON
+     = SPL_CM_M.ID_PERSON) > 0
+Order By ('Region   ' ||  STAGE_FC_M.CD_STAGE_REGION)
+,      CCOUNT_STAGE_M.DECODE
+,      ('Unit  ' ||  UNIT_STAGE_M.NBR_UNIT || '     -     Supervisor:  ' ||  PERSON_SUP_M.NM_PERSON_FULL)
+,      UNIT_STAGE_M.ID_UNIT
+,      PERSON_CM_M.NM_PERSON_FULL
+,      PERSON_CM_M.ID_PERSON
+End-Select
+ Next-Listing
+ Next-Listing  Need=18
+ If #3ROW_COUNT > 0
+ Graphic (2,2,538) Horz-Line 20 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Report Summary:'  (18,1) Bold 
+  Print #report_assigned_cnt (18,163) Bold  Edit 99999na
+   Let #report_eligible_cnt=#report_eligible_cnt
+ Print #report_eligible_cnt (18,211) Edit 9999 Bold 
+   If 1=1
+    ! do nothing
+ Else
+ Let #report_conn_met_cnt=#report_conn_met_cnt
+ Print #report_conn_met_cnt (18,245) Edit 9999
+ End-If
+   Let #report_eligible_cnt=#report_eligible_cnt
+ Let #report_eligible_cnt=#report_eligible_cnt
+ Let #report_eligible_cnt=#report_eligible_cnt
+ Let $report_percent_commitment_met=cond( #report_eligible_cnt  !=0, EDIT( #report_commitment_met_cnt  / cond( #report_eligible_cnt  != 0,  #report_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $report_percent_commitment_met (18,418,8) Bold 
+   Let #report_eligible_cnt=#report_eligible_cnt
+ Let #report_eligible_cnt=#report_eligible_cnt
+ Let #report_eligible_cnt=#report_eligible_cnt
+ Let $report_percent_ilp_met=cond( #report_eligible_cnt  !=0, EDIT(  #report_ilp_met_cnt   / cond( #report_eligible_cnt  != 0,  #report_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $report_percent_ilp_met (18,347,8) Bold 
+   Let #report_eligible_cnt=#report_eligible_cnt
+ Let #report_appla_met_cnt=#report_appla_met_cnt
+ Let #report_eligible_cnt=#report_eligible_cnt
+ Let #report_eligible_cnt=#report_eligible_cnt
+ Let $report_percent_appla_met=cond( #report_eligible_cnt  !=0, EDIT(  #report_appla_met_cnt   / cond( #report_eligible_cnt  != 0,  #report_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $report_percent_appla_met (18,491,8) Bold 
+   Let #report_eligible_cnt=#report_eligible_cnt
+ Let #report_conn_met_cnt=#report_conn_met_cnt
+ Let #report_eligible_cnt=#report_eligible_cnt
+ Let #report_eligible_cnt=#report_eligible_cnt
+ Let $report_percent_conn_met=cond( #report_eligible_cnt  !=0, EDIT( #report_conn_met_cnt  / cond( #report_eligible_cnt  != 0,  #report_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $report_percent_conn_met (18,277,8) Bold 
+   If 1=1
+    ! do nothing
+ Else
+ Let #report_appla_met_cnt=#report_appla_met_cnt
+ Print #report_appla_met_cnt (18,468) Edit 9999
+ End-If
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryID_PERSON_AfterProc304
+!Add #cm_assigned_cnt to #report_assigned_cnt
+!Add #cm_assigned_cnt to #region_assigned_cnt
+!Add #cm_assigned_cnt to #cnty_assigned_cnt
+!Add #cm_assigned_cnt to #unit_assigned_cnt
+
+Add #cm_eligible_cnt to #report_eligible_cnt
+Add #cm_eligible_cnt to #region_eligible_cnt
+Add #cm_eligible_cnt to #cnty_eligible_cnt
+Add #cm_eligible_cnt to #unit_eligible_cnt
+
+Add #cm_conn_met_cnt to #report_conn_met_cnt
+Add #cm_conn_met_cnt to #region_conn_met_cnt
+Add #cm_conn_met_cnt to #cnty_conn_met_cnt
+Add #cm_conn_met_cnt to #unit_conn_met_cnt
+
+Add #cm_ilp_met_cnt to #report_ilp_met_cnt
+Add #cm_ilp_met_cnt to #region_ilp_met_cnt
+Add #cm_ilp_met_cnt to #cnty_ilp_met_cnt
+Add #cm_ilp_met_cnt to #unit_ilp_met_cnt
+
+Add #cm_commitment_met_cnt to #report_commitment_met_cnt
+Add #cm_commitment_met_cnt to #region_commitment_met_cnt
+Add #cm_commitment_met_cnt to #cnty_commitment_met_cnt
+Add #cm_commitment_met_cnt to #unit_commitment_met_cnt
+
+Add #cm_appla_met_cnt to #report_appla_met_cnt
+Add #cm_appla_met_cnt to #region_appla_met_cnt
+Add #cm_appla_met_cnt to #cnty_appla_met_cnt
+Add #cm_appla_met_cnt to #unit_appla_met_cnt
+
+ Next-Listing  Need=3
+ Alter-Printer Font=4 Point-Size=1    ! [SQR.INI] 4=Arial,proportional
+ Print '  '  (3,1)
+   Position (+1,)
+ Next-Listing  Need=14
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Queryregion_header_label_BeforeProc301
+If $regionSelected = 'N' and $countySelected = 'N'
+!Move 0 to #region_assigned_cnt
+Move 0 to #region_eligible_cnt
+Move 0 to #region_conn_met_cnt
+Move 0 to #region_ilp_met_cnt
+Move 0 to #region_commitment_met_cnt
+Move 0 to #region_appla_met_cnt
+ Next-Listing  Need=19
+ Graphic (1,1,538) Horz-Line 20 
+ Position (3,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &region_header_label (19,1,33) Bold 
+   Position (+12,)
+ Next-Listing  Need=14
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Queryregion_header_label_AfterProc301
+If $regionSelected = 'N' and $countySelected = 'N'
+
+ Next-Listing  Need=20
+ Graphic (2,2,538) Horz-Line 20 
+ Position (4,1)
+  Let $region_sum_label=$prev_stage_region || '  Summary:'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $region_sum_label (20,1,24) Bold 
+  Let #region_eligible_cnt=#region_eligible_cnt
+ Print #region_eligible_cnt (18,211) Edit 9999 Bold 
+ Print #region_assigned_cnt (18,169) Bold  Edit 9999na
+  If 1=1
+    ! do nothing
+ Else
+ Let #region_conn_met_cnt=#region_conn_met_cnt
+ Print #region_conn_met_cnt (19,245) Edit 9999
+ End-If
+  Let #region_eligible_cnt=#region_eligible_cnt
+ Let #region_eligible_cnt=#region_eligible_cnt
+ Let #region_eligible_cnt=#region_eligible_cnt
+ Let $region_percent_commitment_met=cond( #region_eligible_cnt  !=0, EDIT( #region_commitment_met_cnt  / cond( #region_eligible_cnt  != 0,  #region_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $region_percent_commitment_met (18,418,8) Bold 
+  Let #region_eligible_cnt=#region_eligible_cnt
+ Let #region_eligible_cnt=#region_eligible_cnt
+ Let #region_eligible_cnt=#region_eligible_cnt
+ Let $region_percent_ilp_met=cond( #region_eligible_cnt  !=0, EDIT(  #region_ilp_met_cnt   / cond( #region_eligible_cnt  != 0,  #region_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $region_percent_ilp_met (18,347,8) Bold 
+  Let #region_eligible_cnt=#region_eligible_cnt
+ Let #region_eligible_cnt=#region_eligible_cnt
+ Let #region_eligible_cnt=#region_eligible_cnt
+ Let $region_percent_appla_met=cond( #region_eligible_cnt  !=0, EDIT(  #region_appla_met_cnt   / cond( #region_eligible_cnt  != 0,  #region_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $region_percent_appla_met (18,491,8) Bold 
+  Let #region_eligible_cnt=#region_eligible_cnt
+ Let #region_conn_met_cnt=#region_conn_met_cnt
+ Let #region_eligible_cnt=#region_eligible_cnt
+ Let #region_eligible_cnt=#region_eligible_cnt
+ Let $region_percent_conn_met=cond( #region_eligible_cnt  !=0, EDIT( #region_conn_met_cnt  / cond( #region_eligible_cnt  != 0,  #region_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $region_percent_conn_met (18,277,8) Bold 
+   Position (+12,)
+ Move 0 To #region_assigned_cnt
+ Next-Listing  Need=14
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_Querycounty_header_label_BeforeProc302
+If $countySelected = 'N'
+!Move 0 to #cnty_assigned_cnt
+Move 0 to #cnty_eligible_cnt
+Move 0 to #cnty_conn_met_cnt
+Move 0 to #cnty_ilp_met_cnt
+Move 0 to #cnty_commitment_met_cnt
+Move 0 to #cnty_appla_met_cnt
+
+ Next-Listing  Need=20
+ Graphic (1,2,538) Horz-Line 15 
+ Position (2,1)
+ Graphic (1,2,538) Horz-Line 15 
+ Position (2,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &county_header_label (20,1,36) Bold 
+   Position (+12,)
+ Next-Listing  Need=14
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querycounty_header_label_AfterProc302
+If $countySelected = 'N'
+
+ Next-Listing  Need=20
+ Graphic (2,1,538) Horz-Line 15 
+ Position (3,1)
+  Let $cnty_sum_label=$prev_stage_cnty || ' Summary:'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $cnty_sum_label (19,1,23) Bold 
+  Let #cnty_eligible_cnt=#cnty_eligible_cnt
+ Print #cnty_eligible_cnt (19,211) Edit 9999 Bold 
+ Print #cnty_assigned_cnt (19,169) Bold  Edit 9999na
+  If 1=1
+    ! do nothing
+ Else
+ Let #cnty_ilp_met_cnt=#cnty_ilp_met_cnt
+ Print #cnty_ilp_met_cnt (19,324) Edit 9999
+ End-If
+  If 1=1
+    ! do nothing
+ Else
+ Let #cnty_conn_met_cnt=#cnty_conn_met_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #cnty_conn_met_cnt (20,245) Edit 9999
+ End-If
+  Let #cnty_eligible_cnt=#cnty_eligible_cnt
+ Let #cnty_eligible_cnt=#cnty_eligible_cnt
+ Let #cnty_eligible_cnt=#cnty_eligible_cnt
+ Let $cnty_percent_commitment_met=cond( #cnty_eligible_cnt  !=0, EDIT( #cnty_commitment_met_cnt  / cond( #cnty_eligible_cnt  != 0,  #cnty_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $cnty_percent_commitment_met (19,418,8) Bold 
+  Let #cnty_eligible_cnt=#cnty_eligible_cnt
+ Let #cnty_ilp_met_cnt=#cnty_ilp_met_cnt
+ Let #cnty_eligible_cnt=#cnty_eligible_cnt
+ Let #cnty_eligible_cnt=#cnty_eligible_cnt
+ Let $cnty_percent_ilp_met=cond( #cnty_eligible_cnt  !=0, EDIT(  #cnty_ilp_met_cnt   / cond( #cnty_eligible_cnt  != 0,  #cnty_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $cnty_percent_ilp_met (19,347,8) Bold 
+  Let #cnty_eligible_cnt=#cnty_eligible_cnt
+ Let #cnty_eligible_cnt=#cnty_eligible_cnt
+ Let #cnty_eligible_cnt=#cnty_eligible_cnt
+ Let $cnty_percent_appla_met=cond( #cnty_eligible_cnt  !=0, EDIT(  #cnty_appla_met_cnt   / cond( #cnty_eligible_cnt  != 0,  #cnty_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $cnty_percent_appla_met (19,491,8) Bold 
+  Let #cnty_eligible_cnt=#cnty_eligible_cnt
+ Let #cnty_conn_met_cnt=#cnty_conn_met_cnt
+ Let #cnty_eligible_cnt=#cnty_eligible_cnt
+ Let #cnty_eligible_cnt=#cnty_eligible_cnt
+ Let $cnty_percent_conn_met=cond( #cnty_eligible_cnt  !=0, EDIT( #cnty_conn_met_cnt  / cond( #cnty_eligible_cnt  != 0,  #cnty_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $cnty_percent_conn_met (19,277,8) Bold 
+   Position (+12,)
+ Move 0 To #cnty_assigned_cnt
+ Next-Listing  Need=14
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_Queryunit_header_label_BeforeProc303
+!Move 0 to #unit_assigned_cnt
+Move 0 to #unit_eligible_cnt
+Move 0 to #unit_conn_met_cnt
+Move 0 to #unit_ilp_met_cnt
+Move 0 to #unit_commitment_met_cnt
+Move 0 to #unit_appla_met_cnt
+
+ Next-Listing  Need=21
+ Graphic (1,1,538) Horz-Line 10 
+ Position (2,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &unit_header_label (21,1,50) Bold 
+  If &Master_Query_CCOUNT_STAGE_M.DECODE=&Master_Query_CCOUNT_UNIT_M.DECODE
+    ! do nothing
+ Else
+ Print &sup_cnty_decode (21,291,20)
+ End-If
+   Position (+12,)
+ Next-Listing  Need=14
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Queryunit_header_label_AfterProc303
+ Next-Listing  Need=20
+ Graphic (4,26,513) Horz-Line 10 
+ Position (5,1)
+  Let $unit_sum_label='Unit Summary:'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $unit_sum_label (20,26,15) Bold 
+  Let #unit_eligible_cnt=#unit_eligible_cnt
+ Print #unit_eligible_cnt (20,211) Edit 9999 Bold 
+ Print #unit_assigned_cnt (20,169) Bold  Edit 9999na
+  If 1=1
+    ! do nothing
+ Else
+ Let #unit_conn_met_cnt=#unit_conn_met_cnt
+ Print #unit_conn_met_cnt (20,245) Edit 9999
+ End-If
+  Let #unit_eligible_cnt=#unit_eligible_cnt
+ Let #unit_eligible_cnt=#unit_eligible_cnt
+ Let #unit_eligible_cnt=#unit_eligible_cnt
+ Let $unit_percent_commitment_met=cond( #unit_eligible_cnt  !=0, EDIT( #unit_commitment_met_cnt  / cond( #unit_eligible_cnt  != 0,  #unit_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $unit_percent_commitment_met (20,418,8) Bold 
+  Let #unit_eligible_cnt=#unit_eligible_cnt
+ Let #unit_eligible_cnt=#unit_eligible_cnt
+ Let #unit_eligible_cnt=#unit_eligible_cnt
+ Let $unit_percent_ilp_met=cond( #unit_eligible_cnt  !=0, EDIT(  #unit_ilp_met_cnt   / cond( #unit_eligible_cnt  != 0,  #unit_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $unit_percent_ilp_met (20,347,8) Bold 
+  Let #unit_eligible_cnt=#unit_eligible_cnt
+ Let #unit_eligible_cnt=#unit_eligible_cnt
+ Let #unit_eligible_cnt=#unit_eligible_cnt
+ Let $unit_percent_appla_met=cond( #unit_eligible_cnt  !=0, EDIT(  #unit_appla_met_cnt   / cond( #unit_eligible_cnt  != 0,  #unit_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $unit_percent_appla_met (20,491,8) Bold 
+  Let #unit_eligible_cnt=#unit_eligible_cnt
+ Let #unit_conn_met_cnt=#unit_conn_met_cnt
+ Let #unit_eligible_cnt=#unit_eligible_cnt
+ Let #unit_eligible_cnt=#unit_eligible_cnt
+ Let $unit_percent_conn_met=cond( #unit_eligible_cnt  !=0, EDIT( #unit_conn_met_cnt  / cond( #unit_eligible_cnt  != 0,  #unit_eligible_cnt , 1)  * 100, '999.99') || ' %',  '     n/a')
+ Print $unit_percent_conn_met (20,277,8) Bold 
+   Position (+12,)
+ Move 0 To #unit_assigned_cnt
+ Next-Listing  Need=14
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+Alter-Printer Font=4 Point-Size=10
+
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\_PIPs\10\Summary\SHINES.bmp'
+	Image-size=(102,73)
+ Let $region_county_header_disp=$region_county_header
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $region_county_header_disp (83,223,13) Bold 
+ Let $region_header_disp=$region_header
+ Print $region_header_disp (101,241,8) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (16,184,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'APPLA Summary' (40,211,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (16,474) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (16,408,0)
+ Let $dt_report_disp=datetostr ( strtodate($dt_report , 'mm/yyyy' ) , 'mm/yyyy' )
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $dt_report_disp (61,245,7) Bold 
+ If $unitSelected = 'N'
+    ! do nothing
+ Else
+ Let $nbr_unit_header='Unit: ' || $_nbr_unit
+ Print $nbr_unit_header (106,1,15) Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Manager' (137,26,0) Underline  Bold 
+ Print 'Assigned$Cases' (137,149,14) Underline  Bold  Wrap 14 2 line-height=12 Keep-Top on=$
+ Print 'Eligible$Cases' (137,217,14) Underline  Bold  Wrap 14 2 line-height=12 Keep-Top on=$
+ Print '%Commitment$Met' (137,410,11) Underline  Bold  Wrap 11 2 line-height=12 Keep-Top on=$
+ Print '%ILP$Met' (137,353,11) Underline  Bold  Wrap 11 2 line-height=12 Keep-Top on=$
+ Print '%APPLA$Met' (137,489,11) Underline  Bold  Wrap 11 2 line-height=12 Keep-Top on=$
+ Print '%Connected$Met' (137,277,11) Underline  Bold  Wrap 11 2 line-height=12 Keep-Top on=$
+ Else   ! put a non combined page header
+ Print 'Case Manager' (14,26,0) Underline  Bold 
+ Print 'Assigned$Cases' (14,149,14) Underline  Bold  Wrap 14 2 line-height=12 Keep-Top on=$
+ Print 'Eligible$Cases' (14,217,14) Underline  Bold  Wrap 14 2 line-height=12 Keep-Top on=$
+ Print '%Commitment$Met' (14,410,11) Underline  Bold  Wrap 11 2 line-height=12 Keep-Top on=$
+ Print '%ILP$Met' (14,353,11) Underline  Bold  Wrap 11 2 line-height=12 Keep-Top on=$
+ Print '%APPLA$Met' (14,489,11) Underline  Bold  Wrap 11 2 line-height=12 Keep-Top on=$
+ Print '%Connected$Met' (14,277,11) Underline  Bold  Wrap 11 2 line-height=12 Keep-Top on=$
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (13,484) '' ' of '
+ Last-Page (13,517) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

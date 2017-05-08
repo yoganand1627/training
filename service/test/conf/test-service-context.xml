@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+  <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+    <property name="driverClassName" value="${jdbc.driverClassName}"/>
+    <property name="url" value="${jdbc.url}"/>
+    <property name="username" value="${jdbc.username}"/>
+    <property name="password" value="${jdbc.password}"/>
+    <!--<property name="suppressClose" value="false"/>-->
+  </bean>
+
+  <!-- This provides values for ${} variables above. -->
+  <bean id="placeholderConfig" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="location" value="jdbc.properties"/>
+  </bean>
+
+  <!-- Transaction management-->
+  <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+    <property name="sessionFactory" ref="sessionFactory"/>
+  </bean>
+
+  <!-- Session factory for testing. -->
+  <bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+    <property name="dataSource" ref="dataSource"/>
+    <property name="configLocation" value="classpath:hibernate.cfg.xml"/>
+    <property name="hibernateProperties">
+      <props>
+        <prop key="hibernate.dialect">org.hibernate.dialect.Oracle9Dialect</prop>
+      </props>
+    </property>
+  </bean>
+
+  <!-- This creates proxies for beans at runtime in order to make them use transactions declaratively. -->
+  <bean id="autoServiceProxyCreator" class="gov.georgia.dhr.dfcs.sacwis.service.spring.ServiceAutoProxyCreator">
+    <property name="interceptorNames">
+      <list>
+        <idref local="txInterceptor"/>
+        <idref bean="sessionFlushAdvisor"/>
+      </list>
+    </property>
+  </bean>
+
+  <!-- An advisor that automatically transforms common Hibernate exceptions into Service Exceptions. -->
+  <bean id="hibernateAdvisor" class="org.springframework.aop.support.DefaultPointcutAdvisor">
+    <property name="advice" ref="hibernateThrowsAdvice"/>
+  </bean>
+
+  <!-- Note: This bean definition does not contain definitions for transactionManager; it must be provided another file. -->
+  <bean id="txInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+    <property name="transactionManager" ref="transactionManager"/>
+    <property name="transactionAttributeSource" ref="transactionAttributeSource"/>
+  </bean>
+
+  <!-- This bean defines a map between INTERFACE names (not implementation names) and methods and their transaction
+       requirements. Possible values are:
+         o PROPAGATION_REQUIRED: Executes inside an existing transaciton, if available; otherwise, starts a new one.
+         o PROPAGATION_SUPPORTS: Execute inside an existing transaction, if available; otherwise, executes with no transaction.
+         o PROPAGATION_MANDATORY: Executes inside an existing transaction, if available; otherwise, throws an exception.
+         o PROPAGATION_REQUIRES_NEW: Always creats a new transaction.
+         o PROPAGATION_NOT_SUPPORTED: Executes with no transaction; suspeds existing transaction if one is open.
+         o PROPAGATION_NEVER: Executes with no transaction; throws an exception if one exists.
+         o PROPAGATION_NESTED: Run as a nested transaction if one exists; if none exists, execute as PROPAGATION_REQUIRED.
+       In most cases, PROPAGATION_REQUIRED is appropriate. If you use something else, please include a comment as to why.
+       If the transaction is known to be readOnly, ",readOnly" should be included after the transaction attribute attribute.-->
+  <bean id="transactionAttributeSource"
+        class="org.springframework.transaction.interceptor.MethodMapTransactionAttributeSource">
+    <property name="methodMap">
+      <!-- Put the INTERFACE name (not implementation name) in the key, including the method name, and the
+             transactional attribute in the value. -->
+      <map>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.CheckStageEventStatus.status"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.CloseOpenStage.closeOpenStage"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.CloseStageCase.closeStageCase"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.DeleteTodo.deleteTodo" value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.InvalidateApproval.invalidateApproval"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.PostEvent.postEvent" value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveAdminReview.retrieveAdminReview"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveApprovalStatus.retrieveApprovalStatus"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveAssign.retrieveEmployeeAssignInfo"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveCaseFileManagement.retrieveCaseFileManagement"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveCaseList.findCaseListInformation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveCaseMergeList.findCaseMergeList"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveCaseMergeVerify.findCaseMergeVerify"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveCaseSummary.retrieveCaseSummary"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveCaseTodo.retrieveCaseTodo"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveChangeCaseName.findAllPrinciplesAndFacility"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveClosureEvent.retrieveClosureEvent"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveDesignees.retrieveDesigneeAssignments"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveEmployeeDetail.retrieveEmployeeDetail"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveEventList.retrieveEventList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveIntake.findIntakeInformation"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveOfficeCity.findCountiesLinkedToCity"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveOfficeName.retrieveOfficeName"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveOnCallList.findOnCallList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveOnCallListCounty.retrieveOnCallListCounty"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveOnCallPhone.retrieveOnCallPhone"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveRecordsRetention.findRecordsRetention"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveSpecialHandling.findCapsCase"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveStaffList.retrieveStaffList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveStaffSecurity.findEmployeeSecurityInformation"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveStaffTodo.retrieveStaffTodo"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveStageList.retrieveStageList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveStageProgression.retrieveStageProgression"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveUnitID.retrieveUnitID"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveUnitList.retrieveUnitList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveUnitSummary.findUnitSumary"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveUnitSupervisor.findUnitSupervisorName"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveUserProfile.retrieveUserProfile"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.RetrieveWorkload.findWorkloadInformation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveAdminReview.saveAdminReview"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveAssign.saveAssign" value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveCaseFileManagement.saveCaseFileManagement"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveCaseMerge.saveCaseMerge"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveCaseName.saveCaseNameInformation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveCounty.updateStageCountyCaseCounty"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveCreateAdminReview.saveCreateAdminReview"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveDesignees.saveDesigneeAssignments"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveEmployeeDetail.saveEmployeeDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveOnCallDetail.saveOnCallDetailInformation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveOnCallList.saveOnCallListInformation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveRecordsRetention.saveRecordsRetention"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveReopenStage.saveReopenStage"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveSpecialHandling.updateCapsCase"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveStaffSecurity.saveStaffSecurityInformation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveStageProgression.saveStageProgression"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveTodo.saveTodoInformation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.SaveUnitDetail.saveUnitInformation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.StageClosureEditChecks.performEditChecks"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.TodoCommonFunction.audTodo" value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.admin.UnitAccess.checkForPersonWithUnitAccess"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.assessment.RetrievePrincipalsForRiskAssessment.retrievePrincipalsForRiskAssessment"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.assessment.RetrieveRiskFactors.retrieveRiskFactors"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.assessment.RetrieveServicesReferralsChecklist.retrieveServicesReferralsChecklist"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.assessment.SaveServicesAndReferrals.saveServicesAndReferralsInformation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.RetrieveAddressAndPhone.retrieveAddressAndPhone"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.RetrieveChangeStageType.retrieveChangeStageType"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.RetrieveConservatorshipRemoval.findConservatorShipRemovalInformation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.RetrieveLevelofCare.findEventAndPersonLocInformation"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.RetrievePALFollowup.retrievePALFollowup"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.RetrievePALILSAssessment.retrieveEventStatus"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.RetrievePALTrainingService.retrievePALTrainningService"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.RetrievePersonsInHomeRemoval.retrievePersonsInHomeRemoval"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.RetrievePPT.retrievePPT"
+               value="PROPAGATION_REQUIRED, readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.RetrievePPTParticipant.retrievePPTParticipant"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.RetrieveSvcDeliveryClosure.retrieveServDelivery"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SaveChangeStageType.saveChangeStageType"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SaveClosePALStage.saveClosePALStage"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SaveConservatorshipRemoval.saveConservatorshipRemoval"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SaveLevelofCare.saveEventAndLevelofCare"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SavePAL.savePAL"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SavePALFollowup.savePALFollowup"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SavePALILSAssessment.savePalIlsAssessment"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SavePALTrainingService.savePALTrainningService"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SavePersonsInHomeRemoval.savePersonsInHomeRemoval"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SavePlacementDetail.savePlacementDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SavePPTDetail.savePPTDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SavePPTParticipant.savePPTParticipant"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SaveReopenPAL.saveReopenPAL"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SaveSvcDeliveryClosure.saveSvcDeliveryClosure"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.SvcDeliveryClosureValidation.svcDeliveryClosureValidation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.ValidatePlacementDetail.validatePlacementDetail"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.common.ContactDetailRetrieve.contactDetailRetrieve"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.common.ContactDetailSave.contactDetailSave"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.common.ContactListSearch.contactListSearch"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.common.RetrieveContactSearchPersonList.retrievePersonList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.common.RetrieveCriminalHistory.retrieveCriminalHistory"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.common.RetrieveExternalDocumentation.retrieveExternalDocumentation"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.common.RetrieveFAHomeMemberTraining.retrieveFAHomeMemberTraining"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.common.RetrieveTaskList.findTaskListEvents"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.common.SaveExternalDocumentation.saveExternalDocumentation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.courtprocess.RetrieveLegalAction.retrieveLegalAction"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.courtprocess.RetrieveLegalService.retrieveLegalService"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.courtprocess.SaveLegalAction.saveLegalAction"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.courtprocess.SaveLegalService.saveLegalService"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.ContractValidation.contractValidation"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.DeliveredServiceValidation.retrieveDeliveredServiceValidation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveAdminDetail.retrieveAdminDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveAdoptionSubsidy.retrieveAdoptionSubsidy"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveBudgetTransfer.retrieveBudgetTransfer"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveContract.findContract"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveContractList.retrieveContractList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveContractPeriod.findContractPeriod"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveContractService.findContractService"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveContractVersion.findContractVersion"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveCostReimbursementDetail.retrieveCostReimbursementDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveCountyList.retrieveCounties"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveDeliveredServiceDetail.findDeliveredServiceDetail"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveFosterCareDetail.retrieveFosterCareDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveInvoiceHeader.findInvoiceHeaderInformation"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveInvoiceList.retrieveInvoiceList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrievePaymentApprovalList.retrievePaymentApprovalList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrievePaymentHistoryList.retrievePaymentHistoryList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveRejectionReason.retrieveRejectionReason"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveResource.findResource"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveServiceAuthorization.retrieveServiceAuthorization"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveServiceAuthorizationDetail.retrieveServiceAuthorizationDetail"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.RetrieveServiceList.retrieveServiceList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.SaveAdminDetail.saveAdminDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.SaveContract.saveContract"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.SaveContractList.saveContractList"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.SaveContractService.saveContractService"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.SaveContractVersion.saveContractVersion"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.SaveCostReimbursementDetail.saveCostReimbursementDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.SaveCountyList.saveCountyList"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.SaveDeliveredServiceDetail.saveDelvrdSvcDtl"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.SaveFosterCareDetail.saveFosterCareDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.SaveInvoiceHeader.saveInvoiceHeaderInformation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.SavePaymentApprovalList.savePaymentApprovalList"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.SaveServiceAuthorization.saveServiceAuthorization"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.financials.SaveServiceAuthorizationDetail.saveServiceAuthorizationDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.RetrieveAllegationDetail.retrieveAllegationDetail"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.RetrieveAllegationList.retrieveAllegationList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.RetrieveAllegations.retrieveAllegations"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.RetrieveCallEntryCallDecision.retrieveCallEntryCallDecision"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.RetrieveCallPersonList.retrieveCallPersonList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.RetrieveIncomingPersonDetail.retrieveIncomingPersonDetail"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.RetrieveIntakeNarrative.findIntakeNarrative"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.RetrieveIntakePriorityClosure.retrieveIntakePriorityClosure"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.RetrievePersonSearchAsync.retrievePersonSearchAsync"
+               value="PROPAGATION_REQUIRED, readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.RetrieveRaceAndEthnicity.findPersonRaceAndPersonEthnicity"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.SaveAllegationDetail.saveAllegDtl"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.SaveAllegations.saveAllegations"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.SaveCallDecision.saveCallDecision"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.SaveCallEntry.saveCallEntry"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.SaveCallPersonList.saveCallPersonList"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.SaveIntakePriorityClosure.saveIntakePriorityClosure"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.SaveMultipleAllegationDetail.saveMultipleAllegationDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.SaveOverallRoleandDisposition.saveRoleDisp"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.SavePersonList.savePersonList"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.SaveRelatePerson.relatePerson"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.intake.SaveUnrelatePerson.saveUnrelatedPerson"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.investigation.RetrieveCPSInvestigationConclusion.retrieveCPSInvestigationConclusion"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.investigation.RetrieveEmergencyAssistance.retrieveEmergencyAssistance"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.investigation.RetrievePersonAddressPersonPhone.retrievePersonAddressPersonPhone"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.investigation.RetrieveProfessionalAssessment.retrieveProfessionalAssessment"
+               value="PROPAGATION_REQUIRED, readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.investigation.SaveCPSInvestigationConclusion.saveCPSInvestigationConclusion"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.investigation.SaveCPSInvestigationConclusionValidation.saveCPSInvestigationConclusionValidation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.investigation.SaveEmergencyActionDetail.saveEmergencyActionDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.investigation.SaveProfessionalAssessment.saveProfessionalAssessment"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.PersonMergeValidation.personMergeValidation"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrieveEducationalHistory.retrieveEducationalHistory"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrieveIncomeAndResources.retrieveIncomeAndResources"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrieveName.retrievePersonNameInformation"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrieveMedication.retrievePersonMedicationInformation"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrieveOnCallDetail.findEmpOnCallInfo"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrievePerson.retrievePerson"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrievePersonAddressList.retrievePersonAddressList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrievePersonDetail.retrievePersonDetail"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrievePersonDTL.retrievePersonDTL"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrievePersonIdentifiers.findPersonIdentifiers"
+               value="PROPAGATION_REQUIRED, readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrievePersonList.retrievePersonList"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrievePersonMerge.retrievePersonMerge"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrievePersonSearch.retrievePersonSearch"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrievePhoneListDetail.retrievePhoneListDetail"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrieveRecordsCheck.retrieveRecordsCheck"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.RetrieveUnitDetail.findUnitEmployees"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SaveAddressListDetail.saveAddressListDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SaveCriminalHistory.saveCriminalHistory"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SaveEducationalHistory.audEducationalHistory"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SaveIncomeAndResources.saveIncomeAndResources"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SaveName.updateNameInformation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SaveMedication.updateMedicationInformation"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SavePersonDetail.savePersonDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SavePersonDTL.updatePersonDTL"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SavePersonIdentifiers.savePersonIdentifiers"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SavePersonMerge.savePersonMerge"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SavePersonSearchIndicator.updatePersonSearchIndicator"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SavePhoneListDetail.savePhoneListDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SavePreservice.savePreservice"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SaveRecordsCheck.audRecordsCheck"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.person.SaveStagePersonLink.updateIndStagePersEmpNew"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.reports.DeleteReportList.deleteReportList"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.reports.LaunchReportAsync.launchReportAsync"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.reports.RetrieveOutputLaunch.retrieveOutputLaunch"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.reports.RetrieveReportList.retrieveReportList"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.reports.RetrieveReportParmlist.retrieveReportParamList"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.reports.SaveOutputLaunch.saveOutputLaunch"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.Caretaker.caretaker" value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.RetrieveAreaServed.retrieveAreaServed"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.RetrieveCloseReopenFAHome.retrieveNeccessaryInformation"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.RetrieveFacilityDetail.retrieveFacilityDetail"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.RetrieveFacilityPlacementLog.retrieveLog"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.RetrieveFAHomeHistory.retrieveFAHomeHistory"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.RetrieveHomeDemographics.retrieveHomeDemographics"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.RetrieveHomeLicense.retrieveHomeLicenseInformation"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.RetrieveResourceCharacteristics.retrieveCharacteristicsData"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.RetrieveResourceDetail.retrieveResourceDetail"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.RetrieveResourceHistory.retrieveResourceHistory"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.RetrieveResourceName.retrieveResourceName"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.RetrieveSchoolDistricts.retrieveSchoolDistricts"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.RetrieveSubcontractorList.findSubcontractorResources"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.SaveAreaServed.saveAreaServed"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.SaveFacilityDetail.saveFacilityDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.SaveFAHomeCloseReopen.saveFAHomeCloseReopen"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.SaveHomeDemographics.saveHomeDemographics"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.SaveHomeLicense.saveHomeLicense"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.SaveResourceCharacteristics.saveResourceCharacteristics"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.SaveResourceDetail.saveResourceDetail"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.SaveResourceHistory.audResourceHistory"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.SaveSubcontractorList.saveUpdateOrDeleteRscrcLink"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.resource.UpdateFAResource.updateFAResource"
+               value="PROPAGATION_REQUIRED"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.security.RetrieveSecurityClass.retrieveSecurityClass"
+               value="PROPAGATION_REQUIRED,readOnly"/>
+        <entry key="gov.georgia.dhr.dfcs.sacwis.service.security.SaveSecurityClass.saveSecurityClass"
+               value="PROPAGATION_REQUIRED"/>
+      </map>
+    </property>
+  </bean>
+</beans>

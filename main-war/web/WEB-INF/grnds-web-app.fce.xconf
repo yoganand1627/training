@@ -1,0 +1,551 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE grnds-web-app SYSTEM "grnds-web-app.dtd">
+
+<grnds-web-app>
+  <!--
+  NOTE: PLEASE READ BEFORE MODIFIYING
+  Nearly Every command has an error branch, even if it is the same as the
+  default branch because each conversation has common ErrorHandling.
+  -->
+  <servlet mapping="fce">
+    <conversations>
+      <conversation>
+        <conversation-name>ApplicationAndBackground</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.fce.ApplicationAndBackgroundConversation
+        </conversation-class>
+        <commands>
+          <command>
+            <command-name>displayFceApplication</command-name>
+            <activity type="method">displayFceApplication_xa</activity>
+            <presentation type="url">
+              /fce/ApplicationAndBackground/displayAppAndBG
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayAppAndBG</command-name>
+            <activity type="method">displayAppAndBG_xa</activity>
+            <presentation type="class" screen="APP_AND_BACKGROUND">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="class" screen="APP_AND_BACKGROUND" branch="error">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>forwardPersonDetail</command-name>
+            <activity type="method">forwardPersonDetail_xa</activity>
+            <presentation type="url">
+              /person/PersonDetail/displayPersonDetail
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/ApplicationAndBackground/displayAppAndBG
+            </presentation>
+          </command>
+          <command>
+            <command-name>forwardPersonSearch</command-name>
+            <activity type="method">forwardPersonSearch_xa</activity>
+            <presentation type="url">
+              /person/PersonSearch/displayPersonSearch
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/ApplicationAndBackground/displayAppAndBG
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAppAndBG</command-name>
+            <activity type="method">saveAppAndBG_xa</activity>
+            <presentation type="url">
+              /fce/AgeCitizenship/displayAgeCitizenship
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/ApplicationAndBackground/displayAppAndBG
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+  <conversation>
+        <conversation-name>AgeCitizenship</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.fce.AgeCitizenshipConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayAgeCitizenship</command-name>
+            <activity type="method">displayAgeCitizenship_xa</activity>
+            <presentation type="class" screen="AGE_CITIZENSHIP">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="class" screen="AGE_CITIZENSHIP" branch="error">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAgeCitizenship</command-name>
+            <activity type="method">saveAgeCitizenship_xa</activity>
+            <presentation type="url">
+              /fce/DomicileDeprivation/displayDomicile
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/AgeCitizenship/displayAgeCitizenship
+            </presentation>
+          </command>
+          <command>
+            <command-name>callPersonDetail</command-name>
+            <activity type="method">callPersonDetail_xa</activity>
+            <presentation type="url">
+              /person/PersonDetail/displayPersonDetail
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/AgeCitizenship/displayAgeCitizenship
+            </presentation>
+          </command>
+          <command>
+            <command-name>callPersonCitizenshipIdentity</command-name>
+            <activity type="method">callPersonCitizenshipIdentity_xa</activity>
+            <presentation type="url">
+              /person/PersonCitizenshipIdentity/displayCitizenshipIdentity
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/AgeCitizenship/displayAgeCitizenship
+            </presentation>
+          </command>
+          <command>
+            <command-name>callCvsFaHome</command-name>
+            <activity type="method">callCvsFaHome_xa</activity>
+            <presentation type="url">
+              /person/CvsFaHome/displayCvsFaHome
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/AgeCitizenship/displayAgeCitizenship
+            </presentation>
+          </command>
+          <command>
+            <command-name>launchEvaluativeConclusionNarrative</command-name>
+            <activity type="method">launchEvaluativeConclusionNarrative_xa</activity>
+            <presentation type="url">
+              /document/DocumentConversation/showDocument
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAndStayAgeCitizenship</command-name>
+            <activity type="method">saveAgeCitizenship_xa</activity>
+            <presentation type="url">
+              /fce/AgeCitizenship/displayAgeCitizenship
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/AgeCitizenship/displayAgeCitizenship
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+
+
+      <conversation>
+        <conversation-name>DomicileDeprivation</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.fce.DomicileDeprivationConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayDomicile</command-name>
+            <activity type="method">displayDomicile_xa</activity>
+            <presentation type="class" screen="DOMICILE_DEPRIVATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="class" screen="DOMICILE_DEPRIVATION" branch="error">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveDomicile</command-name>
+            <activity type="method">saveDomicile_xa</activity>
+            <presentation type="url">/fce/ThirdPartyHealthInsurance/displayThirdPartyHealthInsurance</presentation>
+            <presentation type="url" branch="stay">
+              /fce/DomicileDeprivation/displayDomicile
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/DomicileDeprivation/displayDomicile
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+
+
+      <conversation>
+        <conversation-name>IncomeExpenditures</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.fce.IncomeExpendituresConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayIncomeExpenditures</command-name>
+            <activity type="method">displayIncomeExpenditures_xa</activity>
+            <presentation type="class" screen="INCOME_EXPENDITURES">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="class" screen="INCOME_EXPENDITURES" branch="error">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayPersonDetail</command-name>
+            <activity type="method">displayPersonDetail_xa</activity>
+            <presentation type="url">
+              /person/PersonDetail/displayPersonDetail
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/IncomeExpenditures/displayIncomeExpenditures
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveIncomeExpendituresDetail</command-name>
+            <activity type="method">saveIncomeExpendituresDetail_xa</activity>
+            <presentation type="url">
+              /fce/IncomeExpenditures/displayIncomeExpenditures
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/IncomeExpenditures/displayIncomeExpenditures
+            </presentation>
+          </command>
+          <command>
+            <command-name>submitApplication</command-name>
+            <activity type="method">submitApplication_xa</activity>
+            <presentation type="url">
+              /workload/EventSearch/displayEventList
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/IncomeExpenditures/displayIncomeExpenditures
+            </presentation>
+          </command>
+          <command>
+            <command-name>calculate</command-name>
+            <activity type="method">calculate_xa</activity>
+            <presentation type="url">
+              /fce/EligibilityDetermination/determineEligibility
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/IncomeExpenditures/displayIncomeExpenditures
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+
+
+      <conversation>
+        <conversation-name>EligibilityDetermination</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.fce.EligibilityDeterminationConversation
+        </conversation-class>
+        <commands>
+          <command>
+            <command-name>displayEligibilityDetermination</command-name>
+            <activity type="method">displayEligibilityDetermination_xa</activity>
+            <presentation type="class" screen="ELIGIBILITY_DETERMINATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="class" screen="ELIGIBILITY_DETERMINATION" branch="error">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveEligibilityDetermination</command-name>
+            <activity type="method">saveEligibilityDetermination_xa</activity>
+            <presentation type="url">
+              /fce/EligibilityDetermination/displayEligibilityDetermination
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/EligibilityDetermination/displayEligibilityDetermination
+            </presentation>
+          </command>
+          <command>
+            <command-name>determineEligibility</command-name>
+            <activity type="method">determineEligibility_xa</activity>
+            <presentation type="url">
+              /fce/EligibilityDetermination/displayEligibilityDetermination
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/EligibilityDetermination/displayEligibilityDetermination
+            </presentation>
+          </command>
+          <command>
+            <command-name>confirmYes</command-name>
+            <activity type="method">confirmYes_xa</activity>
+            <presentation type="url">
+              /fce/EligibilitySummary/displayEligibilitySummary
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/EligibilityDetermination/displayEligibilityDetermination
+            </presentation>
+          </command>
+          <command>
+            <command-name>confirmNo</command-name>
+            <activity type="method">confirmNo_xa</activity>
+            <presentation type="url">
+              /fce/EligibilityDetermination/displayEligibilityDetermination
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/EligibilityDetermination/displayEligibilityDetermination
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+
+
+      <conversation>
+        <conversation-name>LegacyApplication</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.fce.LegacyApplicationConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayLegacyApplication</command-name>
+            <activity type="method">displayLegacyApplication_xa</activity>
+            <presentation type="class" screen="LEGACY_APPLICATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="class" screen="LEGACY_APPLICATION" branch="error">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveLegacyApplication</command-name>
+            <activity type="method">saveLegacyApplication_xa</activity>
+            <presentation type="url">
+              /fce/FosterCareReview/displayFosterCareReview2
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/LegacyApplication/displayLegacyApplication
+            </presentation>
+          </command>
+          <command>
+            <command-name>continueLegacyApplication</command-name>
+            <activity type="method">continueLegacyApplication_xa</activity>
+            <presentation type="url">
+              /fce/FosterCareReview/displayFosterCareReview2
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/LegacyApplication/displayLegacyApplication
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+
+
+      <conversation>
+        <conversation-name>FosterCareReview</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.fce.FosterCareReviewConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayFosterCareReview</command-name>
+            <activity type="method">displayFosterCareReview_xa</activity>
+            <presentation type="url">
+              /fce/FosterCareReview/displayFosterCareReview2
+            </presentation>
+            <presentation type="class" screen="FOSTER_CARE_REVIEW" branch="error">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="url" branch="EventList">
+              /workload/EventSearch/displayEventList
+            </presentation>
+            <presentation type="url" branch="LegacyApplication">
+              /fce/LegacyApplication/displayLegacyApplication
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayFosterCareReview2</command-name>
+            <activity type="method">displayFosterCareReview2_xa</activity>
+            <presentation type="class" screen="FOSTER_CARE_REVIEW">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="class" screen="FOSTER_CARE_REVIEW" branch="error">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveReview</command-name>
+            <activity type="method">saveReview_xa</activity>
+            <presentation type="url">
+              /fce/FosterCareReview/displayFosterCareReview2
+            </presentation>
+            <presentation type="url" branch="CloseReview">
+              /fce/FosterCareReview/displayFosterCareReview2
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/FosterCareReview/displayFosterCareReview2
+            </presentation>
+          </command>
+          <command>
+            <command-name>submitReview</command-name>
+            <activity type="method">submitReview_xa</activity>
+            <presentation type="url">
+              /workload/ToDo/newFceToDo
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/FosterCareReview/displayFosterCareReview2
+            </presentation>
+            <presentation type="url" branch="CloseReview">
+              /fce/FosterCareReview/displayFosterCareReview2
+            </presentation>
+            <presentation type="url" branch="LegacyApplication">
+              /fce/LegacyApplication/displayLegacyApplication
+            </presentation>
+          </command>
+          <command>
+            <command-name>confirmYes</command-name>
+            <activity type="method">confirmYes_xa</activity>
+            <presentation type="url">
+              /fce/EligibilitySummary/displayEligibilitySummary
+            </presentation>
+            <presentation type="url" branch="CloseReview">
+              /workload/EventSearch/displayEventList
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/FosterCareReview/displayFosterCareReview2
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayPersonDetail</command-name>
+            <activity type="method">displayPersonDetail_xa</activity>
+            <presentation type="url">
+              /person/PersonDetail/displayPersonDetail
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/FosterCareReview/displayFosterCareReview2
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+      <conversation>
+        <conversation-name>EligibilitySummary</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.fce.EligibilitySummaryConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayEligibilitySummary</command-name>
+            <activity type="method">displayEligibilitySummary_xa</activity>
+            <presentation type="class" screen="FCE_SUMMARY">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="class" screen="FCE_SUMMARY" branch="error">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="url" branch="EventList">
+              /workload/EventSearch/displayEventList
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveEligibilitySummary</command-name>
+            <activity type="method">saveEligibilitySummary_xa</activity>
+            <presentation type="url">/workload/EventSearch/displayEventList</presentation>
+            <presentation type="url" branch="redisplay">/fce/EligibilitySummary/displayEligibilitySummary</presentation>
+            <presentation type="class" branch="error" screen="FCE_SUMMARY">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>deleteEligibilitySummary</command-name>
+            <activity type="method">deleteEligibilitySummary_xa</activity>
+            <presentation type="url">/workload/EventSearch/displayEventList</presentation>
+            <presentation type="url" branch="redisplay">/fce/EligibilitySummary/displayEligibilitySummary</presentation>
+            <presentation type="class" branch="error" screen="FCE_SUMMARY">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+      <conversation>
+        <conversation-name>ThirdPartyHealthInsurance</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.fce.ThirdPartyHealthInsuranceConversation
+        </conversation-class>
+        <commands>
+          <command>
+            <command-name>displayThirdPartyHealthInsurance</command-name>
+            <activity type="method">displayThirdPartyHealthInsurance_xa</activity>
+            <presentation type="class" screen="THIRD_PARTY_HEALTH_INSURANCE_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="class" screen="THIRD_PARTY_HEALTH_INSURANCE_DETAIL" branch="error">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveThirdPartyHealthInsurance</command-name>
+            <activity type="method">saveThirdPartyHealthInsurance_xa</activity>
+            <presentation type="url">
+              /fce/IncomeExpenditures/displayIncomeExpenditures
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/ThirdPartyHealthInsurance/displayThirdPartyHealthInsurance
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+     <conversation>
+        <conversation-name>InitialMedicaid</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.fce.InitialMedicaidConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayInitialMedicaid</command-name>
+            <activity type="method">displayInitialMedicaid_xa</activity>
+            <presentation type="class" screen="INITIAL_MEDICAID_APPLICATION_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation type="class" screen="INITIAL_MEDICAID_APPLICATION_DETAIL" branch="error">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveInitialMedicaid</command-name>
+            <activity type="method">saveInitialMedicaid_xa</activity>
+            <presentation type="url">
+              /fce/InitialMedicaid/displayInitialMedicaid
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/InitialMedicaid/displayInitialMedicaid
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveConfirmationInitialMedicaid</command-name>
+            <activity type="method">saveConfirmationInitialMedicaid_xa</activity>
+            <presentation type="url">
+              /fce/InitialMedicaid/displayInitialMedicaid
+            </presentation>
+            <presentation type="url" branch="stay">
+             /fce/InitialMedicaid/displayInitialMedicaid
+            </presentation>
+            <presentation type="url" branch="error">
+             /fce/InitialMedicaid/displayInitialMedicaid
+            </presentation>
+          </command>
+          <command>
+            <command-name>forwardPersonDetail</command-name>
+            <activity type="method">forwardPersonDetail_xa</activity>
+            <presentation type="url">
+              /person/PersonDetail/displayPersonDetail
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/InitialMedicaid/displayInitialMedicaid
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveAndSubmitApplication</command-name>
+            <activity type="method">saveAndSubmitApplication_xa</activity>
+            <presentation type="url">
+               /fce/InitialMedicaid/displayInitialMedicaid
+            </presentation>
+            <presentation type="url" branch="error">
+               /fce/InitialMedicaid/displayInitialMedicaid
+            </presentation>
+          </command>
+          <command>
+            <command-name>signNowApplication</command-name>
+            <activity type="method">signNowApplication_xa</activity>
+            <presentation type="url">
+              /fce/InitialMedicaid/displayInitialMedicaid
+            </presentation>
+            <presentation type="url" branch="error">
+              /fce/InitialMedicaid/displayInitialMedicaid
+            </presentation>
+          </command>
+       </commands>
+     </conversation>
+     </conversations>
+  </servlet>
+
+  <error-handling>
+    <domain>sacwis</domain>
+    <logger>grnds.syslog</logger>
+  </error-handling>
+
+</grnds-web-app>

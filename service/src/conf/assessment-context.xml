@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+       default-dependency-check="all"
+       default-lazy-init="false">
+  <bean id="deleteSafetyAssessment"
+        class="gov.georgia.dhr.dfcs.sacwis.service.assessment.impl.DeleteSafetyAssessmentImpl" parent="baseService">
+    <property name="checkStageEventStatus" ref="checkStageEventStatus"/>
+    <property name="saDrugExposedNewbornsDAO" ref="saDrugExposedNewbornsDAO"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="saReasonableEffortsDAO" ref="saReasonableEffortsDAO"/>
+    <property name="saSafetyAssessmentDAO" ref="saSafetyAssessmentDAO"/>
+    <property name="saSafetyFactorDAO" ref="saSafetyFactorDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="approversDAO" ref="approversDAO"/>
+    <property name="approvalEventLinkDAO" ref="approvalEventLinkDAO"/>     
+  </bean>
+  <bean id="retrieveIsDrugExposedNewborn"
+        class="gov.georgia.dhr.dfcs.sacwis.service.assessment.impl.RetrieveIsDrugExposedNewbornImpl"
+        parent="baseService">
+    <property name="incmgDetermFactorsDAO" ref="incmgDetermFactorsDAO"/>
+    <property name="stageLinkDAO" ref="stageLinkDAO"/>
+  </bean>
+  <bean id="retrievePrincipalsForRiskAssessment"
+        class="gov.georgia.dhr.dfcs.sacwis.service.assessment.impl.RetrievePrincipalsForRiskAssessmentImpl"
+        parent="baseService">
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="riskAssessmentDAO" ref="riskAssessmentDAO"/>
+    <property name="personHistoryDAO" ref="personHistoryDAO"/>
+    <property name="cpsInvstDetailDAO" ref="cpsInvstDetailDAO"/>
+    <property name="allegationDAO" ref="allegationDAO"/>
+  </bean>
+  <bean id="retrievePrincipals" class="gov.georgia.dhr.dfcs.sacwis.service.assessment.impl.RetrievePrincipalsImpl"
+        parent="baseService">
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="allegationDAO" ref="allegationDAO"/>
+  </bean>
+  <bean id="retrieveRiskFactors" class="gov.georgia.dhr.dfcs.sacwis.service.assessment.impl.RetrieveRiskFactorsImpl"
+        parent="baseService">
+    <property name="riskFactorsDAO" ref="riskFactorsDAO"/>
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+  </bean>
+  <bean id="retrieveSafetyAssessment"
+        class="gov.georgia.dhr.dfcs.sacwis.service.assessment.impl.RetrieveSafetyAssessmentImpl" parent="baseService">
+    <property name="saDrugExposedNewbornsDAO" ref="saDrugExposedNewbornsDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO"/>
+    <property name="saReasonableEffortsDAO" ref="saReasonableEffortsDAO"/>
+    <property name="retrieveIsDrugExposedNewborn" ref="retrieveIsDrugExposedNewborn"/>
+    <property name="saSafetyAssessmentDAO" ref="saSafetyAssessmentDAO"/>
+    <property name="saSafetyFactorDAO" ref="saSafetyFactorDAO"/>
+  </bean>
+  <bean id="retrieveServicesReferralsChecklist"
+        class="gov.georgia.dhr.dfcs.sacwis.service.assessment.impl.RetrieveServicesReferralsChecklistImpl"
+        parent="baseService">
+    <property name="contactDAO" ref="contactDAO"/>
+    <property name="cpsChecklistDAO" ref="cpsChecklistDAO"/>
+    <property name="cpsChecklistItemDAO" ref="cpsChecklistItemDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+  </bean>
+  <bean id="saveServicesAndReferrals"
+        class="gov.georgia.dhr.dfcs.sacwis.service.assessment.impl.SaveServicesAndReferralsImpl" parent="baseService">
+    <property name="checkStageEventStatus" ref="checkStageEventStatus"/>
+    <property name="cpsChecklistDAO" ref="cpsChecklistDAO"/>
+    <property name="cpsChecklistItemDAO" ref="cpsChecklistItemDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="invalidateApproval" ref="invalidateApproval"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="todoDAO" ref="todoDAO"/>
+  </bean>
+  <bean id="saveSafetyAssessment" class="gov.georgia.dhr.dfcs.sacwis.service.assessment.impl.SaveSafetyAssessmentImpl"
+        parent="baseService">
+    <property name="checkStageEventStatus" ref="checkStageEventStatus"/>
+    <property name="saDrugExposedNewbornsDAO" ref="saDrugExposedNewbornsDAO"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="saReasonableEffortsDAO" ref="saReasonableEffortsDAO"/>
+    <property name="saSafetyAssessmentDAO" ref="saSafetyAssessmentDAO"/>
+    <property name="saSafetyFactorDAO" ref="saSafetyFactorDAO"/>
+  </bean>
+
+  <bean id="retrieveSafetyPlan" class="gov.georgia.dhr.dfcs.sacwis.service.assessment.impl.RetrieveSafetyPlanImpl"
+        parent="baseService">
+    <property name="spSafetyFactorsDAO" ref="spSafetyFactorsDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+  </bean>
+
+  <bean id="saveSafetyPlan" class="gov.georgia.dhr.dfcs.sacwis.service.assessment.impl.SaveSafetyPlanImpl"
+        parent="baseService">
+    <property name="spSafetyFactorsDAO" ref="spSafetyFactorsDAO"/>
+    <property name="spSafetyPlanDAO" ref="spSafetyPlanDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="spPersonsRespnsblDAO" ref="spPersonsRespnsblDAO"/>
+    <property name="checkStageEventStatus" ref="checkStageEventStatus"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO"/>
+    <property name="approversDAO" ref="approversDAO"/>
+    <property name="approvalRejectionDAO" ref="approvalRejectionDAO"/>
+    <property name="approvalEventLinkDAO" ref="approvalEventLinkDAO"/>
+    <property name="approvalDAO" ref="approvalDAO"/>
+    <property name="invalidateApproval" ref="invalidateApproval"/>
+  </bean>
+  
+</beans>

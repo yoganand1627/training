@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.AllegationHistory" table="ALLEGATION_HISTORY" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idAllegHistory" type="integer" unsaved-value="undefined">
+      <column name="ID_ALLEG_HISTORY" precision="16" scale="0"/>
+      <generator class="assigned"/>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="personByIdAllegedPerpetrator" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_ALLEGED_PERPETRATOR" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_ALLEGATION_STAGE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="allegation" class="gov.georgia.dhr.dfcs.sacwis.db.Allegation" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_ALLEGATION" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdVictim" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_VICTIM" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdAllegHistIncdntStg" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ALLEG_HIST_INCDNT_STG" length="4"/>
+    </property>
+    <property name="txtAllegHistDuration" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_ALLEG_HIST_DURATION" length="12"/>
+    </property>
+    <property name="cdAllegHistType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ALLEG_HIST_TYPE" length="4"/>
+    </property>
+    <property name="cdAllegHistDisposition" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ALLEG_HIST_DISPOSITION" length="3"/>
+    </property>
+    <property name="cdAllegHistSeverity" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ALLEG_HIST_SEVERITY" length="2"/>
+    </property>
+    <property name="dtAllegHistEffective" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ALLEG_HIST_EFFECTIVE" length="7"/>
+    </property>
+    <property name="dtAllegHistEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ALLEG_HIST_END" length="7"/>
+    </property>
+    <property name="cdMaltreatorRel" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_MALTREATOR_REL" length="2"/>
+    </property>
+  </class>
+</hibernate-mapping>

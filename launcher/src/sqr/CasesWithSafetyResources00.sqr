@@ -1,0 +1,171 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Thu Jan 10 10:39:56 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\sacwis\launcher\src\sqr\CasesWithSafetyResources00.sqr
+! Format  : Tabular
+! Username: CAPSON
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+Begin-Procedure Get-Input
+Input $_I101_CD_COUNTY 'Enter a value for CD_COUNTY' MaxLen=3  Type=Text
+If IsNull($_I101_CD_COUNTY) or IsBlank($_I101_CD_COUNTY)  
+  Show 'Input Error (7734):  No value was entered.  A value is required.'  
+  Let #return-status = 7734  
+  Stop
+End-If
+Let $brb_tmp = 'STAGE.CD_STAGE_CNTY'
+Let $where_clause101 = $brb_tmp  || ' = ''' || $_I101_CD_COUNTY || ''''
+Let $where_clause102 = 'CCOUNT.CODE = ''' || $_I101_CD_COUNTY ||''''
+
+End-Procedure
+
+Begin-Procedure BRB_Report_Before
+Begin-Select Loops=1
+DECODE &County_Query_County_Query_DECODE
+From  CAPS.CCOUNT
+Where [$where_clause102]
+End-Select
+ Alter-Report Heading-Size=132    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input
+ Position (1,1)
+ Do SafetyResource
+End-Program
+
+Begin-Procedure SafetyResource
+ Do CreateXML_ManifestFile
+Begin-Select
+(STAGE.NM_STAGE) &stageName
+(STAGE.ID_CASE) &caseID
+(person.NM_PERSON_FULL) &personName
+(to_char(MAX (sr_event.DT_CONTACT_OCCURRED), 'MM/DD/YYYY')) &Dt_Safety_Resource_Assessment
+(PERSON.ID_PERSON) &PersonID
+(CCOUNT.DECODE) &County
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &stageName (10,1,24)
+ Print &caseID (11,154,12)
+ Print &personName (11,228,28)
+ Print &Dt_Safety_Resource_Assessment (12,463,12)
+ Print &PersonID (12,394) Edit 999999999na
+ Next-Listing  SkipLines=2 Need=14
+From 
+ stage, stage_person_link, person, ccount,
+	   (SELECT
+ event_person_link.ID_PERSON, event.ID_EVENT_STAGE,
+                                     contact.DT_CONTACT_OCCURRED
+
+                     FROM contact, event_person_link,
+ event
+                      WHERE contact.CD_CONTACT_TYPE
+ IN ('ASRA','LSRA')
+                      AND contact.ID_EVENT
+ = event_person_link.ID_EVENT
+                   
+   AND contact.ID_EVENT = event.ID_EVENT) sr_event
+WHERE
+ stage.ID_STAGE = stage_person_link.ID_STAGE
+AND stage_person_link.ID_PERSON
+ = person.ID_PERSON
+AND stage_person_link.IND_STAGE_PERS_SFTY_RESOURCE
+ = 'Y'
+AND stage.CD_STAGE IN ('INV','FPR')
+AND stage.DT_STAGE_CLOSE
+ IS NULL
+AND stage_person_link.ID_PERSON = sr_event.id_person
+ (+)
+AND stage_person_link.ID_STAGE = sr_event.id_event_stage
+ (+)
+AND ccount.CODE = stage.CD_STAGE_CNTY
+AND [$where_clause101]
+ 
+GROUP BY stage.id_case, stage.NM_STAGE, person.NM_PERSON_FULL,
+ person.ID_PERSON, ccount.decode 
+ORDER BY stage.nm_stage
+
+ 
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Cases With Safety Resources' (49,169,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (13,184,0)
+ Print $current-date (13,473) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (13,409,0)
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'County:' (96,1,7) Bold 
+Print &County_Query_County_Query_DECODE (96,62,29)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='D:\sacwis\launcher\src\images\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Last Assmt Date' (125,462,28) Underline  Bold 
+ Print 'Case ID' (125,156,7) Underline  Bold 
+ Print 'SR Person ID' (125,394,12) Underline  Bold 
+ Print 'Safety Resource Name' (125,229,0) Underline  Bold 
+ Print 'Stage Name' (125,2,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Last Assmt Date' (14,462,28) Underline  Bold 
+ Print 'Case ID' (14,156,7) Underline  Bold 
+ Print 'SR Person ID' (14,394,12) Underline  Bold 
+ Print 'Safety Resource Name' (14,229,0) Underline  Bold 
+ Print 'Stage Name' (14,2,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (11,489) '' '  of'
+ Last-Page (11,514) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

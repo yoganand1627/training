@@ -1,0 +1,65 @@
+package gov.georgia.dhr.dfcs.sacwis.core.lookup.codestables;
+
+public interface Clivarr {
+
+  public static final String CLIVARR = "CLIVARR";
+  public static final String CLIVARR_AFH = "AFH";
+  public static final String CLIVARR_ASL = "ASL";
+  public static final String CLIVARR_BCF = "BCF";
+  public static final String CLIVARR_BOA = "BOA";
+  public static final String CLIVARR_BWS = "BWS";
+  public static final String CLIVARR_CFA = "CFA";
+  public static final String CLIVARR_CFH = "CFH";
+  public static final String CLIVARR_CFV = "CFV";
+  public static final String CLIVARR_CGH = "CGH";
+  public static final String CLIVARR_CGV = "CGV";
+  public static final String CLIVARR_CPS = "CPS";
+  public static final String CLIVARR_DFA = "DFA";
+  public static final String CLIVARR_DFC = "DFC";
+  public static final String CLIVARR_DJC = "DJC";
+  public static final String CLIVARR_DJG = "DJG";
+  public static final String CLIVARR_DJR = "DJR";
+  public static final String CLIVARR_ESH = "ESH";
+  public static final String CLIVARR_FAM = "FAM";
+  public static final String CLIVARR_FCN = "FCN";
+  public static final String CLIVARR_FCR = "FCR";
+  public static final String CLIVARR_FRN = "FRN";
+  public static final String CLIVARR_GHI = "GHI";
+  public static final String CLIVARR_GHN = "GHN";
+  public static final String CLIVARR_HCS = "HCS";
+  public static final String CLIVARR_HLS = "HLS";
+  public static final String CLIVARR_HML = "HML";
+  public static final String CLIVARR_HOS = "HOS";
+  public static final String CLIVARR_HSH = "HSH";
+  public static final String CLIVARR_ICL = "ICL";
+  public static final String CLIVARR_ICM = "ICM";
+  public static final String CLIVARR_ICS = "ICS";
+  public static final String CLIVARR_IMR = "IMR";
+  public static final String CLIVARR_MHO = "MHO";
+  public static final String CLIVARR_MRF = "MRF";
+  public static final String CLIVARR_MRG = "MRG";
+  public static final String CLIVARR_NOA = "NOA";
+  public static final String CLIVARR_NON = "NON";
+  public static final String CLIVARR_NRG = "NRG";
+  public static final String CLIVARR_NRP = "NRP";
+  public static final String CLIVARR_NUR = "NUR";
+  public static final String CLIVARR_OWN = "OWN";
+  public static final String CLIVARR_PPH = "PPH";
+  public static final String CLIVARR_RAB = "RAB";
+  public static final String CLIVARR_RCP = "RCP";
+  public static final String CLIVARR_RDC = "RDC";
+  public static final String CLIVARR_REF = "REF";
+  public static final String CLIVARR_REL = "REL";
+  public static final String CLIVARR_RTC = "RTC";
+  public static final String CLIVARR_SAT = "SAT";
+  public static final String CLIVARR_SCE = "SCE";
+  public static final String CLIVARR_SHO = "SHO";
+  public static final String CLIVARR_SST = "SST";
+  public static final String CLIVARR_UAB = "UAB";
+  public static final String CLIVARR_UNK = "UNK";
+  public static final String CLIVARR_UNP = "UNP";
+  public static final String CLIVARR_XXX = "XXX";
+  public static final String CLIVARR_YDC = "YDC";
+  public static final String CLIVARR_YDV = "YDV";
+
+}

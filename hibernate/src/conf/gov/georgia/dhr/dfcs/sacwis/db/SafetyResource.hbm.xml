@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.SafetyResource" table="SAFETY_RESOURCE" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idEvent" type="integer" unsaved-value="undefined">
+            <column name="ID_EVENT" precision="16" scale="0"/>
+            <generator class="foreign">
+<param name="property">event</param>
+</generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+<one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+        
+        <property name="idPrimary" type="integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ID_PRIMARY" precision="16" scale="0" not-null="true"/>
+        </property>
+        <property name="idSecondary" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ID_SECONDARY" precision="16" scale="0"/>
+        </property>
+        <property name="dtRequestReceived" type="timestamp" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_REQUEST_RECVD" length="7"/>
+        </property>
+            <property name="indRecommendation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RECOMMENDATION" length="1"/>
+    </property>
+        <property name="cdDenialReason" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_DENIAL_REASON" length="3"/>
+    </property>
+            <property name="txtComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_COMMENTS" length="300"/>
+    </property>
+        <property name="dtHomeVisit" type="timestamp" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_HOME_VISIT" length="7"/>
+        </property>
+        <bag name="safetyResourceChilds" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+            <key on-delete="noaction" update="false">
+                <column name="ID_SR_EVENT" precision="16" scale="0" not-null="true"/>
+            </key>
+            <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.SafetyResourceChild" not-found="exception" embed-xml="true"/>
+        </bag>
+    </class>
+</hibernate-mapping>

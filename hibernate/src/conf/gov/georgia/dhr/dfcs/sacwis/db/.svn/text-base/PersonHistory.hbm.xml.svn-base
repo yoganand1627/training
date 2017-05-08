@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.PersonHistory" table="PERSON_HISTORY" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idPersonHistory" type="integer" unsaved-value="0">
+      <column name="ID_PERSON_HISTORY" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_PERSON_HISTORY</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERS_HIST_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdPersHistEthnic" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_HIST_ETHNIC" length="2"/>
+    </property>
+    <property name="cdPersHistLanguage" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_HIST_LANGUAGE" length="2"/>
+    </property>
+    <property name="cdPersHistMaritalStat" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_HIST_MARITAL_STAT" length="2"/>
+    </property>
+    <property name="cdPersHistDeath" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PERS_HIST_DEATH" length="3"/>
+    </property>
+    <property name="cdPersHistReligion" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_HIST_RELIGION" length="3"/>
+    </property>
+    <property name="cdPersHistSex" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PERS_HIST_SEX" length="1"/>
+    </property>
+    <property name="cdPersHistStatus" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_HIST_STATUS" length="1"/>
+    </property>
+    <property name="dtPersHistBirth" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PERS_HIST_BIRTH" length="7"/>
+    </property>
+    <property name="dtPersHistDeath" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PERS_HIST_DEATH" length="7"/>
+    </property>
+    <property name="dtPersHistEffect" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PERS_HIST_EFFECT" length="7"/>
+    </property>
+    <property name="dtPersHistEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PERS_HIST_END" length="7"/>
+    </property>
+    <property name="nbrPersHistAge" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PERS_HIST_AGE" precision="3" scale="0"/>
+    </property>
+    <property name="nmPersHistFull" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_PERS_HIST_FULL" length="25"/>
+    </property>
+    <property name="cdPersHistChar" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PERS_HIST_CHAR" length="1"/>
+    </property>
+    <property name="indPersHistDobApprox" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PERS_HIST_DOB_APPROX" length="1"/>
+    </property>
+    <property name="cdPersHistLivArr" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_HIST_LIV_ARR" length="3"/>
+    </property>
+    <property name="cdPersHistGuardCnsrv" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_HIST_GUARD_CNSRV" length="1"/>
+    </property>
+    <property name="txtPersHistOccupation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PERS_HIST_OCCUPATION" length="20"/>
+    </property>
+    <property name="cdDisasterRlf" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_DISASTER_RLF" length="2"/>
+    </property>
+    <property name="txtCharCmnts" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CHAR_CMNTS" length="300"/>
+    </property>
+    <property name="cdPersHistNotYetDiag" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_HIST_NOT_YET_DIAG" length="2"/>
+    </property>
+    <property name="indPersHistUsCitizen" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PERS_HIST_US_CITIZEN" length="1"/>
+    </property>
+    <property name="cdPersHistImmgStatus" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_HIST_IMMG_STATUS" length="4"/>
+    </property>
+    <property name="cdPersHistCountryOrigin" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_HIST_COUNTRY_ORIGIN" length="4"/>
+    </property>
+    <property name="cdPersHistProofCitizen" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_HIST_PROOF_CITIZEN" length="4"/>
+    </property>
+    <property name="cdPersHistSuffix" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_HIST_SUFFIX" length="2"/>
+    </property>
+    <property name="cdPersHistTitle" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PERS_HIST_TITLE" length="4"/>
+    </property>
+    <property name="cdPersHistMatchType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERS_HIST_MATCH_TYPE" length="3"/>
+    </property>
+    <property name="txtPersHistOtherRelations" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PERS_HIST_OTHER_RELATIONS" length="300"/>
+    </property>
+    <property name="cdSmileClient" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SMILE_CLIENT" length="3"/>
+    </property>
+    <property name="txtIdsNumber" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_IDS_NUMBER" length="13"/>
+    </property>
+    <property name="indPrevAdopted" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PREV_ADOPTED" length="1"/>
+    </property>
+    <property name="indPrivate" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PRIVATE" length="1"/>
+    </property>
+    <property name="indPublic" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PUBLIC" length="1"/>
+    </property>
+    <property name="indIntrntl" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INTRNTL" length="1"/>
+    </property>
+    <property name="cdAdoptState" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ADOPT_STATE" length="2"/>
+    </property>
+    <property name="cdAdoptCounty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ADOPT_COUNTY" length="3"/>
+    </property>
+    <property name="cdAdoptCntry" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ADOPT_CNTRY" length="4"/>
+    </property>
+    <property name="indAdoptDisluton" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ADOPT_DISLUTON" length="1"/>
+    </property>
+    <property name="txtPersonAddlCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PERSON_ADDL_CMNTS" length="300"/>
+    </property>
+    <property name="indIvePriorAdoption" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_IVE_PRIOR_ADOPTION" length="1" />
+    </property>
+  </class>
+</hibernate-mapping>

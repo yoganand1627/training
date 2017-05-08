@@ -1,0 +1,696 @@
+!*****************************************************************************
+!  BATCH REPORT EXCEPTION REPORT                                             *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cbat02a.sqr                                          *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/levyhd/work/sqr                          *
+!                                                                            *
+!                                                                            *
+! DATE:                 10/17/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      H. Levy                                              *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This report will read a flat file and format it      *
+!                       into a pre-defined layout for all CAPS exception     *
+!                       reports. The report inputs are limited to the name   *
+!                       of the file to be read.                              *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 10/17/95   H. Levy      Initial Programming                                *
+!                                                                            *
+! 12/07/03   S. Miller    SIR 18561 - Agency name change.                    *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+   do HOUSEKEEPING
+
+        if $continue_flag = 'Y'
+
+       do PROCESS-REPORT
+
+   end-if
+
+   do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+   #INCLUDE 'setup01a.sqc'            ! control codes for Landscape
+                      ! batch reports
+
+        ASK INPUT_FILE             ! name of the file to be inputed
+                  ! if the SQR report does not reside
+                  ! in the same directory as the file
+                  ! to be read then the full path must be
+                  ! given
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. 12  lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines.                         *
+!                                                                            *
+!       For this report, we have three possibilities for the headings.       *
+!                                                                            *
+!       1----- There is no Key Identification area 1 and therefore it does   *
+!              not get printed. But the normal detail level header is        *
+!              printed                                                       *
+!       2----- There is Key Identification area 1 and therefore it gets      *
+!              printed as well as the standard detail level header is        *
+!              printed                                                       *
+!       3----- The footer or summary page is printed and only those headers  *
+!              for the summary get printed.                                  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 13
+
+PRINT 'REPORT ID:'                     (1,1)
+PRINT $report_id                   ()
+PRINT 'DEPARTMENT OF FAMILY AND PROTECTIVE SERVICES' (1,) center
+PRINT 'PAGE:'                      (1,160)
+      page-number                  (1,166)
+
+let $report_name_print = rtrim($report_name,' ')
+PRINT $report_name_print               (2,) center
+PRINT 'DATE: '                     (2,160)
+PRINT $run_date                        (2,166)
+PRINT 'TIME: '                     (3,160)
+PRINT $run_time                        (3,166)
+
+
+if $footer_flag = 'Y'
+
+   !print footer or summary line
+
+   PRINT 'BATCH EXCEPTION MESSAGE AREA FOOTER'             (+7,14)
+   PRINT 'TOTAL'                                           (+0,67)
+   PRINT '-'                           (+1,1,60)  fill
+   PRINT '-'                       (+0,65,9) fill
+
+else
+   !print initial header line if it has a value
+
+        if rtrim($key_id_header_1,' ') != ' '
+   PRINT $key_id_header_1                  (+2,1)
+   PRINT $key_id_under_1                   (+1,1)
+   PRINT $previous_id_1                    (+1,1)
+   move 'Y'  to $key_1_exists
+   end-if
+
+   !print Sub Headers
+
+        if $key_1_exists = 'Y'
+   PRINT 'type/ '                   (+3,86)
+   else
+   PRINT 'type/ '                   (+5,86)
+   end-if
+   PRINT 'rgn#'                      (+1,1)
+   PRINT 'WORKER  '                    (+0,7)
+   PRINT $key_id_header_2                  (+0,28)
+   PRINT '#    trans'            (+0,81,10) fill
+   PRINT 'EXCEPTION SEVERITY & MESSAGE'  (+0,97)
+   PRINT '-'                       (+1,1,4) fill
+   PRINT '-'                       (+0,7,28) fill
+   PRINT $key_id_under_2                   (+0,28)
+   PRINT '-'                       (+0,81,3) fill
+   PRINT '-'                       (+0,86,7) fill
+   PRINT '-'                       (+0,97,40) fill
+
+end-if
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+
+PRINT 'Severity    F-Fatal, W - Warning, S - Severe,  R - Recommended action, I - Informational' (2,1)
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS      : OPEN-FILE                                              *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+   move '{INPUT_FILE}' to $input_file
+
+   DO OPEN-FILE
+
+if $continue_flag = 'Y'
+
+   read 1 into $line_type:2
+       $extra_character:1
+       $body:169
+
+   if #end-file
+        PRINT 'ERROR READING FILE'     (+4) center
+   let $printout = 'FILE '||$input_file||' IS EMPTY  '
+   PRINT $printout             (+1) center
+   move 'N' to $continue_flag
+   let #return-status = 33
+   else
+
+        if $line_type = 'L1'
+
+        let $report_id = substr($body,1,8)
+        let $report_name = substr($body,9,60)
+        let $run_date = substr($body,69,8)
+        let $run_time = substr($body,77,8)
+        else
+                PRINT 'ERROR WITH FILE'        (+4) center
+        let $printout = 'FILE '||$input_file||' HAS NO HEADER RECORD'
+        PRINT $printout            (+1) center
+        move 'N' to $continue_flag
+            let #return-status = 33
+        end-if
+    end-if
+
+    if $continue_flag = 'Y'
+
+   while $line_type != 'L6' and
+         $line_type != 'L7' and
+         $line_type != 'L8' and
+         $quit_flag != 'N'
+
+           read 1 into $line_type:2
+               $extra_character:1
+                   $body:169
+
+                if #end-file
+          break
+                end-if
+
+                evaluate $line_type
+
+       when ='L2'
+
+          let $key_id_header_1 = substr($body,1,50)
+
+       break
+
+       when ='L3'
+
+          let $key_id_header_2 = substr($body,1,50)
+
+       break
+
+       when ='L4'
+
+          let $key_id_under_1 = substr($body,1,50)
+
+       break
+
+       when ='L5'
+
+          let $key_id_under_2 = substr($body,1,50)
+
+       break
+
+       when ='L6'
+
+          let $key_id_line_1 = substr($body,1,4)
+          let $previous_id_1 = $key_id_line_1
+
+       break
+
+       when ='L7'
+
+
+       break
+
+       when ='L8'
+
+
+       break
+
+       when-other
+
+                PRINT 'ERROR WITH FILE'        (+4) center
+    let $printout = 'FILE '||$input_file||' HAS UNEXPECTED RECORD'
+        PRINT $printout            (+1) center
+        move 'N' to $continue_flag
+        move 'N' to $quit_flag
+            let #return-status = 32
+
+                break
+
+           end-evaluate
+
+   end-while
+
+   if #end-file
+      move 'N' to $continue_flag
+                PRINT 'ERROR WITH FILE'        (+4) center
+    let $printout = 'FILE '||$input_file||' HAS UNEXPECTED END-OF-FILE'
+        PRINT $printout            (+1) center
+            let #return-status = 31
+        end-if
+    end-if
+
+end-if
+
+   move '****END OF REPORT****' to $end_of_report  ! Initialize Working
+                           ! Storage constants
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   OPEN-FILE                                                               *
+!                                                                           *
+!       This procedure will open the file to be read and if there is a      *
+!       problem it will print it in the report and finish the processing.   *
+!                                                                           *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE OPEN-FILE
+
+OPEN $input_file AS 1 FOR-READING
+   RECORD=172 status=#file_status
+
+if #file_status = 0
+   move 'Y' to $continue_flag
+else
+        PRINT 'ERROR OPENING FILE'     (+4) center
+   let $printout = 'FILE '||$input_file||' DOES NOT EXIST'
+   PRINT $printout             (+1) center
+   move 'N' to $continue_flag
+   move 'N' to $close_file
+   let #return-status = 30
+end-if
+
+END-PROCEDURE OPEN-FILE
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!      This procedure wraps up the report.  It will close the file if open  *
+!      and print a final end of report message                              *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+if $close_file = 'N'
+else
+   CLOSE 1
+end-if
+
+print $end_of_report           (+4,) center
+
+END-PROCEDURE WRAP-UP
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!       This procedure will call the meat of the report, calling for page   *
+!       and other necessary processes to be executed                        *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : PROCESS-NO-PAGE-BREAK                                  *
+!       CALLS      : PROCESS-TWO-PAGE-BREAK                                 *
+!       CALLS      : PROCESS-FOOTER                                         *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT
+
+if $line_type = 'L6'
+
+   let $region = substr($body,6,2)
+   let $worker_name = substr($body,8,28)
+   let $client_name = substr($body,36,28)
+   let $client_id = substr($body,64,10)
+   let $nmbr_error = substr($body,76,3)
+   let $type_trans = substr($body,81,7)
+   let $svrty_mssg = substr($body,90,1)
+   let $mssg = substr($body,92,37)
+   let $key_id_line_2 = substr($body,120,50)
+
+   if rtrim($key_id_line_1,' ') = ' '
+       DO PROCESS-NO-PAGE-BREAK
+   else
+       DO PROCESS-ONE-PAGE-BREAK
+   end-if
+
+else
+   if $line_type = 'L7'
+
+       let $f_error_message = substr($body,1,60)
+       let $f_total = substr($body,61,7)
+
+       move 'Y' to $footer_flag
+
+       DO PROCESS-FOOTER
+   else
+       if $line_type = 'L8'
+          PRINT 'NO DETAIL LINES FOUND IN FILE' (+4,) center
+            else
+                PRINT 'ERROR WITH FILE'        (+4) center
+    let $printout = 'FILE '||$input_file||' HAS UNEXPECTED RECORD'
+        PRINT $printout            (+1) center
+            let #return-status = 32
+            end-if
+        end-if
+
+end-if
+
+END-PROCEDURE PROCESS-REPORT
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-NO-PAGE-BREAK                                                   *
+!                                                                           *
+!       This procedure will handle the printing of detail lines for the     *
+!       body of the exception report.  But it will only leave natural page  *
+!       breaks since the key_1 field is empty                               *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-LINE                                             *
+!       CALLS      : PROCESS-FOOTER                                         *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-NO-PAGE-BREAK
+
+   do PRINT-LINE-6
+
+   WHILE $line_type != 'L7' and
+         $line_type != 'L8'
+
+   read 1 into $line_type:2
+           $extra_character:1
+           $body:169
+
+                if #end-file
+          break
+                end-if
+
+   if $line_type = 'L6'
+
+   let $region = substr($body,6,2)
+   let $worker_name = substr($body,8,28)
+   let $client_name = substr($body,36,28)
+   let $client_id = substr($body,64,10)
+   let $nmbr_error = substr($body,76,3)
+   let $type_trans = substr($body,81,7)
+   let $svrty_mssg = substr($body,90,1)
+   let $mssg = substr($body,92,37)
+      let $key_id_line_2 = substr($body,120,50)
+
+           DO PRINT-LINE-6
+   else
+
+   if $line-type != 'L7' and $line_type != 'L8'
+
+                PRINT 'ERROR WITH FILE'        (+4) center
+    let $printout = 'FILE '||$input_file||' HAS UNEXPECTED RECORD'
+        PRINT $printout            (+1) center
+            let #return-status = 32
+
+                 break
+   end-if
+
+   end-if
+
+end-while
+
+    if #end-file
+                PRINT 'ERROR WITH FILE'        (+4) center
+    let $printout = 'FILE '||$input_file||' HAS UNEXPECTED END-OF-FILE'
+        PRINT $printout            (+1) center
+            let #return-status = 31
+    else
+   if $line_type = 'L7'
+
+                NEW-PAGE
+
+       move 'Y' to $footer_flag
+
+       let $f_error_message = substr($body,1,60)
+       let $f_total = substr($body,61,7)
+
+       DO PROCESS-FOOTER
+   end-if
+   end-if
+
+END-PROCEDURE PROCESS-NO-PAGE-BREAK
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-ONE-PAGE-BREAK                                                  *
+!                                                                           *
+!       This procedure will process the report when there is one forced     *
+!       page break when key_1 changes                                       *
+!                                                                           *
+!       CALLED BY  : PROCESS-ONE-PAGE-BREAK                                 *
+!       CALLS      : PRINT-LINE                                             *
+!       CALLS      : PROCESS-FOOTER                                         *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-ONE-PAGE-BREAK
+
+   move $key_id_line_1 to $previous_id_1
+
+   do PRINT-LINE-6
+
+   WHILE $line_type != 'L7' and
+         $line_type != 'L8'
+
+   read 1 into $line_type:2
+           $extra_character:1
+           $body:169
+
+                if #end-file
+          break
+                end-if
+
+   if $line_type = 'L6'
+
+   let $region = substr($body,6,2)
+   let $worker_name = substr($body,8,28)
+   let $client_name = substr($body,36,28)
+   let $client_id = substr($body,64,10)
+   let $nmbr_error = substr($body,76,3)
+   let $type_trans = substr($body,81,7)
+   let $svrty_mssg = substr($body,90,1)
+   let $mssg = substr($body,92,37)
+      let $key_id_line_1 = substr($body,1,4)
+      let $key_id_line_2 = substr($body,120,50)
+
+       if $key_id_line_1 = $previous_id_1
+           DO PRINT-LINE-6
+
+       else
+
+           NEW-PAGE
+           move $key_id_line_1 to $previous_id_1
+           DO PRINT-LINE-6
+
+       end-if
+
+   else
+
+   if $line_type != 'L7' and $line_type != 'L8'
+
+                PRINT 'ERROR WITH FILE'        (+4) center
+    let $printout = 'FILE '||$input_file||' HAS UNEXPECTED RECORD'
+        PRINT $printout            (+1) center
+            let #return-status = 32
+
+                 break
+   end-if
+
+   end-if
+
+end-while
+
+    if #end-file
+                PRINT 'ERROR WITH FILE'        (+4) center
+    let $printout = 'FILE '||$input_file||' HAS UNEXPECTED END-OF-FILE'
+        PRINT $printout            (+1) center
+            let #return-status = 31
+    else
+   if $line_type = 'L7'
+
+                NEW-PAGE
+
+       move 'Y' to $footer_flag
+
+       let $f_error_message = substr($body,1,60)
+       let $f_total = substr($body,61,7)
+
+       DO PROCESS-FOOTER
+   end-if
+    end-if
+
+END-PROCEDURE PROCESS-ONE-PAGE-BREAK
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-FOOTER                                                          *
+!                                                                           *
+!       This procedure will create the footer or summary of the report      *
+!                                                                           *
+!       CALLED BY  : PROCESS-FOOTER                                         *
+!       CALLS      : PRINT-FOOTER-LINE                                      *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-FOOTER
+
+   DO PRINT-FOOTER-LINE
+
+   WHILE $line_type = 'L7'
+
+   read 1 into $line_type:2
+           $extra_character:1
+           $body:169
+
+                if #end-file
+          break
+                end-if
+
+       let $f_error_message = substr($body,1,60)
+       let $f_total = substr($body,61,7)
+
+       DO PRINT-FOOTER-LINE
+
+   end-while
+
+   if #end-file
+                PRINT 'ERROR WITH FILE'        (+4) center
+    let $printout = 'FILE '||$input_file||' HAS UNEXPECTED END-OF-FILE'
+        PRINT $printout            (+1) center
+            let #return-status = 31
+         else
+       if $line_type != 'L8'
+                PRINT 'ERROR WITH FILE'        (+4) center
+    let $printout = 'FILE '||$input_file||' HAS UNEXPECTED RECORD'
+        PRINT $printout            (+1) center
+            let #return-status = 32
+            end-if
+        end-if
+
+
+
+END-PROCEDURE PROCESS-FOOTER
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-FOOTER-LINE                                                       *
+!                                                                           *
+!       This procedure will print a footer line                             *
+!                                                                           *
+!       CALLED BY  : PROCESS-FOOTER                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-FOOTER-LINE
+
+PRINT $f_error_message             (+1,1)
+PRINT $f_total                 (+0,66)
+
+END-PROCEDURE PRINT-FOOTER-LINE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-LINE                                                              *
+!                                                                           *
+!       This procedure will print one detail line.                          *
+!                                                                           *
+!       CALLED BY  : PROCESS-NO-PAGE-BREAK                                  *
+!       CALLED BY  : PROCESS-ONE-PAGE-BREAK                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-LINE
+
+PRINT $message_number              (+1,2)
+PRINT $severity                    (+0,18)
+PRINT $key_id_line_2               (+0,28)
+PRINT $error_message               (+0,82)
+
+END-PROCEDURE PRINT-LINE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-LINE-6                                                              *
+!                                                                           *
+!       This procedure will print one detail line for L6 lines.                          *
+!                                                                           *
+!       CALLED BY  : PROCESS-NO-PAGE-BREAK                                  *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-LINE-6
+
+PRINT $region                      (+1,2)
+PRINT $worker_name                 (+0,7)
+PRINT $client_name                 (+0,40)
+PRINT $client_id                   (+0,69)
+PRINT $nmbr_error                  (+0,81)
+PRINT $type_trans                  (+0,86)
+PRINT $svrty_mssg                  (+0,97)
+PRINT $mssg                        (+0,100)
+
+END-PROCEDURE PRINT-LINE-6

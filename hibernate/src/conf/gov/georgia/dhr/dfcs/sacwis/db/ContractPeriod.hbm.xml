@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ContractPeriod" table="CONTRACT_PERIOD" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.ContractPeriodId" mapped="false"
+                  unsaved-value="undefined">
+      <meta attribute="implement-equals">true</meta>
+      <key-property name="idContract" type="int">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="ID_CONTRACT" precision="16" scale="0"/>
+      </key-property>
+      <key-property name="nbrCnperPeriod" type="integer">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="NBR_CNPER_PERIOD" precision="2" scale="0"/>
+      </key-property>
+    </composite-id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="contract" class="gov.georgia.dhr.dfcs.sacwis.db.Contract" update="false" insert="false"
+                 fetch="select" unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CONTRACT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CNTRCT_WKR" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdCnperStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CNPER_STATUS" length="3" not-null="true"/>
+    </property>
+    <property name="dtCnperStart" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CNPER_START" length="7" not-null="true"/>
+    </property>
+    <property name="dtCnperTerm" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CNPER_TERM" length="7" not-null="true"/>
+    </property>
+    <property name="dtCnperClosure" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CNPER_CLOSURE" length="7"/>
+    </property>
+    <property name="indCnperRenewal" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CNPER_RENEWAL" length="1"/>
+    </property>
+    <property name="indCnperSigned" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CNPER_SIGNED" length="1"/>
+    </property>
+    <property name="nbrLegalIdentifier" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_LEGAL_IDENTIFIER" precision="3" scale="0"/>
+    </property>
+    <property name="txtTermComm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_TERM_COMM" length="300"/>
+    </property>
+    <bag name="contractVersions" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CONTRACT" precision="16" scale="0" not-null="true"/>
+        <column name="NBR_CNVER_PERIOD" precision="2" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ContractVersion" not-found="exception" embed-xml="true"/>
+    </bag>
+    <property name="txtLastUpdatedBy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_LAST_UPDATED_BY" length="100"/>
+    </property>
+  </class>
+</hibernate-mapping>

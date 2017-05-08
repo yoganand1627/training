@@ -1,0 +1,1213 @@
+!*****************************************************************************
+!  PAL CASE SUMMARY                                                          *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccf03o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 11/20/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brad McCleary                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This report will be generated on demand by the PAL   *
+!                       Coordinator, Caseworker, or other PAL staff.  The    *
+!                       report will de divided into six sections:  client    *
+!                       demographics, training services, support services,   *
+!                       indepedent living skills assessment, follow-up and   *
+!                       closure.  The requestor will have the option to      *
+!                       produce and print one or all of the sections.        *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 11/20/95   B.McCleary   Initial Programming                                *
+! 03/11/96   B.McCleary   SIR 3439 - Changed the inputs to stage only;       *
+!                         Created an SQL to retrieve the primary child for   *
+!                         the input stage.                                   *
+! 03/28/96   B.McCleary   SIR 4359 - Fixed the education decodes.            *
+! 09/13/96   K. Cys       SIR 3461 - Changed edit masks on Quantity variables*
+!                         so they will accept decimals to two digits of      *
+!                         precision                                          *
+! 12/16/96   K. Cys       ENH - Added code for suffix to Name Person Full.   *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02a.sqc'            ! control codes for Landscape
+
+    ask ID_STAGE                       ! input parameter 
+
+!************************************************
+! SIR 3439 - Removed the person input parameter 
+!************************************************
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 3
+  
+print 'Start Date: '                            (1,1)
+print $dt_start                                 (+0,13)
+print 'End Date: '                              (+0,27)
+print $dt_closed                                (+0,38)
+print 'Case Name: '                             (+0,70)
+print $case_name                                (+0,82)
+print 'Case #: '                                (+1,73)
+print #id_case                                  (+0,82) edit 8888888888888888
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer03.sqc'       ! Include file with footer information
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                    !Set printer environment
+    
+    move {ID_STAGE}                         to #input_id_stage
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-CASE, GET-NAME, GET-DISCHARGE, GET-PAID-SRV,       *
+!                    GET-UNPAID-SRV, GET-PAID-TRN, GET-UNPAID-TRN,          *
+!                    GET-FOLLOW-UP, GET-PUB-ASSIST                          *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+                 
+    do GET-CASE
+    do GET-PRIM-CHILD  !SIR 3439 - Created an SQl to get the PC for the stage
+    do GET-NAME
+    do GET-DISCHARGE
+    do GET-PAID-SRV
+    do GET-UNPAID-SRV
+    do GET-PAID-TRN
+    do GET-UNPAID-TRN
+    do GET-FOLLOW-UP
+    do GET-PUB-ASSIST
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-CASE                                                                *
+!                                                                           *
+!       This procedure uses the stage input to retrieve PAL stage and case  *
+!       information.                                                        *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-SYSDATE                                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CASE
+
+print 'PAL CASE SUMMARY'                        (+2) center
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+C.NM_CASE 
+    move &C.NM_CASE                         to $case_name
+
+to_char(S.DT_STAGE_START, 'MM/DD/YYYY') &date1    
+    move &date1                             to $dt_start
+
+to_char(S.DT_STAGE_CLOSE, 'MM/DD/YYYY') &date2    
+    move &date2                             to $dt_closed
+
+S.ID_CASE
+    move &S.ID_CASE                         to #id_case
+
+    if $dt_closed = ''
+        do GET-SYSDATE
+    end-if
+
+FROM    CAPS_CASE   C,
+        STAGE       S    
+
+WHERE   S.ID_STAGE = #input_id_stage
+AND     S.ID_CASE  = C.ID_CASE
+
+END-SELECT
+
+END-PROCEDURE GET-CASE
+       
+!****************************************************************************
+!                                                                           *
+!   GET-SYSDATE                                                             *
+!                                                                           *
+!       This procedure will select the system date in order to replace the  * 
+!       closed date when it is equal to NULL                                *
+!                                                                           * 
+!       CALLED BY  : GET-CASE                                               *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-SYSDATE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+    
+to_char(SYSDATE,'MM/DD/YYYY') &sysdate
+     move &sysdate          to $dt_closed
+
+FROM DUAL
+     
+END-SELECT              
+
+END-PROCEDURE GET-SYSDATE
+           
+!****************************************************************************
+!                                                                           *
+!   GET-PRIM-CHILD                                                          *
+!                                                                           *
+!       This procedure will select the primary child given the input id     *
+!       stage.                                                              *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PRIM-CHILD
+
+    move 0                  to #count1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+S.ID_PERSON
+    move &S.ID_PERSON                       to #input_id_person
+
+    let #count1 = #count1 + 1
+
+FROM    STAGE_PERSON_LINK   S 
+
+WHERE   S.ID_STAGE = #input_id_stage   
+AND     S.CD_STAGE_PERS_ROLE = 'PC'
+    
+END-SELECT
+    
+    if #count1 = 0
+      print 'UNABLE TO LOCATE'          (+3) center
+    end-if
+
+END-PROCEDURE GET-PRIM-CHILD
+
+!****************************************************************************
+!                                                                           *
+!   GET-NAME                                                                *
+!                                                                           *
+!       This procedure will select the name, suffix, and DOB information    *
+!       using effective dating logic.                                       *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-NAME                                             *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-NAME
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+N.NM_NAME_FIRST                             !***ENH***
+    move &N.NM_NAME_FIRST                   to $person_first
+    
+N.NM_NAME_MIDDLE
+    move &N.NM_NAME_MIDDLE                  to $person_middle
+    
+N.NM_NAME_LAST
+    move &N.NM_NAME_LAST                    to $person_last
+    
+CSUFFIX2.decode
+    move &CSUFFIX2.decode                   to $person_suffix     
+    
+to_char(P.DT_PERS_HIST_BIRTH, 'MM/DD/YYYY') &DOB    
+    move &DOB                               to $DOB
+
+    do PRINT-NAME
+
+FROM    NAME                N,
+        CSUFFIX2            CSUFFIX2,
+        PERSON_HISTORY      P
+
+WHERE   N.ID_PERSON = #input_id_person
+AND     N.IND_NAME_PRIMARY = 'Y'
+AND     N.DT_NAME_START_DATE  <= to_date($dt_closed, 'MM/DD/YYYY')
+AND     N.DT_NAME_END_DATE    >= to_date($dt_closed, 'MM/DD/YYYY')
+AND     CSUFFIX2.CODE(+)      = N.CD_NAME_SUFFIX !***ENH***
+AND     P.ID_PERS_HIST_PERSON = N.ID_PERSON
+AND     P.DT_PERS_HIST_EFFECT <= to_date($dt_closed, 'MM/DD/YYYY')
+AND     P.DT_PERS_HIST_END    >= to_date($dt_closed, 'MM/DD/YYYY')
+    
+END-SELECT
+    
+END-PROCEDURE GET-NAME
+
+!****************************************************************************
+!                                                                           *
+!   GET-DISCHARGE                                                           *
+!                                                                           *
+!       This procedure will select the discharge date from subcare.         *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-DISCHARGE                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-DISCHARGE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(DT_PLCMT_END, 'MM/DD/YYYY') &date4   
+    move &date4                               to $dt_place_end
+    
+    do PRINT-DISCHARGE
+    
+FROM    PLACEMENT 
+
+WHERE   ID_PLCMT_CHILD = #input_id_person
+AND     CD_PLCMT_ACT_PLANNED = 'A'
+AND     DT_PLCMT_END = (SELECT  MAX(P.DT_PLCMT_END)
+                        FROM    PLACEMENT P
+                        WHERE   P.ID_PLCMT_CHILD = #input_id_person
+                        AND     P.CD_PLCMT_ACT_PLANNED = 'A')
+AND     CD_PLCMT_REMOVAL_RSN IN ('010', '020', '150', '160')
+
+END-SELECT
+
+END-PROCEDURE GET-DISCHARGE
+
+!****************************************************************************
+!                                                                           *
+!   GET-PAID-SRV                                                            *
+!                                                                           *
+!       This procedure will select the paid services information.  It also  *
+!       keeps a running total of the paid services hours and cost and prints*
+!       them at the end of the select.                                      * 
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-PAID-SRV, PRINT-PAID-SRV-SUB                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PAID-SRV
+
+print 'TYPE OF SERVICE'                         (+3,1)
+print 'CORE ELEMENT/SUBJECT'                    (+0,19)
+print 'HOURS'                                   (+0,49)
+print 'COST'                                    (+0,61)
+print 'DATE TAKEN'                              (+0,75)
+print '-'                                       (+1,1,15) fill
+print '-'                                       (+0,19,20) fill
+print '-'                                       (+0,49,5) fill
+print '-'                                       (+0,61,4) fill
+print '-'                                       (+0,75,10) fill
+print 'PAID SERVICES'                           (+2,1)
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+         
+CPALSVCS1.decode
+    move &CPALSVCS1.decode                        to $paid_srv_type_dec
+    
+D.NBR_SVC_DTL_UNIT_QTY
+    move &D.NBR_SVC_DTL_UNIT_QTY                  to #paid_srv_unit
+    
+D.MO_SVC_DTL_SVC_MONTH    
+    move &D.MO_SVC_DTL_SVC_MONTH                  to #paid_srv_mo
+    
+D.YR_SVC_DTL_SVC_YEAR    
+    move &D.YR_SVC_DTL_SVC_YEAR                   to #paid_srv_yr
+    
+D.AMT_SVC_DTL_FEE_PAID    
+    move &D.AMT_SVC_DTL_FEE_PAID                  to #paid_srv_fee    
+
+    do PRINT-PAID-SRV
+    
+FROM    DELVRD_SVC_DTL      D,
+        CPALSVCS            CPALSVCS1 
+
+WHERE   D.ID_SVC_DTL_PERSON = #input_id_person
+AND     CPALSVCS1.CODE      = D.CD_SVC_DTL_SERVICE
+
+ORDER BY    D.CD_SVC_DTL_SERVICE, 
+            D.YR_SVC_DTL_SVC_YEAR DESC, 
+            D.MO_SVC_DTL_SVC_MONTH DESC
+
+END-SELECT
+
+    do PRINT-PAID-SRV-SUB
+
+END-PROCEDURE GET-PAID-SRV
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNPAID-SRV                                                          *
+!                                                                           *
+!       This procedure will select the unpaid services information.  It also*
+!       keeps a running total of the unpaid services hours and cost and     *
+!       prints them at the end of the select.  It then prints the total for * 
+!       all paid and unpaid services.                                       *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-UNPAID-SRV, PRINT-UNPAID-SRV-SUB                 *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNPAID-SRV
+
+print 'UNPAID SERVICES'                         (+3,1)
+print 'DESCRIPTION'                             (+1,86)
+print '-'                                       (+1,86,20) fill
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CPALSVCS.decode
+    move &CPALSVCS.decode                       to $unpaid_srv_type_dec
+    
+P.NBR_PAL_SERVICE_UNITS
+    move &P.NBR_PAL_SERVICE_UNITS               to #unpaid_srv_unit
+    
+to_char(P.DT_PAL_SERVICE_DATE, 'MM/DD/YYYY') &date5   
+    move &date5                                 to $dt_unpaid_srv
+
+P.SDS_PAL_SERVICE_OTHER
+    move &P.SDS_PAL_SERVICE_OTHER               to $unpaid_srv_desc
+    
+    do PRINT-UNPAID-SRV
+
+FROM    PAL_SERVICE         P,
+        STAGE               S,
+        STAGE_PERSON_LINK   SPL,
+        CPALSVCS            CPALSVCS
+        
+WHERE   SPL.ID_PERSON = #input_id_person
+AND     S.ID_STAGE = SPL.ID_STAGE
+AND     P.ID_PAL_SERVICE_STAGE = S.ID_STAGE
+AND     P.CD_PAL_SERVICE_CATGORY = 'SVC'
+AND     CPALSVCS.CODE(+) = P.CD_PAL_SERVICE_TYPE
+
+ORDER BY    P.CD_PAL_SERVICE_TYPE, 
+            P.DT_PAL_SERVICE_DATE DESC
+
+END-SELECT
+
+    do PRINT-UNPAID-SRV-SUB
+    do PRINT-SRV-SUB
+
+END-PROCEDURE GET-UNPAID-SRV
+
+!****************************************************************************
+!                                                                           *
+!   GET-PAID-TRN                                                            *
+!                                                                           *
+!       This procedure will select the paid training information.  It also  *
+!       keeps a running total of the paid training hours and cost and prints*
+!       them at the end of the select.                                      * 
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-PAID-TRN, PRINT-PAID-SRV-TRN                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PAID-TRN
+
+print 'TYPE OF TRAINING'                        (+3,1)
+print 'CORE ELEMENT/SUBJECT'                    (+0,19)
+print 'HOURS'                                   (+0,49)
+print 'COST'                                    (+0,61)
+print 'DATE TAKEN'                              (+0,75)
+print '-'                                       (+1,1,16) fill
+print '-'                                       (+0,19,20) fill
+print '-'                                       (+0,49,5) fill
+print '-'                                       (+0,61,4) fill
+print '-'                                       (+0,75,10) fill
+print 'PAID TRAINING'                           (+2,1)
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CPALTRNG1.decode
+    move &CPALTRNG1.decode                        to $paid_trn_type_dec
+    
+DSD.NBR_SVC_DTL_UNIT_QTY
+    move &DSD.NBR_SVC_DTL_UNIT_QTY                to #paid_trn_unit
+    
+DSD.MO_SVC_DTL_SVC_MONTH    
+    move &DSD.MO_SVC_DTL_SVC_MONTH                to #paid_trn_mo
+    
+DSD.YR_SVC_DTL_SVC_YEAR    
+    move &DSD.YR_SVC_DTL_SVC_YEAR                 to #paid_trn_yr
+    
+DSD.AMT_SVC_DTL_FEE_PAID    
+    move &DSD.AMT_SVC_DTL_FEE_PAID                to #paid_trn_fee    
+    
+    do PRINT-PAID-TRN
+
+FROM    DELVRD_SVC_DTL      DSD,
+        CPALTRNG            CPALTRNG1 
+
+WHERE   DSD.ID_SVC_DTL_PERSON = #input_id_person
+AND     CPALTRNG1.CODE        = DSD.CD_SVC_DTL_SERVICE
+
+ORDER BY    DSD.CD_SVC_DTL_SERVICE, 
+            DSD.YR_SVC_DTL_SVC_YEAR DESC, 
+            DSD.MO_SVC_DTL_SVC_MONTH DESC
+
+END-SELECT
+
+    do PRINT-PAID-TRN-SUB
+
+END-PROCEDURE GET-PAID-TRN
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNPAID-TRN                                                          *
+!                                                                           *
+!       This procedure will select the unpaid training information.  It also*
+!       keeps a running total of the unpaid training hours and cost and     *
+!       prints them at the end of the select.  It then prints the total for * 
+!       all paid and unpaid training as well as the grand total for services*
+!       and training.                                                       *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-UNPAID-TRN, PRINT-UNPAID-TRN-SUB                 *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNPAID-TRN
+
+print 'UNPAID TRAINING'                     (+3,1)
+print 'DESCRIPTION'                         (+1,86)
+print '-'                                   (+1,86,20) fill
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                                   
+CPALTRNG.decode
+    move &CPALTRNG.decode                       to $unpaid_trn_type_dec
+    
+PS.NBR_PAL_SERVICE_UNITS
+    move &PS.NBR_PAL_SERVICE_UNITS              to #unpaid_trn_unit
+    
+to_char(PS.DT_PAL_SERVICE_DATE, 'MM/DD/YYYY') &date6   
+    move &date6                                 to $dt_unpaid_trn
+
+PS.SDS_PAL_SERVICE_OTHER
+    move &PS.SDS_PAL_SERVICE_OTHER              to $unpaid_trn_desc
+    
+    do PRINT-UNPAID-TRN
+
+FROM    PAL_SERVICE         PS,
+        STAGE               S,
+        STAGE_PERSON_LINK   SPL,
+    CPALTRNG            CPALTRNG
+        
+WHERE   SPL.ID_PERSON = #input_id_person
+AND     S.ID_STAGE = SPL.ID_STAGE
+AND     PS.ID_PAL_SERVICE_STAGE = S.ID_STAGE
+AND     PS.CD_PAL_SERVICE_CATGORY = 'TRN'
+AND     CPALTRNG.CODE(+) = PS.CD_PAL_SERVICE_TYPE
+
+ORDER BY    PS.CD_PAL_SERVICE_TYPE, 
+            PS.DT_PAL_SERVICE_DATE DESC
+
+END-SELECT
+
+    do PRINT-UNPAID-TRN-SUB
+    do PRINT-TRN-SUB
+    do PRINT-GRAND-TOTAL
+
+END-PROCEDURE GET-UNPAID-TRN
+
+!****************************************************************************
+!                                                                           *
+!   GET-FOLLOW-UP                                                           *
+!                                                                           *
+!       This procedure will select the follow up summary information as well*
+!       as the pre and post assessment scores and dates.                    *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-FOLLOW-UP                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-FOLLOW-UP
+
+NEW-PAGE
+print 'INDEPENDENT LIVING SKILLS ASSESSMENT'            (+2,1)
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CPALCLLA.decode
+    move &CPALCLLA.decode                       to $follup_la_dec
+    
+to_char(P.DT_PAL_PREASMT_DATE, 'MM/DD/YYYY') &date7
+    move &date7                                 to $dt_preasmt
+    
+to_char(P.DT_PAL_POSTASMT_DATE, 'MM/DD/YYYY') &date8
+    move &date8                                 to $dt_postasmt
+    
+P.NBR_PAL_PREASMT_SCORE    
+    move &P.NBR_PAL_PREASMT_SCORE               to #preasmt_score
+
+P.NBR_PAL_POSTASMT_SCORE    
+    move &P.NBR_PAL_POSTASMT_SCORE              to #postasmt_score
+    
+P.TXT_PAL_IL_NO_ILS_RSN    
+    move &P.TXT_PAL_IL_NO_ILS_RSN               to $no_asmt_rsn
+    
+CPALCLRN.decode    
+    move &CPALCLRN.decode                       to $closure_rsn_dec
+    
+CPALFEDU.decode    
+    move &CPALFEDU.decode                       to $highest_edu_dec
+
+CPALEMPL.decode    
+    move &CPALEMPL.decode                       to $employed_dec
+    
+CPALFCES.decode    
+    move &CPALFCES.decode                       to $educ_stat_dec
+    
+CPALCLLA1.decode    
+    move &CPALCLLA1.decode                      to $closure_la_dec
+
+CPALFMAR.decode    
+    move &CPALFMAR.decode                       to $mar_stat_dec
+    
+CPALREUN.decode    
+    move &CPALREUN.decode                       to $reun_dec
+    
+to_char(PF.DT_PAL_FOLLUP_DATE, 'MM/DD/YYYY') &date9
+    move &date9                                 to $dt_follup
+    
+PF.NBR_PAL_FOLLUP_NUM_CHLDRN    
+    move &PF.NBR_PAL_FOLLUP_NUM_CHLDRN          to #num_child
+ 
+    do PRINT-FOLLOW-UP
+
+FROM    PAL                 P,
+        PAL_FOLLOW_UP       PF,
+        STAGE               S,
+        STAGE_PERSON_LINK   SPL,
+        CPALCLRN            CPALCLRN,
+        CPALFEDU            CPALFEDU,
+        CPALEMPL            CPALEMPL,
+        CPALFCES            CPALFCES,
+        CPALCLLA            CPALCLLA,
+        CPALCLLA            CPALCLLA1,
+        CPALFMAR            CPALFMAR,
+        CPALREUN            CPALREUN
+      
+WHERE   SPL.ID_PERSON  =  #input_id_person
+AND     S.ID_STAGE  = SPL.ID_STAGE
+AND     P.ID_PAL_STAGE  = S.ID_STAGE
+AND     PF.ID_PAL_FOLLUP_STAGE = S.ID_STAGE
+AND     CPALCLLA.CODE(+) = PF.CD_PAL_FOLLUP_LIV_ARR
+AND     CPALFMAR.CODE(+) = PF.CD_PAL_FOLLUP_MARITAL
+AND     CPALFEDU.CODE(+) = PF.CD_PAL_FOLLUP_HIGHEST_EDU  !***SIR 4359***
+AND     CPALFCES.CODE(+) = PF.CD_PAL_FOLLUP_EDUC_STAT  
+AND     CPALEMPL.CODE(+) = PF.CD_PAL_FOLLUP_EMPLOYED
+AND     CPALREUN.CODE(+) = PF.CD_PAL_FOLLUP_REUNIFIED
+AND     CPALCLRN.CODE(+) = S.CD_STAGE_REASON_CLOSED
+AND     CPALCLLA1.CODE(+) = P.CD_PAL_CLOSE_LIV_ARR  
+
+END-SELECT
+
+END-PROCEDURE GET-FOLLOW-UP
+
+!****************************************************************************
+!                                                                           *
+!   GET-PUB-ASSIST                                                          *
+!                                                                           *
+!       This procedure will select the public assistance decodes.  It also  *
+!       calls the closure print statement which ends the report.            *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-PUB-ASSIST-TITLE, PRINT-PUB-ASSIST, PRINT-CLOSURE*
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PUB-ASSIST
+
+  move 0                                    to #count9
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+CPALFPAT.decode
+    move &CPALFPAT.decode                   to $pa_type_dec
+
+    let #count9 = #count9 + 1
+
+    if #count9 = 1
+    do PRINT-PUB-ASSIST-TITLE
+    else
+    do PRINT-PUB-ASSIST
+    end-if
+
+FROM    PAL_PUBLIC_ASSIST   P,
+        STAGE               S,
+        STAGE_PERSON_LINK   SPL,
+        CPALFPAT            CPALFPAT
+        
+WHERE   SPL.ID_PERSON = #input_id_person
+AND     S.ID_STAGE = SPL.ID_STAGE
+AND     P.ID_PAL_PUBLIC_ASSIST_STGE = S.ID_STAGE
+AND     CPALFPAT.CODE(+) = P.CD_PAL_PUBLIC_ASSIST
+
+END-SELECT
+
+    do PRINT-CLOSURE
+
+END-PROCEDURE GET-PUB-ASSIST
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-NAME                                                              *
+!                                                                           *
+!       This procedure prints the client information.                       *
+!                                                                           * 
+!       CALLED BY  : GET-NAME                                               *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-NAME
+
+print 'CLIENT NAME: '                           (+3,1)
+if $person_suffix <> ''  !***ENH***
+   let $person_name_suff = ', ' || $person_suffix
+end-if
+if $person_middle = ''
+   let $person_name = $person_first || ' ' || $person_last || $person_name_suff
+else
+   let $person_name = $person_first || ' ' || $person_middle || ' ' || $person_last || $person_name_suff
+end-if   
+print $person_name                              (+0,19)
+
+move '' to $person_name_suff  !***ENH***
+print 'DOB: '                                   (+0,49)
+print $DOB                                      (+0,74)
+print 'CLIENT ID: '                             (+1,1)
+print #input_id_person                          (+0,19) edit 8888888888888888
+
+END-PROCEDURE PRINT-NAME   
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-DISCHARGE                                                         *
+!                                                                           *
+!       This procedure prints the discharge from subcare date.              *
+!           split between pages.                                            *
+!                                                                           * 
+!       CALLED BY  : GET-DISCHARGE                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-DISCHARGE
+
+print 'Discharge from subcare'                  (+0,49)
+print $dt_place_end                             (+0,74)
+
+END-PROCEDURE PRINT-DISCHARGE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PAID-SRV                                                          *
+!                                                                           *
+!       This procedure prints the paid services with their hours and cost.  *
+!                                                                           * 
+!       CALLED BY  : GET-PAID-SRV                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PAID-SRV 
+
+print $paid_srv_type_dec                        (+1,19) 
+!***SIR 3461***
+print #paid_srv_unit                            (+0,49) edit 88888.88 
+print #paid_srv_fee                             (+0,61) edit $$$$$$$$$.00
+
+if #paid_srv_mo <> 0
+print #paid_srv_mo                              (+0,75) edit 00
+print '/'                                       ()
+print #paid_srv_yr                              () edit 00
+end-if
+
+let #paid_srv_unit_sub = #paid_srv_unit_sub + #paid_srv_unit
+let #paid_srv_fee_sub  = #paid_srv_fee_sub  + #paid_srv_fee
+
+END-PROCEDURE PRINT-PAID-SRV 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PAID-SRV-SUB                                                      *
+!                                                                           *
+!       This procedure prints the subtotal of the paid services.            *
+!                                                                           * 
+!       CALLED BY  : GET-PAID-SRV                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PAID-SRV-SUB 
+
+print '-'                                   (+1,49,10) fill
+print '-'                                   (+0,61,12) fill
+print 'SUBTOTAL'                            (+1,19)
+!***SIR 3461***
+print #paid_srv_unit_sub                    (+0,49) edit 88888.88
+print #paid_srv_fee_sub                     (+0,61) edit $$$$$$$$$.00
+
+END-PROCEDURE PRINT-PAID-SRV-SUB 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-UNPAID-SRV                                                        *
+!                                                                           *
+!       This procedure prints the unpaid services with their hours and cost.*
+!                                                                           * 
+!       CALLED BY  : GET-UNPAID-SRV                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-UNPAID-SRV 
+
+print $unpaid_srv_type_dec                        (+1,19)
+!***SIR 3461***
+print #unpaid_srv_unit                            (+0,49) edit 88888.88
+print $dt_unpaid_srv                              (+0,75)
+print $unpaid_srv_desc                            (+0,86) wrap 20 2
+
+let #unpaid_srv_unit_sub = #unpaid_srv_unit_sub + #unpaid_srv_unit
+let #unpaid_srv_fee_sub  = #unpaid_srv_fee_sub  + #unpaid_srv_fee
+
+END-PROCEDURE PRINT-UNPAID-SRV 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-UNPAID-SRV-SUB                                                    *
+!                                                                           *
+!       This procedure prints the subtotal of the unpaid services.          *
+!                                                                           * 
+!       CALLED BY  : GET-UNPAID-SRV                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-UNPAID-SRV-SUB 
+
+print '-'                                   (+1,49,10) fill
+print 'SUBTOTAL'                            (+1,19)
+!***SIR 3461***
+print #unpaid_srv_unit_sub                  (+0,49) edit 88888.88
+
+END-PROCEDURE PRINT-UNPAID-SRV-SUB 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-SRV-SUB                                                           *
+!                                                                           *
+!       This procedure prints the total paid and unpaid services subtotal.  *
+!                                                                           * 
+!       CALLED BY  : GET-UNPAID-SRV                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-SRV-SUB      
+                                                              
+print '-'                                       (+2,49,10) fill
+print '-'                                       (+0,61,12) fill                                                              
+print 'TOTAL PAID AND UNPAID SERVICES'          (+1,1)
+
+let #tot_srv_units = #paid_srv_unit_sub + #unpaid_srv_unit_sub
+let #tot_srv_fees =  #paid_srv_fee_sub  + #unpaid_srv_fee_sub
+
+!***SIR 3461***
+print #tot_srv_units                            (+0,49) edit 88888.88                             
+print #tot_srv_fees                             (+0,61) edit $$$$$$$$$.00
+
+END-PROCEDURE PRINT-SRV-SUB    
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PAID-TRN                                                          *
+!                                                                           *
+!       This procedure prints the paid training hours and cost.             *
+!                                                                           * 
+!       CALLED BY  : GET-PAID-TRN                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PAID-TRN 
+
+print $paid_trn_type_dec                        (+1,19)
+!***SIR 3461***
+print #paid_trn_unit                            (+0,49) edit 88888.88
+print #paid_trn_fee                             (+0,61) edit $$$$$$$$$.00
+ 
+if #paid_trn_mo <> 0
+print #paid_trn_mo                              (+0,75) edit 00
+print '/'                                       ()
+print #paid_trn_yr                              () edit 00
+end-if
+
+let #paid_trn_unit_sub = #paid_trn_unit_sub + #paid_trn_unit
+let #paid_trn_fee_sub  = #paid_trn_fee_sub  + #paid_trn_fee
+
+END-PROCEDURE PRINT-PAID-TRN 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PAID-TRN-SUB                                                      *
+!                                                                           *
+!       This procedure prints the subtotal of the paid training.            *
+!                                                                           * 
+!       CALLED BY  : GET-PAID-TRN                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PAID-TRN-SUB 
+
+print '-'                                   (+1,49,10) fill
+print '-'                                   (+0,61,12) fill
+print 'SUBTOTAL'                            (+1,19)
+!***SIR 3461***
+print #paid_trn_unit_sub                    (+0,49) edit 88888.88
+print #paid_trn_fee_sub                     (+0,61) edit $$$$$$$$$.00
+
+END-PROCEDURE PRINT-PAID-TRN-SUB 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-UNPAID-TRN                                                        *
+!                                                                           *
+!       This procedure prints the unpaid training hours and cost.           *
+!                                                                           * 
+!       CALLED BY  : GET-UNPAID-TRN                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-UNPAID-TRN 
+
+print $unpaid_trn_type_dec                        (+1,19)
+!***SIR 3461***
+print #unpaid_trn_unit                            (+0,49) edit 88888.88
+print $dt_unpaid_trn                              (+0,75)
+print $unpaid_trn_desc                            (+0,86) wrap 20 2
+
+let #unpaid_trn_unit_sub = #unpaid_trn_unit_sub + #unpaid_trn_unit
+let #unpaid_trn_fee_sub  = #unpaid_trn_fee_sub  + #unpaid_trn_fee
+
+END-PROCEDURE PRINT-UNPAID-TRN 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-UNPAID-TRN-SUB                                                    *
+!                                                                           *
+!       This procedure prints the subtotal of the unpaid training.          *
+!                                                                           * 
+!       CALLED BY  : GET-UNPAID-TRN                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-UNPAID-TRN-SUB 
+
+print '-'                                   (+1,49,10) fill
+print 'SUBTOTAL'                            (+1,19)
+!***SIR 3461***
+print #unpaid_trn_unit_sub                  (+0,49) edit 88888.88
+
+END-PROCEDURE PRINT-UNPAID-TRN-SUB 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-TRN-SUB                                                           *
+!                                                                           *
+!       This procedure prints the total paid and unpaid training subtotal.  *
+!                                                                           * 
+!       CALLED BY  : GET-UNPAID-TRN                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-TRN-SUB      
+                                                              
+print '-'                                       (+2,49,10) fill
+print '-'                                       (+0,61,12) fill                                                              
+print 'TOTAL PAID AND UNPAID TRAINING'          (+1,1)
+
+let #tot_trn_units = #paid_trn_unit_sub + #unpaid_trn_unit_sub
+let #tot_trn_fees =  #paid_trn_fee_sub  + #unpaid_trn_fee_sub
+
+!***SIR 3461***
+print #tot_trn_units                            (+0,49) edit 88888.88                             
+print #tot_trn_fees                             (+0,61) edit $$$$$$$$$.00
+
+END-PROCEDURE PRINT-TRN-SUB    
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-GRAND-TOTAL                                                       *
+!                                                                           *
+!       This procedure prints the grand total for all services and training.*
+!                                                                           * 
+!       CALLED BY  : GET-UNPAID-TRN                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-GRAND-TOTAL   
+                                                              
+print 'HOURS'                                   (+3,49)
+print 'COST'                                    (+0,61)
+print '-'                                       (+1,49,10) fill
+print '-'                                       (+0,61,12) fill                                                              
+print 'GRAND TOTAL SERVICES/TRAINING'           (+1,1)
+
+let #grand_tot_units = #tot_trn_units + #tot_srv_units
+let #grand_tot_fees  = #tot_trn_fees  + #tot_srv_fees
+
+!***SIR 3461***
+print #grand_tot_units                          (+0,49) edit 88888.88                             
+print #grand_tot_fees                           (+0,61) edit $$$$$$$$$.00
+
+END-PROCEDURE PRINT-GRAND-TOTAL   
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-FOLLOW-UP                                                         *
+!                                                                           *
+!       This procedure prints the assessment scores and the follow up       *
+!       summary information.                                                *
+!                                                                           * 
+!       CALLED BY  : GET-FOLLOW-UP                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-FOLLOW-UP 
+
+print 'DATE'                                            (+1,55)
+print 'SCORE'                                           (+0,67)
+print '-'                                               (+1,55,10) fill
+print '-'                                               (+0,67,10) fill
+print 'PRE-ASSESSMENT'                                  (+1,19)
+print $dt_preasmt                                       (+0,55)
+
+if #preasmt_score <> 0
+    print #preasmt_score                                    (+0,67) edit 888
+end-if
+
+print 'POST-ASSESSMENT'                                 (+1,19)
+print $dt_postasmt                                      (+0,55)
+
+if #postasmt_score <> 0
+    print #postasmt_score                                   (+0,67) edit 888
+end-if
+
+print 'NOT TAKEN REASON: '                              (+2,1)
+
+if $no_asmt_rsn <> ''
+    print $no_asmt_rsn                                  (+0,19) wrap 88 4
+else
+    print 'Not Applicable'                              (+0,19)
+end-if
+
+print 'FOLLOW-UP SUMMARY'                               (+3,1)
+print 'DATE FOR FOLLOW-UP: '                            (+1,19)
+print $dt_follup                                        (+0,43)
+print 'LIVING ARRANGEMENT: '                            (+1,19)
+print $follup_la_dec                                    (+0,43)
+print 'MARITAL STATUS: '                                (+1,19)
+print $mar_stat_dec                                     (+0,43)
+print 'NUMBER OF CHILDREN: '                            (+1,19)
+print #num_child                                        (+0,43) edit 88
+print 'EDUCATIONAL STATUS: '                            (+1,19)
+print $educ_stat_dec                                    (+0,43)
+print 'HIGHEST EDUCATION: '                             (+1,19)
+print $highest_edu_dec                                  (+0,43)
+print 'EMPLOYED: '                                      (+1,19)
+print $employed_dec                                     (+0,43)
+print 'REUNIFIED WITH FAMILY: '                         (+1,19)
+print $reun_dec                                         (+0,43)
+
+END-PROCEDURE PRINT-FOLLOW-UP 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PUB-ASSIST-TITLE                                                  *
+!                                                                           *
+!       This procedure prints the public assistance title and first decode. *
+!                                                                           * 
+!       CALLED BY  : GET-PUB-ASSIST                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PUB-ASSIST-TITLE    
+
+print 'PUBLIC ASSISTANCE: '                             (+2,19)
+print $pa_type_dec                                      (+0,43)
+
+END-PROCEDURE PRINT-PUB-ASSIST-TITLE    
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PUB-ASSIST                                                        *
+!                                                                           *
+!       This procedure prints the rest of the public assistance decodes.    *
+!                                                                           * 
+!       CALLED BY  : GET-PUB-ASSIST                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PUB-ASSIST    
+
+print $pa_type_dec                                      (+1,43)
+
+END-PROCEDURE PRINT-PUB-ASSIST   
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CLOSURE                                                           *
+!                                                                           *
+!       This procedure prints the closure reason and living arrangement.    *
+!                                                                           * 
+!       CALLED BY  : GET-PUB-ASSIST                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CLOSURE   
+
+print 'CLOSURE'                                         (+2,1)
+print 'REASON: '                                        (+1,19)
+print $closure_rsn_dec                                  (+0,43)
+print 'LIVING ARRANGEMENT: '                            (+1,19)
+print $closure_la_dec                                   (+0,43)
+
+END-PROCEDURE PRINT-CLOSURE   
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc'

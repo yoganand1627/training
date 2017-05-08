@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Stage" table="STAGE" mutable="true" polymorphism="implicit"
+         dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+    <id name="idStage" type="integer" unsaved-value="0">
+      <column name="ID_STAGE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_STAGE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <!-- The lazy="no-proxy" attribute forces Hibernate to wait to pull the IncomingDetail record until the getter is called. -->
+    <many-to-one name="incomingDetail" class="gov.georgia.dhr.dfcs.sacwis.db.IncomingDetail" fetch="select"
+                 unique="true" update="false" insert="false" optimistic-lock="true" not-found="ignore" embed-xml="true"
+                 lazy="no-proxy">
+      <column name="ID_STAGE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="unit" class="gov.georgia.dhr.dfcs.sacwis.db.Unit" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_UNIT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="situation" class="gov.georgia.dhr.dfcs.sacwis.db.Situation" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_SITUATION" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdStageType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STAGE_TYPE" length="5"/>
+    </property>
+    <property name="dtStageClose" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_STAGE_CLOSE" length="7"/>
+    </property>
+    <property name="cdStageClassification" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_STAGE_CLASSIFICATION" length="4"/>
+    </property>
+    <property name="cdStageCurrPriority" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_STAGE_CURR_PRIORITY" length="3"/>
+    </property>
+    <property name="cdStageInitialPriority" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_STAGE_INITIAL_PRIORITY" length="3"/>
+    </property>
+    <property name="cdStageRsnPriorityChgd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_STAGE_RSN_PRIORITY_CHGD" length="2"/>
+    </property>
+    <property name="cdStageReasonClosed" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_STAGE_REASON_CLOSED" length="3"/>
+    </property>
+    <property name="indStageClose" type="string" unique="false" optimistic-lock="true" lazy="false" generated="always">
+      <column name="IND_STAGE_CLOSE" length="1" not-null="true"/>
+    </property>
+    <property name="cdStageCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STAGE_CNTY" length="3"/>
+    </property>
+    <property name="nmStage" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_STAGE" length="25"/>
+    </property>
+    <property name="cdStageRegion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STAGE_REGION" length="2"/>
+    </property>
+    <property name="dtStageStart" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_STAGE_START" length="7"/>
+    </property>
+    <property name="cdStageProgram" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STAGE_PROGRAM" length="3"/>
+    </property>
+    <property name="cdStage" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STAGE" length="3"/>
+    </property>
+	<property name="txtStageClosureCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_STAGE_CLOSURE_CMNTS" length="300"/>
+    </property>
+    <property name="txtStagePriorityCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_STAGE_PRIORITY_CMNTS" length="4000"/>
+    </property>
+    <property name="cdClientAdvised" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CLIENT_ADVISED" length="1"/>
+    </property>
+    <property name="indEcs" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_ECS" length="1"/>
+    </property>
+    <property name="indEcsVer" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_ECS_VER" length="1"/>
+    </property>
+    <property name="cdStageScroutReason" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_STAGE_SCROUT_REASON" length="4"/>
+    </property>
+    <property name="txtStageSplInstrtCmnt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_STAGE_SPL_INSTRT_CMNT" length="4000"/>
+    </property>
+    <property name="txtStageResponseTimeCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_STAGE_RES_TIME_CMNTS" length="300"/>
+    </property>
+    <property name="indStageSealed" type="string">
+       <column name="IND_STAGE_SEALED" length="1" />
+    </property>
+    <property name="indStageSensitive" type="string">
+       <column name="IND_STAGE_SENSITIVE" length="1" />
+    </property>
+	<property name="dtStageSealed" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_STAGE_SEALED" length="7"/>
+    </property>
+    <property name="indRedFlag" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_RED_FLAG" length="1"/>
+    </property>
+    <bag name="adminAllegationsForIdAdminAllegArStage" inverse="true" mutable="true" optimistic-lock="true"
+         embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ADMIN_ALLEG_AR_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdminAllegation" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="intakeAllegations" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ALLEGATION_STAGE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IntakeAllegation" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="adminAllegationsForIdAdminAllegStage" inverse="true" mutable="true" optimistic-lock="true"
+         embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ADMIN_ALLEG_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdminAllegation" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="stageLinksForIdStage" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.StageLink" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="fceNarratives" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceNarrative" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="fceReviews" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceReview" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="adminReviews" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE_RELATED" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdminReview" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="stagePersonLinks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.StagePersonLink" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="pals" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PAL_STAGE" precision="16" scale="0" not-null="true" unique="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Pal" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="resourceHistories" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RSHS_FA_HOME_STAGE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ResourceHistory" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="recordsChecks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.RecordsCheck" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="allegations" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ALLEGATION_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Allegation" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="tempStagePersLinks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_TEMP_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.TempStagePersLink" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="approvalRejections" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ApprovalRejection" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="fceApplications" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceApplication" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="stffAsgnmtHistories" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.StffAsgnmtHistory" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="incomingPersons" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IncomingPerson" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="workloads" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_WKLD_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Workload" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="fceEligibilities" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceEligibility" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="riskAreas" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.RiskArea" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="palFollowUps" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PAL_FOLLUP_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.PalFollowUp" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="events" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EVENT_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Event" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="stageLinksForIdPriorStage" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PRIOR_STAGE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.StageLink" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="cpsInvstDetails" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CPS_INVST_STAGE" precision="16" scale="0" unique="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CpsInvstDetail" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="familyAssmts" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FAM_ASSMT_STAGE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FamilyAssmt" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="tcmClaims" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.TcmClaim" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="riskFactorses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.RiskFactors" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="contacts" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CONTACT_STAGE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Contact" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="licensingInvstDtls" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_LICNG_INVST_STAGE" precision="16" scale="0" unique="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.LicensingInvstDtl" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="facilAllegPriorReviews" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_REVIEW_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FacilAllegPriorReview" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="caseMerges" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CASE_MERGE_STAGE_FROM" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CaseMerge" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="todos" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_TODO_STAGE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Todo" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="diligentSearchs" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.DiligentSearch" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="cpsChecklistItems" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CpsChecklistItem" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="allegationHistories" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ALLEGATION_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AllegationHistory" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="incmgDetermFactorses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_INCMG_DETERM_STAGE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IncmgDetermFactors" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="medicaidUpdates" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_MED_UPD_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.MedicaidUpdate" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="protectiveServiceAlerts" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ProtectiveServiceAlert" not-found="exception"
+                   embed-xml="true"/>
+    </bag>
+    <bag name="cpsChecklists" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CpsChecklist" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="palServices" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PAL_SERVICE_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.PalService" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="capsResources" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_RSRC_FA_HOME_STAGE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="cfpStatuses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CfpStatus" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="riskCategories" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.RiskCategory" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="riskAssessments" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.RiskAssessment" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="facilityInvstDtls" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FACIL_INVST_STAGE" precision="16" scale="0" unique="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FacilityInvstDtl" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

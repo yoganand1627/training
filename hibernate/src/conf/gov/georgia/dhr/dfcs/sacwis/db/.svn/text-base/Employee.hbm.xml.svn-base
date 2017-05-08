@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Employee" table="EMPLOYEE" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idPerson" type="integer" unsaved-value="undefined">
+      <column name="ID_PERSON" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">person</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" constrained="true"/>
+    <many-to-one name="unit" class="gov.georgia.dhr.dfcs.sacwis.db.Unit" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EMP_UNIT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="empJobHistory" class="gov.georgia.dhr.dfcs.sacwis.db.EmpJobHistory" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EMP_JOB_HISTORY" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="employee" class="gov.georgia.dhr.dfcs.sacwis.db.Employee" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON_MODIFIED_BY" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="office" class="gov.georgia.dhr.dfcs.sacwis.db.Office" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EMP_OFFICE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="mailCode" class="gov.georgia.dhr.dfcs.sacwis.db.MailCode" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="CD_EMP_OFFICE_MAIL" length="4"/>
+    </many-to-one>
+    <property name="cdEmployeeClass" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EMPLOYEE_CLASS" length="8" not-null="true"/>
+    </property>
+    <property name="dtEmpHire" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_EMP_HIRE" length="7" not-null="true"/>
+    </property>
+    <property name="nbrEmpActivePct" type="integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_EMP_ACTIVE_PCT" precision="3" scale="0" not-null="true"/>
+    </property>
+    <property name="idEmployeeLogon" type="string" unique="true" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ID_EMPLOYEE_LOGON" length="20" unique="true"/>
+    </property>
+    <property name="cdEmpSecurityClassNm" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_EMP_SECURITY_CLASS_NM" length="15"/>
+    </property>
+    <property name="cdEmpProgram" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EMP_PROGRAM" length="3"/>
+    </property>
+    <property name="dtEmpLastAssigned" type="timestamp" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_EMP_LAST_ASSIGNED" length="7"/>
+    </property>
+    <property name="dtEmpTermination" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_EMP_TERMINATION" length="7"/>
+    </property>
+    <property name="indEmpActiveStatus" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_EMP_ACTIVE_STATUS" length="1"/>
+    </property>
+    <property name="indEmpConfirmedHrmis" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_EMP_CONFIRMED_HRMIS" length="1"/>
+    </property>
+    <property name="indEmpPendingHrmis" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_EMP_PENDING_HRMIS" length="1"/>
+    </property>
+    <property name="nmEmployeeFirst" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_EMPLOYEE_FIRST" length="12"/>
+    </property>
+    <property name="nmEmployeeMiddle" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_EMPLOYEE_MIDDLE" length="12"/>
+    </property>
+    <property name="nmEmployeeLast" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_EMPLOYEE_LAST" length="22"/>
+    </property>
+    <property name="cdEmpBjnEmp" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EMP_BJN_EMP" length="8"/>
+    </property>
+    <property name="indEmpJobAssignCurr" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_EMP_JOB_ASSIGN_CURR" length="1"/>
+    </property>
+    <property name="nmEmpOfficeName" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_EMP_OFFICE_NAME" length="15"/>
+    </property>
+    <property name="nbrEmpUnitEmpIn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_EMP_UNIT_EMP_IN" length="2"/>
+    </property>
+    <property name="cdEmpUnitRegion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EMP_UNIT_REGION" length="3"/>
+    </property>
+    <property name="cdEmployeeSuffix" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_EMPLOYEE_SUFFIX" length="2"/>
+    </property>
+    <property name="dtLastLogin" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_LAST_LOGIN" length="7"/>
+    </property>
+    <property name="idRacf" type="string" unique="true" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ID_RACF" length="8" unique="true"/>
+    </property>
+    <bag name="stffAsgnmtHistoriesForIdToPerson" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_TO_PERSON" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.StffAsgnmtHistory" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="empSecClassLinks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PERSON_MODIFIED_BY" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.EmpSecClassLink" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="securityClasses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PERSON_MODIFIED_BY" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.SecurityClass" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="stffAsgnmtHistoriesForIdEnteredByPerson" inverse="true" mutable="true" optimistic-lock="true"
+         embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ENTERED_BY_PERSON" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.StffAsgnmtHistory" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="placementReferrals" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EMPLOYEE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.PlacementReferral" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="employees" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PERSON_MODIFIED_BY" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Employee" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="stffAsgnmtHistoriesForIdFromPerson" inverse="true" mutable="true" optimistic-lock="true"
+         embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FROM_PERSON" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.StffAsgnmtHistory" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

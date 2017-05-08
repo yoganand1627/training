@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CaseBudgetLimit" table="CASE_BUDGET_LIMIT" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.CaseBudgetLimitId" mapped="false"
+                  unsaved-value="undefined">
+      <meta attribute="implement-equals">true</meta>
+      <key-property name="idCase" type="java.lang.Integer">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="ID_CASE" precision="16" scale="0"/>
+      </key-property>
+      <key-property name="cdSvcCode" type="string">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="CD_SVC_CODE" length="6"/>
+      </key-property>
+    </composite-id>    
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" update="false" insert="false"
+                 fetch="select" unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0" not-null="true" unique="false"/>
+    </many-to-one>
+    <property name="amtBudgt" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_BUDGT" precision="13"/>
+    </property>
+    <property name="amtSpent" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SPENT" precision="13"/>
+    </property>
+    <property name="amtRemain" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_REMAIN" precision="13"/>
+    </property>
+    <property name="amtWaiver" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_WAIVER" precision="13"/>
+    </property>
+    <property name="amtBalance" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_BALANCE" precision="13"/>
+    </property>
+    <property name="cdSvcAuthStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SVC_AUTH_STATUS" length="4"/>
+    </property>
+    <property name="amtPendAuth" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_PEND_AUTH" precision="13"/>
+    </property>
+  </class>
+</hibernate-mapping>

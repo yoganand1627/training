@@ -1,0 +1,1623 @@
+!*****************************************************************************
+!  Person Data                                                               *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         civ15o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 10/30/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brad McCleary                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The Person Data Report allows the user to produce a  *
+!                       hardcopy of the information captured on the Person   *
+!                       Detail, CVS/FAD Person Detail, Person Characteristic,*
+!                       Address List/Detail, and Phone List/Detail windows.  *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 10/30/95   B. McCleary  Initial Programming                                *
+! 02/07/96   B. McCleary  SIR 3138 - Changed SQR to retrieve all four        *
+!                         characteristic codes tables according to their     *
+!                         category.                                          *
+! 03/07/96   B. McCleary  SIR 3721 - Added correct type codes for history of *
+!                         addresses and phones; now prints Primary correctly *
+!                         and never prints Mailing; selects indicators.      *
+! 03/20/96   B. McCleary  SIR 4091 - Calculates age using DOB; Add header for*
+!                         FA Home Member information; Print Primary and/or   *
+!                         Invalid for all names, addresses, id's, and phone  *
+!                         numbers.                                           *
+! 04/11/96   B. McCleary  SIR 20269 - Added code to print UNKNOWN when the   *
+!                         person has no name.                                *
+! 05/07/96   B. McCleary  SIR 20962 - Changed aka name conditions so that all*
+!                         valid names, that are not the current name, are    *
+!                         selected and printed.                              *
+! 12/15/96   D. Ly        ENH - Change occurence of Name to Name person full *
+!                               format.                                      *
+! 01/06/01   S. Miller    SIR 15672 - Added case information.                *
+! 07/27/04   E. Dickman   SIR 23039 - In the PRINT-PERSON-DATA, I created    *
+!                         one columns versus two.  This handles the problem  *
+!                         of the first column printing on the top of the     *
+!                         second column.                                     *
+! 02/14/04   E. Dickman   Removed SQL GET-AKA-NAME method, now the SQL will  *
+!                         return both Valid AND invalid.                     *
+! 05/16/05   menteesj     SIR 23435 - Add PersonMergeView in GET-PERSON-IDS, *
+!                         GET-CHARS, GET-AKA-NAME, GET-HIST-OF-ADDR,         *
+!                         GET-HIST-OF-PHONES,and GET-CASES.  Save IDs        *
+!                         retrieved in GET-CHARS to use in other procedures: *
+!                         GET-CAP, GET-CCH, GET-CCT, and GET-CPL.            *
+!                         Also correct text in some commented statements.    *
+! 02/21/06   malpans      SIR 24094 - The "view options/case list" option    *
+!			  for employees(or former employees) who are part of *
+!			  a case (can only be generated from within the case)* 
+!			  returns all cases that have ever been assigned to  *
+!                         the employee as a "STF".Modified GET-CASES to get  *
+!			  list that should only display those cases          *
+!			  where the employee/former employee is named as a   *
+!			  principal or collateral.	                     *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'                 ! control codes for Portrait 
+
+    ask ID_PERSON                           !input parameter         
+    
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 4
+
+print 'PERSON NAME: '                       (1,28)
+
+!***SIR 20269***
+
+if rtrim($full_name, ' ') = ''
+   print 'UNKNOWN'                           (+0,41)
+else 
+   print $full_name                          (+0,41) wrap 38 2
+   move '' to $primary_name_suff  !***ENH***
+end-if
+
+print 'PERSON ID#: '                        (+1,29)
+print #id_person                            (+0,41) edit 8888888888888888
+
+print 'PERSON DATA REPORT'                  (+2) center 
+                              
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+                                ! specific to portrait on demand report
+
+ 
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+   move {ID_PERSON}                             to #input_id_person
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-PERSON-DATA, GET-PERSON-IDS, GET-CHARS,            *
+!                    GET-PERS-CAT, GET-PERSON-DTL, GET-LOC,                 *
+!                    GET-PLACEMENT-HOME, GET-AKA-NAME, GET-HIST-OF-ADDR,    *
+!                    GET-HIST-OF-PHONES, GET-CASES.                         *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do GET-PERSON-DATA
+    do GET-PERS-CAT
+    do GET-PERSON-DTL
+    do GET-LOC
+    do GET-PLACEMENT-HOME
+    do GET-AKA-NAME
+    do GET-CHARS
+    do GET-PERSON-IDS
+    do GET-HIST-OF-ADDR
+    do GET-HIST-OF-PHONES
+    do GET-CASES
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-PERSON-DATA                                                         *
+!                                                                           *
+!       This procedure will select all the information from the person table*
+!       as well as the primary name information.                            *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-PERSON-DATA                                      *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PERSON-DATA
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+    
+A.ID_PERSON
+    move &A.ID_PERSON                           to #id_person
+
+B.NM_NAME_FIRST   !***ENH***
+    move &B.NM_NAME_FIRST                       to $primary_first
+    
+B.NM_NAME_MIDDLE
+    move &B.NM_NAME_MIDDLE                      to $primary_middle     
+    
+B.NM_NAME_LAST
+    move &B.NM_NAME_LAST                        to $primary_last
+
+CSUFFIX2A.decode
+    move &CSUFFIX2A.decode                      to $primary_suffix
+
+to_char(A.DT_PERSON_BIRTH, 'MM/DD/YYYY') &DOB
+    move &DOB                                   to $DOB
+    
+trunc(months_between(SYSDATE,to_date(A.DT_PERSON_BIRTH,'MM/DD/YYYY'))/12,0) &age
+    move &age                                   to $age
+    
+A.IND_PERSON_DOB_APPROX    
+    move &A.IND_PERSON_DOB_APPROX               to $approx_ind
+    
+to_char(A.DT_PERSON_DEATH, 'MM/DD/YYYY') &DOD
+    move &DOD                                   to $DOD
+    
+CSEX.decode
+    move &CSEX.decode                           to $sex_dec
+    
+CETHNIC.decode    
+    move &CETHNIC.decode                        to $ethnic_dec
+    
+CLIVARR.decode    
+    move &CLIVARR.decode                        to $liv_dec
+    
+CRSNFDTH.decode    
+    move &CRSNFDTH.decode                       to $reason_dec
+    
+CLANG.decode    
+    move &CLANG.decode                          to $lang_dec
+    
+CMARSTAT.decode    
+    move &CMARSTAT.decode                       to $marital_dec
+    
+A.TXT_PERSON_OCCUPATION        
+    move &A.TXT_PERSON_OCCUPATION               to $occupation
+    
+CRELIGNS.decode    
+    move &CRELIGNS.decode                       to $religion_dec
+    
+CPERSTAT.decode        
+    move &CPERSTAT.decode                       to $stat_dec
+    
+CGRDCSRV.decode    
+    move &CGRDCSRV.decode                       to $grd_dec
+
+ 
+     if $primary_suffix <> '' !***ENH***
+       let $primary_name_suff = ', ' || $primary_suffix
+     end-if
+     if $primary_middle = ''
+       let $full_name = $primary_first || ' ' || $primary_last || $primary_name_suff
+     else
+       let $full_name = $primary_first || ' ' || $primary_middle || ' ' || $primary_last || $primary_name_suff
+     end-if
+     
+     !***Used in Where condition in AKA NAME procedure***
+     let $primary_name = $primary_first || ' ' || $primary_middle || ' ' || $primary_last || ' ' || $primary_suffix
+     !show $primary_name
+    do PRINT-PERSON-DATA
+            
+FROM    PERSON              A,
+        NAME                B,
+        CSUFFIX2            CSUFFIX2A,   !***ENH***
+        CSEX                CSEX,
+        CETHNIC             CETHNIC,
+        CLIVARR             CLIVARR,
+        CRSNFDTH            CRSNFDTH,
+        CLANG               CLANG,
+        CMARSTAT            CMARSTAT,
+        CPERSTAT            CPERSTAT,
+        CGRDCSRV            CGRDCSRV,
+        CRELIGNS            CRELIGNS
+        
+WHERE   A.ID_PERSON = #input_id_person
+AND     A.ID_PERSON = B.ID_PERSON(+)
+AND     B.IND_NAME_PRIMARY(+) = 'Y'
+AND     B.DT_NAME_END_DATE(+) = '12/31/4712'
+AND     CSEX.CODE(+)     = A.CD_PERSON_SEX
+AND     CETHNIC.CODE(+)  = A.CD_PERSON_ETHNIC_GROUP
+AND     CLIVARR.CODE(+)  = A.CD_PERSON_LIV_ARR
+AND     CSUFFIX2A.CODE(+)  = B.CD_NAME_SUFFIX       !***ENH***
+AND     CRSNFDTH.CODE(+) = A.CD_PERSON_DEATH
+AND     CLANG.CODE(+)    = A.CD_PERSON_LANGUAGE
+AND     CMARSTAT.CODE(+) = A.CD_PERSON_MARITAL_STATUS
+AND     CRELIGNS.CODE(+) = A.CD_PERSON_RELIGION
+AND     CPERSTAT.CODE(+) = A.CD_PERSON_STATUS
+AND     CGRDCSRV.CODE(+) = A.CD_PERS_GUARD_CNSRV
+        
+END-SELECT
+    
+END-PROCEDURE GET-PERSON-DATA
+
+!****************************************************************************
+!                                                                           *
+!   GET-SYSDATE                                                             *
+!                                                                           *
+!       This procedure will select the system date in order to replace the  * 
+!       closed date when it is equal to NULL                                *
+!                                                                           * 
+!       CALLED BY  : GET-CASE                                               *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-SYSDATE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+    
+to_char(SYSDATE,'MM/DD/YYYY') &sysdate
+     move &sysdate                      to $sysdate
+     
+     let $sys_month = substr($sysdate,1,2)
+     let $sys_day   = substr($sysdate,4,2)
+     let $sys_year  = substr($sysdate,7,4)
+
+FROM DUAL
+     
+END-SELECT              
+
+END-PROCEDURE GET-SYSDATE
+           
+!****************************************************************************
+!                                                                           *
+!   GET-PERSON-IDS                                                          *
+!                                                                           *
+!       This procedure will select all the ids for the person.              *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-PERSON-IDS                                       *
+!                                                                           *
+!       05/16/05 menteesj SIR# 23435 - Added Person_Merge_View.             *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PERSON-IDS
+
+print 'HISTORY OF PERSON ID''S: '                     (+3,1)
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.CD_PERSON_ID_TYPE
+    move &A.CD_PERSON_ID_TYPE                         to $id_type
+    
+A.NBR_PERSON_ID_NUMBER
+    move &A.NBR_PERSON_ID_NUMBER                      to $id_num
+
+to_char(A.DT_PERSON_ID_START, 'MM/DD/YYYY') &date9
+    move &date9                                     to $id_start
+
+to_char(A.DT_PERSON_ID_END, 'MM/DD/YYYY') &date10
+    move &date10                                    to $id_end    
+
+A.IND_PERSON_ID_INVALID
+    move &A.IND_PERSON_ID_INVALID                     to $id_invalid
+
+    do PRINT-PERSON-IDS
+
+FROM    PERSON_ID             A,
+        PERSON_MERGE_VIEW     PMV
+        
+WHERE   PMV.ID_PERSON_INPUT = #input_id_person
+AND	A.ID_PERSON = PMV.ID_PERSON_OUTPUT
+
+END-SELECT
+    
+END-PROCEDURE GET-PERSON-IDS
+
+!****************************************************************************
+!                                                                           *
+!   GET-CHARS                                                               *
+!                                                                           *
+!       This procedure will select Ra listing of the characteristics of the *
+!       primary person.                                                     *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-CAP, GET-CCH, GET-CCT, GET-CPL                     *
+!                                                                           *
+!       05/16/05 menteesj SIR# 23435 - Added Person_Merge_View.             *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CHARS
+
+print 'HISTORY OF CHARACTERISTICS: '            (+3,1)
+
+    move 0                                          to #count3
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+C.ID_CHARACTERISTICS
+    move &C.ID_CHARACTERISTICS                      to #id_char
+
+C.CD_CHAR_CATEGORY
+    move &C.CD_CHAR_CATEGORY                        to $category
+
+C.ID_PERSON
+    move &C.ID_PERSON                               to #id_char_pers
+
+to_char(C.DT_CHAR_START, 'MM/DD/YYYY') &date5
+    move &date5                                     to $char_start
+
+to_char(C.DT_CHAR_END, 'MM/DD/YYYY') &date6
+    move &date6                                     to $char_end
+
+! SIR 3138 - Now selects the characteristic category to retrieve decodes
+!            from the appropriate codes tables.                        
+
+    if $category = 'CAP'
+      do GET-CAP
+    else
+    if $category = 'CCH'
+      do GET-CCH
+    else
+    if $category = 'CCT'
+      do GET-CCT
+    else
+    if $category = 'CPL'
+      do GET-CPL
+    end-if
+    end-if
+    end-if
+    end-if
+
+FROM    CHARACTERISTICS C,
+        PERSON_MERGE_VIEW	PMV
+        
+WHERE   PMV.ID_PERSON_INPUT = #input_id_person
+AND	C.ID_PERSON = PMV.ID_PERSON_OUTPUT
+AND     C.CD_CHARACTERISTIC <> 'HI'
+
+END-SELECT
+    
+END-PROCEDURE GET-CHARS
+
+!****************************************************************************
+!                                                                           *
+!   GET-CAP                                                                 *
+!                                                                           *
+!       This procedure will select decodes for APS.                         *
+!                                                                           *
+!       CALLED BY  : GET-CHARS                                              *
+!       CALLS      : PRINT-CHARS                                            *
+!                                                                           *
+!       05/16/05 menteesj SIR# 23435 - Use new variable "#id_char_pers" as  *
+!                selection criteria to include "merged closed" person IDs.  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CAP         
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CAP.decode                      
+    move &CAP.decode                              to $categ_dec
+
+        do PRINT-CHARS      
+
+FROM    CAP             CAP,
+        CCHRTCAT        CCHRTCAT,
+    CHARACTERISTICS C
+        
+WHERE   CAP.CODE = C.CD_CHARACTERISTIC
+AND     CCHRTCAT.CODE = C.CD_CHAR_CATEGORY
+AND     C.ID_PERSON = #id_char_pers
+AND     C.ID_CHARACTERISTICS = #id_char         
+
+END-SELECT
+
+END-PROCEDURE GET-CAP         
+
+!****************************************************************************
+!                                                                           *
+!   GET-CCH                                                                 *
+!                                                                           *
+!       This procedure will select decodes for child - invest.              *
+!                                                                           * 
+!       CALLED BY  : GET-CHARS                                              *
+!       CALLS      : PRINT-CHARS                                            *
+!                                                                           *
+!       05/16/05 menteesj SIR# 23435 - Use new variable "#id_char_pers" as  *
+!                selection criteria to include "merged closed" person IDs.  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CCH         
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CCH.decode                      
+    move &CCH.decode                              to $categ_dec
+
+        do PRINT-CHARS      
+
+FROM    CCH             CCH,
+        CCHRTCAT        CCHRTCAT,
+    CHARACTERISTICS C
+        
+WHERE   CCH.CODE = C.CD_CHARACTERISTIC
+AND     CCHRTCAT.CODE = C.CD_CHAR_CATEGORY
+AND     C.ID_PERSON = #id_char_pers
+AND     C.ID_CHARACTERISTICS = #id_char         
+
+END-SELECT
+
+END-PROCEDURE GET-CCH         
+
+!****************************************************************************
+!                                                                           *
+!   GET-CCT                                                                 *
+!                                                                           *
+!       This procedure will select decodes for parent/caretaker.            *
+!                                                                           * 
+!       CALLED BY  : GET-CHARS                                              *
+!       CALLS      : PRINT-CHARS                                            *
+!                                                                           *
+!       05/16/05 menteesj SIR# 23435 - Use new variable "#id_char_pers" as  *
+!                selection criteria to include "merged closed" person IDs.  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CCT         
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CCT.decode                      
+    move &CCT.decode                              to $categ_dec
+
+        do PRINT-CHARS      
+
+FROM    CCT             CCT,
+        CCHRTCAT        CCHRTCAT,
+    CHARACTERISTICS C
+        
+WHERE   CCT.CODE = C.CD_CHARACTERISTIC
+AND     CCHRTCAT.CODE = C.CD_CHAR_CATEGORY
+AND     C.ID_PERSON = #id_char_pers
+AND     C.ID_CHARACTERISTICS = #id_char         
+
+END-SELECT
+
+END-PROCEDURE GET-CCT         
+
+!****************************************************************************
+!                                                                           *
+!   GET-CPL                                                                 *
+!                                                                           *
+!       This procedure will select decodes for child/placement.             *
+!                                                                           * 
+!       CALLED BY  : GET-CHARS                                              *
+!       CALLS      : PRINT-CHARS                                            *
+!                                                                           *
+!       05/16/05 menteesj SIR# 23435 - Use new variable "#id_char_pers" as  *
+!                selection criteria to include "merged closed" person IDs.  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CPL         
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CPL.decode                      
+    move &CPL.decode                              to $categ_dec
+
+        do PRINT-CHARS      
+
+FROM    CPL             CPL,
+        CCHRTCAT        CCHRTCAT,
+    CHARACTERISTICS C
+        
+WHERE   CPL.CODE = C.CD_CHARACTERISTIC
+AND     CCHRTCAT.CODE = C.CD_CHAR_CATEGORY
+AND     C.ID_PERSON = #id_char_pers
+AND     C.ID_CHARACTERISTICS = #id_char         
+
+END-SELECT
+
+END-PROCEDURE GET-CPL         
+
+!****************************************************************************
+!                                                                           *
+!   GET-PERS-CAT                                                            *
+!                                                                           *
+!       This procedure will select all of the categories and calls the      *
+!       print statement for the status which was selected in person data.   *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-STATUS, PRINT-PERS-CAT-TITLE, PRINT-PERS-CAT     *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PERS-CAT
+
+    do PRINT-STATUS
+
+    move 0                    to #count4
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CPSNDTCT.decode &dec2           
+    move &dec2                                    to $cat_dec
+
+    let #count4 = #count4 + 1
+
+    if #count4 = 1
+        do PRINT-PERS-CAT-TITLE
+    else
+        do PRINT-PERS-CAT
+    end-if
+
+FROM    CPSNDTCT        CPSNDTCT,
+        PERSON_CATEGORY P
+        
+WHERE   P.ID_PERSON = #input_id_person
+AND     P.CD_PERSON_CATEGORY = CPSNDTCT.CODE(+)
+
+END-SELECT
+
+    if #count4 = 1
+      print ''                  (+1,1)
+    end-if
+
+END-PROCEDURE GET-PERS-CAT
+
+!****************************************************************************
+!                                                                           *
+!   GET-PERSON-DTL                                                          *
+!                                                                           *
+!       This procedure will select information from the person detail table.*
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-PERSON-DTL                                       *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PERSON-DTL
+
+    move 0                                      to #count5
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+D.CD_PERSON_BIRTH_CITY
+    move &D.CD_PERSON_BIRTH_CITY                to $birth_city
+    
+CSTATE.decode   
+    move &CSTATE.decode                         to $state_dec
+    
+CCOUNT.decode 
+    move &CCOUNT.decode                         to $county_dec
+    
+D.CD_PERSON_BIRTH_COUNTRY     
+    move &D.CD_PERSON_BIRTH_COUNTRY             to $birth_country
+    
+D.QTY_PERSON_WEIGHT 
+    move &D.QTY_PERSON_WEIGHT                   to $weight
+    
+CEYECOLR.decode 
+    move &CEYECOLR.decode                       to $eye_dec
+    
+D.QTY_PERSON_HEIGHT_FEET 
+    move &D.QTY_PERSON_HEIGHT_FEET              to $ht_ft
+    
+D.QTY_PERSON_HEIGHT_INCHES 
+    move &D.QTY_PERSON_HEIGHT_INCHES            to $ht_in
+    
+CHAIRCLR.decode 
+    move &CHAIRCLR.decode                       to $hair_dec
+    
+D.NM_PERSON_MAIDEN_NAME 
+    move &D.NM_PERSON_MAIDEN_NAME               to $maid_name
+    
+D.NM_PERSON_LAST_EMPLOYER 
+    move &D.NM_PERSON_LAST_EMPLOYER             to $last_emp
+    
+CEDUCLVL.decode 
+    move &CEDUCLVL.decode                       to $educ_dec
+    
+CCTZNSTA.decode  
+    move &CCTZNSTA.decode                       to $cit_dec
+    
+D.AMT_PERSON_ANNUAL_INCOME 
+    move &D.AMT_PERSON_ANNUAL_INCOME            to $income
+    
+CFAHROLS.decode 
+    move &CFAHROLS.decode                       to $home_role
+                  
+    let #count5 = #count5 + 1
+                  
+    if #count5 > 0
+        do PRINT-PERSON-DTL
+    end-if
+    
+FROM    PERSON_DTL      D,
+        CSTATE          CSTATE,
+        CCOUNT          CCOUNT,
+        CEYECOLR        CEYECOLR,
+        CHAIRCLR        CHAIRCLR,
+        CEDUCLVL        CEDUCLVL,
+        CCTZNSTA        CCTZNSTA,
+        CFAHROLS        CFAHROLS
+
+WHERE   D.ID_PERSON = #input_id_person
+AND     CSTATE.CODE(+) = D.CD_PERSON_BIRTH_STATE
+AND     CCOUNT.CODE(+) = D.CD_PERSON_BIRTH_COUNTY
+AND     CEYECOLR.CODE(+) = D.CD_PERSON_EYE_COLOR
+AND     CHAIRCLR.CODE(+) = D.CD_PERSON_HAIR_COLOR
+AND     CEDUCLVL.CODE(+) = D.CD_PERSON_HIGHEST_EDUC
+AND     CCTZNSTA.CODE(+) = D.CD_PERSON_CITIZENSHIP
+AND     CFAHROLS.CODE(+) = D.CD_PERSON_FA_HOME_ROLE
+
+END-SELECT
+    
+END-PROCEDURE GET-PERSON-DTL
+
+!****************************************************************************
+!                                                                           *
+!   GET-LOC                                                                 *
+!                                                                           *
+!       This procedure will select the LOC information from the person_loc  *
+!       table.                                                              *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-LOC                                              *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-LOC
+
+    move 0                                          to #count6
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CATHPLOC.decode
+    move &CATHPLOC.decode                           to $LOC_dec
+
+to_char(LOC.DT_PLOC_START, 'MM/DD/YYYY') &date1
+    move &date1                                     to $LOC_start
+
+to_char(LOC.DT_PLOC_END, 'MM/DD/YYYY') &date2           
+    move &date2                                     to $LOC_end
+
+    let #count6 = #count6 + 1
+    
+    if #count6 > 0    
+        do PRINT-LOC
+    end-if
+
+FROM    CATHPLOC        CATHPLOC,
+        PERSON_LOC      LOC
+        
+WHERE   LOC.ID_PERSON = #input_id_person
+AND     CATHPLOC.CODE(+) = LOC.CD_PLOC_CHILD
+AND     LOC.CD_PLOC_TYPE = 'ALOC'
+AND     LOC.DT_PLOC_START = (SELECT MAX(Z.DT_PLOC_START) FROM PERSON_LOC Z 
+                                 WHERE Z.ID_PERSON = #input_id_person 
+                                 AND Z.CD_PLOC_TYPE = 'ALOC')
+
+END-SELECT
+    
+END-PROCEDURE GET-LOC
+
+!****************************************************************************
+!                                                                           *
+!   GET-PLACEMENT-HOME                                                      *
+!                                                                           *
+!       This procedure will select the information about the placement home.*
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-PLACEMENT-HOME                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PLACEMENT-HOME
+
+    move 0                                      to #count7
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+PL.ADDR_PLCMT_LN1
+    move &PL.ADDR_PLCMT_LN1                     to $plc_addr_ln1
+    
+PL.ADDR_PLCMT_LN2 
+    move &PL.ADDR_PLCMT_LN2                     to $plc_addr_ln2
+    
+PL.ADDR_PLCMT_CITY
+    move &PL.ADDR_PLCMT_CITY                    to $plc_city
+    
+CSTATE1.decode 
+    move &CSTATE1.decode                        to $plc_state
+    
+PL.ADDR_PLCMT_ZIP 
+    move &PL.ADDR_PLCMT_ZIP                     to $plc_zip
+    
+CCOUNT1.decode 
+    move &CCOUNT1.decode                        to $plc_county
+    
+PL.TXT_PLCMT_ADDR_COMMENT 
+    move &PL.TXT_PLCMT_ADDR_COMMENT             to $plc_comments
+                                                          
+    let #count7 = #count7 + 1
+    
+    if #count7 > 0                                                          
+        do PRINT-PLACEMENT-HOME
+    end-if
+    
+FROM    PLACEMENT       PL,
+        CSTATE          CSTATE1,
+        CCOUNT          CCOUNT1
+        
+WHERE   PL.ID_PLCMT_CHILD = #input_id_person
+AND     PL.CD_PLCMT_ACT_PLANNED = 'A'
+AND     PL.DT_PLCMT_END = '12/31/4712'
+AND     CSTATE1.CODE(+) = PL.ADDR_PLCMT_ST
+AND     CCOUNT1.CODE(+) = PL.ADDR_PLCMT_CNTY
+
+END-SELECT
+    
+END-PROCEDURE GET-PLACEMENT-HOME
+
+!****************************************************************************
+!                                                                           *
+!   GET-AKA-NAME                                                            *
+!                                                                           *
+!       This procedure will select every name that the person has or goes by*
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-AKA-NAME                                         *
+!                                                                           *
+!       05/16/05 menteesj SIR# 23435 - Added Person_Merge_View.             *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-AKA-NAME 
+
+print 'AKA NAMES: '                                 (+3,1)
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                  
+A.NM_NAME_FIRST   !***ENH***
+    move &A.NM_NAME_FIRST                           to $aka_first
+    
+A.NM_NAME_MIDDLE
+    move &A.NM_NAME_MIDDLE                          to $aka_middle     
+    
+A.NM_NAME_LAST
+    move &A.NM_NAME_LAST                            to $aka_last
+
+CSUFFIX2B.decode
+    move &CSUFFIX2B.decode                          to $aka_suffix    
+
+to_char(A.DT_NAME_START_DATE, 'MM/DD/YYYY') &aka_start
+    move &aka_start                                 to $aka_start
+
+to_char(A.DT_NAME_END_DATE, 'MM/DD/YYYY') &aka_end           
+    move &aka_end                                   to $aka_end
+
+A.IND_NAME_INVALID
+    move &A.IND_NAME_INVALID                        to $aka_invalid
+    show $aka_suffix
+    do PRINT-AKA-NAME
+
+FROM    CSUFFIX2    CSUFFIX2B,
+        NAME        A,
+        PERSON_MERGE_VIEW	PMV
+        
+WHERE   PMV.ID_PERSON_INPUT = #input_id_person
+AND	A.ID_PERSON = PMV.ID_PERSON_OUTPUT
+
+!SIR 20962 - Change conditions to get all names that are not the current name
+AND     CSUFFIX2B.CODE(+)  = A.CD_NAME_SUFFIX
+AND     A.NM_NAME_FIRST ||' '|| A.NM_NAME_MIDDLE ||' '|| A.NM_NAME_LAST ||' '||CSUFFIX2B.decode != $primary_name
+
+ORDER BY A.DT_NAME_END_DATE DESC
+
+END-SELECT
+    
+END-PROCEDURE GET-AKA-NAME 
+
+!****************************************************************************
+!                                                                           *
+!   GET-HIST-OF-ADDR                                                        *
+!                                                                           *
+!       This procedure will select all of the addresses associated with the *
+!       input person.                                                       *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-HIST-OF-ADDR                                     *
+!                                                                           *
+!       05/16/05 menteesj SIR# 23435 - Added Person_Merge_View.             *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-HIST-OF-ADDR
+
+print 'HISTORY OF ADDRESSES: '                  (+3,1)
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CADDRTYP.DECODE
+    move &CADDRTYP.DECODE                       to $addr_type
+
+P.ADDR_PERSON_ADDR_ATTN
+    move &P.ADDR_PERSON_ADDR_ATTN               to $attn
+    
+P.ADDR_PERS_ADDR_ST_LN_1
+    move &P.ADDR_PERS_ADDR_ST_LN_1              to $addr_ln1
+    
+P.ADDR_PERS_ADDR_ST_LN_2
+    move &P.ADDR_PERS_ADDR_ST_LN_2              to $addr_ln2
+    
+P.ADDR_PERSON_ADDR_CITY
+    move &P.ADDR_PERSON_ADDR_CITY               to $city
+    
+CSTATE2.decode 
+    move &CSTATE2.decode                        to $state
+    
+P.ADDR_PERSON_ADDR_ZIP
+    move &P.ADDR_PERSON_ADDR_ZIP                to $zip
+    
+CCOUNT2.decode 
+    move &CCOUNT2.decode                        to $county
+    
+A.TXT_PERS_ADDR_CMNTS 
+    move &A.TXT_PERS_ADDR_CMNTS                 to $addr_comments
+
+to_char(A.DT_PERS_ADDR_LINK_START, 'MM/DD/YYYY') &date3
+    move &date3                                 to $dt_start
+
+to_char(A.DT_PERS_ADDR_LINK_END, 'MM/DD/YYYY') &date4           
+    move &date4                                 to $dt_end
+
+A.IND_PERS_ADDR_LINK_INVALID
+    move &A.IND_PERS_ADDR_LINK_INVALID          to $addr_invalid
+    
+A.IND_PERS_ADDR_LINK_PRIMARY
+    move &A.IND_PERS_ADDR_LINK_PRIMARY          to $addr_primary
+    
+A.CD_PERS_ADDR_LINK_TYPE    
+    move &A.CD_PERS_ADDR_LINK_TYPE              to $addr_code   
+    
+    do PRINT-HIST-OF-ADDR
+
+FROM    ADDRESS_PERSON_LINK     A,
+        PERSON_ADDRESS          P,
+        PERSON_MERGE_VIEW	PMV,
+        CSTATE                  CSTATE2,
+        CCOUNT                  CCOUNT2,
+    CADDRTYP                CADDRTYP
+
+WHERE   PMV.ID_PERSON_INPUT = #input_id_person
+AND     A.ID_PERSON = PMV.ID_PERSON_OUTPUT
+AND     P.ID_PERSON_ADDR = A.ID_PERSON_ADDR
+AND     CSTATE2.CODE(+) = P.CD_PERSON_ADDR_STATE
+AND     CCOUNT2.CODE(+) = P.CD_PERSON_ADDR_COUNTY
+AND     CADDRTYP.CODE(+) = A.CD_PERS_ADDR_LINK_TYPE
+                                           
+ORDER BY    A.IND_PERS_ADDR_LINK_PRIMARY DESC, A.DT_PERS_ADDR_LINK_END DESC 
+                                           
+END-SELECT
+    
+END-PROCEDURE GET-HIST-OF-ADDR
+
+!****************************************************************************
+!                                                                           *
+!   GET-HIST-OF-PHONES                                                      *
+!                                                                           *
+!       This procedure will select all of the phone numbers associated with *
+!       the input person.                                                   *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-HIST-OF-PHONES                                   *
+!                                                                           *
+!       05/16/05 menteesj SIR# 23435 - Added Person_Merge_View.             *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-HIST-OF-PHONES
+
+print 'HISTORY OF PHONES: '                  (+3,1)
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                  
+CPHNTYP.decode  
+    move &CPHNTYP.decode                            to $phone_type
+    
+P.NBR_PERSON_PHONE
+    move &P.NBR_PERSON_PHONE                        to $phone_num
+    
+P.NBR_PERSON_PHONE_EXTENSION
+    move &P.NBR_PERSON_PHONE_EXTENSION              to $phone_ext
+    
+P.TXT_PERSON_PHONE_COMMENTS    
+    move &P.TXT_PERSON_PHONE_COMMENTS               to $phone_comments
+
+to_char(P.DT_PERSON_PHONE_START, 'MM/DD/YYYY') &date7
+    move &date7                                     to $phone_start
+
+to_char(P.DT_PERSON_PHONE_END, 'MM/DD/YYYY') &date8           
+    move &date8                                     to $phone_end
+
+P.IND_PERSON_PHONE_INVALID
+    move &P.IND_PERSON_PHONE_INVALID                to $phone_invalid
+    
+P.IND_PERSON_PHONE_PRIMARY
+    move &P.IND_PERSON_PHONE_PRIMARY                to $phone_primary
+    
+P.CD_PERSON_PHONE_TYPE      
+    move &P.CD_PERSON_PHONE_TYPE                    to $phone_code   
+    
+    do PRINT-HIST-OF-PHONES
+
+FROM    PERSON_PHONE            P,
+        PERSON_MERGE_VIEW	PMV,
+    CPHNTYP                 CPHNTYP
+
+WHERE   PMV.ID_PERSON_INPUT = #input_id_person
+AND     P.ID_PERSON = PMV.ID_PERSON_OUTPUT
+AND     CPHNTYP.CODE(+) = P.CD_PERSON_PHONE_TYPE
+
+ORDER BY    P.IND_PERSON_PHONE_PRIMARY DESC, P.DT_PERSON_PHONE_END DESC 
+                                           
+END-SELECT
+    
+END-PROCEDURE GET-HIST-OF-PHONES
+
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-CASES                                                               *
+!                                                                           *
+!       This procedure will select the case ids from the stage_person_link  *
+!       and stage tables.                                                   *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-CASES                                            *
+!                                                                           *
+!       05/16/05 menteesj SIR# 23435 - Added Person_Merge_View.             *
+!	02/21/06 malpans - SIR 24094 Added SPL.CD_STAGE_PERS_TYPE <> 'STF'  *
+!		 	   check	                                    *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CASES
+
+Next-listing skiplines =1 need = 10
+
+print 'HISTORY OF CASES: '                     (+3,1)
+print 'ID_CASE:'                               (+2,1)
+print 'ID STAGE:'                              (+0,13)
+print 'DATE STAGE CLOSED:'                     (+0,30)
+print 'STAGE TYPE:'                            (+0,50)
+print 'PROGRAM:'                               (+0,70)
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+S.ID_CASE
+    move &S.ID_CASE                            to $id_case
+
+S.ID_STAGE 
+    move &S.ID_STAGE                            to $id_stage
+
+
+S.DT_STAGE_CLOSE 
+    move &S.DT_STAGE_CLOSE                      to $dt_stage_close
+
+S.CD_STAGE
+    move &S.CD_STAGE                            to $cd_stage
+    
+S.CD_STAGE_PROGRAM
+    move &S.CD_STAGE_PROGRAM                    to $program
+    
+                                                          
+        do PRINT-CASES
+
+    
+FROM    STAGE S,
+        STAGE_PERSON_LINK SPL,
+        PERSON_MERGE_VIEW	PMV
+WHERE   PMV.ID_PERSON_INPUT = #input_id_person
+AND     SPL.ID_PERSON = PMV.ID_PERSON_OUTPUT
+AND     S.ID_STAGE     = SPL.ID_STAGE
+AND	SPL.CD_STAGE_PERS_TYPE <> 'STF'
+
+END-SELECT
+    
+END-PROCEDURE GET-CASES
+
+
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PERSON-DATA                                                       *
+!                                                                           *
+!       This procedure prints the main data about the primary person.       *
+!                                                                           * 
+!       CALLED BY  : GET-PERSON-DATA                                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PERSON-DATA
+! SIR 23039
+
+print $full_name                                    (+2,1)
+move '' to $primary_name_suff  !***ENH***
+print 'DOB: '                                       (+2,1)
+print $DOB                                          (+0,22)
+
+print 'APPROX: '                                    (+1,1)
+print $approx_ind                                   (+0,22)
+
+print 'AGE: '                                       (+1,1)
+if $age <> ''
+  print $age                                        (+0,22) edit 888
+end-if
+
+print 'DOD: '                                       (+1,1)
+print $DOD                                          (+0,22)
+
+print 'REASON: '                                    (+1,1)
+print $reason_dec                                   (+0,22) 
+
+print 'SEX: '                                       (+1,1)
+print $sex_dec                                      (+0,22)
+
+print 'LANGUAGE: '                                  (+1,1)
+print $lang_dec                                     (+0,22) 
+
+print 'ETHNICITY: '                                 (+1,1)  
+print $ethnic_dec                                   (+0,22)
+
+print 'MARITAL STATUS: '                            (+1,1) 
+print $marital_dec                                  (+0,22) 
+
+print 'LIVING ARRANGEMENT: '                        (+1,1)
+print $liv_dec                                      (+0,22)
+
+print 'OCCUPATION: '                                (+1,1)
+print $occupation                                   (+0,22) 
+
+print 'RELIGION: '                                  (+1,1)
+print $religion_dec                                 (+0,22) 
+
+
+END-PROCEDURE PRINT-PERSON-DATA
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PERSON-IDS                                                        *
+!                                                                           *
+!       This procedure prints the major ids of the primary person and their *
+!       types.                                                              *
+!                                                                           * 
+!       CALLED BY  : GET-PERSON-IDS                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PERSON-IDS
+
+print $id_type                                  (+2,1)
+print ': '                                      ()
+print $id_num                                   (+0,20) 
+
+!SIR 4091 - Added to correctly print Primary and/or Invalid
+
+if ($id_end = '12/31/4712')
+    print 'Primary'                                  (+0,61)
+else
+
+    if $id_invalid = 'Y'
+        print 'Invalid'                              (+0,61)
+    end-if
+
+end-if
+
+print 'START DATE: '                            (+1,1)
+print $id_start                                 (+0,13)
+print 'END DATE: '                              (+0,33)
+
+if $id_end <> '12/31/4712'
+  print $id_end                                 (+0,44)
+end-if
+
+END-PROCEDURE PRINT-PERSON-IDS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CHARS                                                             *
+!                                                                           *
+!       This procedure prints each characteristic.                          *
+!                                                                           * 
+!       CALLED BY  : GET-CAP, GET-CCH, GET-CCT, GET-CPL                     *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHARS
+
+next-listing need = 3
+
+print $categ_dec                                (+1,1) wrap 77 2
+print 'START DATE: '                            (+1,1)
+print $char_start                               (+0,13)
+print 'END DATE: '                              (+0,33)
+
+if $char_end <> '12/31/4712'
+  print $char_end                               (+0,43)
+end-if
+
+END-PROCEDURE PRINT-CHARS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-STATUS                                                            *
+!                                                                           *
+!       This procedure prints the person status and guardian/conservatorship*
+!       status.                                                             *
+!                                                                           * 
+!       CALLED BY  : GET-PERS-CAT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-STATUS
+                 
+print 'STATUS: '                                (+2,1)
+print $stat_dec                                 (+0,22)
+print $grd_dec                                  (+1,22)
+
+END-PROCEDURE PRINT-STATUS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PERS-CAT-TITLE                                                    *
+!                                                                           *
+!       This procedure prints the title and the first person category.      *
+!                                                                           * 
+!       CALLED BY  : GET-PERS-CAT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PERS-CAT-TITLE
+
+if #current-line = 5
+    print ' '                                   (+1,1)
+end-if
+
+print 'CATEGORY: '                              (-1,44)
+print $cat_dec                                  (+0,61)
+                                              
+END-PROCEDURE PRINT-PERS-CAT-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PERS-CAT                                                          *
+!                                                                           *
+!       This procedure prints the other categories.                         *
+!                                                                           * 
+!       CALLED BY  : GET-PERS-CAT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PERS-CAT
+                                              
+print $cat_dec                                  (+1,61)
+
+END-PROCEDURE PRINT-PERS-CAT
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PERSON-DTL                                                        *
+!                                                                           *
+!       This procedure prints personal information about the primary person.*
+!                                                                           * 
+!       CALLED BY  : GET-PERSON-DTL                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PERSON-DTL
+
+print 'BIRTH CITY: '                                (+2,1)
+print $birth_city                                   (+0,22)
+print 'BIRTH COUNTY: '                              (+0,44)
+print $county_dec                                   (+0,61)
+print 'BIRTH STATE: '                               (+1,1)
+print $state_dec                                    (+0,22)
+print 'BIRTH COUNTRY: '                             (+0,44)
+print $birth_country                                (+0,61)
+print 'WEIGHT: '                                    (+2,1)
+print $weight                                       (+0,22)
+print 'HEIGHT: '                                    (+0,44)
+print $ht_ft                                        (+0,61)
+print ' ft, '                                       ()
+print $ht_in                                        ()
+print ' in '                                        ()
+print 'EYE COLOR: '                                 (+1,1)
+print $eye_dec                                      (+0,22)
+print 'HAIR COLOR: '                                (+0,44)
+print $hair_dec                                     (+0,61)
+print 'MAIDEN NAME: '                               (+2,1)
+print $maid_name                                    (+0,23)
+print 'MOST RECENT EMPLOYER: '                      (+1,1)
+print $last_emp                                     (+0,23)
+print 'HIGHEST EDUCATION: '                         (+1,1)
+print $educ_dec                                     (+0,23)
+print 'CITIZENSHIP STATUS: '                        (+1,1)
+print $cit_dec                                      (+0,23)
+print 'FOST/ADOPT HOME MEMBER INFO: '               (+2,1)
+print 'ANNUAL INCOME: '                             (+1,1)
+print '$'                                           (+0,16) 
+print $income                                       (+0,17) edit 8,888,888,888
+print 'HOME ROLE: '                                 (+0,44)
+print $home_role                                    (+0,61)
+
+END-PROCEDURE PRINT-PERSON-DTL
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-LOC                                                               *
+!                                                                           *
+!       This procedure prints the LOC information about the child.          *
+!                                                                           * 
+!       CALLED BY  : GET-LOC                                                *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-LOC
+
+print 'AUTHORIZED LOC: '                            (+2,1)
+print $LOC_dec                                      (+0,17)
+print 'START: '                                     (+1,1)
+print $LOC_start                                    (+0,8)
+print 'END: '                                       (+0,21)
+
+if $LOC_end <> '12/31/4712'
+  print $LOC_end                                    (+0,26)
+end-if
+
+END-PROCEDURE PRINT-LOC
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PLACEMENT-HOME                                                    *
+!                                                                           *
+!       This procedure prints the placement address information.            *
+!                                                                           * 
+!       CALLED BY  : GET-PLACEMENT-HOME                                     *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PLACEMENT-HOME
+
+print 'PLACEMENT ADDRESS:'                          (+3,1)
+print 'ADDRESS: '                                   (+2,1)
+print $plc_addr_ln1                                 (+0,13)
+print ', '                                          ()
+print $plc_addr_ln2                                 ()
+print $plc_city                                     (+1,13)
+print ', '                                          ()
+print $plc_state                                    ()
+print ' '                                           ()
+print $plc_zip                                      ()
+print 'COUNTY: '                                    (+1,1)
+print $plc_county                                   (+0,13)
+print 'COMMENTS: '                                  (+1,1)
+print $plc_comments                                 (+0,13) wrap 65 2
+
+END-PROCEDURE PRINT-PLACEMENT-HOME
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-AKA-NAME                                                          *
+!                                                                           *
+!       This procedure prints the aliases and other names of the primary    *
+!       person.                                                             *
+!                                                                           * 
+!       CALLED BY  : GET-AKA-NAME                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-AKA-NAME
+
+next-listing need = 3
+
+if $aka_suffix <> '' !***ENH***
+  let $aka_name_suff = ', ' || $aka_suffix
+end-if
+if $aka_middle = ''
+  let $aka_name = $aka_first || ' ' || $aka_last || $aka_name_suff
+else
+  let $aka_name = $aka_first || ' ' || $aka_middle || ' ' || $aka_last || $aka_name_suff
+end-if
+
+print $aka_name                                     (+1,1)
+
+move '' to $aka_name_suff !***ENH***
+
+!SIR 4091 - Added to correctly print Primary and/or Invalid
+
+    if $aka_invalid = 'Y'
+        print 'Invalid'                              (+0,61)
+    end-if
+
+print 'START DATE: '                                (+1,1)
+print $aka_start                                    (+0,13)
+print 'END DATE: '                                  (+0,33)
+
+if $aka_end <> '12/31/4712'
+  print $aka_end                                    (+0,44)
+end-if
+
+END-PROCEDURE PRINT-AKA-NAME
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-HIST-OF-ADDR                                                      *
+!                                                                           *
+!       This procedure prints all the addresses associated with the primary *
+!       person.                                                             *
+!                                                                           * 
+!       CALLED BY  : GET-HIST-OF-ADDR                                       *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-HIST-OF-ADDR
+
+next-listing need = 7
+
+print 'TYPE: '                                       (+1,1)
+print $addr_type                                     (+0,13)
+
+!SIR 3721 - Added to get rid of printing Mailing and to correctly print Primary
+!           and/or Invalid
+
+if ($dt_end = '12/31/4712'
+    and $addr_primary = 'Y')
+    print 'Primary'                                  (+0,61)
+else
+
+    if $addr_invalid = 'Y'
+        print 'Invalid'                              (+0,61)
+    end-if
+
+end-if
+
+print 'ADDRESS: '                                    (+1,1)
+print $addr_ln1                                      (+0,13)
+print ', '                                           ()
+print $addr_ln2                                      ()
+print $city                                          (+1,13)
+print ', '                                           ()
+print $state                                         ()
+print ' '                                            ()
+print $zip                                           ()
+print 'COUNTY: '                                     (+1,1)
+print $county                                        (+0,13)
+print 'COMMENTS: '                                   (+1,1)
+print $addr_comments                                 (+0,13) wrap 65 5
+print 'START DATE: '                                 (+1,1)
+print $dt_start                                      (+0,13)
+print 'END DATE: '                                   (+0,33)
+
+if $dt_end <> '12/31/4712'
+  print $dt_end                                      (+0,44)
+end-if
+
+END-PROCEDURE PRINT-HIST-OF-ADDR
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-HIST-OF-PHONES                                                    *
+!                                                                           *
+!       This procedure prints all the phone numbers associated with the     *
+!       primary person.                                                     *
+!                                                                           * 
+!       CALLED BY  : GET-HIST-OF-PHONES                                     *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-HIST-OF-PHONES
+
+next-listing need = 7
+
+print 'TYPE: '                                      (+1,1)
+print $phone_type                                   (+0,13)
+
+!SIR 3721 - Added to get rid of printing Mailing and to correctly print Primary
+!           and/or Invalid
+
+if ($phone_end = '12/31/4712'
+    and $phone_primary = 'Y')
+    print 'Primary'                                  (+0,61)
+
+else
+
+    if $phone_invalid = 'Y'
+        print 'Invalid'                              (+0,61)
+    end-if
+
+end-if
+
+print 'PHONE: '                                     (+1,1)
+
+if substr($phone_num,8,1) = ''
+  let $phone_print = substr($phone_num,1,3)||'-'||substr($phone_num,4,4)
+else
+  let $phone_print = '('||substr($phone_num,1,3)||')'||substr($phone_num,4,3)||'-'||substr($phone_num,7,4)
+end-if
+
+if $phone_num <> ''
+  print $phone_print                                (+0,13)
+end-if
+
+print 'EXTENSION: '                                 (+0,33)
+print $phone_ext                                    (+0,44)
+print 'COMMENTS: '                                  (+1,1)
+print $phone_comments                               (+0,13) wrap 65 5
+print 'START DATE: '                                (+1,1)
+print $phone_start                                  (+0,13)
+print 'END DATE: '                                  (+0,33)
+
+if $phone_end <> '12/31/4712'
+  print $phone_end                                  (+0,44)
+end-if
+
+END-PROCEDURE PRINT-HIST-OF-PHONES
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CASES                                                             *
+!                                                                           *
+!       This procedure prints the case  information.                        *
+!                                                                           * 
+!       CALLED BY  : GET-CASES                                              *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CASES
+next-listing need = 3
+
+print $id_case                                      (+0,1)
+print $id_stage                                     (+0,13)
+print $dt_stage_close                               (+0,30)
+print $cd_stage                                     (+0,50)
+print $program                                      (+0,70)
+
+END-PROCEDURE PRINT-CASES
+
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc'

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.PortalUserDtl" table="PORTAL_USER_DTL" mutable="true" 
+    polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idUser" type="integer" unsaved-value="undefined">
+            <column name="ID_USER" precision="16" scale="0"/>
+            <generator class="foreign">
+              <param name="property">portalUser</param>
+            </generator>
+        </id>                           
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+            <one-to-one name="portalUser" class="gov.georgia.dhr.dfcs.sacwis.db.PortalUser" constrained="true"/>
+                <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+                 <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+                </many-to-one>
+        <property name="txtUserFacebook" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_USER_FACEBOOK" length="320"/>
+        </property>
+        <property name="txtUserMyspace" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_USER_MYSPACE" length="320"/>
+        </property>
+        <property name="txtUserTwitter" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_USER_TWITTER" length="320"/>
+        </property>
+        <property name="txtOtherSite" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_OTHER_SITE" length="320"/>
+        </property>
+        <property name="txtUserOtherSite" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_USER_OTHER_SITE" length="320"/>
+        </property>
+        <property name="nbrUserPhoneBest" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_USER_PHONE_BEST" length="10"/>
+        </property>
+        <property name="nbrUserPhoneBestExtension" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_USER_PHONE_BEST_EXTENSION" length="8"/>
+        </property>
+        <property name="cdUserPhoneBestType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_USER_PHONE_BEST_TYPE" length="2"/>
+        </property>
+        <property name="nbrUserPhoneAlt1" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_USER_PHONE_ALT_1" length="10"/>
+        </property>
+        <property name="nbrUserPhoneAlt1Extension" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_USER_PHONE_ALT_1_EXTENSION" length="8"/>
+        </property>
+        <property name="cdUserPhoneAlt1Type" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_USER_PHONE_ALT_1_TYPE" length="2"/>
+        </property>
+        <property name="nbrUserPhoneAlt2" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_USER_PHONE_ALT_2" length="10"/>
+        </property>
+        <property name="nbrUserPhoneAlt2Extension" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_USER_PHONE_ALT_2_EXTENSION" length="8"/>
+        </property>
+        <property name="cdUserPhoneAlt2Type" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_USER_PHONE_ALT_2_TYPE" length="2"/>
+        </property>
+        <property name="indContactByText" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_CONTACT_BY_TEXT" length="1"/>
+        </property>
+        <property name="txtEmerContact" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_EMER_CONTACT" length="300"/>
+        </property>
+    </class>
+</hibernate-mapping>

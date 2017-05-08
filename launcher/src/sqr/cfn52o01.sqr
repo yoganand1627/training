@@ -1,0 +1,1734 @@
+!*****************************************************************************
+!  Singular Provider Statement Report                                        *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cfn52o01.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /opt/caps/sys/prod/sqr                               *
+!                                                                            *
+!                                                                            *
+! DATE:                 03/15/96                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Kent Cys                                             *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This Singular Provider Statement report displays the *
+!                       total paid, warrant number, and line item detail     *
+!                       corresponding to a paid invoice (warrant) issued to  *
+!                       providers.  This report will be generated as         *
+!                       requested from a CAPS window for a selected invoice. *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 03/15/96   K. Cys       Initial Programming                                *
+! 04/11/96   K. Cys       SIR #20325 -- Admin and Offset amounts are now     *
+!                                       ADDED into line item totals.         *
+! 04/17/96   K. Cys       SIR #20454 -- Outer joins added to rejection       *
+!                                       reason variables.  Code that allows  *
+!                                       select for a specific invo type      *
+!                                       was removed.                         *
+! 05/06/96   K. Cys       SIR #20930 -- Changed variable in 'Paid Line Item' *
+!                                       and 'Rejected Line Item' to select   *
+!                                       YR_SVC_DTL_SVC_YEAR and cleaned up   *
+!                                       spacing on print-outs of each.       *
+! 05/10/96   B. McCleary  SIR #21045 -- Changed invo claimed amount to invo  *
+!                                       valid amount; new csli number instead*
+!                                       of budg id; order by csli; removed   *
+!                                       all adjustment info.                 *
+! 05/13/96   K. Cys       SIR #21076 -- Offset amount now IGNORED in Admin   *
+!                                       line item totals (paid & rejected);  *
+!                                       Condition added to Cost Reim. Paid   *
+!                                       and Rejected line item selects and   *
+!                                       prints.  This condition guards       *
+!                                       against dividing by zero by          *
+!                                       manipulating quantity and rate based *
+!                                       on line item type.  Selects that     *
+!                                       select a name are now ordered by     *
+!                                       name.  Columns for cost reimbursement*
+!                                       line items and admin line items re-  *
+!                                       ordered to match corresponding       *
+!                                       windows.  Header now prints provider *
+!                                       name.  Rejection Reason added to     *
+!                                       admin rejection reason select and    *
+!                                       print.                               *
+! 05/30/96   B. McCleary  SIR #21528 -- Changed condition in GET-PROV-ADDR   *
+!                                       from C.ID_RSRC_ADDRESS to            *
+!                                       C.ID_RESOURCE; original link did not *
+!                                       function properly.                   *
+! 07/31/96   K. Cys       SIR #10726 -- NBR_INVO_WARRANT has changed to an   *
+!                                       alphanumeric variable.  Changed SQR  *
+!                                       host variable from # to $ and        *
+!                                       removed the edit mask from it.       *
+! 08/07/96   K. Cys       SIR #21781 -- Added logic to make a Region sub-    *
+!                                       heading appear in the report header  *
+!                                       with the input invoices region #.    *
+! 08/20/96   K. Cys       SIR #22018 -- Added logic to distinguish invoice   *
+!                                       types 'FSC' and 'ADS' so they will   *
+!                                       be marked as such when they print.   *
+!                                       Made SELECT statements SELECT        *
+!                                       DISTINCT to prevent duplicate line   *
+!                                       items from printing.                 *
+! 09/10/96   K. Cys       SIR #22078 -- Total Paid was not changed to warrant*
+!                                       amount in SIR 21045.  Now changed.   *
+! 09/10/96   K. Cys       SIR #22082 -- Changed link in GET-PROV-ADDR to     *
+!                                       retrieve the Resource Address that   *
+!                                       corresponds to the ID_RSRC_ADDR on   *
+!                                       the contract used by the invoice.    *
+!                                       This overwrote Brad McCleary's change*
+!                                       in SIR 21528                         *
+! 09/11/96   K. Cys       SIR #22084 -- Added code and conditions so that    *
+!                                       when a line item with multiple       *
+!                                       rejection reasons is encountered, it *
+!                                       is not factored into the Total       *
+!                                       Rejected or Total Paid as the case   *
+!                                       may be.  When multiple rejection     *
+!                                       reasons are printed, Rate, Qty,      *
+!                                       Fee/Income, and Amount will NOT      *
+!                                       repeat for the additional rejection  *
+!                                       reasons.  Id_Svc_Dtl is being        *
+!                                       selected and used to distinguish line*
+!                                       items now in all affected Procedures.*
+! 09/16/96   K. Cys       SIR #3461  -- Changed edit mask of Quantity        *
+!                                       variables to allow for decimals of   *
+!                                       two digits of precision.             *
+!                                                                            *
+! 11/02/1999 hallrv       SIR 12774:                                         *
+!                         Modified program to print all invoices paid on the *
+!                           same DLN as the requested invoice.               *
+!                                                                            *
+! 11/02/1999 hallrv       SIR 14592:                                         *
+!                         Modified calculation of amounts to avoid totals    *
+!                           that do not represent the sum of their parts.    *
+!                           Added rounding function.                         *
+!                         Added the following fields to the report:          *
+!                           DT_INVO_WARRANT_DATE                             *
+!                           ID_CONTRACT                                      *
+!                           ID_RESOURCE                                      *
+!                         Changed report column headings from CLIENT NUMBER  *
+!                           to PERSON ID.                                    *
+!                         Moved invoice receipt date from the level of       *
+!                           "delvrd_svc_dtl" to the level of "invoice" on    *
+!                           report sections.                                 *
+!                         Added Invoice Received Date to Administrative and  *
+!                           Cost Reimbursement listing to be consistent with *
+!                           data supplied for other types of invoices.       *
+!                         Added a blank line for each invoice between the    *
+!                           line that reports the invoice id, mo/yr and      *
+!                           receipt date, and the line that begins the       *
+!                           detail column headings.                          *
+!                         Added code to avoid printing blank lines within    *
+!                           the mailing address rows when ATTN or LINE2 data *
+!                           is not available, but still space the next       *
+!                           section down so that it does not intrude further *
+!                           into the envelope window.                        *
+!                         Added totals to cost_reim and admin sections.      *
+!                         Restructured program to utilize common print       *
+!                           routines.  Previously, there were six different  *
+!                           routines, but they were nearly identical except  *
+!                           for differences between those based on           *
+!                           delvrd_svc_dtl as opposed to                     *
+!                           admin/cost_reim_dtl.  The use of common routines *
+!                           makes testing and maintenance simpler.           *
+!                                                                            *
+! 12/10/1999 hallrv       SIR 15398:                                         *
+!                         Modified the program to fix a bug that caused fees *
+!                           and income to fail to print or get included in   *
+!                           the calculation of amounts.                      *
+! 10/27/2003 dejuanr      SIR 19813 - Added alter-printer font=300 point-size=14 *
+!                           This will bold the font and make it larger.      *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup01c.sqc'                 ! control codes for Landscape Batch
+
+    ask ID_INVOICE                          ! input parameter
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 13
+
+    let $region = 'REGION ' || $cntrct_region  !***SIR 21781***
+    move 0                                   to #SkipCnt                    !***SIR 14592***
+
+    move 'PROVIDER STATEMENT'                to $ReportTitle
+    move 'cfn52o01'                          to $ReportID
+    move $region                             to $ReportSubHeading !***SIR 21781*
+
+    #INCLUDE 'header05.sqc'        ! Include file with header information
+
+    print $prov_name                                (+1,15) !***SIR #21076***
+
+    if $prov_addr_attn <> ''                                                !***SIR 14592***
+        print $prov_addr_attn                       (+1,15)
+    else
+        let #SkipCnt = #SkipCnt + 1
+    end-if
+
+    print $prov_addr_ln1                            (+1,15)
+
+    if $prov_addr_ln2 <> ''                                                 !***SIR 14592***
+        print $prov_addr_ln2                        (+1,15)
+    else
+        let #SkipCnt = #SkipCnt + 1
+    end-if
+
+    print $prov_city                                (+1,15)
+
+    if $prov_city <> ''
+        print ', '                                  ()
+        print $prov_state                           ()
+        print ' '                                   ()
+    end-if
+
+    print $prov_zip                                 ()
+
+    print ''                                        (+#SkipCnt,1)           !***SIR 14592***
+    print 'VENDOR ID'                               (+2,34)
+    print 'WARRANT'                                 (+0,89)
+    print 'WARRANT'                                 (+0,102)
+    print 'DOC LOCATOR'                             (+0,115)
+    print 'PROVIDER NAME'                           (+1,1)
+    print 'NUMBER'                                  (+0,34)
+    print 'RESOURCE ID'                             (+0,51)                         !***SIR 14592***
+    print 'CONTRACT ID'                             (+0,70)                         !***SIR 14592***
+    print 'NUMBER'                                  (+0,89)
+    print 'DATE'                                    (+0,102)                        !***SIR 14592***
+    print '   (DLN)'                                (+0,115)
+    print 'TOTAL PAID'                              (+0,137)
+    print '-'                                       (+1,1,30)   fill
+    print '-'                                       (+0,34,14)  fill
+    print '-'                                       (+0,51,16)  fill
+    print '-'                                       (+0,70,16)  fill
+    print '-'                                       (+0,89,10)  fill
+    print '-'                                       (+0,102,10) fill
+    print '-'                                       (+0,115,11) fill
+    print '-'                                       (+0,129,18) fill
+    print $prov_name                                (+1,1)
+    print $prov_vid                                 (+0,34)
+    print #id_rsrc                                  (+0,51) edit 8888888888888888  !***SIR 14592***
+    print #id_contract                              (+0,70) edit 8888888888888888  !***SIR 14592***
+
+    if $warrant <> ''  !***SIR 10726***
+        print $warrant                              (+0,89) !***SIR 10726***
+    end-if
+
+    if $wrrnt_dt <> ''
+        print $wrrnt_dt                             (+0,102)  !***SIR 14592***
+    end-if
+
+    if #prov_dln <> 0
+        print #prov_dln                             (+0,115) edit 888888888888
+    end-if
+
+
+    if #amt_claimed <> 0
+        print '$'                                   (+0,129)
+        print #amt_claimed                          ()      edit 99,999,999,999.00
+    end-if
+
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   alter-printer font=300 point-size=14
+
+   #INCLUDE 'setenv.sqc'                      !Set printer environment
+
+    move '{ID_INVOICE}'                       to #input_invoice
+
+    move 'PAD'                                to $PAD
+    move 'ADM'                                to $ADM
+    move 'DCR'                                to $DCR
+    move 'DSB'                                to $DSB
+    move 'DUR'                                to $DUR
+    move 'FSC'                                to $FSC !***SIR 22018***
+    move 'ADS'                                to $ADS
+    move '01'                                 to $01
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-PROV-ADDR                                          *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT
+
+    do GET-PROV-ADDR
+
+END-PROCEDURE PROCESS-REPORT
+
+!****************************************************************************
+!                                                                           *
+!   GET-PROV-ADDR                                                           *
+!                                                                           *
+!       The header area contains the Provider Mailing Address, Provider     *
+!       Name, Provider Vendor Id, Warrant Number and Total Paid Amount.     *
+!                                                                           *
+!       CALLED BY  : GET-PROCESS-REPORT                                     *
+!       CALLS      : GET-REJECT-LI, GET-PAID-LI, GET-COST-REIM-REJ-LI,      *
+!                    GET-COST-REIM-PAID-LI, GET-ADMIN-REJ-LI,               *
+!                    GET-ADMIN-PAID-LI                                      *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PROV-ADDR
+
+    move 0                                          to #count1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+    if #count1 <> 0
+      NEW-PAGE
+    end-if
+
+A.NM_RESOURCE
+    move &A.NM_RESOURCE                             to $prov_name
+
+!***SIR 14592***
+A.ID_RESOURCE
+    move &A.ID_RESOURCE                             to #id_rsrc
+
+B.NBR_INVO_VID
+    move &B.NBR_INVO_VID                            to $prov_vid
+
+B.NBR_INVO_WARRANT
+    move &B.NBR_INVO_WARRANT                        to $warrant  !***SIR 10726***
+
+!***SIR 14592***
+TO_CHAR(B.DT_INVO_WARRANT_DATE, 'MM/DD/YYYY') &wrrnt_dt
+    MOVE &wrrnt_dt                                  to $wrrnt_dt
+
+!*******SIR 21045******* !***SIR 22078****
+B.AMT_INVO_WARRANT
+    move &B.AMT_INVO_WARRANT                        to #amt_claimed
+
+B.NBR_INVO_DLN
+    move &B.NBR_INVO_DLN                            to #prov_dln
+
+C.ADDR_RSRC_ADDR_ATTN
+    move &C.ADDR_RSRC_ADDR_ATTN                     to $prov_addr_attn
+
+C.ADDR_RSRC_ADDR_ST_LN_1
+    move &C.ADDR_RSRC_ADDR_ST_LN_1                  to $prov_addr_ln1
+
+C.ADDR_RSRC_ADDR_ST_LN_2
+    move &C.ADDR_RSRC_ADDR_ST_LN_2                  to $prov_addr_ln2
+
+C.ADDR_RSRC_ADDR_CITY
+    move &C.ADDR_RSRC_ADDR_CITY                     to $prov_city
+
+C.CD_RSRC_ADDR_STATE
+    move &C.CD_RSRC_ADDR_STATE                      to $prov_state
+
+C.ADDR_RSRC_ADDR_ZIP
+    move &C.ADDR_RSRC_ADDR_ZIP                      to $prov_zip
+
+D.ID_CONTRACT
+    move &D.ID_CONTRACT                             to #id_contract
+
+D.CD_CNTRCT_REGION                                  !***SIR 21781***
+    move &D.CD_CNTRCT_REGION                        to $cntrct_region
+
+    let #count1 = #count1 + 1
+
+    do GET-REJECT-LI
+    do GET-PAID-LI
+    do GET-COST-REIM-REJ-LI
+    do GET-COST-REIM-PAID-LI
+    do GET-ADMIN-REJ-LI
+    do GET-ADMIN-PAID-LI
+
+FROM    CAPS_RESOURCE       A,
+        INVOICE             B,
+        RESOURCE_ADDRESS    C,
+        CONTRACT            D
+
+WHERE   B.ID_INVOICE  = #input_invoice
+AND     B.ID_CONTRACT = D.ID_CONTRACT
+AND     A.ID_RESOURCE = D.ID_RESOURCE
+!***SIR 21528***
+!***SIR 22082***
+AND     D.ID_RSRC_ADDRESS = C.ID_RSRC_ADDRESS
+
+ORDER BY A.NM_RESOURCE,  B.NBR_INVO_WARRANT, D.ID_CONTRACT
+
+END-SELECT
+
+END-PROCEDURE GET-PROV-ADDR
+
+!****************************************************************************
+!                                                                           *
+!   GET-REJECT-LI                                                           *
+!                                                                           *
+!       The line item rejection area contains the rejected delivered service*
+!       line items associated with the invoice.  A total of rejected line   *
+!       items is provided for the invoice.  The contract service line item  *
+!       number (CSLI) is also included.  This section will only display if  *
+!       there are rejected line items.                                      *
+!                                                                           *
+!       CALLED BY  : GET-PROV-ADDR                                          *
+!       CALLS      : RPRT-PRINT-DRVR,       PRINT-TTL-AMNT                  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REJECT-LI
+
+    move 0                                          to #rprt_cnt
+    move 0                                          to #prnt_TtlAmnt
+    move 'N'                                        to $tot_flag
+    move 'rjct'                                     to $PrntTypFlag
+    move 'dsd'                                      to $PrntSrcFlag
+
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+A.ID_INVOICE &rej_invo
+    move &rej_invo                                  to #rej_invo
+
+A.NBR_INVO_VID &rej_vid
+    move &rej_vid                                   to $rej_vid
+
+A.MO_INVO_MONTH &rej_invo_mo
+    move &rej_invo_mo                               to #rej_invo_mo
+
+A.YR_INVO_YEAR &rej_yr
+    move &rej_yr                                    to #rej_invo_yr
+
+A.CD_INVO_TYPE &rej_invo_type                       !***SIR 22018***
+    move &rej_invo_type                             to $rej_invo_type
+
+B.NM_PERSON_FULL &rej_name
+    move &rej_name                                  to $rej_name
+
+C.ID_SVC_DTL &id_svc_dtl                            !***SIR 22084***
+    move &id_svc_dtl                                to #rej_id_svc_dtl
+
+C.ID_SVC_DTL_PERSON &rej_person
+    move &rej_person                                to #rej_person
+
+C.MO_SVC_DTL_SVC_MONTH &rej_mo
+    move &rej_mo                                    to #rej_mo
+
+C.YR_SVC_DTL_SVC_YEAR &rej_year
+    move &rej_year                                  to #rej_yr
+
+C.CD_SVC_DTL_SERVICE &rej_svc
+    move &rej_svc                                   to $rej_svc
+
+C.CD_SVC_DTL_UNIT_TYPE &rej_type
+    move &rej_type                                  to $rej_type
+
+C.AMT_SVC_DTL_UNIT_RATE &rej_rate
+    move &rej_rate                                  to #rej_rate
+
+C.NBR_SVC_DTL_UNIT_QTY &rej_qty
+    move &rej_qty                                   to #rej_qty
+
+C.AMT_SVC_DTL_FEE_PAID &rej_fee
+    move &rej_fee                                   to #rej_fee
+
+C.AMT_SVC_DTL_INCOME &rej_inc                       !***SIR 22018***
+    move &rej_inc                                   to #rej_inc
+
+C.NBR_SVC_DTL_CSLI &rej_csli
+    move &rej_csli                                  to #rej_csli
+
+C.NBR_SVC_DTL_FROM_DAY &rej_from_day
+    move &rej_from_day                              to #rej_from_day
+
+C.NBR_SVC_DTL_TO_DAY &rej_to_day
+    move &rej_to_day                                to #rej_to_day
+
+C.ID_SVC_AUTH_DTL &rej_dtl                          !***SIR 22018***
+    move &rej_dtl                                   to #rej_dtl
+
+TO_CHAR(A.DT_INVO_RECEIVED_DATE, 'MM/DD/YYYY') &rej_dt_rec
+    move &rej_dt_rec                                to $rej_dt_rec
+
+CRJCTRSN.DECODE &rej_dec
+    move &rej_dec                                   to $rej_dec
+
+    move #rej_invo                                  to #prnt_IdInvc
+    move $rej_invo_type                             to $prnt_InvcTyp
+    move #rej_id_svc_dtl                            to #prnt_row_id
+    move #rej_invo_mo                               to #prnt_InvcMnth
+    move #rej_invo_yr                               to #prnt_InvcYr
+    move $rej_dt_rec                                to $prnt_InvcRcvdDt
+
+    evaluate $prnt_InvcTyp
+        when = $FSC
+            move 'fsc'                              to $PrntSrcFlag
+            break
+        when = $ADS
+            move 'ads'                              to $PrntSrcFlag
+            break
+        when = $DCR
+        when = $DUR
+        when = $DSB
+            move 'dsd'                              to $PrntSrcFlag
+            break
+    end-evaluate
+
+    do RPRT-PRINT-DRVR
+
+FROM    INVOICE             A,
+        INVOICE             I,
+        PERSON              B,
+        DELVRD_SVC_DTL      C,
+        REJECTION_REASON    D,
+        CRJCTRSN            CRJCTRSN
+
+
+WHERE   I.ID_INVOICE = #input_invoice
+AND     A.NBR_INVO_DLN = I.NBR_INVO_DLN
+AND     C.ID_INVOICE = A.ID_INVOICE
+AND     C.ID_SVC_DTL_PERSON = B.ID_PERSON
+AND     D.ID_REJECTED_ITEM_ID(+) = C.ID_SVC_DTL  !***SIR #20454***
+AND     C.IND_SVC_DTL_REJ_ITEM = 'Y'
+AND     CRJCTRSN.CODE(+) = D.CD_REJ_RSN
+
+!*******SIR 21045*******
+ORDER BY A.ID_INVOICE, B.NM_PERSON_FULL, C.NBR_SVC_DTL_CSLI
+
+END-SELECT
+
+    if $tot_flag = 'Y'
+        do PRINT-TTL-AMNT
+    end-if
+
+END-PROCEDURE GET-REJECT-LI
+
+!****************************************************************************
+!                                                                           *
+!   GET-PAID-LI                                                             *
+!                                                                           *
+!       The paid line item section contains the paid delivered service      *
+!       line items associated with the invoice.  A total of paid line items *
+!       is provided for each invoice.  The contract service line item number*
+!       (CSLI) is also included.  This section will only display if there   *
+!       are paid line items.                                                *
+!                                                                           *
+!       CALLED BY  : GET-PROV-ADDR                                          *
+!       CALLS      : RPRT-PRINT-DRVR,       PRINT-TTL-AMNT                  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PAID-LI
+
+    move 0                                          to #rprt_cnt
+    move 0                                          to #prnt_TtlAmnt
+    move 'N'                                        to $tot_flag
+    move 'paid'                                     to $PrntTypFlag
+    move 'dsd'                                      to $PrntSrcFlag
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+A.ID_INVOICE &paid_invo
+    move &paid_invo                                 to #paid_invo
+
+A.NBR_INVO_VID &paid_vid
+    move &paid_vid                                  to $paid_vid
+
+A.MO_INVO_MONTH &paid_invo_mo
+    move &paid_invo_mo                              to #paid_invo_mo
+
+A.YR_INVO_YEAR &paid_yr
+    move &paid_yr                                   to #paid_invo_yr
+
+A.CD_INVO_TYPE &paid_invo_type                      !***SIR 22018***
+    move &paid_invo_type                            to $paid_invo_type
+
+B.NM_PERSON_FULL &paid_name
+    move &paid_name                                 to $paid_name
+
+C.ID_SVC_DTL &paid_svc_dtl                          !***SIR 22084***
+    move &paid_svc_dtl                              to #paid_id_svc_dtl
+
+C.ID_SVC_DTL_PERSON &paid_person
+    move &paid_person                               to #paid_person
+
+C.MO_SVC_DTL_SVC_MONTH &paid_mo
+    move &paid_mo                                   to #paid_mo
+
+C.YR_SVC_DTL_SVC_YEAR &paid_year
+    move &paid_year                                 to #paid_yr
+
+C.CD_SVC_DTL_SERVICE &paid_svc
+    move &paid_svc                                  to $paid_svc
+
+C.CD_SVC_DTL_UNIT_TYPE &paid_type
+    move &paid_type                                 to $paid_type
+
+C.AMT_SVC_DTL_UNIT_RATE &paid_rate
+    move &paid_rate                                 to #paid_rate
+
+C.NBR_SVC_DTL_UNIT_QTY &paid_qty
+    move &paid_qty                                  to #paid_qty
+
+C.AMT_SVC_DTL_FEE_PAID &paid_fee
+    move &paid_fee                                  to #paid_fee
+
+C.AMT_SVC_DTL_INCOME &paid_inc                      !***SIR 22018***
+    move &paid_inc                                  to #paid_inc
+
+C.NBR_SVC_DTL_CSLI &paid_csli
+    move &paid_csli                                 to #paid_csli
+
+C.NBR_SVC_DTL_FROM_DAY &paid_from_day
+    move &paid_from_day                             to #paid_from_day
+
+C.NBR_SVC_DTL_TO_DAY &paid_to_day
+    move &paid_to_day                               to #paid_to_day
+
+C.ID_SVC_AUTH_DTL &paid_dtl                         !***SIR 22018***
+    move &paid_dtl                                  to #paid_dtl
+
+TO_CHAR(A.DT_INVO_RECEIVED_DATE, 'MM/DD/YYYY') &paid_dt_rec
+    move &paid_dt_rec                               to $paid_dt_rec
+
+CRJCTRSN.DECODE &paid_dec
+    move &paid_dec                                  to $paid_dec
+
+    move #paid_invo                                 to #prnt_IdInvc
+    move $paid_invo_type                            to $prnt_InvcTyp
+    move #paid_id_svc_dtl                           to #prnt_row_id
+    move #paid_invo_mo                              to #prnt_InvcMnth
+    move #paid_invo_yr                              to #prnt_InvcYr
+    move $paid_dt_rec                               to $prnt_InvcRcvdDt
+
+    evaluate $prnt_InvcTyp
+        when = $FSC
+            move 'fsc'                              to $PrntSrcFlag
+            break
+        when = $ADS
+            move 'ads'                              to $PrntSrcFlag
+            break
+        when = $DCR
+        when = $DUR
+        when = $DSB
+            move 'dsd'                              to $PrntSrcFlag
+            break
+    end-evaluate
+
+    do RPRT-PRINT-DRVR
+
+
+FROM    INVOICE             A,
+        INVOICE             I,
+        PERSON              B,
+        DELVRD_SVC_DTL      C,
+        REJECTION_REASON    D,
+        CRJCTRSN            CRJCTRSN
+
+WHERE   I.ID_INVOICE = #input_invoice
+AND     A.NBR_INVO_DLN = I.NBR_INVO_DLN
+AND     C.ID_INVOICE = A.ID_INVOICE
+AND     C.ID_SVC_DTL_PERSON = B.ID_PERSON
+AND     D.ID_REJECTED_ITEM_ID(+) = C.ID_SVC_DTL  !***SIR #20454***
+AND     C.IND_SVC_DTL_REJ_ITEM = 'N'
+AND     CRJCTRSN.CODE(+) = D.CD_REJ_RSN
+
+!*******SIR 21045*******
+ORDER BY A.ID_INVOICE, B.NM_PERSON_FULL, C.NBR_SVC_DTL_CSLI
+
+END-SELECT
+
+    if $tot_flag = 'Y'
+        do PRINT-TTL-AMNT
+    end-if
+
+END-PROCEDURE GET-PAID-LI
+
+!****************************************************************************
+!                                                                           *
+!   GET-COST-REIM-REJ-LI                                                    *
+!                                                                           *
+!       The cost reimbursement rejected line item section shows rejected    *
+!       reimbursements by category.  Admin and offsets are displayed.  The  *
+!       total is calculated for each line, and then divided by the quantity *
+!       to compute the rate.  Each line is cross referenced to the budget   *
+!       item by the CSLI number.                                            *
+!                                                                           *
+!       CALLED BY  : GET-PROV-ADDR                                          *
+!       CALLS      : RPRT-PRINT-DRVR,       PRINT-TTL-AMNT                  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-COST-REIM-REJ-LI
+
+    move 0                                          to #rprt_cnt
+    move 0                                          to #prnt_TtlAmnt
+    move 'N'                                        to $tot_flag
+    move 'rjct'                                     to $PrntTypFlag
+    move 'crd'                                      to $PrntSrcFlag
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.ID_INVOICE &rr_invo
+    move &rr_invo                                   to #rr_invo
+
+A.NBR_INVO_VID &rr_vid
+    move &rr_vid                                    to $rr_vid
+
+A.MO_INVO_MONTH &rr_mo
+    move &rr_mo                                     to #rr_mo
+
+A.YR_INVO_YEAR &rr_yr
+    move &rr_yr                                     to #rr_yr
+
+!***SIR 14592***
+TO_CHAR(A.DT_INVO_RECEIVED_DATE, 'MM/DD/YYYY') &RjctCstRmbrsmntInvcRcvdDt
+    move &RjctCstRmbrsmntInvcRcvdDt                 to $RjctCstRmbrsmntInvcRcvdDt
+
+C.ID_COST_REIM &rr_id_cost_reim
+    move &rr_id_cost_reim                           to #rr_id_cost_reim
+
+C.NBR_COST_REIM_CSLI &rr_csli
+    move &rr_csli                                   to #rr_csli
+
+C.AMT_COST_REIM_TRAVEL &rr_travel
+    move &rr_travel                                 to #rr_travel
+
+C.AMT_COST_REIM_SUPPLY &rr_supply
+    move &rr_supply                                 to #rr_supply
+
+C.AMT_COST_REIM_EQUIP &rr_equip
+    move &rr_equip                                  to #rr_equip
+
+C.AMT_COST_REIM_SALARY &rr_salary
+    move &rr_salary                                 to #rr_salary
+
+C.AMT_COST_REIM_FRG_BENFT &rr_fb
+    move &rr_fb                                     to #rr_fb
+
+C.AMT_COST_REIM_OTHER &rr_other
+    move &rr_other                                  to #rr_other
+
+C.AMT_COST_REIM_ADMIN_ALL &rr_admin
+    move &rr_admin                                  to #rr_admin
+
+C.AMT_COST_REIM_OFF_ITEM &rr_off
+    move &rr_off                                    to #rr_off
+
+C.NBR_COST_REIM_UNIT_QTY &rr_qty
+    move &rr_qty                                    to #rr_qty
+
+C.CD_COST_REIM_LI_TYPE &rr_type                     !***SIR #21076***
+    move &rr_type                                   to $rr_type
+
+    move #rr_invo                                   to #prnt_IdInvc
+    move #rr_id_cost_reim                           to #prnt_row_id
+    move #rr_mo                                     to #prnt_InvcMnth
+    move #rr_yr                                     to #prnt_InvcYr
+    move $RjctCstRmbrsmntInvcRcvdDt                 to $prnt_InvcRcvdDt
+    do RPRT-PRINT-DRVR
+
+
+FROM    INVOICE             A,
+        INVOICE             I,
+        COST_REIM_DTL       C
+
+WHERE   I.ID_INVOICE = #input_invoice
+AND     I.NBR_INVO_DLN = A.NBR_INVO_DLN
+AND     C.ID_INVOICE  = A.ID_INVOICE
+AND     C.IND_COST_REIM_REJ_ITM = 'Y'
+
+!*******SIR 21045*******
+ORDER BY A.ID_INVOICE, C.NBR_COST_REIM_CSLI
+
+END-SELECT
+
+    if $tot_flag = 'Y'
+        do PRINT-TTL-AMNT
+    end-if
+
+END-PROCEDURE GET-COST-REIM-REJ-LI
+
+!****************************************************************************
+!                                                                           *
+!   GET-COST-REIM-PAID-LI                                                   *
+!                                                                           *
+!       The cost reimbursement paid line item section shows paid cost       *
+!       reimbursements by category.  Admin and offsets are displayed.  The  *
+!       total is calculated for each line, and then divided by the quantity *
+!       to compute the rate.  Each line is cross referenced to the budget   *
+!       item by the CSLI number.                                            *
+!                                                                           *
+!                                                                           *
+!       CALLED BY  : GET-PROV-ADDR                                          *
+!       CALLS      : RPRT-PRINT-DRVR,       PRINT-TTL-AMNT                  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-COST-REIM-PAID-LI
+
+    move 0                                          to #rprt_cnt
+    move 0                                          to #prnt_TtlAmnt
+    move 'N'                                        to $tot_flag
+    move 'paid'                                     to $PrntTypFlag
+    move 'crd'                                      to $PrntSrcFlag
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.ID_INVOICE &rp_invo
+    move &rp_invo                                   to #rp_invo
+
+A.NBR_INVO_VID &rp_vid
+    move &rp_vid                                    to $rp_vid
+
+A.MO_INVO_MONTH &rp_mo
+    move &rp_mo                                     to #rp_mo
+
+A.YR_INVO_YEAR &rp_yr
+    move &rp_yr                                     to #rp_yr
+
+!***SIR 14592***
+TO_CHAR(A.DT_INVO_RECEIVED_DATE, 'MM/DD/YYYY') &CstRmbrsmntInvcRcvdDt
+    move &CstRmbrsmntInvcRcvdDt                     to $CstRmbrsmntInvcRcvdDt
+
+C.ID_COST_REIM &rp_id_cost_reim
+    move &rp_id_cost_reim                           to #rp_id_cost_reim
+
+C.NBR_COST_REIM_CSLI &rp_csli
+    move &rp_csli                                   to #rp_csli
+
+C.AMT_COST_REIM_TRAVEL &rp_travel
+    move &rp_travel                                 to #rp_travel
+
+C.AMT_COST_REIM_SUPPLY &rp_supply
+    move &rp_supply                                 to #rp_supply
+
+C.AMT_COST_REIM_EQUIP &rp_equip
+    move &rp_equip                                  to #rp_equip
+
+C.AMT_COST_REIM_SALARY &rp_salary
+    move &rp_salary                                 to #rp_salary
+
+C.AMT_COST_REIM_FRG_BENFT &rp_fb
+    move &rp_fb                                     to #rp_fb
+
+C.AMT_COST_REIM_OTHER &rp_other
+    move &rp_other                                  to #rp_other
+
+C.AMT_COST_REIM_ADMIN_ALL &rp_admin
+    move &rp_admin                                  to #rp_admin
+
+C.AMT_COST_REIM_OFF_ITEM &rp_off
+    move &rp_off                                    to #rp_off
+
+C.NBR_COST_REIM_UNIT_QTY &rp_qty
+    move &rp_qty                                    to #rp_qty
+
+C.CD_COST_REIM_LI_TYPE &rp_type                     !***SIR #21076***
+    move &rp_type                                   to $rp_type
+
+    move #rp_invo                                   to #prnt_IdInvc
+    move #rp_id_cost_reim                           to #prnt_row_id
+    move #rp_mo                                     to #prnt_InvcMnth
+    move #rp_yr                                     to #prnt_InvcYr
+    move $CstRmbrsmntInvcRcvdDt                     to $prnt_InvcRcvdDt
+    do RPRT-PRINT-DRVR
+
+FROM    INVOICE             A,
+        INVOICE             I,
+        COST_REIM_DTL       C
+
+WHERE   I.ID_INVOICE = #input_invoice
+AND     A.NBR_INVO_DLN = I.NBR_INVO_DLN
+AND     C.ID_INVOICE  = A.ID_INVOICE
+AND     C.IND_COST_REIM_REJ_ITM = 'N'
+
+!*******SIR 21045*******
+ORDER BY A.ID_INVOICE, C.NBR_COST_REIM_CSLI
+
+END-SELECT
+
+    if $tot_flag = 'Y'
+        do PRINT-TTL-AMNT
+    end-if
+
+END-PROCEDURE GET-COST-REIM-PAID-LI
+
+!****************************************************************************
+!                                                                           *
+!   GET-ADMIN-REJ-LI                                                        *
+!                                                                           *
+!       The administrative rejected line item section shows rejected items  *
+!       by admin category.  Admin and offsets to the rejected items are     *
+!       displayed.  The total is calculated for each line, and then divided *
+!       by the quantity to compute the rate.  Each line is cross referenced *
+!       to the budget item by the CSLI number.                              *
+!                                                                           *
+!       CALLED BY  : GET-PROV-ADDR                                          *
+!       CALLS      : RPRT-PRINT-DRVR,       PRINT-TTL-AMNT                  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ADMIN-REJ-LI
+
+    move 0                                          to #rprt_cnt
+    move 0                                          to #prnt_TtlAmnt
+    move 'N'                                        to $tot_flag
+    move 'rjct'                                     to $PrntTypFlag
+    move 'adm'                                      to $PrntSrcFlag
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.ID_INVOICE &ar_invo
+    move &ar_invo                                   to #ar_invo
+
+A.NBR_INVO_VID &ar_vid
+    move &ar_vid                                    to $ar_vid
+
+A.MO_INVO_MONTH &ar_mo
+    move &ar_mo                                     to #ar_mo
+
+A.YR_INVO_YEAR &ar_yr
+    move &ar_yr                                     to #ar_yr
+
+!***SIR 14592***
+TO_CHAR(A.DT_INVO_RECEIVED_DATE, 'MM/DD/YYYY') &RjctAdmnInvcRcvdDt
+    move &RjctAdmnInvcRcvdDt                        to $RjctAdmnInvcRcvdDt
+
+C.ID_ADMIN_DTL &ar_admin_dtl                        !***SIR 22084***
+    move &ar_admin_dtl                              to #ar_id_admin_dtl
+
+C.NBR_ADMIN_DTL_CSLI &ar_csli
+    move &ar_csli                                   to #ar_csli
+
+C.AMT_ADMIN_DTL_TRAVEL &ar_travel
+    move &ar_travel                                 to #ar_travel
+
+C.AMT_ADMIN_DTL_SUPPLIES &ar_supply
+    move &ar_supply                                 to #ar_supply
+
+C.AMT_ADMIN_DTL_EQUIPMENT &ar_equip
+    move &ar_equip                                  to #ar_equip
+
+C.AMT_ADMIN_DTL_SALARIES &ar_salary
+    move &ar_salary                                 to #ar_salary
+
+C.AMT_ADMIN_DTL_FRG_BENFT &ar_fb
+    move &ar_fb                                     to #ar_fb
+
+C.AMT_ADMIN_DTL_OTHER &ar_other
+    move &ar_other                                  to #ar_other
+
+C.AMT_ADMIN_DTL_ADMIN_ALLOC &ar_admin
+    move &ar_admin                                  to #ar_admin
+
+C.AMT_ADMIN_DTL_OFFSET_ITEM &ar_off
+    move &ar_off                                    to #ar_off
+
+CRJCTRSN.DECODE &ar_dec                             !***SIR #21076***
+    move &ar_dec                                    to $ar_dec
+
+    move #ar_invo                                   to #prnt_IdInvc
+    move #ar_id_admin_dtl                           to #prnt_row_id
+    move #ar_mo                                     to #prnt_InvcMnth
+    move #ar_yr                                     to #prnt_InvcYr
+    move $RjctAdmnInvcRcvdDt                        to $prnt_InvcRcvdDt
+    do RPRT-PRINT-DRVR
+
+
+FROM    INVOICE             A,
+        INVOICE             I,
+        ADMIN_DTL           C,
+        REJECTION_REASON    D,
+        CRJCTRSN            CRJCTRSN
+
+WHERE   I.ID_INVOICE = #input_invoice
+AND     A.NBR_INVO_DLN = I.NBR_INVO_DLN
+AND     C.ID_INVOICE  = A.ID_INVOICE
+AND     C.IND_ADMIN_DTL_REJ_ITM = 'Y'
+AND     D.ID_REJECTED_ITEM_ID(+) = C.ID_ADMIN_DTL  !***SIR #20454***
+AND     CRJCTRSN.CODE(+) = D.CD_REJ_RSN  !***SIR #21076***
+
+!*******SIR 21045*******
+ORDER BY A.ID_INVOICE, C.NBR_ADMIN_DTL_CSLI
+
+END-SELECT
+
+    if $tot_flag = 'Y'
+        do PRINT-TTL-AMNT
+    end-if
+
+END-PROCEDURE GET-ADMIN-REJ-LI
+
+!****************************************************************************
+!                                                                           *
+!   GET-ADMIN-PAID-LI                                                       *
+!                                                                           *
+!       The administrative paid line item section shows paid items          *
+!       by admin category.  Admin and offsets to the paid items are         *
+!       displayed.  The total is calculated for each line, and then divided *
+!       by the quantity to compute the rate.  Each line is cross referenced *
+!       to the budget item by the CSLI number.                              *
+!                                                                           *
+!                                                                           *
+!       CALLED BY  : GET-PROV-ADDR                                          *
+!       CALLS      : RPRT-PRINT-DRVR,       PRINT-TTL-AMNT                  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ADMIN-PAID-LI
+
+    move 0                                          to #rprt_cnt
+    move 0                                          to #prnt_TtlAmnt
+    move 'N'                                        to $tot_flag
+    move 'paid'                                     to $PrntTypFlag
+    move 'adm'                                      to $PrntSrcFlag
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.ID_INVOICE &ap_invo
+    move &ap_invo                                   to #ap_invo
+
+A.NBR_INVO_VID &ap_vid
+    move &ap_vid                                    to $ap_vid
+
+A.MO_INVO_MONTH &ap_mo
+    move &ap_mo                                     to #ap_mo
+
+A.YR_INVO_YEAR &ap_yr
+    move &ap_yr                                     to #ap_yr
+
+!***SIR 14592***
+TO_CHAR(A.DT_INVO_RECEIVED_DATE, 'MM/DD/YYYY') &AdmnInvcRcvdDt
+    move &AdmnInvcRcvdDt                            to $AdmnInvcRcvdDt
+
+C.ID_ADMIN_DTL &ap_id_admin_dtl
+    move &ap_id_admin_dtl                           to #ap_id_admin_dtl
+
+C.NBR_ADMIN_DTL_CSLI &ap_csli
+    move &ap_csli                                   to #ap_csli
+
+C.AMT_ADMIN_DTL_TRAVEL &ap_travel
+    move &ap_travel                                 to #ap_travel
+
+C.AMT_ADMIN_DTL_SUPPLIES &ap_supply
+    move &ap_supply                                 to #ap_supply
+
+C.AMT_ADMIN_DTL_EQUIPMENT &ap_equip
+    move &ap_equip                                  to #ap_equip
+
+C.AMT_ADMIN_DTL_SALARIES &ap_salary
+    move &ap_salary                                 to #ap_salary
+
+C.AMT_ADMIN_DTL_FRG_BENFT &ap_fb
+    move &ap_fb                                     to #ap_fb
+
+C.AMT_ADMIN_DTL_OTHER &ap_other
+    move &ap_other                                  to #ap_other
+
+C.AMT_ADMIN_DTL_ADMIN_ALLOC &ap_admin
+    move &ap_admin                                  to #ap_admin
+
+C.AMT_ADMIN_DTL_OFFSET_ITEM &ap_off
+    move &ap_off                                    to #ap_off
+
+    move #ap_invo                                   to #prnt_IdInvc
+    move #ap_id_admin_dtl                           to #prnt_row_id
+    move #ap_mo                                     to #prnt_InvcMnth
+    move #ap_yr                                     to #prnt_InvcYr
+    move $AdmnInvcRcvdDt                            to $prnt_InvcRcvdDt
+    do RPRT-PRINT-DRVR
+
+FROM    INVOICE         A,
+        INVOICE         I,
+        ADMIN_DTL       C
+
+
+WHERE   I.ID_INVOICE = #input_invoice
+AND     A.NBR_INVO_DLN = I.NBR_INVO_DLN
+AND     C.ID_INVOICE  = A.ID_INVOICE
+AND     C.IND_ADMIN_DTL_REJ_ITM = 'N'
+
+!*******SIR 21045*******
+ORDER BY A.ID_INVOICE, C.NBR_ADMIN_DTL_CSLI
+
+END-SELECT
+
+    if $tot_flag = 'Y'
+        do PRINT-TTL-AMNT
+    end-if
+
+END-PROCEDURE GET-ADMIN-PAID-LI
+
+!****************************************************************************
+!                                                                           *
+!   RPRT-PRINT-DRVR                                                         *
+!                                                                           *
+!       This procedure drives the process of printing detail headers and    *
+!       lines.                                                              *
+!                                                                           *
+!       CALLED BY  : GET-REJECT-LI,             GET-PAID-LI,                *
+!                    GET-COST-REIM-REJ-LI,      GET-COST-REIM-PAID-LI,      *
+!                    GET-ADMIN-REJ-LI,          GET-ADMIN-PAID-LI,          *
+!       CALLS      : MOVE-DS-RJCT-LI-TO-PRINT,  MOVE-DS-PAID-LI-TO-PRINT,   *
+!                    MOVE-CRD-RJCT-LI-TO-PRINT, MOVE-CRD-PAID-LI-TO-PRINT,  *
+!                    MOVE-ADM-RJCT-LI-TO-PRINT, MOVE-ADM-PAID-LI-TO-PRINT,  *
+!                    PRINT-COLUMN-HDRS,         PRINT-COLUMN-DTL,           *
+!                    PRINT-TTL-AMNT                                         *
+!****************************************************************************
+
+BEGIN-PROCEDURE RPRT-PRINT-DRVR
+
+    let #rprt_cnt = #rprt_cnt + 1
+
+    if #rprt_cnt = 1
+        next-listing need = 9
+        evaluate $PrntSrcFlag
+            when = 'dsd'
+                if $PrntTypFlag = 'rjct'
+                    print '==================== LINE ITEM REJECTIONS ===================='  (+2) center
+                    do MOVE-DS-RJCT-LI-TO-PRINT
+                else
+                    print '==================== PAID LINE ITEM ===================='    (+2) center
+                    do MOVE-DS-PAID-LI-TO-PRINT
+                end-if
+                break
+            when = 'crd'
+                if $PrntTypFlag = 'rjct'
+                    print '==================== COST REIMBURSEMENT REJECTED LINE ITEM ====================' (+2) center
+                    do MOVE-CRD-RJCT-LI-TO-PRINT
+                else
+                    print '==================== COST REIMBURSEMENT LINE ITEM ====================' (+2) center
+                    do MOVE-CRD-PAID-LI-TO-PRINT
+                end-if
+                break
+            when = 'adm'
+                if $PrntTypFlag = 'rjct'
+                    print '==================== ADMINISTRATIVE REJECTED LINE ITEM ====================' (+2) center
+                    do MOVE-ADM-RJCT-LI-TO-PRINT
+                else
+                    print '==================== ADMINISTRATIVE LINE ITEM ====================' (+2) center
+                    do MOVE-ADM-PAID-LI-TO-PRINT
+                end-if
+                break
+            when = 'fsc'
+                if $PrntTypFlag = 'rjct'
+                    print '==================== FOSTER CARE LINE ITEM REJECTIONS ===================='  (+2) center
+                    do MOVE-DS-RJCT-LI-TO-PRINT
+                else
+                    print '==================== FOSTER CARE PAID LINE ITEM ===================='    (+2) center
+                    do MOVE-DS-PAID-LI-TO-PRINT
+                end-if
+                break
+            when = 'ads'
+                if $PrntTypFlag = 'rjct'
+                    print '==================== ADOPTION SUBSIDY LINE ITEM REJECTIONS ===================='  (+2) center
+                    do MOVE-DS-RJCT-LI-TO-PRINT
+                else
+                    print '==================== ADOPTION SUBSIDY PAID LINE ITEM ===================='    (+2) center
+                    do MOVE-DS-PAID-LI-TO-PRINT
+                end-if
+                break
+        end-evaluate
+        do PRINT-COLUMN-HDRS
+        do PRINT-COLUMN-DTL
+    else
+        if #prnt_IdInvc <> #prnt_OldIdInvc
+            do PRINT-TTL-AMNT
+            do PRINT-COLUMN-HDRS
+            move 0                                  to #prnt_TtlAmnt
+            move 1                                  to #rprt_cnt
+        end-if
+
+        evaluate $PrntTypFlag
+            when = 'rjct'
+                evaluate $PrntSrcFlag
+                    when = 'dsd'
+                    when = 'fsc'
+                    when = 'ads'
+                        do MOVE-DS-RJCT-LI-TO-PRINT
+                        break
+                    when = 'crd'
+                        do MOVE-CRD-RJCT-LI-TO-PRINT
+                        break
+                    when = 'adm'
+                        do MOVE-ADM-RJCT-LI-TO-PRINT
+                        break
+                end-evaluate
+                break
+            when = 'paid'
+                evaluate $PrntSrcFlag
+                    when = 'dsd'
+                    when = 'fsc'
+                    when = 'ads'
+                        do MOVE-DS-PAID-LI-TO-PRINT
+                        break
+                    when = 'crd'
+                        do MOVE-CRD-PAID-LI-TO-PRINT
+                        break
+                    when = 'adm'
+                        do MOVE-ADM-PAID-LI-TO-PRINT
+                        break
+                end-evaluate
+                break
+        end-evaluate
+
+        do PRINT-COLUMN-DTL
+    end-if
+
+    move #prnt_row_id                           to #old_prnt_row_id
+
+END-PROCEDURE RPRT-PRINT-DRVR
+
+!****************************************************************************
+!                                                                           *
+!   MOVE-DS-RJCT-LI-TO-PRINT                                                *
+!                                                                           *
+!       This procedure moves retrieved data to generically named variables  *
+!       for use in printing.                                                *
+!                                                                           *
+!       CALLED BY  : RPRT-PRINT-DRVR                                        *
+!       CALLS      : --                                                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE MOVE-DS-RJCT-LI-TO-PRINT
+    move #rej_csli                                  to #prnt_csli
+    move $rej_name                                  to $prnt_PrsnName
+    move #rej_person                                to #prnt_IdPrsn
+    move #rej_mo                                    to #prnt_SrvcMnth
+    move #rej_yr                                    to #prnt_SrvcYr
+    move #rej_from_day                              to #prnt_FromDay
+    move #rej_to_day                                to #prnt_ToDay
+    move $rej_svc                                   to $prnt_SrvcCd
+    move $rej_type                                  to $prnt_UnitTyp
+    move #rej_rate                                  to #prnt_UnitRate
+    move #rej_qty                                   to #prnt_UnitQntty
+
+    if $PrntSrcFlag = 'fsc'
+        move #rej_inc                               to #prnt_FeeOrIncm      !***SIR 15398***
+    else
+        move #rej_fee                               to #prnt_FeeOrIncm      !***SIR 15398***
+    end-if
+
+    move 0                                          to #prnt_Amnt
+    move $rej_dec                                   to $prnt_RjctnRsn
+END-PROCEDURE MOVE-DS-RJCT-LI-TO-PRINT
+
+!****************************************************************************
+!                                                                           *
+!   MOVE-DS-PAID-LI-TO-PRINT                                                *
+!                                                                           *
+!       This procedure moves retrieved data to generically named variables  *
+!       for use in printing.                                                *
+!                                                                           *
+!       CALLED BY  : RPRT-PRINT-DRVR                                        *
+!       CALLS      : --                                                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE MOVE-DS-PAID-LI-TO-PRINT
+    move #paid_csli                                 to #prnt_csli
+    move $paid_name                                 to $prnt_PrsnName
+    move #paid_person                               to #prnt_IdPrsn
+    move #paid_mo                                   to #prnt_SrvcMnth
+    move #paid_yr                                   to #prnt_SrvcYr
+    move #paid_from_day                             to #prnt_FromDay
+    move #paid_to_day                               to #prnt_ToDay
+    move $paid_svc                                  to $prnt_SrvcCd
+    move $paid_type                                 to $prnt_UnitTyp
+    move #paid_rate                                 to #prnt_UnitRate
+    move #paid_qty                                  to #prnt_UnitQntty
+
+    if $PrntSrcFlag = 'fsc'
+        move #paid_inc                              to #prnt_FeeOrIncm      !***SIR 15398***
+    else
+        move #paid_fee                              to #prnt_FeeOrIncm      !***SIR 15398***
+    end-if
+
+    move 0                                          to #prnt_Amnt
+    move ''                                         to $prnt_RjctnRsn
+END-PROCEDURE MOVE-DS-PAID-LI-TO-PRINT
+
+!****************************************************************************
+!                                                                           *
+!   MOVE-CRD-RJCT-LI-TO-PRINT                                               *
+!                                                                           *
+!       This procedure moves retrieved data to generically named variables  *
+!       for use in printing.                                                *
+!                                                                           *
+!       CALLED BY  : RPRT-PRINT-DRVR                                        *
+!       CALLS      : --                                                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE MOVE-CRD-RJCT-LI-TO-PRINT
+    move #rr_csli                                   to #prnt_csli
+    move #rr_salary                                 to #prnt_salary
+    move #rr_fb                                     to #prnt_fb
+    move #rr_travel                                 to #prnt_travel
+    move #rr_supply                                 to #prnt_supply
+    move #rr_equip                                  to #prnt_equip
+    move #rr_other                                  to #prnt_other
+    move #rr_admin                                  to #prnt_admin
+    move #rr_off                                    to #prnt_off
+    move 0                                          to #prnt_UnitRate
+    move #rr_qty                                    to #prnt_UnitQntty
+    move 0                                          to #prnt_Amnt
+    move ''                                         to $prnt_RjctnRsn
+END-PROCEDURE MOVE-CRD-RJCT-LI-TO-PRINT
+
+!****************************************************************************
+!                                                                           *
+!   MOVE-CRD-PAID-LI-TO-PRINT                                               *
+!                                                                           *
+!       This procedure moves retrieved data to generically named variables  *
+!       for use in printing.                                                *
+!                                                                           *
+!       CALLED BY  : RPRT-PRINT-DRVR                                        *
+!       CALLS      : --                                                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE MOVE-CRD-PAID-LI-TO-PRINT
+    move #rp_csli                                   to #prnt_csli
+    move #rp_salary                                 to #prnt_salary
+    move #rp_fb                                     to #prnt_fb
+    move #rp_travel                                 to #prnt_travel
+    move #rp_supply                                 to #prnt_supply
+    move #rp_equip                                  to #prnt_equip
+    move #rp_other                                  to #prnt_other
+    move #rp_admin                                  to #prnt_admin
+    move #rp_off                                    to #prnt_off
+    move 0                                          to #prnt_UnitRate
+    move #rp_qty                                    to #prnt_UnitQntty
+    move 0                                          to #prnt_Amnt
+    move ''                                         to $prnt_RjctnRsn
+END-PROCEDURE MOVE-CRD-PAID-LI-TO-PRINT
+
+!****************************************************************************
+!                                                                           *
+!   MOVE-ADM-RJCT-LI-TO-PRINT                                               *
+!                                                                           *
+!       This procedure moves retrieved data to generically named variables  *
+!       for use in printing.                                                *
+!                                                                           *
+!       CALLED BY  : RPRT-PRINT-DRVR                                        *
+!       CALLS      : --                                                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE MOVE-ADM-RJCT-LI-TO-PRINT
+    move #ar_csli                                   to #prnt_csli
+    move #ar_salary                                 to #prnt_salary
+    move #ar_fb                                     to #prnt_fb
+    move #ar_travel                                 to #prnt_travel
+    move #ar_supply                                 to #prnt_supply
+    move #ar_equip                                  to #prnt_equip
+    move #ar_other                                  to #prnt_other
+    move #ar_admin                                  to #prnt_admin
+    move #ar_off                                    to #prnt_off
+    move 0                                          to #prnt_UnitRate
+    move 0                                          to #prnt_UnitQntty
+    move 0                                          to #prnt_Amnt
+    move $ar_dec                                    to $prnt_RjctnRsn
+END-PROCEDURE MOVE-ADM-RJCT-LI-TO-PRINT
+
+!****************************************************************************
+!                                                                           *
+!   MOVE-ADM-PAID-LI-TO-PRINT                                               *
+!                                                                           *
+!       This procedure moves retrieved data to generically named variables  *
+!       for use in printing.                                                *
+!                                                                           *
+!       CALLED BY  : RPRT-PRINT-DRVR                                        *
+!       CALLS      : --                                                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE MOVE-ADM-PAID-LI-TO-PRINT
+    move #ap_csli                                   to #prnt_csli
+    move #ap_salary                                 to #prnt_salary
+    move #ap_fb                                     to #prnt_fb
+    move #ap_travel                                 to #prnt_travel
+    move #ap_supply                                 to #prnt_supply
+    move #ap_equip                                  to #prnt_equip
+    move #ap_other                                  to #prnt_other
+    move #ap_admin                                  to #prnt_admin
+    move #ap_off                                    to #prnt_off
+    move 0                                          to #prnt_UnitRate
+    move 0                                          to #prnt_UnitQntty
+    move 0                                          to #prnt_Amnt
+    move ''                                         to $prnt_RjctnRsn
+END-PROCEDURE MOVE-ADM-PAID-LI-TO-PRINT
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-COLUMN-HDRS                                                       *
+!                                                                           *
+!       This procedure prints column headers for the detail portion of the  *
+!       report.                                                             *
+!                                                                           *
+!       CALLED BY  : RPRT-PRINT-DRVR                                        *
+!       CALLS      : --                                                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-COLUMN-HDRS
+
+    next-listing need = 7
+
+    print 'INVOICE NUMBER: '                        (+2,1)
+    print #prnt_IdInvc                              (+0,17) edit 88888888888888
+    print 'INVOICE MO/YR: '                         (+0,35)
+    print #prnt_InvcMnth                            (+0,50) edit 88
+    print '/'                                       ()
+    print #prnt_InvcYr                              () edit 8888
+    print 'INVOICE RECEIPT DATE: '                  (+0,59)
+    print $prnt_InvcRcvdDt                          (+0,81)
+
+    evaluate $PrntSrcFlag
+        when = 'ads'
+        when = 'fsc'
+        when = 'dsd'
+            print 'CSLI'                            (+2,1)
+            print 'PERSON'                          (+0,35)
+            print 'SVC'                             (+0,46)
+            print 'FROM-'                           (+0,53)
+
+            if $PrntTypFlag = 'rjct'
+                print 'REJECTION'                   (+0,117)
+            end-if
+
+            print 'NO'                              (+1,2)
+            print 'NAME'                            (+0,7)
+            print 'ID'                              (+0,35)
+            print 'MO/YR'                           (+0,45)
+            print 'TO'                              (+0,55)
+            print 'SVC'                             (+0,60)
+            print 'TYP'                             (+0,65)
+            print 'RATE'                            (+0,73)
+            print 'QTY'                             (+0,84)
+            print 'FEE/INCOME'                      (+0,90)
+            print 'AMOUNT'                          (+0,109)
+
+            if $PrntTypFlag = 'rjct'
+                print 'REASON'                      (+0,117)
+            end-if
+
+            print '-'                               (+1,1,4)  fill
+            print '-'                               (+0,7,24) fill
+            print '-'                               (+0,33,9) fill
+            print '-'                               (+0,44,7) fill
+            print '-'                               (+0,53,5) fill
+            print '-'                               (+0,60,3) fill
+            print '-'                               (+0,65,3) fill
+            print '-'                               (+0,70,7) fill
+            print '-'                               (+0,79,8) fill
+            print '-'                               (+0,89,11) fill
+            print '-'                               (+0,102,13) fill
+
+            if $PrntTypFlag = 'rjct'
+                print '-'                           (+0,117,20) fill
+            end-if
+
+            break
+        when = 'crd'
+        when = 'adm'
+            print 'CSLI'                            (+2,1)
+
+            if $PrntSrcFlag = 'adm'
+                if $PrntTypFlag = 'rjct'
+                    print 'REJECTION'               (+0,142)
+                end-if
+            end-if
+
+            print 'NO'                              (+1,2)
+            print 'SALARY'                          (+0,14)
+            print 'FRING BEN'                       (+0,26)
+            print 'TRAVEL'                          (+0,44)
+            print 'SUPPLY'                          (+0,59)
+            print 'EQUIPMT'                         (+0,73)
+            print 'OTHER'                           (+0,90)
+            print 'ADMIN'                           (+0,105)
+            print 'OFFSET'                          (+0,119)
+            print 'TOTAL'                           (+0,135)
+
+            if $PrntSrcFlag = 'crd'
+                print 'QUANTITY'                    (+0,143)
+                print 'RATE'                        (+0,158)
+            else
+                if $PrntSrcFlag = 'adm' and $PrntTypFlag = 'rjct'
+                    print 'REASON'                  (+0,142)
+                end-if
+            end-if
+
+            print '-'                               (+1,1,4)   fill
+            print '-'                               (+0,7,13)  fill
+            print '-'                               (+0,22,13) fill
+            print '-'                               (+0,37,13) fill
+            print '-'                               (+0,52,13) fill
+            print '-'                               (+0,67,13) fill
+            print '-'                               (+0,82,13) fill
+            print '-'                               (+0,97,13) fill
+            print '-'                               (+0,112,13) fill
+            print '-'                               (+0,127,13) fill
+
+            if $PrntSrcFlag = 'crd'
+                print '-'                           (+0,142,9) fill
+                print '-'                           (+0,153,9) fill
+            else
+                if $PrntSrcFlag = 'adm' and $PrntTypFlag = 'rjct'
+                    print '-'                       (+0,142,20) fill
+                end-if
+            end-if
+
+            break
+    end-evaluate
+
+END-PROCEDURE PRINT-COLUMN-HDRS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-COLUMN-DTL                                                        *
+!                                                                           *
+!       This procedure prints the detail portion of the report relating to  *
+!       individual delvrd_svc_dtl, cost_reim_dtl, and admin_dtl rows.       *
+!                                                                           *
+!       CALLED BY  : RPRT-PRINT-DRVR                                        *
+!       CALLS      : --                                                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-COLUMN-DTL
+
+    evaluate $PrntSrcFlag
+        when = 'ads'
+        when = 'fsc'
+        when = 'dsd'
+            print #prnt_csli                        (+1,1)  edit 999
+            print $prnt_PrsnName                    (+0,7)
+            print #prnt_IdPrsn                      (+0,33) edit 999999999
+            print #prnt_SrvcMnth                    (+0,44) edit 99
+            print '/'                               ()
+            print #prnt_SrvcYr                      ()      edit 8888
+            print #prnt_FromDay                     (+0,53) edit 99
+            print '-'                               ()
+            print #prnt_ToDay                       ()      edit 99
+            print $prnt_SrvcCd                      (+0,60)
+            print $prnt_UnitTyp                     (+0,65)
+
+            if #prnt_row_id <> #old_prnt_row_id
+                print #prnt_UnitRate                (+0,70) edit 9999.99
+                print #prnt_UnitQntty               (+0,79) edit 99999.99
+                print #prnt_FeeOrIncm               (+0,89) edit 99999999.99
+
+                let #prnt_Amnt = round(#prnt_UnitRate * #prnt_UnitQntty,2) - #prnt_FeeOrIncm                     !SIR 14593-Added rounding
+
+                print #prnt_Amnt                    (+0,102) edit 99,999,999.99
+                let #prnt_TtlAmnt = #prnt_TtlAmnt + #prnt_Amnt
+            end-if
+
+            if $PrntTypFlag = 'rjct'
+                print $prnt_RjctnRsn                (+0,117)
+            end-if
+            break
+        when = 'crd'
+        when = 'adm'
+            print #prnt_csli                        (+1,1)  edit 999
+            print #prnt_salary                      (+0,7)  edit 99,999,999.99
+            print #prnt_fb                          (+0,22) edit 99,999,999.99
+            print #prnt_travel                      (+0,37) edit 99,999,999.99
+            print #prnt_supply                      (+0,52) edit 99,999,999.99
+            print #prnt_equip                       (+0,67) edit 99,999,999.99
+            print #prnt_other                       (+0,82) edit 99,999,999.99
+            print #prnt_admin                       (+0,97) edit 99,999,999.99
+            print #prnt_off                         (+0,112) edit 99,999,999.99
+
+            if #prnt_row_id <> #old_prnt_row_id
+                let #prnt_Amnt = #prnt_salary +
+                                 #prnt_fb +
+                                 #prnt_travel +
+                                 #prnt_supply +
+                                 #prnt_equip +
+                                 #prnt_other +
+                                 #prnt_admin +
+                                 #prnt_off
+
+                print #prnt_Amnt                    (+0,127) edit 99,999,999.99
+                let #prnt_TtlAmnt = #prnt_TtlAmnt + #prnt_Amnt
+            end-if
+
+            if $PrntSrcFlag = 'crd'
+                print #prnt_UnitQntty               (+0,142) edit 999999.99
+
+                if #prnt_UnitQntty <> 0
+                    let #prnt_UnitRate = #prnt_Amnt / #prnt_UnitQntty
+                end-if
+
+                print #prnt_UnitRate                (+0,153) edit 999999.99
+            else
+                if $PrntSrcFlag = 'adm' and $PrntTypFlag = 'rjct'
+                    print $prnt_RjctnRsn            (+0,142)
+                end-if
+            end-if
+
+            break
+    end-evaluate
+
+    move #prnt_IdInvc                               to #prnt_OldIdInvc
+    move 'Y'                                        to $tot_flag
+
+END-PROCEDURE PRINT-COLUMN-DTL
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-TTL-AMNT                                                          *
+!                                                                           *
+!       This procedure prints the total amount for rows in the section just *
+!       printed.                                                            *
+!                                                                           *
+!       CALLED BY  : RPRT-PRINT-DRVR,                                       *
+!                    GET-REJECT-LI,             GET-PAID-LI,                *
+!                    GET-COST-REIM-REJ-LI,      GET-COST-REIM-PAID-LI,      *
+!                    GET-ADMIN-REJ-LI,          GET-ADMIN-PAID-LI           *
+!       CALLS      : --                                                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-TTL-AMNT
+
+    evaluate $PrntSrcFlag
+        when = 'dsd'
+        when = 'ads'
+        when = 'fsc'
+
+            if $PrntTypFlag = 'rjct'
+                print 'TOTAL LINE ITEM REJECTIONS : '   (+1,72)
+            else
+                print 'TOTAL LINE ITEM PAID : '         (+1,78)
+            end-if
+
+            print #prnt_TtlAmnt                         (+0,102) edit 99,999,999.99
+            break
+        when = 'crd'
+        when = 'adm'
+
+            if $PrntTypFlag = 'rjct'
+                print 'TOTAL BUDGET ITEM REJECTIONS : ' (+1,95)
+            else
+                print 'TOTAL BUDGET ITEM ACCEPTED : '   (+1,97)
+            end-if
+
+            print #prnt_TtlAmnt                         (+0,127) edit 99,999,999.99
+            break
+    end-evaluate
+
+END-PROCEDURE PRINT-TTL-AMNT
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+    NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle
+
+
+    print 'SQL error - Processing Terminated'               (+1,2)
+    print $error                                            (+1,2)
+    print 'ERROR: SQL error halted loader processing'       (+0)
+    print $error                                            (+1,2)
+    print 'SQL Error: '                                     (+0)
+    print $sql-error                                        (+0)
+    print $error                                            (+1,2)
+    print 'SQL Status: '                                    (+0)
+    print #sql-status                                       (+0)
+    STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************

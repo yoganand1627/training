@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.AdminDtl" table="ADMIN_DTL" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idAdminDtl" type="integer" unsaved-value="0">
+      <column name="ID_ADMIN_DTL" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_ADMIN_DTL</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="invoice" class="gov.georgia.dhr.dfcs.sacwis.db.Invoice" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_INVOICE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="adminDtl" class="gov.georgia.dhr.dfcs.sacwis.db.AdminDtl" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_ADMIN_DTL_REVRSAL_ORIG" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="amtAdminDtlAdminAlloc" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ADMIN_DTL_ADMIN_ALLOC" precision="10"/>
+    </property>
+    <property name="amtAdminDtlEquipment" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ADMIN_DTL_EQUIPMENT" precision="10"/>
+    </property>
+    <property name="amtAdminDtlFrgBenft" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ADMIN_DTL_FRG_BENFT" precision="10"/>
+    </property>
+    <property name="amtAdminDtlOffsetItem" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ADMIN_DTL_OFFSET_ITEM" precision="10"/>
+    </property>
+    <property name="amtAdminDtlOther" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ADMIN_DTL_OTHER" precision="10"/>
+    </property>
+    <property name="amtAdminDtlSalaries" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ADMIN_DTL_SALARIES" precision="10"/>
+    </property>
+    <property name="amtAdminDtlSupplies" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ADMIN_DTL_SUPPLIES" precision="10"/>
+    </property>
+    <property name="amtAdminDtlTravel" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ADMIN_DTL_TRAVEL" precision="10"/>
+    </property>
+    <property name="cdAdminDtlService" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ADMIN_DTL_SERVICE" length="6"/>
+    </property>
+    <property name="cdAdminDtlInvoDisptn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ADMIN_DTL_INVO_DISPTN" length="2"/>
+    </property>
+    <property name="cdAdminDtlLiType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ADMIN_DTL_LI_TYPE" length="2"/>
+    </property>
+    <property name="cdAdminDtlPac" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ADMIN_DTL_PAC" length="3"/>
+    </property>
+    <property name="cdAdminDtlObjCode" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ADMIN_DTL_OBJ_CODE" length="6"/>
+    </property>
+    <property name="indAdminDtlRejItm" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ADMIN_DTL_REJ_ITM" length="1"/>
+    </property>
+    <property name="moAdminDtlSvcMonth" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="MO_ADMIN_DTL_SVC_MONTH" precision="2" scale="0"/>
+    </property>
+    <property name="nbrAdminDtlCsli" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_ADMIN_DTL_CSLI" precision="4" scale="0"/>
+    </property>
+    <property name="yrAdminDtlSvcYear" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="YR_ADMIN_DTL_SVC_YEAR" precision="4" scale="0"/>
+    </property>
+    <property name="nbrCntrctPrd" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CNTRCT_PRD" precision="2" scale="0"/>
+    </property>
+    <property name="cdObjctCertified" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_OBJCT_CERTIFIED" length="6"/>
+    </property>
+    <property name="cdObjctPure" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_OBJCT_PURE" length="6"/>
+    </property>
+    <property name="nbrObjctAllowable" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_OBJCT_ALLOWABLE" precision="9" scale="6"/>
+    </property>
+    <property name="nbrObjctCertified" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_OBJCT_CERTIFIED" precision="9" scale="6"/>
+    </property>
+    <property name="nbrObjctPure" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_OBJCT_PURE" precision="9" scale="6"/>
+    </property>
+    <property name="txtComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_COMMENTS" length="80"/>
+    </property>
+    <property name="amtAdminDtlPromotional" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ADMIN_DTL_PROMOTIONAL" precision="10"/>
+    </property>
+    <property name="cdCounty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ON_CALL_COUNTY" length="3"/>
+    </property>
+    <property name="amtSmilePaid" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="AMT_SMILE_PAID" precision="10"/>
+    </property>
+    <property name="nbrCheck" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CHECK" precision="10" scale="0"/>
+    </property>
+    <property name="dtPaid" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PAID" length="7"/>
+    </property>
+    <bag name="adminDtls" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ADMIN_DTL_REVRSAL_ORIG" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdminDtl" not-found="exception" embed-xml="true"/>
+    </bag>    
+  </class>
+</hibernate-mapping>

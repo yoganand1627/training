@@ -1,0 +1,738 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Mon Sep 08 09:50:35 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\INV Statistics\InvestigationMonthlyStatistics00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Text $rprtMonth 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+Begin-Select Loops=1
+DECODE &Init_Query_Init_Query_DECODE
+From  CODES_TABLES
+Where CODE_TYPE = 'CCOUNT'
+ And CODES_TABLES.CODE = [$_I5201_CD_COUNTY]
+End-Select
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (24,1,0) Underline  Bold 
+ Print 'Pending at Beginning of the Month: ' (76,5,25) Bold  Wrap 25 2 line-height=12 Keep-Top
+ Print 'Pending at End of the Month:' (179,5,25) Bold  Wrap 25 2 line-height=12 Keep-Top
+ Print 'Received in the Month:' (108,5,22) Bold 
+ Print 'Closed in the Month:' (128,5,0) Bold 
+ Print 'The number of investigations active as of the first day of the reporting month.' (76,151,0)
+ Print 'The number of investigations active as of the last day of the reporting month.' (179,151,0)
+ Print 'The number of new investigations opened during the reporting month. ' (108,151,85) Wrap 85 2 line-height=12 Keep-Top
+ Print 'The number of investigations that were closed during the reporting month. ' (128,151,0)
+ Print 'Closed Counts per Maltreatment Finding:' (146,5,25) Bold  Wrap 25 2 line-height=12 Keep-Top
+ Print 'Number of Children:' (263,5,25) Bold  Wrap 25 2 line-height=12 Keep-Top
+ Print 'In FC at Beginning of the Month with Pending Investigation: ' (282,13,25) Bold  Wrap 25 3 line-height=12 Keep-Top
+ Print 'The number of foster care stages* that are active as of the first day of the reporting month. The corresponding investigations are also active as of the first day of the month.' (282,152,85) Wrap 85 3 line-height=12 Keep-Top
+ Print 'Placed in FC during the Month: ' (365,13,25) Bold  Wrap 25 2 line-height=12 Keep-Top
+ Print 'The number of foster care stages* opened in the reporting month, independent of the investigation''s status.' (365,151,85) Wrap 85 2 line-height=12 Keep-Top
+ Print 'In FC at End of the Month with Investigation Closed in the Month:' (395,13,25) Bold  Wrap 25 3 line-height=12 Keep-Top
+ Print 'The number of active foster care stages*, of which the corresponding investigations are closed, as of the last day of the reporting month.' (395,151,85) Wrap 85 2 line-height=12 Keep-Top
+ Print 'Returned home from FC:' (439,13,25) Bold 
+ Print 'When Investigation still Pending:' (458,23,25) Bold  Wrap 25 2 line-height=12 Keep-Top
+ Print 'The number of foster care stages* closed in the reporting month while the corresponding investigation remained active.' (458,151,85) Wrap 85 2 line-height=12 Keep-Top
+ Print 'When Investigation has been Closed:' (488,22,25) Bold  Wrap 25 2 line-height=12 Keep-Top
+ Print 'The number of foster care stages* closed in the reporting month after the investigation was closed.' (488,151,85) Wrap 85 2 line-height=12 Keep-Top
+ Print 'The number of foster care stages* that are active as of the last day of the reporting month. The corresponding investigations are also active as of the last day of the month.' (324,152,85) Wrap 85 3 line-height=12 Keep-Top
+ Print 'In FC at End of the Month with Pending Investigation:' (324,13,25) Bold  Wrap 25 3 line-height=12 Keep-Top
+ Print 'The sum of all investigations closed during the reporting month grouped by the maltreatment finding.' (146,151,85) Wrap 85 2 line-height=12 Keep-Top
+ Print 'Number of Cases Completed within/after 45 calendar days:' (216,5,25) Bold  Wrap 25 3 line-height=12 Keep-Top
+ Print 'An investigation is only considered complete when the investigation has been approved and closed. This number calculates the difference between the stage closure date and the original intake date.' (216,151,85) Wrap 85 3 line-height=12 Keep-Top
+ Print 'This is a statistical report of all investigation activities for a unit, county, region and/or statewide. The reporting county is determined by the county of the stage, not the unit county of the primary case manager.' (40,5,120) Wrap 120 2 line-height=12 Keep-Top
+ Print 'Key' (609,1,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'FC - Foster Care' (624,10,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print '* Foster care stages are Foster Care Child (FCC) and/or Adoption (ADO) stage. Number of Children count means the count of foster care stages of distinct children. For example, if a child has both FCC and ADO opned in the reporting month, it is counted only one for the Placed in FC during the Month count.' (552,5,120) Wrap 120 3 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=12   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ !Let #fc_return_inv_pend_new_cnt = 0
+ !Let #fc_return_inv_closed_new_cnt = 0
+ Do Get-Input-Man
+ Do Get-Region-Input
+ Do Get-County-Input 
+ Do Get-Unit-Input
+ Do Make-Header-n-Initialize-Var
+ Do Get_Received_Counts_For_Selected_Unit
+ Do Get_Pending_First_Counts
+ Do Get_Pending_Last_Counts
+ Do Get_Closed_Counts
+ !Do Get_Children_Associated_INV_Assigned_Out
+ !Do Get_INV_Assigned_Out
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Input-Man
+! -----------------------------
+Input $dt_report 'Enter month and year (MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+End-Procedure
+
+Begin-Procedure Get-Unit-Input
+Input $_I102_NBR_UNIT 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If (isnull($_I102_NBR_UNIT) or isblank($_I102_NBR_UNIT) or ($_I102_NBR_UNIT = '0'))
+  Let $brb_tmp = 'NBR_UNIT'
+  Let $where_clause_unit = $brb_tmp  || ' is not null '
+  Let $is_unit_selected = 'false'
+Else
+  Let $unit_value_102 = $_I102_NBR_UNIT
+  If SubStr($_I102_NBR_UNIT, 1, 1) != ''''
+    Let $_I102_NBR_UNIT = '''' || $_I102_NBR_UNIT || ''''
+  End-If
+  Let $brb_tmp = 'NBR_UNIT'
+  Let $where_clause_unit = $brb_tmp  || ' = ' || $_I102_NBR_UNIT
+  Let $is_unit_selected = 'true'
+  Let $where_clause_unit_assigned_out = ' u1.NBR_UNIT <> u2.NBR_UNIT '
+End-If
+End-Procedure
+
+Begin-Procedure Get-Supervisor-Name
+Begin-Select
+person.nm_person_full &sup_name
+from person, unit
+where unit.nbr_unit = [$_I102_NBR_UNIT] and unit.cd_county = [$_I5201_CD_COUNTY]
+and person.id_person = unit.id_person
+End-Select
+End-Procedure
+
+Begin-Procedure Get-County-Decode ! For get input procedures since Init query not executed at this time
+Begin-Select 
+DECODE &county_decode
+From  CODES_TABLES
+Where CODE_TYPE = 'CCOUNT'
+ And CODES_TABLES.CODE = [$_I5201_CD_COUNTY]
+End-Select
+End-Procedure
+
+Begin-Procedure Get-County-Input
+! -----------------------------
+Input $_I5201_CD_COUNTY 'Enter a value for CD_COUNTY' MaxLen=3  Type=Char
+If (isnull($_I5201_CD_COUNTY) or isblank($_I5201_CD_COUNTY) or ($_I5201_CD_COUNTY = '0'))
+  Let $county_value = $_I5201_CD_COUNTY
+  Let $_I5201_CD_COUNTY = '''' || $_I5201_CD_COUNTY || ''''
+  !Let $where_clause_county = 'CD_COUNTY is not null'
+  Let $where_clause_county = 'CD_STAGE_CNTY IS NOT NULL'
+  Let $is_county_selected = 'false'
+Else
+  Let $_I5201_CD_COUNTY = '''' || $_I5201_CD_COUNTY || ''''
+  Let $brb_tmp = 'CD_STAGE_CNTY'
+  Let $where_clause_county = $brb_tmp  || ' = ' || $_I5201_CD_COUNTY
+  Let $is_county_selected = 'true'
+  Let $where_clause_county_assigned_out = ' u1.CD_COUNTY <> u2.CD_COUNTY '! TO_DPO
+End-If
+End-Procedure
+
+Begin-Procedure Get-Region-Input
+Input $_I101_CD_UNIT_REGION 'Enter a value for CD_UNIT_REGION' MaxLen=3  Type=Char
+Let $region_value = $_I101_CD_UNIT_REGION
+If (isnull($_I101_CD_UNIT_REGION) or isblank($_I101_CD_UNIT_REGION) or ($_I101_CD_UNIT_REGION = '0'))
+  Let $_I101_CD_UNIT_REGION= '97' ! Out of State
+  Let $_I101_CD_UNIT_REGION = '''' || $_I101_CD_UNIT_REGION || ''''  
+  Let $where_clause_region = 'CD_STAGE_REGION <> '|| $_I101_CD_UNIT_REGION
+  Let $is_region_selected = 'false'
+  !Let $where_clause_state_assigned_out = ' u1.NBR_UNIT = '|| $_I101_CD_UNIT_REGION
+Else
+  !Let $_I101_CD_UNIT_REGION = '''' || '0' || $_I101_CD_UNIT_REGION || ''''
+  Let $brb_tmp = 'CD_STAGE_REGION'
+  Let $where_clause_region = $brb_tmp  || ' = ' || $_I101_CD_UNIT_REGION
+  Let $is_region_selected = 'true'
+  !Let $where_clause_region_assigned_out = ' u1.CD_UNIT_REGION  <> u2.CD_UNIT_REGION '
+End-If
+End-Procedure
+
+Begin-Procedure Make-Header-n-Initialize-Var
+If ($is_county_selected = 'true') ! county report
+   Let $county_label = 'County: ' 
+   Let $where_clause = $where_clause_county
+   !Let $where_clause_ao = ' u1.' || $where_clause_county
+   !Let $where_clause_assigned_out = $where_clause_county_assigned_out
+   Do Get-County-Decode
+   Move &county_decode to $county_header
+   Let $unit_header = $unit_value_102
+   If ($is_unit_selected = 'true')
+      Let $where_clause = $where_clause || ' and ' || $where_clause_unit
+      !Let $where_clause_ao = $where_clause_ao || ' and u1.' || $where_clause_unit
+      !Let $where_clause_assigned_out = $where_clause_unit_assigned_out
+      Let $unit_label = 'Unit:  '
+      Let $supervisor_label = 'Supervisor:  '
+      Do Get-Supervisor-Name
+      Move &sup_name to $supervisor_name_102
+      Let $supervisor_header = $supervisor_name_102
+   End-If
+Else
+   Let $where_clause = $where_clause_region                ! these 2 clauses have been formatted depending region input so it applies to regional or statewide version correctly
+   !Let $where_clause_ao = 'u1.' || $where_clause_region    ! applies to regional or statewide version correctly
+   If ($is_region_selected = 'true') ! regional report
+      Let $region_header = 'Region '|| $region_value  
+      !Let $where_clause_assigned_out = $where_clause_region_assigned_out
+   Else ! statewide report
+      Let $region_header = 'Statewide'
+      !Let $where_clause_assigned_out = $where_clause_state_assigned_out
+   End-If
+End-If
+End-Procedure
+
+Begin-Procedure Make-Header-n-Initialize-Var-Bk
+Let $where_clause = $where_clause_region
+Let $where_clause_ao = 'u1.' || $where_clause_region
+Let $where_clause_assigned_out = $where_clause_state_assigned_out
+If ($is_region_selected = 'false')
+ Let $region_header = 'Statewide'
+Else
+ Let $region_header = 'Region '|| $region_value
+ Let $where_clause_assigned_out = $where_clause_region_assigned_out
+ If ($is_county_selected = 'false')
+   !Let $county_header = 'All Counties'
+ Else
+   Let $county_label = 'County: ' 
+   Let $where_clause = $where_clause || ' and ' || $where_clause_county
+   Let $where_clause_ao = $where_clause_ao || ' and u1.' || $where_clause_county
+   Let $where_clause_assigned_out = $where_clause_county_assigned_out
+   Do Get-County-Decode
+   Move &county_decode to $county_header
+   Let $unit_header = $unit_value_102
+   If ($is_unit_selected = 'true')
+      Let $where_clause = $where_clause || ' and ' || $where_clause_unit
+      Let $where_clause_ao = $where_clause_ao || ' and u1.' || $where_clause_unit
+      Let $where_clause_assigned_out = $where_clause_unit_assigned_out
+      Let $unit_label = 'Unit:  '
+      Let $supervisor_label = 'Supervisor:  '
+      Do Get-Supervisor-Name
+      Move &sup_name to $supervisor_name_102
+      Let $supervisor_header = $supervisor_name_102
+   Else
+      !Let $unit_header = 'All Units' 
+   End-If
+ End-If
+End-If
+! These are accumulative counts for the run of the report so declare them here
+! --------------------------
+! Variables for Returned Home from Foster Care group
+ Let #fc_return_inv_pend_first_cnt = 0    ! drawn from fc pending at first of the month
+ Let #fc_return_inv_closed_first_cnt = 0  ! drawn from fc pending at first of the month
+ Let #fc_return_inv_pend_new_cnt = 0      ! drawn from new fc in the month
+ Let #fc_pend_inv_closed_cnt = 0          ! drawn from new fc in the month
+
+End-Procedure
+
+! Revised for single unit to include previously open investigation but assinged to this unit this month
+! This logic is copied in assigned out count. Changes in here needs be done in assigned out logic as well
+Begin-Procedure Get_Received_Counts_For_Selected_Unit
+  Let #received_cnt = 0
+  Let #new_fc_received_cnt = 0
+Begin-Select Distinct 
+  Add 1 to #received_cnt
+STAGE01.ID_STAGE &received_inv_stage_id_all                
+  Do Get_New_Fostercare(&received_inv_stage_id_all, #new_fc_received_cnt)
+From stage STAGE01, unit
+where STAGE01.id_unit = unit.id_unit
+AND DT_STAGE_START >= TO_DATE($dt_report, 'MM/YYYY')
+AND DT_STAGE_START < (LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1) 
+AND  STAGE01.CD_STAGE = 'INV' 
+and [$where_clause]
+End-Select
+End-Procedure
+
+Begin-Procedure Get_Pending_Last_Counts
+ Let #pending_last_cnt = 0
+ Let #fc_pend_inv_pend_last_cnt = 0
+Begin-Select distinct 
+ Add 1 to #pending_last_cnt
+stage.ID_STAGE &pend_last_stage_id   
+ Do Get_Fostercare_Last(&pend_last_stage_id, #fc_pend_inv_pend_last_cnt)
+FROM  stage, unit
+WHERE stage.id_unit = unit.id_unit
+  AND stage.CD_STAGE IN ('INV')   
+  AND DT_STAGE_START < (LAST_DAY(TO_DATE($dt_report, 'MM/YYYY')) + 1)
+  AND ( DT_STAGE_CLOSE is null or DT_STAGE_CLOSE >= (LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1 ) ) 
+and [$where_clause]
+End-Select
+
+End-Procedure
+! Called from Get_Pending_Last_Counts and Get_Closed_Counts
+Begin-Procedure Get_Fostercare_Last(#inv_stage_id, :#fc_last_cnt)
+Begin-Select Distinct
+ Add 1 to #fc_last_cnt
+spl_child.id_person &sub_child_id
+FROM stage inv_stage, stage_link, stage sub_stage, stage_person_link spl_child
+WHERE inv_stage.ID_STAGE = stage_link.ID_PRIOR_STAGE and inv_stage.ID_STAGE = #inv_stage_id
+AND stage_link.ID_STAGE = sub_stage.ID_STAGE AND sub_stage.CD_STAGE in ('SUB', 'ADO')
+AND sub_stage.DT_STAGE_START < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1)
+AND (sub_stage.DT_STAGE_CLOSE >=(LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) OR
+   sub_stage.DT_STAGE_CLOSE IS NULL)
+and spl_child.id_stage = sub_stage.id_stage and spl_child.cd_stage_pers_role = 'PC'
+End-Select
+End-Procedure
+
+Begin-Procedure Get_Pending_First_Counts
+  Let #pending_first_cnt = 0
+  Let #fc_first_cnt = 0
+  Let #new_fc_first_cnt = 0
+Begin-Select distinct 
+  Add 1 to #pending_first_cnt
+stage.ID_STAGE &pend_first_stage_id  
+  Do Get_Fostercare_First(&pend_first_stage_id) 
+  Do Get_New_Fostercare(&pend_first_stage_id, #new_fc_first_cnt)
+FROM  stage, unit 
+WHERE stage.id_unit = unit.id_unit
+  AND stage.CD_STAGE IN ('INV')
+  AND DT_STAGE_START < TO_DATE($dt_report, 'MM/YYYY')
+  AND (DT_STAGE_CLOSE is null or DT_STAGE_CLOSE >= TO_DATE($dt_report, 'MM/YYYY') )
+and [$where_clause]
+End-Select
+End-Procedure
+
+Begin-Procedure Get_Closed_Counts
+ Let #closed_cnt = 0
+ Let #sub_cnt = 0
+ Let #uns_cnt = 0
+ Let #open_pla_sub_cnt = 0
+ Let #risk_controlled_sub_cnt = 0
+ Let #no_sig_risk_sub_cnt = 0
+ Let #no_ra_sub_cnt = 0
+ Let #open_serv_sub_cnt = 0
+ Let #oie_sub_cnt = 0
+
+ Let #open_pla_uns_cnt = 0
+ Let #risk_controlled_uns_cnt = 0
+ Let #no_sig_risk_uns_cnt = 0
+ Let #no_ra_uns_cnt = 0
+ Let #open_serv_uns_cnt = 0
+ Let #open_serv_uns_cnt = 0
+ Let #oie_uns_cnt = 0
+
+ Let #open_pla_utd_cnt = 0
+ Let #risk_controlled_utd_cnt = 0
+ Let #no_sig_risk_utd_cnt = 0
+ Let #no_ra_utd_cnt = 0
+ Let #open_serv_utd_cnt = 0
+ Let #oie_utd_cnt = 0
+
+ Let #comp_in_45d_cnt = 0
+ Let #comp_after_45d_cnt = 0
+
+ Let #fc_pend_inv_closed_cnt = 0 
+
+Begin-Select distinct 
+ Add 1 to #closed_cnt
+stage.ID_STAGE &closed_stage_id 
+ Do Get_Substantiated_Count(&closed_stage_id) 
+ Do Get_UnSubstantiated_Count(&closed_stage_id)
+ Do Get_Undetermined_Count(&closed_stage_id) 
+ Do Get_Completed_Per_45d(&closed_stage_id)
+ Do Get_Fostercare_Last(&closed_stage_id, #fc_pend_inv_closed_cnt)
+FROM  stage, unit
+WHERE stage.id_unit = unit.id_unit
+  AND stage.CD_STAGE = 'INV'
+  AND stage.DT_STAGE_CLOSE >= (TO_DATE($dt_report, 'MM/YYYY'))
+  AND stage.DT_STAGE_CLOSE < (LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1) 
+and [$where_clause]
+End-Select
+End-Procedure
+
+Begin-Procedure Get_Substantiated_Count(#inv_stage_id)
+Begin-Select Distinct 
+ Let #_sub_cnt = #_sub_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+ Do Get_Open_Pla_Count(&cps_invst_stage_id, #_open_pla_sub_cnt)
+ Do Get_Risk_Controlled_Count(&cps_invst_stage_id, #_risk_controlled_sub_cnt)
+ Do Get_No_Sig_Risk_Count(&cps_invst_stage_id, #_no_sig_risk_sub_cnt)
+ Do Get_No_RA_Count(&cps_invst_stage_id, #_no_ra_sub_cnt)
+ Do Get_Open_Serv_Count(&cps_invst_stage_id, #_open_serv_sub_cnt)
+ Do Get_Open_In_Error_Count(&cps_invst_stage_id, #_oie_sub_cnt)
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+AND cps_invst_detail.CD_CPS_INVST_DTL_OVRLL_DISPTN = 'SUB'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_UnSubstantiated_Count(#inv_stage_id)
+Begin-Select Distinct 
+ Let #_uns_cnt = #_uns_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+ Do Get_Open_Pla_Count(&cps_invst_stage_id, #_open_pla_uns_cnt)
+ Do Get_Risk_Controlled_Count(&cps_invst_stage_id, #_risk_controlled_uns_cnt)
+ Do Get_No_Sig_Risk_Count(&cps_invst_stage_id, #_no_sig_risk_uns_cnt)
+ Do Get_No_RA_Count(&cps_invst_stage_id, #_no_ra_uns_cnt)
+ Do Get_Open_Serv_Count(&cps_invst_stage_id, #_open_serv_uns_cnt)
+ Do Get_Open_In_Error_Count(&cps_invst_stage_id, #_oie_uns_cnt)
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+AND ( cps_invst_detail.CD_CPS_INVST_DTL_OVRLL_DISPTN is null OR cps_invst_detail.CD_CPS_INVST_DTL_OVRLL_DISPTN = 'UNS')
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_Undetermined_Count(#inv_stage_id)
+Begin-Select Distinct 
+ Let #_utd_cnt = #_utd_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+ Do Get_Open_Pla_Count(&cps_invst_stage_id, #_open_pla_utd_cnt)
+ Do Get_Risk_Controlled_Count(&cps_invst_stage_id, #_risk_controlled_utd_cnt)
+ Do Get_No_Sig_Risk_Count(&cps_invst_stage_id, #_no_sig_risk_utd_cnt)
+ Do Get_No_RA_Count(&cps_invst_stage_id, #_no_ra_utd_cnt)
+ Do Get_Open_Serv_Count(&cps_invst_stage_id, #_open_serv_utd_cnt)
+ Do Get_Open_In_Error_Count(&cps_invst_stage_id, #_oie_utd_cnt)
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+AND cps_invst_detail.CD_CPS_INVST_DTL_OVRLL_DISPTN = 'UTD'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_Open_Pla_Count(#inv_stage_id, :#open_pla_cnt)! Open tfor Placement
+Begin-Select Distinct 
+ Let #open_pla_cnt = #open_pla_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+AND cps_invst_detail.CD_CNCLSN_RISK_FND = '01'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_Risk_Controlled_Count(#inv_stage_id, :#risk_controlled_cnt)
+Begin-Select Distinct 
+ Let #risk_controlled_cnt = #risk_controlled_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+AND cps_invst_detail.CD_CNCLSN_RISK_FND = '02'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_No_Sig_Risk_Count(#inv_stage_id, :#no_sig_risk_cnt)
+Begin-Select Distinct 
+ Let #no_sig_risk_cnt = #no_sig_risk_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+AND cps_invst_detail.CD_CNCLSN_RISK_FND = '03'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_No_RA_Count(#inv_stage_id, :#no_ra_cnt)
+Begin-Select Distinct 
+ Let #no_ra_cnt = #no_ra_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+AND cps_invst_detail.CD_CNCLSN_RISK_FND = '04'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_Open_Serv_Count(#inv_stage_id, :#open_serv_cnt)
+Begin-Select Distinct 
+ Let #open_serv_cnt = #open_serv_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+AND cps_invst_detail.CD_CNCLSN_RISK_FND = '05'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_Open_In_Error_Count(#inv_stage_id, :#oie_cnt)
+Begin-Select Distinct 
+ Let #oie_cnt = #oie_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+AND cps_invst_detail.CD_CNCLSN_RISK_FND = '06'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_Completed_Per_45d(#inv_stage_id) ! to be called from closed_count query
+Begin-Select Distinct
+cps_invst_detail.ID_CPS_INVST_STAGE  &45d_stage_id
+(stage.DT_STAGE_CLOSE - cps_invst_detail.DT_CPS_INVST_DTL_INTAKE) &nbr_days_completed
+  Move &nbr_days_completed to #nbr_days_completed
+  If #nbr_days_completed > 45
+    Add 1 to #_comp_after_45d_cnt
+  Else
+    Add 1 to #_comp_in_45d_cnt
+  End-If
+from cps_invst_detail, stage
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+and cps_invst_detail.ID_CPS_INVST_STAGE = stage.ID_STAGE
+and cps_invst_detail.DT_CPS_INVST_DTL_INTAKE is not null
+
+End-Select
+End-Procedure
+
+! Number of Fostercare stages at beginning of the month
+! To be called from pend_first count query 
+Begin-Procedure Get_Fostercare_First(#inv_stage_id)
+Begin-Select Distinct 
+ Add 1 to #_fc_first_cnt
+spl_child.id_person &fc_pend_first_child_id
+ Do Get_Returned_Home(#inv_stage_id, &fc_pend_first_child_id, #_fc_return_inv_pend_first_cnt, #_fc_return_inv_closed_first_cnt)
+from stage_link, stage sub_stage, stage_person_link spl_child
+where stage_link.ID_PRIOR_STAGE = #inv_stage_id 
+and stage_link.ID_STAGE = sub_stage.ID_STAGE and spl_child.id_stage = sub_stage.id_stage
+AND sub_stage.CD_STAGE in ('SUB', 'ADO')
+AND sub_stage.DT_STAGE_START < (TO_DATE($_dt_report, 'MM/YYYY'))
+AND (sub_stage.DT_STAGE_CLOSE IS NULL OR sub_stage.DT_STAGE_CLOSE >=TO_DATE($_dt_report, 'MM/YYYY')) 
+and spl_child.cd_stage_pers_role = 'PC'  
+End-Select
+End-Procedure
+
+Begin-Procedure Get_New_Fostercare(#inv_stage_id, :#new_fc_cnt)
+Begin-Select Distinct 
+ Add 1 to #new_fc_cnt
+spl_child.id_person &fc_new_child_id
+ Do Get_Returned_Home(#inv_stage_id, &fc_new_child_id, #_fc_return_inv_pend_new_cnt, #_fc_return_inv_closed_new_cnt)
+from stage_link, stage sub_stage, stage_person_link spl_child
+where stage_link.ID_PRIOR_STAGE = #inv_stage_id 
+and stage_link.ID_STAGE = sub_stage.ID_STAGE 
+and spl_child.id_stage = sub_stage.id_stage and spl_child.cd_stage_pers_role = 'PC'
+AND sub_stage.CD_STAGE in ('SUB', 'ADO') ! check for ADO too in case SUB close to open ADO it won't count as new FC to be consistent with Return Home logic that both SUB and ADO (if any) has to be closed to count as Return Home
+AND sub_stage.DT_STAGE_START >= (TO_DATE($_dt_report, 'MM/YYYY'))
+AND sub_stage.DT_STAGE_START < (LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) 
+End-Select
+End-Procedure
+
+Begin-Procedure Get_Returned_Home(#inv_stage_id, #fc_child_id, :#fc_return_inv_pend_cnt, :#fc_return_inv_closed_cnt)
+
+Begin-Select distinct 
+spl_child.id_person          &fc_return_inv_pend_child_id 
+inv_stage.DT_STAGE_CLOSE     &inv_stage_dt_cld
+sub_stage.DT_STAGE_CLOSE     &fc_stage_dt_cld
+  If ( (1=isnull(&inv_stage_dt_cld)) or (&inv_stage_dt_cld >= &fc_stage_dt_cld) )
+    Add 1 to #fc_return_inv_pend_cnt
+  Else
+    Add 1 to #fc_return_inv_closed_cnt
+  End-If 
+FROM stage_link, stage inv_stage, stage_person_link spl_child, stage sub_stage 
+WHERE sub_stage.DT_STAGE_CLOSE >= (TO_DATE($_dt_report, 'MM/YYYY'))
+AND sub_stage.DT_STAGE_CLOSE <(LAST_DAY(TO_DATE($_dt_report, 'MM/YYYY'))+1) 
+AND stage_link.ID_PRIOR_STAGE = inv_stage.ID_STAGE 
+and stage_link.ID_STAGE = sub_stage.ID_STAGE and sub_stage.cd_stage in ('ADO', 'SUB')
+and stage_link.ID_STAGE = spl_child.ID_STAGE and spl_child.cd_stage_pers_role = 'PC'
+and inv_stage.id_stage = #inv_stage_id and spl_child.id_person = #fc_child_id
+and not exists(
+select * from stage, stage_person_link
+where stage.id_case = sub_stage.id_case and stage_person_link.id_stage = stage.id_stage
+and stage.cd_stage in ('ADO', 'SUB')
+and stage_person_link.id_person = spl_child.id_person and spl_child.cd_stage_pers_role = 'PC'
+and stage.dt_stage_close is null
+)
+End-Select
+End-Procedure
+
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select Distinct
+((1)) &dummy
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Number of Investigations' (16,29,0) Underline  Bold 
+ Print 'Pending at Beginning of the Month' (36,53,0) Bold 
+ Let #m_pending_first_cnt=#pending_first_cnt
+ Print #m_pending_first_cnt (36,472) Edit 9999
+ Print 'Received in the Month' (54,53,0) Bold 
+ Let #m_received_cnt=#received_cnt
+ Print #m_received_cnt (54,472) Edit 9999
+ Print 'Closed in the Month' (71,53,0) Bold 
+ Let #m_closed_cnt=#closed_cnt
+ Print #m_closed_cnt (71,472) Edit 9999
+ Print 'Maltreatment Finding' (91,316,0) Underline  Bold 
+ Print 'Overall Risk Finding' (102,73,0) Underline  Bold 
+ Print 'Unsubstantiated' (112,326,0) Bold 
+ Print 'Substantiated' (112,250,0) Bold 
+ Print 'Undetermined' (112,413,13) Bold 
+ Graphic (118,72,410) Horz-Line 10 
+ Print 'Risk Indicated - Open for Services' (136,73,34) Bold 
+ Let #m_open_serv_uns_cnt=#open_serv_uns_cnt
+ Print #m_open_serv_uns_cnt (136,350) Edit 9999
+ Let #m_open_serv_utd_cnt=#open_serv_utd_cnt
+ Print #m_open_serv_utd_cnt (136,430) Edit 9999
+ Let #m_open_serv_sub_cnt=#open_serv_sub_cnt
+ Print #m_open_serv_sub_cnt (136,267) Edit 9999
+ Print 'Risk Indicated - Open for Placement' (152,73,0) Bold 
+ Let #m_open_pla_sub_cnt=#open_pla_sub_cnt
+ Print #m_open_pla_sub_cnt (152,267) Edit 9999
+ Let #m_open_pla_uns_cnt=#open_pla_uns_cnt
+ Print #m_open_pla_uns_cnt (152,350) Edit 9999
+ Let #m_open_pla_utd_cnt=#open_pla_utd_cnt
+ Print #m_open_pla_utd_cnt (152,430) Edit 9999
+ Print 'Risk Controlled' (168,73,0) Bold 
+ Let #m_risk_controlled_sub_cnt=#risk_controlled_sub_cnt
+ Print #m_risk_controlled_sub_cnt (168,267) Edit 9999
+ Let #m_risk_controlled_uns_cnt=#risk_controlled_uns_cnt
+ Print #m_risk_controlled_uns_cnt (168,350) Edit 9999
+ Let #m_risk_controlled_utd_cnt=#risk_controlled_utd_cnt
+ Print #m_risk_controlled_utd_cnt (168,430) Edit 9999
+ Print 'No Significant Risk Factors' (184,73,0) Bold 
+ Let #m_no_sig_risk_uns_cnt=#no_sig_risk_uns_cnt
+ Print #m_no_sig_risk_uns_cnt (184,350) Edit 9999
+ Let #m_no_sig_risk_utd_cnt=#no_sig_risk_utd_cnt
+ Print #m_no_sig_risk_utd_cnt (184,430) Edit 9999
+ Let #m_no_sig_risk_sub_cnt=#no_sig_risk_sub_cnt
+ Print #m_no_sig_risk_sub_cnt (184,267) Edit 9999
+ Print 'Risk Assessment N/A' (200,73,0) Bold 
+ Let #m_no_ra_uns_cnt=#no_ra_uns_cnt
+ Print #m_no_ra_uns_cnt (200,350) Edit 9999
+ Let #m_no_ra_utd_cnt=#no_ra_utd_cnt
+ Print #m_no_ra_utd_cnt (200,430) Edit 9999
+ Let #m_no_ra_sub_cnt=#no_ra_sub_cnt
+ Print #m_no_ra_sub_cnt (200,267) Edit 9999
+ Print 'Opened in Error' (216,73,0) Bold 
+ Let #m_oie_sub_cnt=#oie_sub_cnt
+ Print #m_oie_sub_cnt (216,267) Edit 9999
+ Let #m_oie_uns_cnt=#oie_uns_cnt
+ Print #m_oie_uns_cnt (216,350) Edit 9999
+ Let #m_oie_utd_cnt=#oie_utd_cnt
+ Print #m_oie_utd_cnt (216,430) Edit 9999
+ Graphic (227,72,411) Horz-Line 10 
+ Let #m_utd_cnt=#utd_cnt
+ Print #m_utd_cnt (247,430) Edit 9999
+ Let #m_uns_cnt=#uns_cnt
+ Print #m_uns_cnt (248,350) Edit 9999
+ Print 'Closed Counts per Maltreament Finding' (249,73,0) Bold 
+ Let #m_sub_cnt=#sub_cnt
+ Print #m_sub_cnt (249,267) Edit 9999
+ Graphic (259,72,411) Horz-Line 10 
+ Print 'Pending at End of the Month' (279,53,0) Bold 
+ Let #m_pending_last_cnt=#pending_last_cnt
+ Print #m_pending_last_cnt (279,472) Edit 9999
+ Graphic (291,12,518) Horz-Line 10 
+ Print 'Number of Cases' (311,29,0) Underline  Bold 
+ Print 'Completed within 45 calendar days' (330,53,0) Bold 
+ Let #m_comp_45d_cnt=#comp_in_45d_cnt
+ Print #m_comp_45d_cnt (330,471) Edit 9999
+ Print 'Completed after 45 calendar days' (347,53,0) Bold 
+ Let #m_after_45d_cnt=#comp_after_45d_cnt
+ Print #m_after_45d_cnt (347,471) Edit 9999
+ Graphic (362,12,520) Horz-Line 10 
+ Print 'Number of Children Placed in Foster Care' (383,29,0) Underline  Bold 
+ Print 'In Foster Care at Beginning of the Month with Pending Investigation' (404,53,123) Bold 
+ Let #m_fc_first_cnt=#fc_first_cnt
+ Print #m_fc_first_cnt (404,471) Edit 9999
+ Print 'In Foster Care at End of the Month with Pending Investigation' (423,53,0) Bold 
+ Let #m_fc_last_cnt=#fc_pend_inv_pend_last_cnt
+ Print #m_fc_last_cnt (423,471) Edit 9999
+ Graphic (435,53,440) Horz-Line 10 
+ Let #m_fc_new_cnt=#new_fc_first_cnt + #new_fc_received_cnt
+ Print #m_fc_new_cnt (458,471) Edit 9999
+ Print 'Placed in Foster Care during the Month' (458,53,0) Bold 
+ Let #m_fc_pend_inv_closed_cnt=#fc_pend_inv_closed_cnt
+ Print #m_fc_pend_inv_closed_cnt (477,471) Edit 9999
+ Print 'In Foster Care at End of the Month with Investigation Closed during the Month' (477,53,0) Bold 
+ Print 'Returned Home from Foster Care' (498,53,0) Bold 
+ Let #m_fc_return_cnt=#fc_return_inv_pend_first_cnt + #fc_return_inv_pend_new_cnt
+ Print #m_fc_return_cnt (519,471) Edit 9999
+ Print 'When Investigation is still Pending' (519,89,0) Bold 
+ Print 'When Investigation has been Closed' (537,89,0) Bold 
+ Let #fc_return_inv_closed_cnt=#fc_return_inv_closed_first_cnt + #fc_return_inv_closed_new_cnt
+ Print #fc_return_inv_closed_cnt (537,471) Edit 9999
+ Next-Listing  Need=537
+From 
+ dual
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 12 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (23,184,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Investigation Monthly Statistics' (49,161,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (23,472) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (23,407,0)
+ Let $region_header_dsp=$region_header
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $region_header_dsp (72,238,9) Bold 
+ Print 'Reporting Month: ' (106,2,0) Bold 
+ Let $rprtMonth=$dt_report
+ Print $rprtMonth (106,116,9)
+ Let $unit_label=$unit_label
+ Print $unit_label (105,261,8) Bold 
+ Let $unit_header_dsp=$unit_header
+ Print $unit_header_dsp (105,362,15)
+ Let $supervisor_header_dsp=$supervisor_header
+ Print $supervisor_header_dsp (123,362,26)
+ Let $supervisor_label=$supervisor_label
+ Print $supervisor_label (123,261,14) Bold 
+ Let $county_header_dsp=$county_header
+ Print $county_header_dsp (123,117,20)
+ Let $county_label=$county_label
+ Print $county_label (123,2,15) Bold 
+ Alter-Printer Font=4 Point-Size=1    ! [SQR.INI] 4=Arial,proportional
+ Print '  ' (138,1,0)
+ Else   ! put a non combined page header
+ Print '  ' (3,1,0)
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (17,495) '' ' of'
+ Last-Page (17,516) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

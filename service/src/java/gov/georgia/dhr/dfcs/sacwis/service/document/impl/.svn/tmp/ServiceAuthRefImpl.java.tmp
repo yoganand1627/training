@@ -1,0 +1,803 @@
+package gov.georgia.dhr.dfcs.sacwis.service.document.impl;
+
+import gov.georgia.dhr.dfcs.sacwis.core.lookup.CodesTables;
+import gov.georgia.dhr.dfcs.sacwis.core.lookup.Lookup;
+import gov.georgia.dhr.dfcs.sacwis.core.utility.DateHelper;
+import gov.georgia.dhr.dfcs.sacwis.core.utility.FormattingHelper;
+import gov.georgia.dhr.dfcs.sacwis.core.utility.StringHelper;
+import gov.georgia.dhr.dfcs.sacwis.dao.ApprovalRejectionDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.CapsCaseDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.CaseMergeDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.EventDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.PersonDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.PersonDtlDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.PersonEthnicityDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.PersonIdDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.PersonPhoneDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.PlacementDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.ResourceAddressDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.ResourcePhoneDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.SafetyResourceChildDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.ServiceAuthorizationDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.StageDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.StageLinkDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.StagePersonLinkDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.SvcAuthDetailDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.UnitEmpLinkDAO;
+import gov.georgia.dhr.dfcs.sacwis.dao.UnitEmpLinkDAO;
+import gov.georgia.dhr.dfcs.sacwis.db.Approval;
+import gov.georgia.dhr.dfcs.sacwis.db.ApprovalEventLink;
+import gov.georgia.dhr.dfcs.sacwis.db.Approvers;
+import gov.georgia.dhr.dfcs.sacwis.db.CapsCase;
+import gov.georgia.dhr.dfcs.sacwis.db.CapsResource;
+import gov.georgia.dhr.dfcs.sacwis.db.CaseMerge;
+import gov.georgia.dhr.dfcs.sacwis.db.Contract;
+import gov.georgia.dhr.dfcs.sacwis.db.Event;
+import gov.georgia.dhr.dfcs.sacwis.db.Name;
+import gov.georgia.dhr.dfcs.sacwis.db.OfficePhone;
+import gov.georgia.dhr.dfcs.sacwis.db.Person;
+import gov.georgia.dhr.dfcs.sacwis.db.PersonEthnicity;
+import gov.georgia.dhr.dfcs.sacwis.db.PersonId;
+import gov.georgia.dhr.dfcs.sacwis.db.PersonPhone;
+import gov.georgia.dhr.dfcs.sacwis.db.Placement;
+import gov.georgia.dhr.dfcs.sacwis.db.ResourceAddress;
+import gov.georgia.dhr.dfcs.sacwis.db.ResourcePhone;
+import gov.georgia.dhr.dfcs.sacwis.db.ServiceAuthorization;
+import gov.georgia.dhr.dfcs.sacwis.db.Stage;
+import gov.georgia.dhr.dfcs.sacwis.db.StagePersonLink;
+import gov.georgia.dhr.dfcs.sacwis.db.SvcAuthDetail;
+import gov.georgia.dhr.dfcs.sacwis.service.document.ServiceAuthRef;
+import gov.georgia.dhr.dfcs.sacwis.structs.input.SERVICEAUTHREFSI;
+import gov.georgia.dhr.dfcs.sacwis.structs.output.FormDataGroup;
+import gov.georgia.dhr.dfcs.sacwis.structs.output.PreFillData;
+import gov.georgia.dhr.dfcs.sacwis.structs.output.SERVICEAUTHREFSO;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * This is the Service class used to populate the Service Authorization Referral Form
+ * 
+ * <pre>
+ * Change History:
+ * Date        User              Description
+ * ----------  ----------------  -------------------------------------------------
+ * 01/31/2012  schoi             STGAP00017831: MR-102 Initial Creation
+ * 02/08/2012  htvo              STGAP00017831: MR-102 added retrieveCaseHistory section place holder
+ * </pre>
+ * @author Seung-eun (Caroline) Choi
+ */
+
+public class ServiceAuthRefImpl extends BaseDocumentServiceImpl implements ServiceAuthRef {
+
+  private static final String FOSTER_CARE = "Foster Care";
+
+  private static final String SAFETY_RESOURCE = "Safety Resource";
+  
+  private static final String IND_CASE_MANAGER = "Ind Case Manager";
+  
+  private static final String IND_SUPERVISOR = "Ind Supervisor";  
+
+  private CapsCaseDAO capsCaseDAO;
+  
+  private CaseMergeDAO caseMergeDAO;
+
+  private PersonDAO personDAO;
+
+  private PersonPhoneDAO personPhoneDAO;
+
+  private SafetyResourceChildDAO safetyResourceChildDAO;
+
+  private ServiceAuthorizationDAO serviceAuthorizationDAO;
+
+  private SvcAuthDetailDAO svcAuthDetailDAO;
+  
+  private StageLinkDAO stageLinkDAO;
+
+  private StagePersonLinkDAO stagePersonLinkDAO;
+
+  private PersonIdDAO personIdDAO;
+
+  private PersonEthnicityDAO personEthnicityDAO;
+
+  private PlacementDAO placementDAO;
+
+  private ResourceAddressDAO resourceAddressDAO;
+  
+  private ResourcePhoneDAO resourcePhoneDAO;
+
+  private EventDAO eventDAO;
+
+  private StageDAO stageDAO;
+
+  private ApprovalRejectionDAO approvalRejectionDAO;
+  
+  private UnitEmpLinkDAO unitEmpLinkDAO;
+
+  public void setApprovalRejectionDAO(ApprovalRejectionDAO approvalRejectionDAO) {
+    this.approvalRejectionDAO = approvalRejectionDAO;
+  }
+
+  public void setPersonDAO(PersonDAO personDAO) {
+    this.personDAO = personDAO;
+  }
+
+  public void setPersonDtlDAO(PersonDtlDAO personDtlDAO) {
+  }
+
+  public void setStageDAO(StageDAO stageDAO) {
+    this.stageDAO = stageDAO;
+  }
+
+  public void setCapsCaseDAO(CapsCaseDAO capsCaseDAO) {
+    this.capsCaseDAO = capsCaseDAO;
+  }
+
+  public void setEventDAO(EventDAO eventDAO) {
+    this.eventDAO = eventDAO;
+  }
+
+  public void setSafetyResourceChildDAO(SafetyResourceChildDAO safetyResourceChildDAO) {
+    this.safetyResourceChildDAO = safetyResourceChildDAO;
+  }
+
+  public void setStagePersonLinkDAO(StagePersonLinkDAO stagePersonLinkDAO) {
+    this.stagePersonLinkDAO = stagePersonLinkDAO;
+  }
+
+  public void setPersonEthnicityDAO(PersonEthnicityDAO personEthnicityDAO) {
+    this.personEthnicityDAO = personEthnicityDAO;
+  }
+
+  public void setPersonIdDAO(PersonIdDAO personIdDAO) {
+    this.personIdDAO = personIdDAO;
+  }
+
+  public void setPersonPhoneDAO(PersonPhoneDAO personPhoneDAO) {
+    this.personPhoneDAO = personPhoneDAO;
+  }
+
+  public void setPlacementDAO(PlacementDAO placementDAO) {
+    this.placementDAO = placementDAO;
+  }
+
+  public void setResourceAddressDAO(ResourceAddressDAO resourceAddressDAO) {
+    this.resourceAddressDAO = resourceAddressDAO;
+  }
+  
+  public void setResourcePhoneDAO(ResourcePhoneDAO resourcePhoneDAO) {
+    this.resourcePhoneDAO = resourcePhoneDAO;
+  }
+
+  public void setServiceAuthorizationDAO(ServiceAuthorizationDAO serviceAuthorizationDAO) {
+    this.serviceAuthorizationDAO = serviceAuthorizationDAO;
+  }
+
+  public void setSvcAuthDetailDAO(SvcAuthDetailDAO svcAuthDetailDAO) {
+    this.svcAuthDetailDAO = svcAuthDetailDAO;
+  }
+  
+  public void setUnitEmpLinkDAO(UnitEmpLinkDAO unitEmpLinkDAO) {
+    this.unitEmpLinkDAO = unitEmpLinkDAO;
+  }
+  
+  public void setCaseMergeDAO(CaseMergeDAO caseMergeDAO) {
+    this.caseMergeDAO = caseMergeDAO;
+  }
+  
+  public void setStageLinkDAO(StageLinkDAO stageLinkDAO) {
+    this.stageLinkDAO = stageLinkDAO;
+  }
+  
+  public SERVICEAUTHREFSO retrieveServiceAuthRef(SERVICEAUTHREFSI serviceAuthRefsi) {
+    SERVICEAUTHREFSO serviceAuthRefso = new SERVICEAUTHREFSO();
+    int idEvent = serviceAuthRefsi.getUlIdEvent();
+    Event event = eventDAO.findEventByIdEvent(idEvent);
+    int idStage = serviceAuthRefsi.getUlIdStage();
+    int idSvcAuth = serviceAuthRefsi.getUlIdSvcAuth();
+    Stage stage = stageDAO.findStageByIdStage(idStage);
+    ServiceAuthorization serviceAuthorization = serviceAuthorizationDAO.findServiceAuth(idSvcAuth);
+
+    PreFillData preFillData = getHeadings(serviceAuthorization);
+    getFirstSection(stage, preFillData, serviceAuthorization);
+    getProviderSection(preFillData, serviceAuthorization);
+    getSectionOtherPrincipals(stage, preFillData);
+    getCaseManagerSection(preFillData, stage, event);
+    serviceAuthRefso.setPreFillData(preFillData);
+    return serviceAuthRefso;
+  }
+
+  private PreFillData getHeadings(ServiceAuthorization serviceAuthorization) {
+    PreFillData preFillData = new PreFillData();
+    java.util.Date date = new java.util.Date();
+    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+    String currentDate = dateFormat.format(date);
+
+    preFillData.addBookmark(createBookmark(CURRENT_DATE, currentDate));
+    preFillData.addBookmark(createBookmark(REFERRAL_DATE, serviceAuthorization.getDtRefSent()));
+
+    return preFillData;
+  }
+
+  /**
+   * Gets the first section information
+   * 
+   * @param stage
+   * @param preFillData
+   * @param serviceAuthorization
+   * @return
+   */
+  private PreFillData getFirstSection(Stage stage, PreFillData preFillData, ServiceAuthorization serviceAuthorization) {
+    int idStage = stage.getIdStage();
+    int idCase = stage.getCapsCase().getIdCase();
+    CapsCase capsCase = capsCaseDAO.findCapsCaseByIdCase(idCase);
+    // Gets the primary Client
+    Person primaryPerson = serviceAuthorization.getPersonByIdPrimaryClient();
+    int idPerson = primaryPerson.getIdPerson();
+    String faxPerson = personPhoneDAO.findNbrPersonPhoneByIdPersonAndPhoneType(idPerson, "BF");
+
+    // Gets Contract information
+    Contract contract = serviceAuthorization.getContract();
+
+    preFillData.addBookmark(createBookmark(CASE_NAME, primaryPerson.getNmPersonFull()));
+    preFillData.addBookmark(createBookmark(CASE_NUM, capsCase.getIdCase()));
+    preFillData.addBookmark(createBookmark(CASE_TYPE,
+                                           Lookup.simpleDecodeSafe(CodesTables.CPGRMSFM, capsCase.getCdCaseProgram())));
+    preFillData.addBookmark(createBookmark(STAGE_NUM, idStage));
+    preFillData.addBookmark(createBookmark(CD_STAGE_SHORT,
+                                           Lookup.simpleDecodeSafe(CodesTables.CTXTOGA, stage.getCdStage())));
+    preFillData.addBookmark(createBookmark(CD_STAGE_LONG,
+                                           Lookup.simpleDecodeSafe(CodesTables.CSTAGES, stage.getCdStage())));
+
+    preFillData.addBookmark(createBookmark(SERVICE_AUTH_ID, serviceAuthorization.getIdSvcAuth()));
+    preFillData.addBookmark(createBookmark(CONTRACT_ID, contract.getIdContract()));
+
+    // Gets Payment County information
+    preFillData.addBookmark(createBookmark(PAYMENT_COUNTY,
+                                           Lookup.simpleDecodeSafe(CodesTables.CCOUNT,
+                                                                   serviceAuthorization.getCdPayCnty())));
+
+    // Gets Legal County information
+    preFillData.addBookmark(createBookmark(LEGAL_COUNTY,
+                                           Lookup.simpleDecodeSafe(CodesTables.CCOUNT,
+                                                                   serviceAuthorization.getCdSvcAuthCounty())));
+
+    preFillData.addBookmark(createBookmark(CLIENT_CITY, primaryPerson.getAddrPersonCity()));
+    preFillData.addBookmark(createBookmark(CLIENT_ADDRESS, primaryPerson.getAddrPersonStLn1()));
+    preFillData.addBookmark(createBookmark(CLIENT_STATE, primaryPerson.getCdPersonState()));
+    preFillData.addBookmark(createBookmark(CLIENT_ZIP, primaryPerson.getAddrPersonZip()));
+
+    if (faxPerson != null) {
+      preFillData.addBookmark(createBookmark(CLIENT_FAX, FormattingHelper.formatPhone(faxPerson)));
+    }
+    preFillData.addBookmark(createBookmark(CLIENT_TELE, FormattingHelper.formatPhone(primaryPerson.getNbrPersonPhone())));
+    preFillData.addBookmark(createBookmark(REFERRAL_REASON, serviceAuthorization.getTxtSvcAuthComments()));
+    createServiceAuthDetailLists(preFillData, serviceAuthorization);
+    List<Integer> peronsRefForService = createPersonsReferredForServiceLists(preFillData, serviceAuthorization, stage);
+    retrieveCaseHistory(preFillData, stage, peronsRefForService);
+
+    return preFillData;
+  }
+
+  /**
+   * Gets Authorization to Provide Services
+   * 
+   * @param preFillData
+   * @param serviceAuthorization
+   * @return
+   */
+
+  private PreFillData getProviderSection(PreFillData preFillData, ServiceAuthorization serviceAuthorization) {
+    CapsResource capsResource = serviceAuthorization.getCapsResource();
+    String address = "";
+    preFillData.addBookmark(createBookmark(SERVICE_PROVIDER, capsResource.getNmResource()));
+    preFillData.addBookmark(createBookmark(SERVICE_ID_NUM, capsResource.getIdResource().toString()));
+
+    ResourceAddress rsrcAddress = resourceAddressDAO.findRsrcAddressByAddressTypeOnly(capsResource.getIdResource());
+    if (rsrcAddress != null) {
+      StringBuffer addr = new StringBuffer();
+      formatAddress(rsrcAddress.getAddrRsrcAddrStLn1(), rsrcAddress.getAddrRsrcAddrStLn2(),
+                    rsrcAddress.getAddrRsrcAddrCity(), rsrcAddress.getCdRsrcAddrState(),
+                    rsrcAddress.getAddrRsrcAddrZip(), addr);
+      address = addr.toString();
+    }
+    preFillData.addBookmark(createBookmark(SERVICE_PROVIDER_ADDRESS, FormattingHelper.formatString(address)));
+
+    getResourcePhoneNumbers(capsResource, preFillData);
+    preFillData.addBookmark(createBookmark(PERFERRED_SUB, serviceAuthorization.getTxtSvcAuthSecProvdr()));
+
+    return preFillData;
+  }
+
+  /**
+   * Gets HouseHold Members Information
+   * 
+   * @param stage
+   * @param preFillData
+   */
+  private void getSectionOtherPrincipals(Stage stage, PreFillData preFillData) {
+    int idStage = stage.getIdStage();
+    List<StagePersonLink> stagePersonLinks = stagePersonLinkDAO
+                                                               .findHouseMembersLinkedToStage(idStage);
+    if (stagePersonLinks != null && !stagePersonLinks.isEmpty()) {
+      for (Iterator<StagePersonLink> it = stagePersonLinks.iterator(); it.hasNext();) {
+        StagePersonLink stagePersonLink = it.next();
+        determineHouseHoldStatus(stagePersonLink, preFillData);
+      } 
+    } 
+  }
+
+  /**
+   * Determines Household Members Status
+   * 
+   * @param stagePersonLink
+   * @param preFillData
+   */
+  private void determineHouseHoldStatus(StagePersonLink stagePersonLink, PreFillData preFillData) {
+    preFillData.addFormDataGroup(displayHouseHoldStatus(stagePersonLink));
+  }
+
+  private void createServiceAuthDetailLists(PreFillData preFillData, ServiceAuthorization serviceAuthorization) {
+    Collection<SvcAuthDetail> svcAuthDetails = serviceAuthorization.getSvcAuthDetails();
+    Double totalAmount = 0.00;
+    String amount = "";
+    String uasProgramDescriptionLong = "";
+    String uasProgramDescriptionShort = "";
+    String pupEligibilityCriteria = "";
+    if (svcAuthDetails != null && !svcAuthDetails.isEmpty()) {
+      for (Iterator<SvcAuthDetail> it = svcAuthDetails.iterator(); it.hasNext();) {
+        SvcAuthDetail svcAuthDetail = it.next();
+        preFillData.addFormDataGroup(getsvcAuthDetail(svcAuthDetail));
+        totalAmount = totalAmount + svcAuthDetail.getAmtSvcAuthDtlAmtReq();        
+      }
+      amount = FormattingHelper.formatMoney(totalAmount);
+      uasProgramDescriptionLong = Lookup.simpleDecodeSafe(CodesTables.CPRGCOD1, serviceAuthorization.getCdSvcAuthCategory());
+      uasProgramDescriptionShort = uasProgramDescriptionLong.substring(6);
+      if ("HRP".equals(serviceAuthorization.getCdPupTyp())) {
+        pupEligibilityCriteria = "PUP/Homestead - Immediate Reunification";
+      } else if ("HRU".equals(serviceAuthorization.getCdPupTyp())) {
+        pupEligibilityCriteria = "PUP/Homestead - Immediate Reunification";
+      }      
+      
+      preFillData.addBookmark(createBookmark(TOTAL_AMT_AUTHORIZED, amount));
+      preFillData.addBookmark(createBookmark(CD_SVC_AUTH_CATEGORY, serviceAuthorization.getCdSvcAuthCategory()));
+      preFillData.addBookmark(createBookmark(UAS_PROGRAM_DESCRIPTION, uasProgramDescriptionShort));    
+      preFillData.addBookmark(createBookmark(PUP_ELIGIBILITY_CRITERIA, pupEligibilityCriteria));      
+    }
+  }
+
+  private List<Integer> createPersonsReferredForServiceLists(PreFillData preFillData, ServiceAuthorization serviceAuthorization, Stage stage) {
+    List<Integer> peronsRefForService = svcAuthDetailDAO.findDistinctPersonByIdSvcAuth(serviceAuthorization.getIdSvcAuth());
+    if (peronsRefForService != null && !peronsRefForService.isEmpty()) {
+      for (Iterator<Integer> it = peronsRefForService.iterator(); it.hasNext();) {
+        Integer idPersonRefForService = it.next();
+        preFillData.addFormDataGroup(getPersonsRefForService(idPersonRefForService, serviceAuthorization));
+      }
+    }
+    return peronsRefForService;
+  }
+
+  private FormDataGroup getPersonsRefForService(int idPersonRefForService, ServiceAuthorization serviceAuthorization) {
+    FormDataGroup group = createFormDataGroup(TMPLAT_PERSON_FOR_SERVICE, FCM06O00V2);
+    String ethnicity = "";
+
+    Person personForService = personDAO.findPersonByIdPerson(idPersonRefForService);
+    if (personForService != null) {
+      group.addBookmark(createBookmark(PERSON_FOR_SERVICE_NAME, personForService.getNmPersonFull()));
+      group.addBookmark(createBookmark(PERSON_FOR_SERVICE_ID, personForService.getIdPerson()));
+      group.addBookmark(createBookmark(DOB, FormattingHelper.formatDate(personForService.getDtPersonBirth())));
+
+      // ethnicity = Lookup.simpleDecodeSafe(CodesTables.CINDETHN,
+      // retrievePersonEthnicityData(idPersonRefForService).getCdEthnicity());
+      // if (ethnicity != null) {
+      // group.addBookmark(createBookmark(PERSON_ETHNICITY, ethnicity));
+      // }
+      group.addBookmark(createBookmark(MARITAL_STATUS,
+                                       Lookup.simpleDecodeSafe(CodesTables.CMARSTAT,
+                                                               personForService.getCdPersonMaritalStatus())));
+
+    }
+
+    // Look for idPerson in Foster Care Placement type
+    Date earliestBeginDate = null;
+    earliestBeginDate = svcAuthDetailDAO.findEarliestBeiginDateOfSvcAuthDetailByPersonByIdSvcAuth(idPersonRefForService,
+                                                                                                  serviceAuthorization.getIdSvcAuth());
+
+    String livingArrangement = "";
+    Placement placement = placementDAO.findLatestApprovedPlacementByIdPersonBySvcAuthDetail(idPersonRefForService,
+                                                                                            earliestBeginDate);
+    if (placement != null) {
+      livingArrangement = FOSTER_CARE;
+    }
+
+    // SafetyResourceChild safetyResourceChild =
+    // safetyResourceChildDAO.findActiveApprovedSafetyResourceByIdPersonByDate(idPersonRefForService,
+    // earliestBeginDate);
+    // if (safetyResourceChild != null) {
+    // livingArrangement = SAFETY_RESOURCE;
+    // }
+
+    group.addBookmark(createBookmark(LIVING_ARRANGEMENT, livingArrangement));
+    // Look for idPerson in Safety Resource Placement type
+
+    PersonId personIdMhn = personIdDAO.findPersonIdByIdPersonCdPersonIdTypeIndPersonIdInvalidDtPersonIdEnd(idPersonRefForService,
+                                                                                                           "Medicaid/MHN #",
+                                                                                                           "N",
+                                                                                                           DateHelper.toJavaDate(DateHelper.MAX_CASTOR_DATE));
+    if (personIdMhn != null) {
+      group.addBookmark(createBookmark(MEDICAID_NBR, personIdMhn.getNbrPersonIdNumber()));
+    }
+
+    return group;
+  }
+
+  private PersonEthnicity retrievePersonEthnicityData(int idPerson) {
+    PersonEthnicity personEthnicity = null;
+    personEthnicity = personEthnicityDAO.findLatestPersonEthnicityByIdPerson(idPerson);
+
+    return personEthnicity;
+  }
+
+  private FormDataGroup getsvcAuthDetail(SvcAuthDetail svcAuthDetail) {
+    FormDataGroup group = createFormDataGroup(TMPLAT_SERVICE, FCM06O00V2);
+
+    String entitlementCodeLong = "";
+    String entitlementCodeShort = "";
+    entitlementCodeLong = Lookup.simpleDecodeSafe(CodesTables.CSVCCODE, svcAuthDetail.getCdSvcAuthDtlSvc());
+    entitlementCodeShort = entitlementCodeLong.substring(3);
+
+    group.addBookmark(createBookmark(SERVICE_NAMES, svcAuthDetail.getPerson().getNmPersonFull()));
+    group.addBookmark(createBookmark(ENTITLEMENT_CODE, entitlementCodeShort));
+    group.addBookmark(createBookmark(REASON_FOR_REF_COMMENTS, svcAuthDetail.getTxtCmmtsAdditional()));
+    group.addBookmark(createBookmark(NBR_SVC_AUTH_DTL_UNIT_RATE,
+                                     FormattingHelper.formatMoney(svcAuthDetail.getNbrSvcAuthDtlUnitRate())));
+    group.addBookmark(createBookmark(NBR_SVC_AUTH_DTL_UNIT_REQ, svcAuthDetail.getNbrSvcAuthDtlUnitsReq()));
+    group.addBookmark(createBookmark(ID_SVC_AUTH_DTL, svcAuthDetail.getIdSvcAuthDtl()));
+    group.addBookmark(createBookmark(AMT_SVC_AUTH_DTL_AMT_REQ,
+                                     FormattingHelper.formatMoney(svcAuthDetail.getAmtSvcAuthDtlAmtReq())));
+    group.addBookmark(createBookmark(DT_SVC_AUTH_DTL_BEGIN,
+                                     FormattingHelper.formatDate(svcAuthDetail.getDtSvcAuthDtlBegin())));
+    group.addBookmark(createBookmark(DT_SVC_AUTH_DTL_END,
+                                     FormattingHelper.formatDate(svcAuthDetail.getDtSvcAuthDtlEnd())));
+    return group;
+  }
+
+  private FormDataGroup displayHouseHoldStatus(StagePersonLink stagePersonLink) {
+    FormDataGroup group = createFormDataGroup(TMPLAT_OTHER_MEMBERS, FCM06O00V2);
+    String membersName = stagePersonLink.getPerson().getNmPersonFull();
+    Person person = stagePersonLink.getPerson();
+
+    int idPerson = stagePersonLink.getPerson().getIdPerson().intValue();
+    PersonId personIdMed = personIdDAO.findPersonIdByIdPersonCdPersonIdTypeIndPersonIdInvalidDtPersonIdEnd(idPerson,
+                                                                                                           "CRS ID#",
+                                                                                                           "N",
+                                                                                                           DateHelper.toJavaDate(DateHelper.MAX_CASTOR_DATE));
+
+    PersonId personIdMhn = personIdDAO.findPersonIdByIdPersonCdPersonIdTypeIndPersonIdInvalidDtPersonIdEnd(idPerson,
+                                                                                                           "Medicaid/MHN #",
+                                                                                                           "N",
+                                                                                                           DateHelper.toJavaDate(DateHelper.MAX_CASTOR_DATE));
+
+    PersonId personIdSsn = personIdDAO.findPersonIdByIdPersonCdPersonIdTypeIndPersonIdInvalidDtPersonIdEnd(idPerson,
+                                                                                                           "SSN",
+                                                                                                           "N",
+                                                                                                           DateHelper.toJavaDate(DateHelper.MAX_CASTOR_DATE));
+    if (membersName != null) {
+      group.addBookmark(createBookmark(OTHER_NM, membersName));
+    }
+    group.addBookmark(createBookmark(ID_PERSON, idPerson));
+    if (personIdMhn != null) {
+      group.addBookmark(createBookmark(NBR_MEDICAID, personIdMhn.getNbrPersonIdNumber().concat("P")));
+    } else if (personIdMed != null) {
+      group.addBookmark(createBookmark(NBR_MEDICAID, personIdMed.getNbrPersonIdNumber()));
+    }
+    if (person != null) {
+      group.addBookmark(createBookmark(DT_BIRTH, FormattingHelper.formatDate(person.getDtPersonBirth())));
+      group.addBookmark(createBookmark(ETHNICITY,
+                                       Lookup.simpleDecodeSafe(CodesTables.CETHNIC, person.getCdPersonEthnicGroup())));
+    }
+    if (personIdSsn != null) {
+      group.addBookmark(createBookmark(SSN, personIdSsn.getNbrPersonIdNumber()));
+    }
+    group.addBookmark(createBookmark(RELATIONSHIP,
+                                     Lookup.simpleDecodeSafe(CodesTables.CRPTRINT,
+                                                             stagePersonLink.getCdStagePersRelInt())));
+    return group;
+  }
+
+  /**
+   * Gets the Case Manager / Supervisor information
+   * 
+   * @param preFillData
+   * @param stage
+   * @param event
+   */
+  private void getCaseManagerSection(PreFillData preFillData, Stage stage, Event event) {
+    int idStage = stage.getIdStage();
+    int idCase = stage.getCapsCase().getIdCase();
+    // Find Case Manager
+    StagePersonLink stagePersonLink = stagePersonLinkDAO.findStagePersonLinkByIdStageCdStagePersRoleAll(idStage);
+    Integer idCaseManager = 0;
+    if (stagePersonLink != null) {
+      idCaseManager = stagePersonLink.getPerson().getIdPerson();
+    }
+    if (idCaseManager > 0) {
+      //Name managerName = nameDAO.findNameByPersonPrimary(idCaseManager.intValue());
+      Person manager = personDAO.findPersonByIdPerson(idCaseManager);
+      
+      // Find the Supervisor of the Case Manager
+      int idSupervisor = unitEmpLinkDAO.findUnitSupervisorByIdPerson(idCaseManager);
+      Person supervisor = personDAO.findPersonByIdPerson(idSupervisor);
+      String caseManagerPhone = null;
+      caseManagerPhone = retrievePrimaryPersonPhoneData(idCaseManager);      
+      String supervisorPhone = "";
+      supervisorPhone = retrievePrimaryPersonPhoneData(idSupervisor);
+
+      preFillData.addBookmark(createBookmark(MANAGER_NM, manager.getNmPersonFull()));
+      preFillData.addBookmark(createBookmark(MANAGER_PHONE, caseManagerPhone));
+      getBusinessFaxNum(idCaseManager, preFillData, IND_CASE_MANAGER);
+      
+      preFillData.addBookmark(createBookmark(SUPERVISOR_NM, supervisor.getNmPersonFull()));
+      preFillData.addBookmark(createBookmark(SUPERVISOR_PHONE, supervisorPhone));
+      getBusinessFaxNum(idSupervisor, preFillData, IND_SUPERVISOR);
+    }
+    getDesignee(event, preFillData);
+    getReferralDenied(idStage, idCase, preFillData);
+  }
+
+  private String retrievePrimaryPersonPhoneData(int idPerson) {
+    String phoneNbr = null;
+    Date maxDate = DateHelper.toJavaDate(DateHelper.MAX_CASTOR_DATE);
+    PersonPhone personPhone = null;
+    if (idPerson != 0) {
+      personPhone = personPhoneDAO.findPersonPhoneByIdPersonAndMaxDate(idPerson, maxDate);
+    }
+
+    if (personPhone != null) {
+      if (personPhone.getNbrPersonPhoneExtension() != null) {
+        // Display extension after the phone number if it exists
+        phoneNbr = FormattingHelper.formatPhone(personPhone.getNbrPersonPhone()) + " Ext. "
+                   + personPhone.getNbrPersonPhoneExtension();
+      } else {
+        phoneNbr = FormattingHelper.formatPhone(personPhone.getNbrPersonPhone());
+      }
+    }
+    return phoneNbr;
+  }
+  
+  private void getBusinessFaxNum(int idPerson, PreFillData preFillData, String indCmOrSup) {
+    String faxNbr = null;
+    String personFax = null;
+    if (idPerson != 0) {
+      // Find fax number with Type 'Business Fax(BF)'
+      personFax = personPhoneDAO.findNbrPersonPhoneByIdPersonAndPhoneType(idPerson, "BF");
+    }
+    if (personFax != null) {
+      faxNbr = FormattingHelper.formatPhone(personFax);
+    }
+    if (IND_CASE_MANAGER.equals(indCmOrSup)) {
+      preFillData.addBookmark(createBookmark(MANAGER_FAX, faxNbr));
+    } else if (IND_SUPERVISOR.equals(indCmOrSup)) {
+      preFillData.addBookmark(createBookmark(SUPERVISOR_FAX, faxNbr));
+    }
+  }  
+    
+  private void getDesignee(Event event, PreFillData preFillData) {
+    Collection<ApprovalEventLink> approvalEventLinks = event.getApprovalEventLinks();
+    if (approvalEventLinks != null && !approvalEventLinks.isEmpty()) {
+      for (Iterator<ApprovalEventLink> it = approvalEventLinks.iterator(); it.hasNext();) {
+        ApprovalEventLink approvalEventLink = (ApprovalEventLink) it.next();
+        if(approvalEventLink!=null){
+        preFillData.addFormDataGroup(displayApprovalInformation(approvalEventLink, preFillData));
+        }
+      }
+    } 
+    else {
+      preFillData.addFormDataGroup(displayEmptyDesignee());
+    }
+  }  
+  
+  private void getReferralDenied(int idCase, int idStage, PreFillData preFillData) {
+    List<Map> approvalRejections = approvalRejectionDAO.findApprovalRejectionByIdCaseIdStage(idCase, idStage);
+
+    if (approvalRejections != null && !approvalRejections.isEmpty()) {
+      for (Iterator<Map> it = approvalRejections.iterator(); it.hasNext();) {
+        Map approvalRejection = (Map) it.next();
+        preFillData.addFormDataGroup(displayDenialInformation(approvalRejection, preFillData));
+      } 
+    } 
+    else {
+      preFillData.addFormDataGroup(displayEmptyDenialInformation());
+    } 
+  }  
+  
+  private FormDataGroup displayApprovalInformation(ApprovalEventLink approvalEventLink, PreFillData preFillData) {
+    FormDataGroup group = createFormDataGroup(TMPLAT_APPROVAL_INFORMATION, FCM06O00V2);
+    Approval approval = approvalEventLink.getApproval();
+    if (approval != null) {
+      Collection<Approvers> approvers = approval.getApproverses();
+      if (approvers != null && !approvers.isEmpty()) {
+        for (Iterator<Approvers> it = approvers.iterator(); it.hasNext();) {
+          Approvers approver = it.next();
+          if (approver != null) {
+            group.addBookmark(createBookmark(AGENCY_DIRECTOR, approver.getPerson().getNmPersonFull()));
+          }
+        }
+      }
+      group.addBookmark(createBookmark(DT_APPROVED, approvalEventLink.getApproval().getDtApprovalDate()));
+    }
+    return group;
+  }  
+  
+  private FormDataGroup displayDenialInformation(Map approvalRejection, PreFillData preFillData) {
+    FormDataGroup group = createFormDataGroup(TMPLAT_DENIAL_INFORMATION, FCM06O00V2);
+
+    group.addBookmark(createBookmark(REASON_DENIED, approvalRejection.get("txtApproversCmnts")));
+    group.addBookmark(createBookmark(DT_DENIED, approvalRejection.get("dtRejection")));
+
+    return group;
+  }
+
+  private FormDataGroup displayEmptyDesignee() {
+    FormDataGroup group = createFormDataGroup(TMPLAT_APPROVAL_INFORMATION, FCM06O00V2);
+
+    group.addBookmark(createBookmark(AGENCY_DIRECTOR, "N/A"));
+
+    return group;
+  }
+
+  private FormDataGroup displayEmptyDenialInformation() {
+    FormDataGroup group = createFormDataGroup(TMPLAT_DENIAL_INFORMATION, FCM06O00V2);
+
+    group.addBookmark(createBookmark(REASON_DENIED, "N/A"));
+
+    return group;
+  }
+
+  /*
+   * Gets Business phone and fax numbers for the Resource
+   */
+  private void getResourcePhoneNumbers(CapsResource capsResource, PreFillData preFillData) {
+    Collection<ResourcePhone> resourcePhones = capsResource.getResourcePhones();
+    if (resourcePhones != null && !resourcePhones.isEmpty()) {
+      for (Iterator<ResourcePhone> it = resourcePhones.iterator(); it.hasNext();) {
+        ResourcePhone resourcePhone = it.next();
+        String resourcePhoneType = resourcePhone.getCdRsrcPhoneType();
+        // Resource Phone Type as 01 - Primary; only one phone number can be Primary
+        if ("01".equals(resourcePhoneType)) { // 01 - Primary
+          displayResourcePhone(resourcePhone, preFillData, resourcePhoneType);
+        }
+      } 
+      // Find the most recently entered Resource phone number having Phone Type as 03 - Bus-Fax
+      // Phone Type 03 - Bus-Fax can be multiple
+      String resourceFax = null;
+      int idResource = capsResource.getIdResource();
+      resourceFax = resourcePhoneDAO.findLatestNbrResourcePhoneByIdResourceByCdPhoneType(idResource, "03");
+      if (resourceFax != null) {
+        preFillData.addBookmark(createBookmark(SERVICE_FAX_NUM,
+                                               FormattingHelper.formatPhone(resourceFax)));
+      }
+    }
+  }
+
+  private PreFillData displayResourcePhone(ResourcePhone resourcePhone, PreFillData preFillData,
+                                           String resourcePhoneType) {
+    if ("01".equals(resourcePhoneType)) {
+      preFillData.addBookmark(createBookmark(SERVICE_TELEPHONE_NUM,
+                                             FormattingHelper.formatPhone(resourcePhone.getNbrRsrcPhone())));
+    } 
+    
+    return preFillData;
+  }
+
+  private void formatAddress(String stLn1, String stLn2, String city, String state, String zip, StringBuffer addr) {
+    if (stLn1 != null) {
+      addr = addr.append(stLn1);
+    }
+    if (stLn2 != null) {
+      addr = addr.append(", " + stLn2);
+    }
+    if (city != null) {
+      addr = addr.append(", " + city);
+    }
+    if (state != null) {
+      addr = addr.append(", " + state);
+    }
+    if (zip != null) {
+      addr = addr.append(", " + zip);
+    }
+  }
+  
+  private void retrieveCaseHistory(PreFillData preFillData, Stage currStage, List<Integer> peronsRefForService) {
+    if (isNotEmptyList(peronsRefForService)) {
+      boolean hasPriorDfcsHistory = hasPriorDfcsHistory(peronsRefForService, currStage);
+
+    }
+    
+  }
+  private boolean hasPriorDfcsHistory(List<Integer> peronsRefForService, Stage currStage) {
+    boolean isCaseMerge;
+    boolean hasPriorDfcsHistory = false;
+    Date dtCurrCaseOpened = null;
+    
+    CapsCase currCase = currStage.getCapsCase();
+    int idStage = currStage.getIdStage();
+    int idCase = currCase.getIdCase();
+
+    List<CaseMerge> caseMergeList = caseMergeDAO.findByIdCaseMergeTo(idCase);
+    isCaseMerge = isNotEmptyList(caseMergeList);
+    // find start date of the current case: intake date if merged, case start date if not.
+    if (isCaseMerge) {
+      Stage intakeCurrStage = findIntakeStage(idStage);
+      if (intakeCurrStage != null) {
+        dtCurrCaseOpened = intakeCurrStage.getDtStageStart();
+      } else {
+        // what happens if there is no intake
+      }
+    } else {
+      dtCurrCaseOpened = currCase.getDtCaseOpened();
+    }
+    // Compare date
+    for (Integer idPserson : peronsRefForService) {
+      // Find all cases that the person is PRN, excluding the current case, excluding INT cases whose disposition is Screen Out or Opened in Error
+      // For each case, find the earliest date the person is added to the case
+      // Find the INT date for that stage
+      // If the stage  the person was first added to is not INV and the add date is after 
+      // dtCurrCaseOpened, skip to the next case
+      // If the stage  the person was first added to is INV and the add date is after 
+      // dtCurrCaseOpened, compare INT date with dtCurrCaseOpened: if INT date < dtCurrCaseOpened: history indicated, break
+      // If the add date is before the dtCurrCaseOpened then it indicates history, break.
+      // It implies that the INT must be before dtCurrCaseOpened as well, no need to find the INT
+      //
+      // When compare the INT date may nee to find all the INT, in case this case is merged
+      // Or we can look for all intake datte first and For each intake date, compare with the dtCurrCaseOpened
+      // If find one earlier then it is history, break;
+      // 
+    }
+    return hasPriorDfcsHistory;
+  }
+  
+  /**
+   * Helper method to check whether a list of object is not empty.
+   * @param aList
+   * @return true if the passed in list is not empty, false if it is empty or null.
+   */
+  private boolean isNotEmptyList(List<?> aList) {
+    return (aList != null && aList.size() > 0);
+  }
+  
+  /**
+   * Helper method to find the Intake stage of a given stage. We will look back in the progression history until an Intake stage is found
+   * or history exhausted.
+   * The method returns the Intake stage object if found or null object.
+   * @param idCurrStage
+   * @return the Intake stage object
+   */
+  private Stage findIntakeStage(int idCurrStage) {
+    while (true) {
+      Stage priorStage = stageLinkDAO.findPriorStageByIdCurrStage(idCurrStage);
+      // if there is prior stage, check to see if it is Intake, if not repeat the look up
+      if (priorStage != null) {
+        // Intake stage found, return the Stage object
+        if (CodesTables.CSTAGES_INT.equals(priorStage.getCdStage())) {
+          return priorStage;
+        } else {
+          // reset the idCurrSstage to the prior stage id for further lookup.
+          idCurrStage = priorStage.getIdStage();
+        }
+      }
+      // if there is no prior stage found, return
+      return null;
+    }
+  }
+  
+  private List<String> findCpsReason(int idCase) {
+    
+    return null;
+  }
+}

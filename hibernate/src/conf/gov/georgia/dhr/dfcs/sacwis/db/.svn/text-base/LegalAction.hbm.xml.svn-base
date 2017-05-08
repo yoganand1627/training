@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.LegalAction" table="LEGAL_ACTION" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idLegalActEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_LEGAL_ACT_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdLegalActAction" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_LEGAL_ACT_ACTION" length="4"/>
+    </property>
+    <property name="cdLegalActActnSubtype" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_LEGAL_ACT_ACTN_SUBTYPE" length="3"/>
+    </property>
+    <property name="cdLegalActOutcome" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_LEGAL_ACT_OUTCOME" length="3"/>
+    </property>
+    <property name="dtLegalActDateFiled" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_LEGAL_ACT_DATE_FILED" length="7"/>
+    </property>
+    <property name="dtLegalActOutcomeDt" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_LEGAL_ACT_OUTCOME_DT" length="7"/>
+    </property>
+    <property name="indLegalActDocsNCase" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_LEGAL_ACT_DOCS_N_CASE" length="1"/>
+    </property>
+    <property name="txtLegalActComment" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_LEGAL_ACT_COMMENT" length="300"/>
+    </property>
+    <property name="nbrCrtFile" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CRT_FILE" precision="10" scale="0"/>
+    </property>
+    <property name="cdCrtType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CRT_TYPE" length="3"/>
+    </property>
+    <property name="dtNxtHearDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_NXT_HEAR_DATE" length="7"/>
+    </property>
+    <property name="dtContinDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CONTIN_DATE" length="7"/>
+    </property>
+    <property name="dtCrtOrdDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CRT_ORD_DATE" length="7"/>
+    </property>
+    <property name="dtPubDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PUB_DATE" length="7"/>
+    </property>
+    <property name="cdCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_COUNTY" length="3"/>
+    </property>
+    <property name="dtCrtActDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CRT_ACT_DATE" length="7"/>
+    </property>
+    <property name="cdHrTypCrtOrd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_HR_TYP_CRT_ORD" length="3"/>
+    </property>
+    <property name="crtCaseNbr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CRT_CASE_NBR" length="15"/>
+    </property>
+    <property name="indUpPrevAct" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_UP_PREV_ACT" length="1"/>
+    </property>
+    <property name="indComplete" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_COMPLETE" length="1"/>
+    </property>
+    <property name="cdState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STATE" length="2"/>
+    </property>
+    <property name="dtShelterCareAuth" type="timestamp" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_SHELTER_CARE_AUTH" length="7"/>
+    </property>
+    <property name="nmCrtOrdPrepBy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_CRT_ORD_PREP_BY" length="40"/>
+    </property>
+    <property name="indCrtOrdSigned" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CRT_ORD_SIGNED" length="1"/>
+    </property>
+    <property name="indAmendment" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_AMMENDMENT" length="1"/>
+    </property>
+    <property name="indLegalRepAppointed" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_LEGAL_REP_APPOINTED" length="1"/>
+    </property>
+    <bag name="attendeeses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_LEGAL_ACT_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Attendees" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="legalActionCrtLangs" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_LEGAL_ACT_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.LegalActionCrtLang" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="legalActionOutcomes" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_LEGAL_ACT_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.LegalActionOutcome" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

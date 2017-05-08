@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.AdoInfoCbxSent" table="ADO_INFO_CBX_SENT" >
+        <id name="idAdoInfoCbxSent" type="integer">
+            <column name="ID_ADO_INFO_CBX_SENT" precision="16" scale="0" />
+            <generator class="sequence"><param name="sequence">SEQ_ADO_INFO_CBX_SENT</param></generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="null" source="vm"/>
+		<many-to-one name="adoInfoCbx" class="gov.georgia.dhr.dfcs.sacwis.db.AdoInfoCbx" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_INFO_CHAR" precision="16" scale="0"/>
+        </many-to-one>
+        <property name="dtAdoInfoCbxSent" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+            <column name="DT_ADO_INFO_CBX_SENT" length="7" />
+        </property>
+    </class>
+</hibernate-mapping>

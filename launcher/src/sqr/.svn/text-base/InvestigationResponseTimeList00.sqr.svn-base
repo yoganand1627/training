@@ -1,0 +1,575 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Sun Nov 15 14:56:11 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\INV Response Time Measures\InvestigationResponseTimeList00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Variable
+  Date $curr_date 
+  Date $end_date
+ End-Declare
+End-Setup
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 36.000 pt
+  Bottom-Margin = 36.000 pt
+  Left-Margin   = 36.000 pt
+  Right-Margin  = 36.000 pt
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Text $response_date_disp 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=168    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'Key' (270,1,0) Underline  Bold 
+ Print 'This report displays a list of investigations with response time details where the associated intake record was received during the reporting month. Investigations closed with overall risk finding Opened in Error are excluded. Investigations without overall risk finding and closed by merge are also excluded. Notes, investigations that were closed with overall risk finding other than Opened in Error and then later merged would not be excluded because they can be part of case consolidation progress. For cases to be excluded from the response time measurement, case managers should either close the error investigation with overall risk finding of Opened in Error prior to merge or not record overall risk finding at all and let the merge close the error/duplicate investigations through the batch process.' (30,12,150) Wrap 150 6 line-height=12 Keep-Top
+ Print 'The response time is calculated as the date/time that all alleged victims have been contacted, in person, by the case manager. In order for a response time to be met, the last of the initial contacts with the alleged victims must be within the 24hr or 5-day timeframe as of the intake date. In-Progress indicates that the case manager is still within the acceptable timeframe to complete the investigation, and these counts are not included in the met and not met counts. Also note that 24-hr is calculated as 24 hours while 5-day is calculated as 5 full weekdays. (Monday-Friday)' (109,12,150) Wrap 150 4 line-height=12 Keep-Top
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'P: Priority' (284,1,0) Underline  Bold 
+ Print 'IM - Immediate 24 Hrs' (325,1,0)
+ Print '5D - 5 Days' (311,1,0)
+ Print '24 - 24 Hours' (298,1,0)
+ Print 'M: Met (whether response time has been met)' (284,139,0) Underline  Bold 
+ Print 'Y - Yes' (298,139,0)
+ Print 'N - No' (311,139,0)
+ Print 'N - No' (311,388,0)
+ Print 'Y - Yes' (298,388,0)
+ Print 'D: Diverted (whether the investigation was progressed from diversion stage)' (284,388,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'The case manager on the case is the current case manager for open investigations and the last case manager assigned on closed investigations.' (210,12,0)
+ Page-Number (414,662) '' ' of '
+ Last-Page (414,695) 
+ Print 'The reporting county is the investigation stage county. When the case manager county differs from the stage county, the case manager unit and county will be displayed in the rightmost column.' (229,12,150) Wrap 150 2 line-height=12 Keep-Top
+ Print 'Met percentage does not include cases of which response time window has not expired (In-Progress cases) in calculation. Met percentage is calculated as the number of Met count divided by the sum of Met count and Not Met count. When all cases are in progress, Met percentage is not calculated and does not display.' (164,12,150) Wrap 150 3 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get_User_Input
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get_User_Input
+! -----------------------------
+Input $dt_report 'Enter month and year (MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+! Get region optional input
+Input $_cd_stage_region 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_cd_stage_region) or IsBlank($_cd_stage_region) or ($_cd_stage_region='0')
+  Let $where_clause_region = 'CD_STAGE_REGION IS NOT NULL'
+  Let $regionSelected = 'N'
+Else 
+  Let $where_clause_region = 'CD_STAGE_REGION = ' || '''' || $_cd_stage_region || ''''
+  Let $regionSelected = 'Y'
+End-If
+
+! Get county optional input
+Input $_cd_stage_county 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_cd_stage_county) or IsBlank($_cd_stage_county) or ($_cd_stage_county='0')
+  Let $where_clause_county = 'CD_STAGE_REGION IS NOT NULL'
+  Let $countySelected = 'N'
+Else 
+  Move $_cd_stage_county to $_cd_stage_county_NQ
+  Let $_cd_stage_county = '''' || $_cd_stage_county || ''''
+  Let $where_clause_county = 'CD_STAGE_CNTY = ' || $_cd_stage_county 
+  Let $countySelected = 'Y'
+End-If
+! Get Unit number as optional parameter
+Input $nbr_unit 'Enter unit number' MaxLen=3 Type=Char
+If isnull($nbr_unit) or isblank($nbr_unit) or ($nbr_unit='0')
+ Let $where_clause_unit = 'UNIT_STAGE.NBR_UNIT is not null '
+ Let $unitSelected = 'N'
+Else
+ Let $where_clause_unit = 'UNIT_STAGE.NBR_UNIT = ' || '''' || $nbr_unit || ''''
+ Let $unitSelected = 'Y'
+End-If
+! ----------------------------
+! Get CaseManger ID as optional parameter
+Input $id_person 'Enter Case Manager ID' MaxLen=16 Type=Number
+If isnull($id_person) or isblank($id_person) or ($id_person='0')
+ Let $where_clause_casemanager = 'EMPLOYEE.ID_PERSON is not null '
+ Let $cmSelected = 'N'
+Else
+ Let $where_clause_casemanager = 'EMPLOYEE.ID_PERSON = ' || $id_person 
+ Let $cmSelected = 'Y'
+End-If
+
+! Create where clause for region and county input
+Let $where_clause_region_county = $where_clause_region || ' and ' || $where_clause_county
+
+! Decode county if county was selected
+If $countySelected = 'Y'
+  Do Decode_County
+  Move &county_decode to $region_county_header
+  If $_cd_stage_county_NQ = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_cd_stage_region
+  End-If
+Else
+  If $regionSelected = 'Y'
+    Let $region_county_header= 'Region ' || $_cd_stage_region
+  Else
+    Let $region_county_header= 'Statewide'
+End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+Begin-Procedure Decode_County
+! -----------------------------
+! Decode county code for county name in report header
+Begin-Select
+DECODE &county_decode
+from CCOUNT
+where CODE = [$_cd_stage_county] 
+End-Select
+End-Procedure
+
+Begin-Procedure Get_Response_Date(#inv_stage_id, :$inv_response_date, :#diff2)
+
+Begin-Select
+max(victim_contacts.vic_contact_date) &dt_max_contact_date
+ Move &dt_max_contact_date to $inv_response_date 'mm/dd/yyyy hh24:mi:ss'
+from (
+    select stage_person_link.ID_STAGE, stage_person_link.ID_PERSON, 
+    NVL((select min(contact.DT_CONTACT_OCCURRED)
+    from  event_person_link, contact
+    where contact.cd_contact_method in ('ATF', 'UTF') 
+    and event_person_link.ID_EVENT = contact.ID_EVENT
+    and event_person_link.ID_PERSON = stage_person_link.ID_PERSON
+    !and contact.ID_CONTACT_STAGE = stage_person_link.ID_STAGE
+    and contact.ID_CASE = stage_person_link.ID_CASE
+    and (contact.IND_CONTACT_ATTEMPTED is null or contact.IND_CONTACT_ATTEMPTED <> 'Y')
+    ), TO_DATE('12/31/4712 00:00:00', 'MM/DD/YYYY HH24:MI:SS')) vic_contact_date 
+    from stage_person_link, stage
+    where stage_person_link.ID_STAGE = #inv_stage_id and 
+    !stage_person_link.CD_STAGE_PERS_ROLE IN ('VC', 'DB', 'DV', 'VP')
+    exists (select * 
+            from allegation
+            where allegation.ID_ALLEGATION_STAGE = stage_person_link.ID_STAGE 
+            and allegation.ID_VICTIM = stage_person_link.ID_PERSON 
+            )
+    and stage_person_link.ID_STAGE = stage.ID_STAGE
+    and stage.CD_STAGE = 'INV'
+    !group by stage_person_link.ID_STAGE, stage_person_link.ID_PERSON
+    group by stage_person_link.ID_CASE, stage_person_link.ID_PERSON
+    ) victim_contacts
+End-Select
+If isnull($inv_response_date) or isblank($inv_response_date)
+ Let $inv_response_date = '12/31/4712 00:00:00'
+End-If
+
+End-Procedure
+
+Begin-Procedure Get_Num_Of_Weekdays($start_date, $end_date, :#days_cnt)
+Let #nbr_bus_days= 0
+Move $start_date to $start_date_formatted 'mm/dd/yyyy'
+!Move $end_date to $end_date_formatted 'mm/dd/yyyy'
+Let $end_date_formatted = datetostr(strtodate($end_date, 'mm/dd/yyyy hh24:mi:ss'), 'mm/dd/yyyy')
+Let $_curr_date = strtodate($start_date_formatted, 'mm/dd/yyyy')
+Let $_end_date = strtodate($end_date_formatted, 'mm/dd/yyyy')
+While $_curr_date <= $_end_date
+ Let $day = datetostr($_curr_date, 'DY')
+ Evaluate $day
+      When = 'MON'
+      When = 'TUE'
+      When = 'WED'
+      When = 'THU'
+      When = 'FRI'
+        Add 1 to #nbr_bus_days
+      break
+      When-other
+      break
+
+ End-Evaluate
+Let $_curr_date = dateadd($_curr_date, 'day', 1)
+End-While
+Move #nbr_bus_days to #days_cnt
+End-Procedure
+
+! $from_date is db column date value retrieved from master query
+! $to_date is string date retrieved fromGGet_Response_Date
+Begin-Procedure Get_Response_Diff_Days($from_date, $to_date, $priority, :#days_diff, :$met_str)
+Let #diff = -1
+Let $met = ''
+If 0=isnull($from_date)
+Move $from_date to $from_date_formatted 'mm/dd/yyyy hh24:mi:ss'
+!Move $to_date to $to_date_formatted 'mm/dd/yyyy hh24:mi:ss'
+!Let $to_date_formatted = datetostr(strtodate($to_date, 'mm/dd/yyyy hh24:mi:ss'), 'mm/dd/yyyy/hh24:mi:ss')
+If ( $to_date = '12/31/4712 00:00:00' )
+ Let $completed = 'N'
+! Let $to_date_formatted = datetostr(strtodate($to_date, 'mm/dd/yyyy hh24:mi:ss'), 'mm/dd/yyyy/hh24:mi:ss')
+Else
+ Let $completed = 'Y'
+! Move $to_date to $to_date_formatted 'mm/dd/yyyy hh24:mi:ss'
+End-If
+
+Evaluate $priority 
+When = '24' 
+When = 'IM'
+ If ($completed = 'N')
+  Let #diff = datediff(datenow(), strtodate($from_date_formatted, 'mm/dd/yyyy hh24:mi:ss'), 'hour')
+  If ( #diff > 24 )
+   Let $met = 'N'
+   Add 1 to #_not_met_cnt
+  Else 
+   Let $met = 'P' ! response time has not passed, consider pending.
+   Add 1 to #_pending_cnt
+  End-If
+ Else
+  Let #diff = datediff(strtodate($to_date, 'mm/dd/yyyy hh24:mi:ss'), strtodate($from_date_formatted, 'mm/dd/yyyy hh24:mi:ss'), 'hour')
+  If ( #diff > 24 )
+   Let $met = 'N'
+   Add 1 to #_not_met_cnt
+  Else 
+   Let $met = 'Y' 
+   Add 1 to #_met_cnt
+  End-If
+ End-If 
+ Break
+When = '5D'
+ If ($completed = 'N')
+  Let $today =  datenow() 
+  Move $today to  $today 'mm/dd/yyyy hh24:mi:ss'
+  Do Get_Num_Of_Weekdays($from_date, $today, #diff)
+  If ( #diff > 5 )
+   Let $met = 'N'
+   Add 1 to #_not_met_cnt
+  Else
+   Let $met = 'P'
+   Add 1 to #_pending_cnt
+  End-If
+ Else
+  Do Get_Num_Of_Weekdays($from_date, $to_date, #diff)
+  If ( #diff > 5 )
+   Let $met = 'N'
+   Add 1 to #_not_met_cnt
+  Else
+   Let $met = 'Y'
+   Add 1 to #_met_cnt
+  End-If
+ End-If
+
+ Break
+When-other ! = -1 as set as beginning of this function
+ Break
+End-Evaluate
+End-If
+Move #diff to #days_diff
+Move $met to $met_str
+End-Procedure
+
+Begin-Procedure Get_Prior_Stage(#inv_stage_id, :$diverted)
+Begin-Select
+cd_stage &cd_stage
+ if (&cd_stage = 'DIV')
+  let $diverted = 'Y'
+ else 
+  let $diverted = 'N'
+ end-if
+from stage, stage_link
+where stage.id_stage = stage_link.id_prior_stage
+and stage_link.id_stage = #inv_stage_id
+End-Select
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Let #met_cnt = 0
+ Let #not_met_cnt = 0
+ Let #pending_cnt= 0
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select Distinct
+  Let $response_date = ''
+  Let #response_diff_days = -1
+  Let $met_str_var = ''
+  Let $diverted = ''
+STAGE.ID_STAGE &id_stage2
+DT_CPS_INVST_DTL_INTAKE &intake_date2
+CD_STAGE_CURR_PRIORITY &priority2 
+  Do Get_Response_Date(&id_stage2, $response_date, #response_diff_days)
+  Do Get_Prior_Stage(&id_stage2, $diverted)
+  Do Get_Response_Diff_Days(&intake_date2, $response_date, &priority2, #response_diff_days, $met_str_var)
+
+STAGE.ID_STAGE &Master_Query_STAGE.ID_STAGE
+UNIT_EMP.NBR_UNIT &caseworker_unit
+UNIT_EMP.CD_COUNTY &caseworker_cnty
+CD_STAGE_CNTY &Master_Query_CD_STAGE_CNTY
+CCOUNT_EMP.DECODE &caseworker_cnty_decode
+(EMPLOYEE_SUPERVISOR.NM_EMPLOYEE_LAST || ', ' ||  EMPLOYEE_SUPERVISOR.NM_EMPLOYEE_FIRST) &nm_supervisor
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_STAGE_REGION &stage_region () On-Break Set=1 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc101
+CCOUNT_STAGE.DECODE &stage_cnty () On-Break Set=1 Level=2 Print=Never Before=Master_QueryDECODE_BeforeProc102
+UNIT_STAGE.NBR_UNIT &nbr_stage_unit () On-Break Set=1 Level=3 Print=Never Before=Master_QueryNBR_UNIT_BeforeProc103
+(EMPLOYEE.NM_EMPLOYEE_LAST || ', ' ||  EMPLOYEE.NM_EMPLOYEE_FIRST) &nm_caseworker (10,1,25) On-Break Set=1 Level=4 Before=Master_Querynm_caseworker_BeforeProc104
+STAGE.ID_CASE &Master_Query_STAGE.ID_CASE (10,137) Edit 9999999999na
+CD_STAGE_CURR_PRIORITY &priority (10,332,2)
+ Let $met_disp=$met_str_var
+ Print $met_disp (10,354,1)
+DT_CPS_INVST_DTL_INTAKE &intake_date (10,395) Edit 'MM/DD/YYYY HH24:MI'
+ If $response_date = '12/31/4712 00:00:00'
+    ! do nothing
+ Else
+ Let $response_date_disp=datetostr( strtodate( $response_date, 'mm/dd/yyyy hh24:mi:ss' ) , 'mm/dd/yyyy hh24:mi:ss' )
+ Print $response_date_disp (10,539,16)
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+NM_STAGE &Master_Query_NM_STAGE (10,195,25)
+ If &caseworker_cnty=&Master_Query_CD_STAGE_CNTY
+    ! do nothing
+ Else
+ Let $CM_Unit_Cnty=&caseworker_unit  || ' - ' ||   &caseworker_cnty_decode
+ Print $CM_Unit_Cnty (10,624,18)
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+DT_STAGE_START &inv_start_date (10,480) Edit MM/DD/YYYY
+ Let $diverted=$diverted
+ Print $diverted (10,375,1)
+ Add 1 To #1ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+From  STAGE, STAGE_PERSON_LINK
+,      CPS_INVST_DETAIL, EMPLOYEE, UNIT UNIT_EMP
+,      CCOUNT CCOUNT_EMP, UNIT UNIT_STAGE, EMPLOYEE EMPLOYEE_SUPERVISOR
+,      CCOUNT CCOUNT_STAGE
+      Where STAGE.ID_STAGE = STAGE_PERSON_LINK.ID_STAGE
+            And STAGE.ID_STAGE = CPS_INVST_DETAIL.ID_CPS_INVST_STAGE
+            And STAGE_PERSON_LINK.ID_PERSON = EMPLOYEE.ID_PERSON
+            And UNIT_EMP.CD_COUNTY = CCOUNT_EMP.CODE
+            And STAGE.ID_UNIT = UNIT_STAGE.ID_UNIT
+            And UNIT_EMP.ID_PERSON = EMPLOYEE_SUPERVISOR.ID_PERSON
+            And STAGE.ID_UNIT = UNIT_EMP.ID_UNIT
+            And STAGE.CD_STAGE_CNTY = CCOUNT_STAGE.CODE
+ And CD_STAGE_PERS_ROLE IN ('PR','HP')
+ And DT_CPS_INVST_DTL_INTAKE >= to_date($dt_report, 'mm/yyyy')
+ And DT_CPS_INVST_DTL_INTAKE < (last_day(to_date($dt_report, 'mm/yyyy')) + 1)
+ And [$where_clause_unit]
+ And [$where_clause_casemanager]
+ And [$where_clause_region_county]
+ And (CD_STAGE_REASON_CLOSED IS NULL  Or CD_STAGE_REASON_CLOSED NOT IN ('06','97'))
+ And (CD_CNCLSN_RISK_FND IS NULL  Or CD_CNCLSN_RISK_FND NOT IN ('06','97'))
+Order By CD_STAGE_REGION
+,      CCOUNT_STAGE.DECODE
+,      UNIT_STAGE.NBR_UNIT
+,      (EMPLOYEE.NM_EMPLOYEE_LAST || ', ' ||  EMPLOYEE.NM_EMPLOYEE_FIRST)
+,      STAGE.ID_CASE
+End-Select
+ Next-Listing
+ Next-Listing  Need=46
+ If #1ROW_COUNT > 0
+ Graphic (2,2,716) Horz-Line 20 
+ Position (4,1)
+ Graphic (48,1,716) Horz-Line 20 
+ Position (50,1)
+ let #stage_cnt = #1ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #stage_cnt (17,224) Edit 99999999na
+   Let #met_cnt_disp=#met_cnt
+ Print #met_cnt_disp (35,224) Edit 99999999na
+   Let #not_met_cnt_disp=#not_met_cnt
+ Print #not_met_cnt_disp (35,434) Edit 9999
+  Print 'Total stage count:'  (17,136)
+  Print 'Met count & percentage:'  (35,136)
+   Let #pending_cnt_disp=#pending_cnt
+ Print #pending_cnt_disp (35,574) Edit 9999
+  Print 'Not met count:'  (35,366)
+  Print 'In-Progress count:'  (35,492)
+   If ( #met_cnt_disp + #not_met_cnt_disp ) =0
+    ! do nothing
+ Else
+ Let $met_percentage_disp_str='( ' ||   to_char(trunc( #met_cnt_disp / ( #met_cnt_disp + #not_met_cnt_disp ) * 100 , 2 ))  || ' % )'
+ Print $met_percentage_disp_str (35,279,12)
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Report Summary'  (17,1) Underline  Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+!   Do Get_Response_Date(&Master_Query_STAGE.ID_STAGE, $response_date)
+!   !GCalculate difference in number of business days
+!   Do Get_Response_Diff_Days(&intake_date, $response_date, #response_diff_days)
+!
+End-Procedure
+
+Begin-Procedure Master_Querynm_caseworker_BeforeProc104
+ Next-Listing 
+ Graphic (1,1,715) Horz-Line 10 
+ Position (2,1)
+   Position (+0,)
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryNBR_UNIT_BeforeProc103
+!If $unitSelected = 'N'
+ Next-Listing  Need=20
+ Graphic (1,2,715) Horz-Line 10 
+ Position (2,1)
+ Graphic (1,2,715) Horz-Line 10 
+ Position (2,1)
+    Let $unitGroupHeaderLabel='Unit: ' ||  &nbr_stage_unit || '      Supervisor:  ' ||  &nm_supervisor
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $unitGroupHeaderLabel (20,1,54) Bold 
+   Position (+12,)
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+!End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc101
+If $regionSelected = 'N' and $countySelected = 'N'
+ Next-Listing  Need=18
+ Graphic (1,1,715) Horz-Line 20 
+ Position (3,1)
+   Let $regionGroupHeaderLabel='Region  ' ||  &stage_region
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $regionGroupHeaderLabel (18,1,21) Bold 
+   Position (+12,)
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_BeforeProc102
+If $countySelected = 'N'
+ Next-Listing  Need=17
+ Graphic (1,2,715) Horz-Line 15 
+ Position (2,1)
+ Graphic (1,2,715) Horz-Line 15 
+ Position (2,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &stage_cnty (17,2,18) Bold 
+   Position (+12,)
+ Next-Listing  SkipLines=2 Need=12
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ Alter-Printer Font=4 Point-Size=10
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Let $dt_report=datetostr(strtodate($dt_report, 'mm/yyyy'), 'mm/yyyy')
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $dt_report (59,335,7) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On: ' (14,552,0)
+ Print $current-date (14,618) edit 'MM/DD/YYYY HH24:MI'
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Investigation Response Time' (43,263,32) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (14,274,0)
+ If $unitSelected = 'N'
+    ! do nothing
+ Else
+ Let $unitHeaderLabel='Unit: ' || $nbr_unit
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $unitHeaderLabel (95,1,15) Bold 
+ End-If
+ If $cmSelected = 'N'
+    ! do nothing
+ Else
+ Let $cmHeaderLabel='Case Manger ID: ' || $id_person
+ Alter-Printer Font=4 Point-Size=11    ! [SQR.INI] 4=Arial,proportional
+ Print $cmHeaderLabel (115,1,35) Bold 
+ End-If
+ Let $region_county_header=$region_county_header
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $region_county_header (79,313,13) Bold 
+ Let $region_header=$region_header
+ Print $region_header (99,328,9) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'P' (145,332,0) Underline  Bold 
+ Print 'Intake Date$& Time (24Hr)' (145,395,18) Underline  Bold  Wrap 18 2 line-height=12 Keep-Top on=$
+ Print 'M' (145,354,0) Underline  Bold 
+ Print 'Response Date$& Time (24Hr)' (145,539,21) Underline  Bold  Wrap 21 2 line-height=12 Keep-Top on=$
+ Print 'Stage Name' (145,195,0) Underline  Bold 
+ Print 'C/M Unit - County' (145,624,0) Underline  Bold 
+ Print 'INV Start$Date' (145,480,9) Underline  Bold  Wrap 9 2 line-height=12 Keep-Top on=$
+ Print 'D' (145,375,0) Underline  Bold 
+ Print 'Case Manager (C/M)' (145,1,0) Underline  Bold 
+ Print 'Case ID' (145,145,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'P' (10,332,0) Underline  Bold 
+ Print 'Intake Date$& Time (24Hr)' (10,395,18) Underline  Bold  Wrap 18 2 line-height=12 Keep-Top on=$
+ Print 'M' (10,354,0) Underline  Bold 
+ Print 'Response Date$& Time (24Hr)' (10,539,21) Underline  Bold  Wrap 21 2 line-height=12 Keep-Top on=$
+ Print 'Stage Name' (10,195,0) Underline  Bold 
+ Print 'C/M Unit - County' (10,624,0) Underline  Bold 
+ Print 'INV Start$Date' (10,480,9) Underline  Bold  Wrap 9 2 line-height=12 Keep-Top on=$
+ Print 'D' (10,375,0) Underline  Bold 
+ Print 'Case Manager (C/M)' (10,1,0) Underline  Bold 
+ Print 'Case ID' (10,145,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (13,664) '' ' of '
+ Last-Page (13,697) 
+ Alter-Printer Font=4 Point-Size=10
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

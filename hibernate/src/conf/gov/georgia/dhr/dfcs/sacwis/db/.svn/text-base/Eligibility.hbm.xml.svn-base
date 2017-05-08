@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Eligibility" table="ELIGIBILITY" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEligEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_ELIG_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="personByIdPersonUpdate" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_PERSON_UPDATE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdPerson" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="dtEligEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ELIG_END" length="7" not-null="true"/>
+    </property>
+    <property name="cdEligActual" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ELIG_ACTUAL" length="3"/>
+    </property>
+    <property name="cdEligCsupQuest1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ELIG_CSUP_QUEST1" length="3"/>
+    </property>
+    <property name="cdEligCsupQuest2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ELIG_CSUP_QUEST2" length="3"/>
+    </property>
+    <property name="cdEligCsupQuest3" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ELIG_CSUP_QUEST3" length="3"/>
+    </property>
+    <property name="cdEligCsupQuest4" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ELIG_CSUP_QUEST4" length="3"/>
+    </property>
+    <property name="cdEligCsupQuest5" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ELIG_CSUP_QUEST5" length="3"/>
+    </property>
+    <property name="cdEligCsupQuest6" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ELIG_CSUP_QUEST6" length="3"/>
+    </property>
+    <property name="cdEligCsupQuest7" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ELIG_CSUP_QUEST7" length="3"/>
+    </property>
+    <property name="cdEligMedEligGroup" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ELIG_MED_ELIG_GROUP" length="3"/>
+    </property>
+    <property name="cdEligSelected" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ELIG_SELECTED" length="3"/>
+    </property>
+    <property name="dtEligCsupReferral" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ELIG_CSUP_REFERRAL" length="7"/>
+    </property>
+    <property name="dtEligReview" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ELIG_REVIEW" length="7"/>
+    </property>
+    <property name="dtEligStart" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ELIG_START" length="7"/>
+    </property>
+    <property name="indEligCsupSend" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_ELIG_CSUP_SEND" length="1"/>
+    </property>
+    <property name="indReviewCreated" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_REVIEW_CREATED" length="1"/>
+    </property>
+    <property name="cdFceEligReason" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_FCE_ELIG_REASON" length="3"/>
+    </property>
+    <property name="txtChildSuppRefComment" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CHILD_SUPP_REF_COMMENT" length="300"/>
+    </property>
+    <property name="indEligWriteHistory" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ELIG_WRITE_HISTORY" length="1"/>
+    </property>
+    <property name="txtEligComment" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_ELIG_COMMENT" length="300"/>
+    </property>
+  </class>
+</hibernate-mapping>

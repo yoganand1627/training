@@ -1,0 +1,473 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Mon Jun 02 17:06:13 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong.van.t.vo\My Documents\Reports Layout\ValidationStatus00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+! ID range is left inclusive and right exclusive: [LOWER BOUND, UPPPER BOUND)
+! Pilot conversion stage id range
+#define PILOT_LOWER_BOUND 0
+#define PILOT_UPPER_BOUND 7500000
+! Phase 1 regions and conversion stage id range
+#define PHASE_1_LOWER_BOUND 8500000
+#define PHASE_1_UPPER_BOUND 8700000
+#define SEVENTEEN '017'
+! Phase 2 regions and conversion stage id range
+#define PHASE_2_LOWER_BOUND 8800000
+#define PHASE_2_UPPER_BOUND 9000000
+#define SEVEN '007'
+#define NINE '009'
+#define TEN '010'
+#define ELEVEN '011'
+#define TWELVE '012'
+! Phase 3 regions and conversion stage id range - 4/3/08: STGAP00008034 
+#define PHASE_3_LOWER_BOUND 9400000
+#define PHASE_3_UPPER_BOUND 9700000
+#define ONE '001'
+#define THREE '003'
+#define FOUR '004'
+#define EIGHT '008'
+#define FIFTEEN '015'
+#define SIXTEEN '016'
+!Phase 4 regions and conversion stage id range- 6/2/08: 
+#define PHASE_4_LOWER_BOUND 10400000
+#define PHASE_4_UPPER_BOUND 11300000
+#define TWO '002'
+#define FIVE '005'
+#define SIX '006'
+#define THIRTEEN '013'
+#define FOURTEEN '014'
+! Out of State
+#define OUT_OF_STATE '97'
+! State Office
+#define STATE_OFFICE '99'
+!
+#define FAD 'FAD'
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Page = BRB_After_Page
+ End-Declare
+ Declare-Variable
+  Integer #STAGE_ID_LOWER
+  Integer #STAGE_ID_UPPER
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=60   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ 
+ Do Get-Region-Input
+ Do LoadLookupTables
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Region-Input
+! -----------------------------
+Input $_phase 'Enter reporting phase' MaxLen=1 Type=Char
+Evaluate $_phase 
+When = '1'
+ Let #STAGE_ID_LOWER = {PHASE_1_LOWER_BOUND}
+ Let #STAGE_ID_UPPER = {PHASE_1_UPPER_BOUND}
+ Break
+When = '2' 
+ Let #STAGE_ID_LOWER = {PHASE_2_LOWER_BOUND}
+ Let #STAGE_ID_UPPER = {PHASE_2_UPPER_BOUND}
+ Break
+When = '3'
+ Let #STAGE_ID_LOWER = {PHASE_3_LOWER_BOUND}
+ Let #STAGE_ID_UPPER = {PHASE_3_UPPER_BOUND}
+Break
+When = '4'
+ Let #STAGE_ID_LOWER = {PHASE_4_LOWER_BOUND}
+ Let #STAGE_ID_UPPER = {PHASE_4_UPPER_BOUND}
+Break
+When-other
+ Let #STAGE_ID_LOWER = 0! No-data zone
+ Let #STAGE_ID_UPPER = 1
+ Break
+End-Evaluate
+
+Input $_I101_CD_UNIT_REGION 'Enter a value for CD_UNIT_REGION' MaxLen=3  Type=Char
+If ($_I101_CD_UNIT_REGION = '0')
+  Evaluate $_phase
+  When = '1'
+    Let $where_clause101 = ' UNIT00.CD_UNIT_REGION IN (' || {SEVENTEEN} || ')'
+    Break
+  When = '2'
+    Let $where_clause101 = ' UNIT00.CD_UNIT_REGION IN (' || {SEVEN} || ', ' || {NINE} || ', ' || {TEN} || ', ' || {ELEVEN} || ', ' || {TWELVE} || ')'
+    Break
+  When = '3'
+    Let $where_clause101 = ' UNIT00.CD_UNIT_REGION IN (' || {ONE} || ', ' || {THREE} || ', ' || {FOUR} || ', ' || {EIGHT} || ', ' || {FIFTEEN} || ', ' || {SIXTEEN} || ')'
+    Break
+  When = '4'
+    Let $where_clause101 = ' UNIT00.CD_UNIT_REGION IN (' || {TWO} || ', ' || {FIVE} || ', ' || {SIX} || ', ' || {THIRTEEN} || ', ' || {FOURTEEN} || ')'
+    !Let $where_clause101 = ' UNIT00.CD_UNIT_REGION IS NULL '! TODO: remove after phase 4 goes live
+    Break
+  When-other 
+    Let $where_clause101 = ' UNIT00.CD_UNIT_REGION IS NULL '
+    Break
+  End-Evaluate
+Else
+If SubStr($_I101_CD_UNIT_REGION, 1, 1) != ''''
+  Let $_I101_CD_UNIT_REGION = '''' || '0' || $_I101_CD_UNIT_REGION || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CD_UNIT_REGION,'''',0) = 0 and instr($_I101_CD_UNIT_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   !Let $brb_tmp = 'CCNTYREG.DECODE'
+   Let $brb_tmp = 'UNIT00.CD_UNIT_REGION'
+   Let $where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I101_CD_UNIT_REGION || '''' 
+ Else
+   If (instr($_I101_CD_UNIT_REGION,'''',0) = 0 and instr($_I101_CD_UNIT_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else 
+     ! quotes, no commas - process variable as-is
+     !Let $brb_tmp = 'CCNTYREG.DECODE'
+     Let $brb_tmp = 'UNIT00.CD_UNIT_REGION'
+     Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_CD_UNIT_REGION
+   End-If
+ End-If
+End-If
+
+End-Procedure
+
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+ Move 0 To #phase_closed_cnt
+ Move 0 To #phase_validated_tot
+ Move 0 To #phase_not_validated_tot
+Begin-Select Distinct
+(SELECT  (count( DISTINCT STAGE.ID_STAGE ))  FROM  STAGE,  STAGE_PERSON_LINK STAGE_PERSON_LINK00 WHERE STAGE.ID_STAGE = STAGE_PERSON_LINK00.ID_STAGE
+  AND  STAGE.ID_STAGE = STAGE_PERSON_LINK00.ID_STAGE
+ AND  DT_STAGE_CLOSE IS NOT NULL  AND  IND_STAGE_CLOSE = 'Y' AND  STAGE_PERSON_LINK00.CD_STAGE_PERS_ROLE = 'HP' AND  ((STAGE.ID_STAGE >= #STAGE_ID_LOWER AND  STAGE.ID_STAGE < #STAGE_ID_UPPER) OR  (STAGE.CD_STAGE = 'FAD' AND ((STAGE.ID_STAGE >= {PILOT_LOWER_BOUND} AND STAGE.ID_STAGE < {PILOT_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_1_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_1_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_2_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_2_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_3_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_3_UPPER_BOUND})))) AND  STAGE_PERSON_LINK00.ID_PERSON = CASE_WORKER.ID_PERSON) &Master_Query_CLOSED_CONV
+(SELECT  (count( DISTINCT STAGE.ID_STAGE ))  FROM  STAGE,  STAGE_PERSON_LINK STAGE_PERSON_LINK01 WHERE STAGE.ID_STAGE = STAGE_PERSON_LINK01.ID_STAGE
+  AND  STAGE.ID_STAGE = STAGE_PERSON_LINK01.ID_STAGE
+ AND  (DT_STAGE_CLOSE IS NULL  OR  STAGE.DT_STAGE_CLOSE = TO_DATE('12/31/4712', 'MM/DD/YYYY')) AND  STAGE_PERSON_LINK01.CD_STAGE_PERS_ROLE = 'PR' AND  IND_ECS_VER = 'Y' AND  ((STAGE.ID_STAGE >= #STAGE_ID_LOWER AND  STAGE.ID_STAGE < #STAGE_ID_UPPER) OR  (STAGE.CD_STAGE = 'FAD'  AND ((STAGE.ID_STAGE >= {PILOT_LOWER_BOUND} AND STAGE.ID_STAGE < {PILOT_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_1_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_1_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_2_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_2_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_3_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_3_UPPER_BOUND})))) AND  STAGE_PERSON_LINK01.ID_PERSON = CASE_WORKER.ID_PERSON) &Master_Query_VALIDATED
+(SELECT  (count( DISTINCT STAGE.ID_STAGE ))  FROM  STAGE,  STAGE_PERSON_LINK STAGE_PERSON_LINK02 WHERE STAGE.ID_STAGE = STAGE_PERSON_LINK02.ID_STAGE
+  AND  STAGE.ID_STAGE = STAGE_PERSON_LINK02.ID_STAGE
+ AND  (DT_STAGE_CLOSE IS NULL  OR  STAGE.DT_STAGE_CLOSE = TO_DATE('12/31/4712', 'MM/DD/YYYY')) AND  (IND_ECS_VER IS NULL  OR  IND_ECS_VER = 'N') AND  STAGE_PERSON_LINK02.CD_STAGE_PERS_ROLE = 'PR' AND  ((STAGE.ID_STAGE >= #STAGE_ID_LOWER AND  STAGE.ID_STAGE < #STAGE_ID_UPPER) OR  (STAGE.CD_STAGE = 'FAD' AND ((STAGE.ID_STAGE >= {PILOT_LOWER_BOUND} AND STAGE.ID_STAGE < {PILOT_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_1_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_1_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_2_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_2_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_3_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_3_UPPER_BOUND})))) AND  STAGE_PERSON_LINK02.ID_PERSON = CASE_WORKER.ID_PERSON) &Master_Query_NOT_VALIDATED
+CASE_WORKER.NM_EMPLOYEE_FIRST &cw_nm_first
+CASE_WORKER.NM_EMPLOYEE_LAST &cw_nm_last
+UNIT00.ID_PERSON &approver_id
+CODES_TABLES.DECODE &unit_spec
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Let #completion = 100
+ Move &Master_Query_VALIDATED to #validated_cnt
+ Move &Master_Query_NOT_VALIDATED to #not_validated_cnt
+ If #validated_cnt + #not_validated_cnt > 0
+   Let #completion = (#validated_cnt / (#validated_cnt + #not_validated_cnt) * 100)
+ End-If
+UNIT00.CD_UNIT_REGION &region_cd () On-Break Set=1 Level=1 Print=Never Before=Master_QueryCD_UNIT_REGION_BeforeProc101 After=Master_QueryCD_UNIT_REGION_AfterProc101
+CCOUNT.DECODE &cnty_decode () On-Break Set=1 Level=2 Print=Never Before=Master_QueryDECODE_BeforeProc102 After=Master_QueryDECODE_AfterProc102
+UNIT00.NBR_UNIT &unit_nbr () On-Break Set=1 Level=3 Print=Never Before=Master_QueryNBR_UNIT_BeforeProc103 After=Master_QueryNBR_UNIT_AfterProc103
+ Print &Master_Query_CLOSED_CONV (10,445) Edit 99999999na
+ Print &Master_Query_VALIDATED (10,230) Edit 99999999na
+ Let $cw_nm_full=&cw_nm_last || ', ' ||  &cw_nm_first
+ Print $cw_nm_full (10,52,30)
+ Print &Master_Query_NOT_VALIDATED (10,285) Edit 99999999na
+ Print '%' (10,374,0)
+ Let #completion=#completion
+ Print #completion (10,356) Edit 999
+ If #page-count > #pageNum
+  Let #pageNum = #page-count
+  Let $region_cdFirst = &region_cd
+ End-If
+ Add &Master_Query_CLOSED_CONV To #phase_closed_cnt
+ Add &Master_Query_VALIDATED To #phase_validated_tot
+ Add &Master_Query_NOT_VALIDATED To #phase_not_validated_tot
+ Add 1 To #1ROW_COUNT
+ Add &Master_Query_VALIDATED To #reg_validated_tot
+ Add &Master_Query_NOT_VALIDATED To #reg_not_validated_tot
+ Add &Master_Query_CLOSED_CONV To #reg_closed_cnt
+ Add &Master_Query_VALIDATED To #cnty_validated_tot
+ Add &Master_Query_NOT_VALIDATED To #cnty_not_validated_tot
+ Add &Master_Query_CLOSED_CONV To #cnty_closed_cnt
+ Add &Master_Query_VALIDATED To #unit_validated_cnt
+ Add &Master_Query_CLOSED_CONV To #unit_closed_cnt
+ Add &Master_Query_NOT_VALIDATED To #unit_not_validated_cnt
+ Next-Listing  SkipLines=2 Need=12
+From  UNIT UNIT00, CCOUNT
+,      EMPLOYEE CASE_WORKER, CODES_TABLES
+      Where CASE_WORKER.ID_EMP_UNIT = UNIT00.ID_UNIT
+            And UNIT00.CD_COUNTY = CCOUNT.CODE
+            And UNIT00.CD_UNIT_SPECIALIZATION = CODES_TABLES.CODE
+ And [$where_clause101]
+ And ((SELECT  (count( DISTINCT STAGE.ID_STAGE ))  FROM  STAGE,  STAGE_PERSON_LINK STAGE_PERSON_LINK00 WHERE STAGE.ID_STAGE = STAGE_PERSON_LINK00.ID_STAGE
+
+      AND  STAGE.ID_STAGE = STAGE_PERSON_LINK00.ID_STAGE
+ AND  DT_STAGE_CLOSE IS NOT NULL  AND  IND_STAGE_CLOSE = 'Y' AND  STAGE_PERSON_LINK00.CD_STAGE_PERS_ROLE
+     = 'HP' AND  ((STAGE.ID_STAGE >= #STAGE_ID_LOWER AND  STAGE.ID_STAGE < #STAGE_ID_UPPER) OR  (STAGE.CD_STAGE = 'FAD' AND ((STAGE.ID_STAGE
+     >= {PILOT_LOWER_BOUND} AND STAGE.ID_STAGE < {PILOT_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_1_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_1_UPPER_BOUND})
+     OR (STAGE.ID_STAGE >= {PHASE_2_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_2_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_3_LOWER_BOUND} AND
+     STAGE.ID_STAGE < {PHASE_3_UPPER_BOUND})))) AND  STAGE_PERSON_LINK00.ID_PERSON = CASE_WORKER.ID_PERSON) > 0 Or (SELECT  (count( DISTINCT STAGE.ID_STAGE ))  FROM  STAGE,  STAGE_PERSON_LINK STAGE_PERSON_LINK02 WHERE STAGE.ID_STAGE = STAGE_PERSON_LINK02.ID_STAGE
+
+      AND  STAGE.ID_STAGE = STAGE_PERSON_LINK02.ID_STAGE
+ AND  (DT_STAGE_CLOSE IS NULL  OR  STAGE.DT_STAGE_CLOSE = TO_DATE('12/31/4712',
+     'MM/DD/YYYY')) AND  (IND_ECS_VER IS NULL  OR  IND_ECS_VER = 'N') AND  STAGE_PERSON_LINK02.CD_STAGE_PERS_ROLE = 'PR' AND  ((STAGE.ID_STAGE
+     >= #STAGE_ID_LOWER AND  STAGE.ID_STAGE < #STAGE_ID_UPPER) OR  (STAGE.CD_STAGE = 'FAD' AND ((STAGE.ID_STAGE >= {PILOT_LOWER_BOUND} AND
+     STAGE.ID_STAGE < {PILOT_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_1_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_1_UPPER_BOUND}) OR (STAGE.ID_STAGE
+     >= {PHASE_2_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_2_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_3_LOWER_BOUND} AND STAGE.ID_STAGE 
+    < {PHASE_3_UPPER_BOUND})))) AND  STAGE_PERSON_LINK02.ID_PERSON = CASE_WORKER.ID_PERSON) > 0 Or (SELECT  (count( DISTINCT STAGE.ID_STAGE ))  FROM  STAGE,  STAGE_PERSON_LINK STAGE_PERSON_LINK01 WHERE STAGE.ID_STAGE = STAGE_PERSON_LINK01.ID_STAGE
+
+      AND  STAGE.ID_STAGE = STAGE_PERSON_LINK01.ID_STAGE
+ AND  (DT_STAGE_CLOSE IS NULL  OR  STAGE.DT_STAGE_CLOSE = TO_DATE('12/31/4712',
+     'MM/DD/YYYY')) AND  STAGE_PERSON_LINK01.CD_STAGE_PERS_ROLE = 'PR' AND  IND_ECS_VER = 'Y' AND  ((STAGE.ID_STAGE >= #STAGE_ID_LOWER AND
+      STAGE.ID_STAGE < #STAGE_ID_UPPER) OR  (STAGE.CD_STAGE = 'FAD'  AND ((STAGE.ID_STAGE >= {PILOT_LOWER_BOUND} AND STAGE.ID_STAGE < {PILOT_UPPER_BOUND})
+     OR (STAGE.ID_STAGE >= {PHASE_1_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_1_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_2_LOWER_BOUND} AND
+     STAGE.ID_STAGE < {PHASE_2_UPPER_BOUND}) OR (STAGE.ID_STAGE >= {PHASE_3_LOWER_BOUND} AND STAGE.ID_STAGE < {PHASE_3_UPPER_BOUND})))) AND
+      STAGE_PERSON_LINK01.ID_PERSON = CASE_WORKER.ID_PERSON) > 0)
+ And CODE_TYPE = 'CSPCUNTS'
+Order By UNIT00.CD_UNIT_REGION
+,      CCOUNT.DECODE
+,      UNIT00.NBR_UNIT
+,      CASE_WORKER.NM_EMPLOYEE_LAST
+End-Select
+ Next-Listing
+ Next-Listing  Need=17
+ If #1ROW_COUNT > 0
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #phase_closed_cnt (17,445) Bold  Edit 99999999na
+  Print #phase_validated_tot (17,229) Bold  Edit 99999999na
+  Print #phase_not_validated_tot (17,285) Bold  Edit 99999999na
+   Let #phase_completion=#phase_validated_tot / (#phase_validated_tot + #phase_not_validated_tot) * 100
+ Print #phase_completion (17,356) Edit 999 Bold 
+  Print '%'  (17,374)
+  Print 'Report Total'  (17,1) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+! Move &Master_Query_VALIDATED to #validated_cnt
+! Move &Master_Query_NOT_VALIDATED to #not_validated_cnt
+! If #validated_cnt + #not_validated_cnt > 0
+!   Let #completion = #validated_cnt / (#validated_cnt + #not_validated_cnt)* 100
+! End-If
+!
+! Move &Master_Query_VALIDATED to #validated_cnt
+! Move &Master_Query_NOT_VALIDATED to #not_validated_cnt
+! If #validated_cnt + #not_validated_cnt > 0
+!   Let #completion = #validated_cnt / (#validated_cnt + #not_validated_cnt) * 100
+! End-If
+!
+! Move &cnty_decode to $prev_cnty_decode
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_BeforeProc102
+ Next-Listing  SkipLines=1 Need=12
+  Let $cnty_label=&cnty_decode || ' County'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $cnty_label (11,21,22) Bold 
+   Position (+12,)
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc102
+ Let #cnty_completion = 100
+ If #cnty_validated_tot + #cnty_not_validated_tot > 0
+   Let #cnty_completion = #cnty_validated_tot / (#cnty_validated_tot + #cnty_not_validated_tot) * 100
+ End-If
+ Next-Listing  Need=30
+ Graphic (31,21,516) Horz-Line 10 
+ Position (32,1)
+  Let $cnty_tot_label=$prev_cnty_decode || ' County Total'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $cnty_tot_label (19,37,23) Bold 
+ Print #cnty_validated_tot (19,230) Bold  Edit 99999999na
+ Print #cnty_not_validated_tot (19,285) Bold  Edit 99999999na
+  Let #cnty_completion=#cnty_completion
+ Print #cnty_completion (19,356) Edit 999 Bold 
+ Print '%'  (19,374)
+ Print #cnty_closed_cnt (19,445) Bold  Edit 99999999na
+   Position (+12,)
+ Move 0 To #cnty_validated_tot
+ Move 0 To #cnty_not_validated_tot
+ Move 0 To #cnty_closed_cnt
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryNBR_UNIT_BeforeProc103
+ Next-Listing  Need=27
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &unit_nbr (12,65,2) Bold 
+ Print 'Unit'  (12,37) Bold 
+  Lookup EMPLOYEE_NAME &approver_id $approver_nm_full
+ Print $approver_nm_full (27,103,50) Bold 
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+ Print ' - '  (12,82) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Supervisor:'  (27,37) Bold 
+  Print &unit_spec (12,103,50) Bold 
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+ Print '         '  (22,405)
+   Position (+12,)
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryNBR_UNIT_AfterProc103
+ Let #unit_completion = 100
+ If #unit_validated_cnt + #unit_not_validated_cnt >0
+   Let #unit_completion = #unit_validated_cnt / (#unit_validated_cnt + #unit_not_validated_cnt) * 100
+ End-If
+ Next-Listing  Need=22
+ Graphic (23,37,501) Horz-Line 10 
+ Position (24,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #unit_validated_cnt (12,230) Bold  Edit 99999999na
+ Print #unit_closed_cnt (12,445) Bold  Edit 99999999na
+ Print 'Unit Total'  (12,52) Bold 
+ Print #unit_not_validated_cnt (12,285) Bold  Edit 99999999na
+  Let #unit_completion=#unit_completion
+ Print #unit_completion (12,356) Edit 999 Bold 
+ Print '%'  (13,374)
+   Position (+12,)
+ Move 0 To #unit_validated_cnt
+ Move 0 To #unit_closed_cnt
+ Move 0 To #unit_not_validated_cnt
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_UNIT_REGION_BeforeProc101
+ Move &region_cd to $prev_region_cd
+ Next-Listing  Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region'  (12,1) Bold 
+  Print &region_cd (12,41,3) Bold 
+   Position (+12,)
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_UNIT_REGION_AfterProc101
+Let #reg_completion = 100
+ If #reg_validated_tot + #reg_not_validated_tot > 0
+   Let #reg_completion = #reg_validated_tot / (#reg_validated_tot + #reg_not_validated_tot) * 100
+ End-If
+
+ Next-Listing  Need=27
+ Graphic (29,1,537) Horz-Line 20 
+ Position (31,1)
+  Let $reg_tot_label='Region ' || $prev_region_cd || ' Total '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $reg_tot_label (14,21,20) Bold 
+ Print #reg_validated_tot (14,230) Bold  Edit 99999999na
+ Print #reg_not_validated_tot (14,285) Bold  Edit 99999999na
+  Let #reg_completion=#reg_completion
+ Print #reg_completion (14,356) Edit 999 Bold 
+ Print '%'  (14,374)
+ Print #reg_closed_cnt (14,445) Bold  Edit 99999999na
+   Position (+12,)
+ Move 0 To #reg_validated_tot
+ Move 0 To #reg_not_validated_tot
+ Move 0 To #reg_closed_cnt
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=EMPLOYEE_NAME
+      Table=EMPLOYEE
+      Key=ID_PERSON
+      Return_Value='NM_EMPLOYEE_LAST || '', '' || NM_EMPLOYEE_FIRST'
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+End-Procedure
+
+Begin-Heading 60 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ Alter-Printer Font=4 Point-Size=10
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='D:\Documents and Settings\hong.van.t.vo\My Documents\Reports Layout\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Conversion Validation Status' (52,173,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (14,184,0)
+ Print $current-date (14,472) edit 'MM/DD/YYYY'
+ Print 'Produced On: ' (14,408,0)
+ Let $phase_dsp='Phase ' || $_phase
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $phase_dsp (75,245,7) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Open Converted Stages' (101,249,25) Bold 
+ Print 'Validated' (122,228,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Not$Validated' (122,293,9) Underline  Bold  Wrap 9 2 line-height=12 Keep-Top on=$
+ Print 'Closed Converted Stages' (100,410,25) Bold 
+ Print '%$Complete' (122,354,9) Underline  Bold  Wrap 9 2 line-height=12 Keep-Top on=$
+ Print '(validation not required)' (122,415,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Open Converted Stages' (14,249,25) Bold 
+ Print 'Validated' (35,228,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Not$Validated' (35,293,9) Underline  Bold  Wrap 9 2 line-height=12 Keep-Top on=$
+ Print 'Closed Converted Stages' (13,410,25) Bold 
+ Print '%$Complete' (35,354,9) Underline  Bold  Wrap 9 2 line-height=12 Keep-Top on=$
+ Print '(validation not required)' (35,415,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (14,492) '' ' of '
+ Last-Page (14,516) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

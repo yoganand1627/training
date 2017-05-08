@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="mobile-war" default="all" basedir=".">
+  <!-- Project-specific overrides. -->
+  <property file="build.properties"/>
+
+  <!-- Common properties. -->
+  <import file="../build-common.xml"/>
+
+  <property name="mobile-war.web" location="${mobile-war}/web"/>
+  <property name="mobile-war.web.meta-inf" location="${mobile-war.web}/META-INF"/>
+  <property name="mobile-war.web.meta-inf.manifest" location="${mobile-war.web.meta-inf}/MANIFEST.MF"/>
+  <property name="mobile-war.web.web-inf" location="${mobile-war.web}/WEB-INF"/>
+  <property name="mobile-war.web.web-inf.lib" location="${mobile-war.web.web-inf}/lib"/>
+
+  <property name="mobile-war.build.jsp" location="${mobile-war.build}/jsp"/>
+  <property name="mobile-war.build.generated" location="${mobile-war.build}/generated"/>
+  <property name="mobile-war.build.generated.document" location="${mobile-war.build.generated}/document"/>
+  <property name="mobile-war.build.generated.cfp" location="${mobile-war.build.generated}/cfp"/>
+  <property name="mobile-war.build.generated.spellcheck" location="${mobile-war.build.generated}/spellcheck"/>
+
+  <property name="mobile-war.exploded.meta-inf" location="${mobile-war.exploded}/META-INF"/>
+  <property name="mobile-war.exploded.web-inf" location="${mobile-war.exploded}/WEB-INF"/>
+  <property name="mobile-war.exploded.web-inf.classes" location="${mobile-war.exploded.web-inf}/classes"/>
+
+  <path id="build.path">
+    <path refid="app.base.path"/>
+    <path refid="lib.build.path"/>
+  </path>
+
+  <path id="war.path">
+    <fileset dir="${mobile-war.web.web-inf.lib}" includes="*.jar"/>
+    <path refid="build.path"/>
+  </path>
+
+  <!-- Task and macro for wsdl generation. -->
+  <macrodef name="ws-client-gen">
+    <attribute name="ws-name"/>
+    <attribute name="ws-jar-name"/>
+    <sequential>
+      <!-- Define the task here to make sure that it's defined when used. -->
+      <taskdef name="wscompile" classname="com.sun.xml.rpc.tools.ant.Wscompile" classpathref="sjsas.path"/>
+      <mkdir dir="${mobile-war.build.generated}/@{ws-name}"/>
+      <echo file="${mobile-war.build.generated}/@{ws-name}.config.xml" append="false"
+            message='&lt;configuration xmlns="http://java.sun.com/xml/ns/jax-rpc/ri/config"&gt;'/>
+      <echo file="${mobile-war.build.generated}/@{ws-name}.config.xml" append="true"
+            message='&lt;wsdl location="${mobile-war.src.conf}/@{ws-name}.wsdl" packageName="gov.georgia.dhr.dfcs.sacwis.ws.@{ws-name}"/&gt;'/>
+      <echo file="${mobile-war.build.generated}/@{ws-name}.config.xml" append="true" message='&lt;/configuration&gt;'/>
+      <wscompile fork="false" debug="${build.debug}" client="true" keep="true"
+                 config="${mobile-war.build.generated}/@{ws-name}.config.xml"
+                 base="${mobile-war.build.generated}/@{ws-name}" import="${mobile-war.src.conf}/@{ws-name}.wsdl">
+        <classpath refid="sjsas.path"/>
+      </wscompile>
+      <jar destfile="${mobile-war.web.web-inf.lib}/@{ws-jar-name}" basedir="${mobile-war.build.generated}/@{ws-name}"/>
+    </sequential>
+  </macrodef>
+
+  <!-- A macro usefule for updating properties files. -->
+  <macrodef name="update-sun-web-property">
+    <attribute name="property"/>
+    <attribute name="value"/>
+    <sequential>
+      <replaceregexp flags="m" match="^@{property}=.*$" replace="@{property}=@{value}" file="${}"/>
+    </sequential>
+  </macrodef>
+
+  <target name="clean" description="Removes files used to build the main war.">
+    <!-- Do not delete the whole mobile-war/build directory becuase IDEs use it.. -->
+    <delete failonerror="false">
+      <fileset dir="${mobile-war.build}" includes="*"/>
+    </delete>
+    <delete dir="${mobile-war.build.test}"/>
+    <delete dir="${mobile-war.exploded}"/>
+    <delete file="${mobile-war.web.meta-inf.manifest}"/>
+    <delete file="${mobile-war.ear}"/>
+  </target>
+
+  <target name="clean.all" depends="clean" description="Removes all build artifacts.">
+    <delete dir="${mobile-war.build}"/>
+  </target>
+
+  <!-- Note: This depends on the ant-tasks target because we need the override-properties task defined there later on. -->
+  <target name="prepare" depends="ant-tasks">
+    <mkdir dir="${mobile-war.build}"/>
+    <mkdir dir="${mobile-war.build.test}"/>
+    <mkdir dir="${mobile-war.build.test.classes}"/>
+    <mkdir dir="${mobile-war.build.jsp}"/>
+    <mkdir dir="${mobile-war.exploded}"/>
+    <mkdir dir="${mobile-war.exploded.web-inf}"/>
+    <mkdir dir="${mobile-war.exploded.web-inf.classes}"/>
+
+    <!-- Defined this here because all directories need to exist. -->
+    <path id="main.test.path">
+      <!-- Add configuration directory. -->
+      <pathelement location="${test}/"/>
+      <pathelement location="${service.test.conf}"/>
+      <pathelement location="${mobile-war.build.test.classes}"/>
+      <!-- Put the original configuration files first in the path so we can test using those. -->
+      <pathelement location="${mobile-war.src.conf}"/>
+      <pathelement location="${mobile-war.exploded.web-inf.classes}"/>
+      <pathelement location="${service.build.test.classes}"/>
+      <pathelement location="${service.src.conf}"/>
+      <!-- Only needed becasue the mock data source is used for the config test. -->
+      <pathelement location="${core.build.test.classes}"/>
+      <dirset refid="hibernate.exploded.dirset"/>
+      <path refid="base.test.libs"/>
+      <path refid="war.path"/>
+      <!-- // TODO: This is only necessary for the EJBs test, which should probaly be done in the ejbs project. -->
+      <fileset refid="lib.service-ws.fileset"/>
+    </path>
+
+    <!-- This should probably be elsewhere. -->
+    <mkdir dir="${mobile-war.web.web-inf.lib}"/>
+
+    <!-- Determine whether to rebuild the web service client jars. -->
+    <uptodate property="mobile-war.wsclient.uptodate">
+      <srcfiles dir="${mobile-war.src.conf}" includes="*.wsdl"/>
+      <mapper>
+        <mapper type="glob" from="cfp.wsdl" to="${mobile-war.web.web-inf.lib}/cfp_service.jar"/>
+        <mapper type="glob" from="document.wsdl" to="${mobile-war.web.web-inf.lib}/doc_service.jar"/>
+        <mapper type="glob" from="spellcheck.wsdl" to="${mobile-war.web.web-inf.lib}/spck_service.jar"/>
+      </mapper>
+    </uptodate>
+    <condition property="mobile-war.wsclient.skip">
+      <and>
+        <isset property="mobile-war.wsclient.uptodate"/>
+        <not>
+          <istrue value="${mobile-war.wsclient.force}"/>
+        </not>
+      </and>
+    </condition>
+
+    <!--Determine whether or not to include the OLH. -->
+    <condition property="olh.skip.flag">
+      <and>
+        <isset property="olh"/>
+        <isfalse value="${olh}"/>
+      </and>
+    </condition>
+  </target>
+
+  <target name="wscompile" unless="mobile-war.wsclient.skip" depends="prepare"
+          description="Rebuilds WS Client jars from WSDL.">
+    <ws-client-gen ws-name="cfp" ws-jar-name="cfp_service.jar"/>
+    <ws-client-gen ws-name="document" ws-jar-name="doc_service.jar"/>
+    <ws-client-gen ws-name="spellcheck" ws-jar-name="spck_service.jar"/>
+  </target>
+
+  <target name="compile" depends="wscompile" description="Compiles the web-app classes.">
+    <javac source="1.5" target="1.5" debug="${build.debug}"
+           srcdir="${mobile-war.src.java}" destdir="${mobile-war.exploded.web-inf.classes}" classpathref="war.path">
+      <compilerarg value="-Xlint:deprecation"/>
+      <!--Too many warnings: <compilerarg value="-Xlint:unchecked"/>-->
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation"/>
+      <include name="**/*.java"/>
+    </javac>
+    <path id="jsp.path">
+      <pathelement location="${mobile-war.exploded.web-inf.classes}"/>
+      <path refid="war.path"/>
+      <path refid="sjsas.path"/>
+    </path>
+    <taskdef name="jasper2" classname="org.apache.jasper.JspC" classpathref="jsp.path"/>
+    <!-- Note: These options should match sun-web.xml. -->
+    <jasper2 uriroot="${mobile-war.web}" outputDir="${mobile-war.build.jsp}" verbose="0" trimSpaces="${jsp.trimSpaces}"
+             classDebugInfo="true" poolingEnabled="false" javaEncoding="Windows-1252" xpoweredBy="false"/>
+    <javac source="1.5" target="1.5" debug="${build.debug}"
+           srcdir="${mobile-war.build.jsp}" destdir="${mobile-war.exploded.web-inf.classes}">
+      <classpath>
+        <pathelement location="${mobile-war.exploded.web-inf.classes}"/>
+        <path refid="war.path"/>
+      </classpath>
+      <compilerarg value="-Xlint:deprecation"/>
+      <!--Too many warnings: <compilerarg value="-Xlint:unchecked"/>-->
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation"/>
+      <include name="**/*.java"/>
+    </javac>
+    <javac source="1.5" target="1.5" debug="${build.debug}"
+           srcdir="${mobile-war.test.java}" destdir="${mobile-war.build.test.classes}" classpathref="main.test.path">
+      <compilerarg value="-Xlint:deprecation"/>
+      <!--Too many warnings: <compilerarg value="-Xlint:unchecked"/>-->
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation"/>
+      <include name="**/*.java"/>
+    </javac>
+  </target>
+
+  <target name="package.olh" depends="compile" unless="olh.skip.flag">
+    <mkdir dir="${mobile-war.exploded}/OLH"/>
+    <copy todir="${mobile-war.exploded.web-inf.classes}" file="${mobile-war.docs}/BSSCDefault.properties"/>
+    <unzip src="${mobile-war.docs}/OLH.zip" dest="${mobile-war.exploded}/OLH"/>
+  </target>
+
+  <target name="package.exploded" depends="package.olh" description="Jars  the core classes.">
+    <pathconvert refid="app.base.path" property="mobile-war-manifest-class-path" dirsep="/" pathsep=" ">
+      <mapper type="flatten"/>
+    </pathconvert>
+    <manifest file="${mobile-war.web.meta-inf.manifest}">
+      <attribute name="Class-Path" value="${mobile-war-manifest-class-path}"/>
+    </manifest>
+    <!-- Copy everything but classes. -->
+    <copy todir="${mobile-war.exploded}" preservelastmodified="true">
+      <fileset dir="${mobile-war.web}">
+        <exclude name="WEB-INF/sun-web.xml"/>
+        <exclude name="grnds-docs/images/metaphor/SHINES_word_header_*.jpg"/>
+      </fileset>
+    </copy>
+
+    <copy file="${mobile-war.web.web-inf}/sun-web.xml" todir="${mobile-war.exploded.web-inf}" preservelastmodified="true">
+      <filterchain>
+        <replacetokens>
+          <token key="DEVELOPMENT" value="${jsp.development}"/>
+          <token key="MAPPED_FILE" value="${jsp.mappedfile}"/>
+          <token key="TRIM_SPACES" value="${jsp.trimSpaces}"/>
+          <token key="USE_PRECOMPILED" value="${jsp.use-precompiled}"/>
+        </replacetokens>
+      </filterchain>
+    </copy>
+    <!-- Copy classes. -->
+    <copy todir="${mobile-war.exploded.web-inf.classes}" failonerror="true" preservelastmodified="true">
+      <!-- Exclude wsdl files. -->
+      <fileset dir="${mobile-war.src.conf}" excludes="*.wsdl"/>
+    </copy>
+    <!-- Copy sacwis.properties separately so it can be updated; always overwrite because the properties file might change. -->
+    <copy todir="${mobile-war.exploded.web-inf.classes}" file="${mobile-war.src.conf}/sacwis.properties" overwrite="true">
+      <filterchain>
+        <override-properties overrideproperties="${environment.overrirdes}"/>
+      </filterchain>
+    </copy>
+  </target>
+
+  <target name="package.ear" depends="package.exploded" description="Jars  the core classes.">
+    <pathconvert refid="app.base.path" property="mobile-war-manifest-class-path" dirsep="/" pathsep=" ">
+      <mapper type="flatten"/>
+    </pathconvert>
+    <war basedir="${mobile-war.exploded}" destfile="${mobile-war.ear}"
+         webxml="${mobile-war.exploded.web-inf}/web.xml">
+      <exclude name="META-INF/**"/>
+      <exclude name="WEB-INF/**"/>
+      <metainf dir="${mobile-war.exploded.meta-inf}" excludes="MANIFEST.MF"/>
+      <webinf dir="${mobile-war.exploded.web-inf}" excludes="web.xml">
+        <!-- Excluded the generated java files because they just take up space. -->
+        <exclude name="**/*.java"/>
+      </webinf>
+      <manifest>
+        <attribute name="Class-Path" value="${mobile-war-manifest-class-path}"/>
+      </manifest>
+    </war>
+  </target>
+
+  <target name="test.spring" depends="compile" description="Tests the Spring configuration.">
+    <junit dir="${mobile-war.build}" printsummary="false" haltonfailure="${junit.haltonfailure}" fork="true"
+           haltonerror="true">
+      <jvmarg value="-Xmx512m"/>
+      <jvmarg value="-Djava.util.logging.config.file=${test}/logging.properties"/>
+      <classpath refid="main.test.path"/>
+      <formatter type="xml" usefile="true"/>
+      <formatter type="plain" usefile="false"/>
+      <test name="gov.georgia.dhr.dfcs.sacwis.service.SpringMainConfigurationTest" haltonerror="true"
+            haltonfailure="true" todir="${build.junit-reports}"/>
+    </junit>
+  </target>
+
+  <target name="test.fast" depends="test.spring" description="Runs only tests that can be executed quickly."/>
+
+  <target name="update" depends="package.exploded" description="Incremental build for development."/>
+
+  <target name="all" depends="clean,package.exploded,test.fast"
+          description="Cleans, builds and packages to the exploded ear directory."/>
+
+  <target name="dist" depends="all,package.ear"
+          description="Cleans, builds and packages to the ear directory."/>
+</project>

@@ -1,0 +1,400 @@
+!*******************************************************************************
+!Target Case Management Claim Form Report    				       *
+!*******************************************************************************
+!*******************************************************************************
+! PROGRAM NAME:         TCM06RRL.sqr					       *
+!									       *
+! PROGRAM LOCATION:    	/caps/users/parchmjw/work/sqr			       *
+!									       *
+!									       *
+! DATE:            	06/27/96					       *
+!									       *
+! PROGRAMMER NAME:     	John Parchman					       *
+!									       *
+! PROGRAM DESCRIPTION:	The TCM Claim Form Report will list all TCM Medicaid   *
+!			eligible cases which had a valid TCM contact for the   *
+!                       reported monthe by region. It will also indicate       *
+!                       which of these eligible contacts have been claimed     *
+!                       by MHMR. This report will read a flat file and format
+!                       it. The report input are limited to the name of the
+!                       file to be read.
+!*******************************************************************************
+!*******************************************************************************
+! PROGRAM MODIFICATION SECTION
+! ----------------------------
+!
+!   DATE     PROGRAMMER                       MODIFICATION
+! ---------  ----------------------  -------------------------------------------
+! 06/27/96   J. Parchman             Initial Programming
+! 01/16/98   J. Parchman             SIR 14417 - Add Case ID, Person ID, Contact
+!                                    ID, Stage and Program to report output.
+!*******************************************************************************
+!*******************************************************************************
+! REPORT PROCESSING SECTION						       *
+!									       *
+!       This procedure defines the beginning and end of the report processing. *
+!       Housekeeping initializes all report values, Processing processes the   *
+!       body of the report, and Wrap-Up prints the end of report message and   *
+!       other wrap up functions.					       *
+!*******************************************************************************
+
+BEGIN-REPORT
+
+	do HOUSEKEEPING
+	if $continue_flag = 'Y'
+	   do PROCESS-REPORT        
+	end-if
+	do WRAP-UP
+
+END-REPORT
+
+!*******************************************************************************
+!  SETUP-SECTION							       *
+!									       *
+!       This section sets up common parameters including page size and printer *
+!       as well as input parameters.					       *
+!*******************************************************************************
+BEGIN-SETUP
+
+	#INCLUDE 'setup01a.sqc'            	! control codes for landscape   
+					   	! on batch reports             
+	ASK INPUT_FILE	! name of the file to be inputed if the SQR report does
+			! not reside in the same directory as the file to be 
+			! read then the full path must be given
+
+END-SETUP
+
+!*******************************************************************************
+! HEADER								       *
+!									       *
+!       These commands will be processed every time SQR writes a page. They    *
+!       include the report title, date, time, page number, report id, and      *
+!       column headers. XXX lines are reserved to print the heading at the     *
+!       top of each page. This includes blank lines. A common setup header     *
+!       has been created called HEADER99.sqc for landscape or portrait reports *
+!*******************************************************************************
+
+BEGIN-HEADING 5
+
+  print 'TITLE XIX TARGETED CASE MANAGEMENT' 		(+1) center   bold
+  print 'MONTHLY UNIT OF SERVICE CLAIM REPORT'          (+1) center   bold
+  move 'FOR THE MONTH OF ' to $rpt_text
+  concat $mth_yr with $rpt_text
+  print $rpt_text					(+1) center   bold
+
+END-HEADING
+
+!*******************************************************************************
+! FOOTER								       *
+!									       *
+!       These commands will be processed every time SQR writes a page. They    *
+!       include a footer that must be in place in all pages of some reports.   *
+!*******************************************************************************
+
+BEGIN-FOOTING 1
+
+  print 'TX Dept. of Protective and Regulatory Services' (1,) center
+  print 'Printed: '       (+0,1)     
+  date-time () 'MM/DD/YY'   &date_printed
+  print &date_printed 	  ()       
+  print 'PAGE: '          (+0,159) 
+  page-number             ()
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS      : OPEN-FILE                                              *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+   move '{INPUT_FILE}' to $input_file
+
+   DO OPEN-FILE
+
+   if $continue_flag = 'Y'
+
+      if #end-file
+         PRINT 'ERROR READING FILE'		(+4) center
+	 let $printout = 'FILE '||$input_file||' HAS NO HEADER RECORD '     
+	 PRINT $printout				(+1) center
+	 move 'N' to $continue_flag 
+	 let #return-status = 33    
+      end-if   
+ 
+   end-if
+
+   move '"*" Indicates case claimed by MHMR' to $mhmr_message
+   move '****END OF REPORT****' to $end_of_report 	! Initialize Working
+							! Storage constants
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   OPEN-FILE                                                               *
+!                                                                           *
+!       This procedure will open the file to be read and if there is a      *
+!       problem it will print it in the report and finish the processing.   *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE OPEN-FILE
+
+OPEN $input_file AS 1 FOR-READING
+	RECORD=262 status=#file_status       
+
+if #file_status = 0
+	move 'Y' to $continue_flag
+else
+        PRINT 'ERROR OPENING FILE'		(+4) center
+	let $printout = 'FILE '||$input_file||' DOES NOT EXIST' 
+	PRINT $printout				(+1) center
+	let #return-status = 30    
+	move 'N' to $continue_flag
+	move 'N' to $close_file
+end-if
+
+END-PROCEDURE OPEN-FILE
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!      This procedure wraps up the report.  It will close the file if open  *
+!      and print a final end of report message                              *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP          
+
+if $close_file = 'N'    
+else
+	CLOSE 1
+end-if
+
+print $mhmr_message			(+4) center
+print $end_of_report 			(+1) center
+
+END-PROCEDURE WRAP-UP                          
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!       This procedure will call the meat of the report, calling for page   *
+!       and other necessary processes to be executed                        *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : PRINT-LINE                                             *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT
+
+   move 'L2' to $line_type
+   move 0 to #count
+
+   WHILE $line_type = 'L2'        
+	read 1 into $body:262
+        let #count = #count +1 
+	
+        if #end-file
+	   break
+        end-if
+
+	if #count = 1
+	   if $line_type     = 'L2'
+	        let $rpt_yr    = substr($body,37,4)
+	        let $rpt_mth   = substr($body,41,2)
+		let $case_name = substr($body,159,25)
+		let $case_id   = substr($body,1,16)
+		let $person_id = substr($body,43,16)
+		let $wkr_bjn   = substr($body,255,8)
+		let $dhs_id    = substr($body,99,9)
+		let $ind       = substr($body,156,1)
+		let $type      = substr($body,74,4)
+		let $loc       = substr($body,81,3)
+		let $contact_id = substr($body,140,16)
+		let $stage      = substr($body,63,3)
+		let $program    = substr($body,59,3)
+
+		if $loc = '   '
+		   let $loc = 'PRS'
+		end-if
+
+		let $wkr_name  = substr($body,184,25)
+		let $wkr_unit  = substr($body,157,2)
+		let $wkr_reg   = substr($body,66,2)
+
+		DO GET-SERVICE-LOCATION
+		DO PRINT-HEADING
+		DO PRINT-LINE
+
+           end-if
+	else
+	   if $line_type = 'L2'
+	        let $rpt_yr     = substr($body,37,4)
+	        let $rpt_mth    = substr($body,41,2)
+		let $case_name  = substr($body,159,25)
+		let $case_id    = substr($body,1,16)
+		let $person_id  = substr($body,43,16)
+		let $wkr_bjn    = substr($body,255,8)
+		let $dhs_id     = substr($body,99,9)
+		let $ind        = substr($body,156,1)
+		let $type       = substr($body,74,4)
+		let $loc        = substr($body,81,3)
+		let $contact_id = substr($body,140,16)
+		let $stage      = substr($body,63,3)
+		let $program    = substr($body,59,3)
+
+		if $loc = '   '
+		   let $loc = 'PRS'
+		end-if
+
+		let $wkr_name  = substr($body,184,25)
+		let $wkr_unit  = substr($body,157,2)
+		let $wkr_reg   = substr($body,66,2)
+
+		DO GET-SERVICE-LOCATION
+		DO PRINT-LINE
+
+	   end-if
+	end-if
+	let $mth_yr = $rpt_mth||'/'||$rpt_yr
+   end-while
+
+END-PROCEDURE PROCESS-REPORT
+
+!*******************************************************************************
+! GET-SERVICE-LOCATION                                                         *
+!                                                                              *
+!       This procedure will retrieve the service and location decodes          *
+!                                                                              *
+!       CALLED BY  : PROCESS-REPORT                                            *
+!       CALLS      : NONE                                                      *
+!*******************************************************************************
+
+BEGIN-PROCEDURE GET-SERVICE-LOCATION
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CCNTPURP.decode
+	move &CCNTPURP.decode		to	$purpose
+
+CCNCTLOC.decode
+	move &CCNCTLOC.decode		to	$location
+
+FROM	CCNTPURP	CCNTPURP,
+	CCNCTLOC	CCNCTLOC
+
+WHERE	CCNTPURP.CODE(+) = $type
+AND	CCNCTLOC.CODE(+) = $loc
+
+END-SELECT
+
+END-PROCEDURE GET-SERVICE-LOCATION
+
+!*******************************************************************************
+! PRINT-HEADING                                                                *
+!                                                                              *
+!       This procedure will print the heading                                  *
+!                                                                              *
+!       CALLED BY  : PROCESS-REPORT                                            *
+!       CALLS      : NONE                                                      *
+!*******************************************************************************
+
+BEGIN-PROCEDURE PRINT-HEADING
+
+print 'REG/UNIT'              (+1,1)   on-break print=change/top-page
+print 'CASE NAME'             (+0,10)  on-break print=change/top-page
+print 'CASE ID'               (+0,36)  on-break print=change/top-page
+print 'PERSON ID'             (+0,53)  on-break print=change/top-page
+print 'MEDICAID #'            (+0,70)  on-break print=change/top-page
+print 'CASE WORKER'           (+0,81)  on-break print=change/top-page
+print 'BJN'                   (+0,106) on-break print=change/top-page
+print 'SERVICE'               (+0,115) on-break print=change/top-page
+print 'LOCATION'	      (+0,135) on-break print=change/top-page
+print 'CONTACT ID'            (+0,148) on-break print=change/top-page
+print 'STG'                   (+0,164) on-break print=change/top-page
+print 'PGM'                   (+0,168) on-break print=change/top-page
+print '-'		      (+1,1,170) fill
+END-PROCEDURE PRINT-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-LINE                                                              *
+!                                                                           *
+!       This procedure will print one detail line.                          *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-HEADING                                          *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-LINE
+
+if #current-line >= 57
+   new-page
+   do PRINT-HEADING
+end-if
+
+if $ind = '1'
+   print '*'				(+2,1)
+else
+   print ' '				(+2,1)
+end-if
+
+print $wkr_reg                          (+0,2)
+print '/'				(+0,4)
+print $wkr_unit     		        (+0,5)
+print $case_name                        (+0,10)
+print $case_id                          (+0,36) edit 8888888888888888
+print $person_id                        (+0,53) edit 8888888888888888
+print $dhs_id                           (+0,70)	
+print $wkr_name                         (+0,81)
+print $wkr_bjn 			       	(+0,106)
+print $purpose         		       	(+0,115)
+print $location				(+0,135)
+print $contact_id                       (+0,148) edit 8888888888888888
+print $stage				(+0,164)
+print $program				(+0,168)
+END-PROCEDURE PRINT-LINE
+
+!*******************************************************************************
+! SqlErrorHandle 							       *
+!               							       *
+!      This section handles formatting of messages for SQL errors.	       *
+!      When an SQL error is encounterd, the program will write to	       *
+!      the log file, program processing does not stop for SQL errors.	       *
+!                                                                   	       *
+!  CALLS:  None                                                    	       *
+!*******************************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'     	(+1,2)
+  print $error                                 		(+1,2)
+  print 'ERROR: SQL error halted loader processing' 	(+0)
+  print $error                                 		(+1,2)
+  print 'SQL Error: '                          		(+0)
+  print $sql-error                             		(+0)
+  print $error                                 		(+1,2)
+  print 'SQL Status: '                         		(+0)
+  print #sql-status                            		(+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ExtDocumentation" table="EXT_DOCUMENTATION" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idExtDocumentation" type="integer" unsaved-value="0">
+      <column name="ID_EXT_DOCUMENTATION" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_EXT_DOCUMENTATION</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="dtExtDocObtained" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_EXT_DOC_OBTAINED" length="7"/>
+    </property>
+    <property name="txtExtDocDetails" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_EXT_DOC_DETAILS" length="300"/>
+    </property>
+    <property name="cdExtDocType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EXT_DOC_TYPE" length="2"/>
+    </property>
+    <property name="cdDocClass" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_DOC_CLASS" length="3"/>
+    </property>
+    <property name="txtExtDocLocation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_EXT_DOC_LOCATION" length="80"/>
+    </property>
+    <property name="cdExtDocSort" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EXT_DOC_SORT" length="2"/>
+    </property>
+    <property name="indExtDocSigned" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_EXT_DOC_SIGNED" length="1"/>
+    </property>
+    <property name="indNaChecked" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_NA_CHECKED" length="1"/>
+    </property>
+    <property name="dtExtDocUploaded" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_EXT_DOC_UPLOADED" length="7"/>
+    </property>
+    <property name="dtExtDocAdded" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_EXT_DOC_ADDED" length="7"/>
+    </property>
+    <property name="txtFileName" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_FILE_NAME" length="300"/>
+    </property>
+    <property name="txtFormatType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_FORMAT_TYPE" length="80"/>
+    </property>
+    <property name="blExtDoc" type="binary" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="BL_EXT_DOC"/>
+    </property>
+    <property name="ucmDId" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="UCM_DID" length="20"/>
+    </property>
+    <property name="isUcmFile" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IS_UCM_FILE" length="1"/>
+    </property>
+    <property name="indICPCDoc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_ICPC_DOC" length="1"/>
+    </property>
+    <bag name="extDocPerLinks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EXT_DOCUMENTATION" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ExtDocPersonLink" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

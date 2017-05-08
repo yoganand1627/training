@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ChildPlanItem" table="CHILD_PLAN_ITEM" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idChildPlanItem" type="integer" unsaved-value="0">
+      <column name="ID_CHILD_PLAN_ITEM" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_CHILD_PLAN_ITEM</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CHILD_PLAN_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdCspItemNeed" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CSP_ITEM_NEED" length="3"/>
+    </property>
+    <property name="cdCspItemService" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CSP_ITEM_SERVICE" length="5"/>
+    </property>
+    <property name="cdCspItemTask" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CSP_ITEM_TASK" length="5"/>
+    </property>
+    <property name="txtCspItemMethodEval" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_CSP_ITEM_METHOD_EVAL" length="80"/>
+    </property>
+    <property name="txtCspItemSvcFreq" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_CSP_ITEM_SVC_FREQ" length="25"/>
+    </property>
+    <property name="txtCspItemTaskFreq" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_CSP_ITEM_TASK_FREQ" length="25"/>
+    </property>
+    <property name="txtCspService" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CSP_SERVICE" length="300"/>
+    </property>
+    <property name="txtCspTask" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CSP_TASK" length="300"/>
+    </property>
+  </class>
+</hibernate-mapping>

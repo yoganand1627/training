@@ -1,0 +1,261 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Feb 22 10:50:22 2012 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\StatewideModify\PeriodFinal\PeriodFinalFeb22\PeriodFinalizationSummary00.sqr
+! Format  : Tabular
+! Username: JPOTTAMMEL
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+ Declare-chart InstantChart1
+  chart-size=(527,407)
+ End-Declare
+ Declare-Variable
+  Date $start_date
+  Date $end_date
+ End-Declare
+
+End-Setup
+#define INSTANT_CHART_MAX_COLS 13! to display a maximum 12 months()accept 13 months, error out at 14 months
+
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=120    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definition:' (11,1,0) Underline  Bold 
+ Print 'This report displays the number of children finalized with adoption where the date of finalization is within the reporting period of up to 12 months. The number displays for each county by the month in the reporting period.' (29,12,150) Wrap 150 5 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=12   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+
+#define INSTANT_CHART_MAX_ROWS  500
+#define INSTANT_CHART_COUNT          1
+#define INSTANT_CHART_TEMPLATES      1
+#include 'inschart.sqi'
+
+Begin-Program
+ Position (1,1)
+ Do Get_Date_Range
+ Do Get-Input
+ If #months <12 ! 12 nmonths
+ Do Master_Query
+ If 1 > 1
+ Do Master_Query_Charts
+ Else
+ Do Master_Query_Charts_2
+ End-If
+ Else
+  ! Error message
+  Let $invalid_date_range = 'Date range exceeding 12 months. Please re-enter a date range of maximum of 12 months.'
+ End-If
+End-Program
+! Required Date Range
+Begin-Procedure Get_Date_Range
+Input $_dt_start 'Start Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+If IsNull($_dt_start) or IsBlank($_dt_start)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Input $_dt_end 'End Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+If IsNull($_dt_end) or IsBlank($_dt_end)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Let $invalid_date_range = ''
+Let $start_date = strtodate($_dt_start, 'mm/dd/yyyy')
+Let $end_date = strtodate($_dt_end, 'mm/dd/yyyy')
+Let #months = datediff($end_date, $start_date, 'month')
+End-Procedure
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I401_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I401_CD_STAGE_REGION) or IsBlank($_I401_CD_STAGE_REGION) or ($_I401_CD_STAGE_REGION) = '0'
+  Let $where_clause401 = 'CD_STAGE_REGION is not null'
+  Let $region_selected = 'N'
+Else
+  Let $_region = $_I401_CD_STAGE_REGION
+  Let $_I401_CD_STAGE_REGION = '''' || $_I401_CD_STAGE_REGION || ''''
+  Let $brb_tmp = 'CD_STAGE_REGION'
+  Let $where_clause401 = $brb_tmp  || ' = ' || $_I401_CD_STAGE_REGION
+  Let $region_selected = 'Y'
+End-if
+! -----------------------------
+Input $_I402_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_I402_CD_STAGE_CNTY) or IsBlank($_I402_CD_STAGE_CNTY) or ($_I402_CD_STAGE_CNTY) = '0'
+  Let $where_clause402 = 'CD_STAGE_CNTY is not null'
+  Let $county_selected = 'N'
+Else
+  Let $_I402_CD_STAGE_CNTY = '''' || $_I402_CD_STAGE_CNTY || ''''
+  Let $brb_tmp = 'CD_STAGE_CNTY'
+  Let $where_clause402 = $brb_tmp  || ' = ' || $_I402_CD_STAGE_CNTY
+  Let $county_selected = 'Y'
+End-If
+
+If $county_selected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From  CCOUNT
+Where CCOUNT.CODE = [$_I402_CD_STAGE_CNTY]
+End-Select
+  Move &_County_Decode to $_header_disp
+Else
+  If $region_selected = 'Y'
+    Let $_header_disp = 'Region ' || $_region
+  Else 
+    Let $_header_disp = 'Statewide'
+  End-If
+End-If
+End-Procedure
+
+
+Begin-Procedure Master_Query_Charts_2
+ Next-Listing Need=300
+ Position (13, 1)
+ Columns 1 70 117 165 213 260 308 356 404 452 500 548 596 644 692 720
+
+Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Do InstantChartSort(1) 
+! Do InstantChartCrossTab(1, 13, 'SKIP-14;ROWMASK-xxxxxxxxxxxxx;COLMASK-xxxxxxxx;CELLMASK-99999999;TOTALMASK-99999999;COLTXT-TOTAL;COLBOLD;ROWTXT-TOTAL;ROWBOLD;SHADE-0')
+ Print 'Reg/Cnty' (21,7,0)Bold
+ Do InstantChartCrossTab(1, 13, 'SKIP-14;ROWMASK-xxxxxxxxxxxxx;COLMASK-xxxxxxxx;CELLMASK-99999999;TOTALMASK-99999999;COLTXT-TOTAL;COLBOLD;ROWTXT-TOTAL;ROWBOLD;SHADE-0')
+
+ Use-Column 0
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do InstantChartInit(1)
+ Do InstantChartSetAggregationFunction(1,'sum')
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select
+CAPS.CCOUNT.DECODE &Master_Query_CAPS.CCOUNT.DECODE
+(to_char(   LEGAL_STATUS.DT_LEGAL_STAT_STATUS_DT  , 'yyyy/mm' )) &final_month
+(count ( distinct  LEGAL_STATUS.ID_PERSON  )) &child_count
+CAPS.CCNTYREG.DECODE &Master_Query_CAPS.CCNTYREG.DECODE
+(CCNTYREG.DECODE || ' ' || CCOUNT.DECODE) &regCntyname
+ Do InstantChartBarPivot(1, &regCntyname, &final_month, &child_count) 
+ Add 1 To #1ROW_COUNT
+From  CAPS.CCOUNT, CAPS.STAGE
+,      CAPS.LEGAL_STATUS, CAPS.CCNTYREG
+      Where CAPS.CCOUNT.CODE = CAPS.STAGE.CD_STAGE_CNTY
+            And CAPS.LEGAL_STATUS.ID_CASE = CAPS.STAGE.ID_CASE
+            And CAPS.STAGE.CD_STAGE_CNTY = CAPS.CCNTYREG.CODE
+            And CAPS.STAGE.CD_STAGE_REGION = CAPS.CCNTYREG.DECODE
+ And DT_LEGAL_STAT_STATUS_DT >= to_date($_dt_start, 'mm/dd/yyyy')
+ And DT_LEGAL_STAT_STATUS_DT < to_date($_dt_end, 'mm/dd/yyyy') + 1
+ And exists(select * from legal_status_view lsv where lsv.id_person =  LEGAL_STATUS.ID_PERSON  and lsv.IN_DFCS_CUSTODY = 'Y' and lsv.DT_LEGAL_STAT_STATUS_DT
+     <  LEGAL_STATUS.DT_LEGAL_STAT_STATUS_DT  )
+ And CD_LEGAL_STAT_STATUS = 'NAF'
+ And CD_STAGE IN ('ADO')
+ And [$where_clause401]
+ And [$where_clause402]
+Group By CAPS.CCOUNT.DECODE
+,      (to_char(   LEGAL_STATUS.DT_LEGAL_STAT_STATUS_DT  , 'yyyy/mm' ))
+,      CAPS.CCNTYREG.DECODE
+,      (CCNTYREG.DECODE || ' ' || CCOUNT.DECODE)
+Order By (to_char(   LEGAL_STATUS.DT_LEGAL_STAT_STATUS_DT  , 'yyyy/mm' ))
+End-Select
+ Next-Listing
+ Next-Listing  SkipLines=12
+ If #1ROW_COUNT > 0
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+
+Begin-Procedure Master_Query_Charts
+ Next-Listing Need=75
+ Position (10, 2)
+   Columns 4 84 164 244 324 404 484 564 644 720
+   Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Do InstantChartCrossTab(1, 7, 'SKIP-13;ROWMASK-xxxxxxxxxxx;COLMASK-xxxxxxxxxxx;CELLMASK-99999999.99;TOTALMASK-99999999.99;COLTXT-TOTAL;COLBOLD;ROWTXT-TOTAL;ROWBOLD;SHADE-0')
+ Use-Column 0
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 12 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Let $Date_Range=$_dt_start || ' - ' || $_dt_end
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $Date_Range (61,308,23) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Print 'Division of Children and Family Services' (19,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Period Finalization Summary' (41,266,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (19,589,0)
+ Print $current-date (19,652) edit 'MM/DD/YYYY'
+ Let $invalid_date_range=$invalid_date_range
+ Print $invalid_date_range (99,146,85)
+ Let $headerDisp=$_header_disp
+ Print $headerDisp (77,337,15) Bold 
+ Alter-Printer Font=4 Point-Size=1    ! [SQR.INI] 4=Arial,proportional
+ Print '  ' (114,1,0) Bold 
+ Else   ! put a non combined page header
+ Print '  ' (3,1,0) Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Last-Page (15,696) 
+ Page-Number (15,655) '' ' of '
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

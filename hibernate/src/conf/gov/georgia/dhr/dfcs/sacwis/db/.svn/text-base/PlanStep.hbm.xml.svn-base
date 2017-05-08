@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.PlanStep" table="PLAN_STEP" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idPlanStep" type="integer" unsaved-value="0">
+      <column name="ID_PLAN_STEP" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_PLAN_STEP</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="planGoal" class="gov.georgia.dhr.dfcs.sacwis.db.PlanGoal" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PLAN_GOAL" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="txtPriority" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_PRIORITY" length="30"/>
+    </property>
+    <property name="txtRspns" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_RSPNS" length="30"/>
+    </property>
+    <property name="txtStep" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_STEP" length="1000" not-null="true"/>
+    </property>
+    <property name="txtStepComm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_STEP_COMM" length="1000"/>
+    </property>
+    <property name="cdStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STATUS" length="3"/>
+    </property>
+    <property name="dtAntComp" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ANT_COMP" length="7"/>
+    </property>
+    <property name="dtActComp" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ACT_COMP" length="7"/>
+    </property>
+    <property name="cdStepCode" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STEP_CODE" length="3"/>
+    </property>
+    <property name="indSelected" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_SELECTED" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

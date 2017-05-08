@@ -1,0 +1,292 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Mon Jan 25 10:56:50 2010 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Reports\SQR\CasesWithOverdueHealthchecks.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Page-Number (503,670) '' ' of '
+ Last-Page (503,697) 
+ Print 'Upon entering care, all foster children in DFCS custody who are $    - under 18 years old are required to have initial EPSDT and Dental completed within 10 calendar days $    - under 4 years old are required to have initial Developmental completed within 30 calendar days $    - between the age of 4 years and 18 years are required to have initial Psychological completed within 30 calendar days.' (78,12,150) Wrap 150 5 line-height=12 Keep-Top on=$
+ Print 'This report displays all foster children currently in DFCS custody where the child was not given at least one initial health service, was past due or is due for an ongoing health service within the next 60 calendar days.' (27,12,150) Wrap 150 4 line-height=12 Keep-Top
+ Print 'Initial health services include EPSDT, Dental, Psychological, and Developmental. Ongoing health services include EPSDT, Dental, and Psychological.' (61,12,146)
+ Print 'Date Entered Care:' (276,12,0) Bold 
+ Print 'Service Due:' (296,12,0) Bold 
+ Print 'Days Until Due:' (492,12,0) Bold 
+ Print 'Date Next Due:' (378,12,0) Bold 
+ Print 'Date Last Appt.:' (348,12,0) Bold 
+ Print 'The primary child''s most recent removal date or most recent foster care start date on the case.' (276,111,95)
+ Print 'The type of the health checks that is past due or coming due in the next 60 days. A type in this report can be mapped to more than one health detail reason. EPSDT can be EPSDT/GA Health Check or Medical Screen. Dental can be Dental Screen or Dental 6 Mo. Exm/Cl. Psychological is Psychological health detail reason. Developmental can be Developmental Assessment or Developmental Screen.' (296,111,111) Wrap 111 4 line-height=12 Keep-Top
+ Print 'The date of the most recent health service of a specific type was conducted. It displays blank if the service was not performed for the child or one was done before the child''s Date Entered Care.' (348,111,111) Wrap 111 2 line-height=12 Keep-Top
+ Print 'While in care, $1) All children between age 0 months and under 18 years old who are currently in DFCS custody are required to have periodic EPSDT follow-up done:$    - Age group 1: 0 < age <= 6 months (every 2 months or less)$    - Age group 2: 6 < age <= 18 months (every 3 months or less)$    - Age group 3: 18 months < age < 6 yrs (every 6 months or less)$    - Age group 4: 6 yrs <= age < 18 yrs (every 12 months or less)$$2) All children between the age of 4 and under 18 years olds who are currently in DFCS custody are required to have periodic mental health screen (psychological health service) done every 2 years or less.$$3) All children between age 3 and under 18 years old who are currently in DFCS custody are required to have a dental screen done every year or less.' (133,14,150) Wrap 150 11 line-height=12 Keep-Top on=$
+ Print 'The date a specific health service is due next - calculated by adding the interval months required for the age group to the last health service date or the Date Entered Care where the initial health service was not done. If the child would be in the next age group at the estimated next due date, the next due date will be adjusted by the periodic rule of the next age group. For example, last EPSDT is 12/5/2009 and the child is 5 months at the time the EPSDT was done. The estimated next due date is 2/5/2010; however, since the child would be well into her 7th month at that time and belongs to the next age group, the correct next due date is adjusted by adding the next age group months'' required to the last EPSDT; it is now 3/5/2010. For initial health services, next due date is calculated by adding the number of days allowed for each type of service to the Date Entered Care. If the child would be 18 or older at the Next Due date, the child will not be displayed as health check is no longer required.' (378,111,120) Wrap 120 9 line-height=12 Keep-Top
+ Print 'The number of days between the date next due and the system date.' (492,111,0)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input
+ Position (1,1)
+ Do Get-CM-Unit-Input
+ Do House-Keeping
+ Do Master_Query
+End-Program
+Begin-Procedure Get-CM-Unit-Input
+!
+Input $_Unit_Nbr 'Enter Unit Number' MaxLen=2 Type=Char
+
+If IsNull($_Unit_Nbr) or IsBlank($_Unit_Nbr) or ($_Unit_Nbr='0')
+  Let $where_clause_unit = ' 1=1 '
+  Let $unit_selected = 'N'
+Else
+  Let $where_clause_unit = 'NBR_UNIT = ' || '''' || $_Unit_Nbr || ''''
+  Let $unit_selected = 'Y'
+End-If
+!
+Input $_CM_ID 'Enter Casemanager ID' MaxLen=16 Type=Char
+If IsNull($_CM_ID) or IsBlank($_CM_ID) or ($_CM_ID='0')
+  Let $where_clause_CM = ' 2=2 '
+  Let $CM_selected = 'N'
+Else
+  Let $where_clause_CM = 'ID_CM = ' || $_CM_ID
+  Let $CM_selected = 'Y'
+End-If
+!
+Let $where_clause_unit_CM = $where_clause_unit || ' and ' || $where_clause_CM
+End-Procedure
+
+Begin-Procedure House-Keeping
+Begin-Select
+decode &county_decode
+from ccount
+where code = [$_I101_CD_STAGE_CNTY]
+End-Select
+Move &county_decode to $county_decode
+ ! Fill spaces in front of the county name to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($county_decode)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $county_decode = ' ' || $county_decode 
+   Let #counter = #counter + 1
+ End-while
+
+If $unit_selected ='Y'
+  Let $unit_header = 'Unit Number: ' || $_Unit_Nbr|| '          '
+End-If
+
+If $CM_selected = 'Y'
+Begin-Select
+nm_employee_last || ', ' || nm_employee_first &CM_name
+from employee
+where id_person = [$_CM_ID]
+End-Select
+  Let $CM_header = 'Case Manager: ' || &CM_name
+End-If
+End-Procedure
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I101_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_I101_CD_STAGE_CNTY) or IsBlank($_I101_CD_STAGE_CNTY)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+If SubStr($_I101_CD_STAGE_CNTY, 1, 1) != ''''
+  Let $_I101_CD_STAGE_CNTY = '''' || $_I101_CD_STAGE_CNTY || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CD_STAGE_CNTY,'''',0) = 0 and instr($_I101_CD_STAGE_CNTY,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_STAGE_CNTY'
+   Let $where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I101_CD_STAGE_CNTY || '''' 
+ Else
+   If (instr($_I101_CD_STAGE_CNTY,'''',0) = 0 and instr($_I101_CD_STAGE_CNTY,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_STAGE_CNTY'
+     Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_CD_STAGE_CNTY
+   End-If
+ End-If
+End-Procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+ Move 0 To #past_due_cnt
+ Move 0 To #due_in_30_cnt
+ Move 0 To #due_in_60_cnt
+Begin-Select Distinct
+(trunc( KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE ) - trunc(sysdate)) &days_due
+(case when (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) < 0 then 1 else 0 end) &is_past_due
+(case when ((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 0 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <31 ) then 1 else 0 end) &is_coming_due_30
+(case when ((KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) >= 31 and (KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE  - sysdate) <= 60 ) then 1 else 0 end) &is_coming_due_60
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+NM_CHILD &Master_Query_NM_CHILD (10,1,13) Wrap 13 2 line-height=12 Keep-Top
+ID_PERSON_CHILD &Master_Query_ID_PERSON_CHILD (10,84) Edit 9999999999na
+ID_CASE &Master_Query_ID_CASE (10,138) Edit 9999999999na
+DT_ENTERED_CARE &Master_Query_DT_ENTERED_CARE (10,202) Edit MM/DD/YYYY
+DOB_CHILD &Master_Query_DOB_CHILD (10,265) Edit MM/DD/YYYY
+SERVICE_DUE &Master_Query_SERVICE_DUE (10,327,13) Wrap 13 2 line-height=12 Keep-Top
+DT_LAST_APPT &Master_Query_DT_LAST_APPT (10,413) Edit MM/DD/YYYY
+MODIFIED_NEXT_DUE &Master_Query_MODIFIED_NEXT_DUE (10,475) Edit MM/DD/YYYY
+ If &days_due < 0
+ Print &days_due (10,531) Edit 999999na Bold 
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &days_due (10,531) Edit 999999na
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+NM_CM &Master_Query_NM_CM (10,574,10) Wrap 10 3 line-height=12 Keep-Top
+NM_SUP &Master_Query_NM_SUP (10,650,10) Wrap 10 3 line-height=12 Keep-Top
+ Add 1 To #1ROW_COUNT
+ Add &is_past_due To #past_due_cnt
+ Add &is_coming_due_30 To #due_in_30_cnt
+ Add &is_coming_due_60 To #due_in_60_cnt
+ Next-Listing  SkipLines=2 Need=24
+From  KENNY_A_SERVICE_DUE_VIEW
+Where SERVICE_DUE IS NOT NULL 
+ And (trunc( KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE ) - trunc(sysdate)) <= 60
+ And [$where_clause101]
+ And [$where_clause_unit_CM]
+Order By (trunc( KENNY_A_SERVICE_DUE_VIEW.MODIFIED_NEXT_DUE ) - trunc(sysdate))
+,      NM_CHILD
+End-Select
+ Next-Listing
+ Next-Listing  Need=78
+ If #1ROW_COUNT > 0
+ Graphic (2,1,720) Horz-Line 15 
+ Position (3,1)
+ let #rows_cnt = #1ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #rows_cnt (21,397) Bold  Edit 99999999na
+  Print 'Number of Healthchecks past due or coming due within the next 60 calendar days:'  (21,1) Bold 
+  Print #past_due_cnt (40,397) Bold  Edit 99999999na
+  Print #due_in_30_cnt (59,397) Bold  Edit 99999999na
+  Print #due_in_60_cnt (78,397) Bold  Edit 99999999na
+  Print 'Number of Healthchecks past due:'  (40,1) Bold 
+  Print 'Number of Healthchecks coming due between 0 and 30 next calendar days:'  (59,1) Bold 
+  Print 'Number of Healthchecks coming due between 31 and 60 next calendar days:'  (78,1) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\_PIPs\10\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Children and Family Services' (22,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Cases with Overdue Healthchecks' (49,242,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (22,654) edit 'MM/DD/YYYY'
+ Print 'Produced On: ' (22,589,0)
+ Let $county_header=$county_decode
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $county_header (73,306,15) Bold 
+ Let $unit_CM_header=$unit_header || $CM_header
+ Print $unit_CM_header (100,1,74) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Child Name' (121,1,0) Underline  Bold 
+ Print 'Child ID' (121,103,0) Underline  Bold 
+ Print 'Case ID' (121,158,0) Underline  Bold 
+ Print 'Date$Entered Care' (121,202,15) Underline  Bold  Wrap 15 2 line-height=12 Keep-Top on=$
+ Print 'DOB' (121,265,0) Underline  Bold 
+ Print 'Service Due' (121,327,0) Underline  Bold 
+ Print 'Date$Last Appt.' (121,413,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Date$Next Due' (121,475,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Days$Until Due' (121,531,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'CM' (121,574,0) Underline  Bold 
+ Print 'Supervisor' (121,650,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Child Name' (10,1,0) Underline  Bold 
+ Print 'Child ID' (10,103,0) Underline  Bold 
+ Print 'Case ID' (10,158,0) Underline  Bold 
+ Print 'Date$Entered Care' (10,202,15) Underline  Bold  Wrap 15 2 line-height=12 Keep-Top on=$
+ Print 'DOB' (10,265,0) Underline  Bold 
+ Print 'Service Due' (10,327,0) Underline  Bold 
+ Print 'Date$Last Appt.' (10,413,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Date$Next Due' (10,475,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Days$Until Due' (10,531,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'CM' (10,574,0) Underline  Bold 
+ Print 'Supervisor' (10,650,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (14,669) '' ' of '
+ Last-Page (14,696) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

@@ -1,0 +1,1802 @@
+!*****************************************************************************
+!  HOME HISTORY REPORT                                                       *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cfa18o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 11/08/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brad McCleary                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The F/A Home History Report will display all the     *
+!                       historical data about a particular home including    * 
+!                       those historical records that have been updated.     *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 11/08/95   B. McCleary  Initial Programming                                *
+! 03/01/96   B. McCleary  SIR 3530 - Capitalized 'The' in Summary section    *
+! 03/27/96   B. McCleary  SIR 4305 - Changed codestables for marital status  *
+!                         and characteristics.                               *
+! 03/28/96   B. McCleary  SIR 4343 - Made the char sql select distinct.      *
+! 03/28/96   B. McCleary  SIR 4344 - Only prints when either of the willing  *
+!                         indicators is 'Y' or 'T'.                          *
+! 03/28/96   B. McCleary  SIR 4352 - Select home types from codes tables     *
+!                         since they are no longer indicators.               *
+! 05/01/96   B. McCleary  SIR 20387 - Added an SQL to get the deleted records*
+!                         of the resource; added a printed counter for the   *
+!                         historical and audit records.                      *
+! 05/15/96   B. McCleary  SIR 21181 - Changed Updated to Updated By; Made the*
+!                         Historical Records header print for each new one.  *
+! 05/28/96   B. McCleary  SIR 21475 - Added code to get the school district  *
+!                         text field instead of the code.                    *
+! 07/02/96   K. Cys       SIR 21475 - Added code to print update worker      *
+!                         for both resource history and resource audit hist. *
+! 07/26/96   K. Cys       SIR 21732 - Changed code to select VID for the     *
+!                         business address of a given home.                  *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                       !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'             ! control codes for Portrait
+                                        ! On Demand Reports              
+
+    ask ID_STAGE                                
+    
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 5 
+
+print 'F/A HOME NAME: '                         (1,33)
+print $res_name                                 (+0,48)
+print 'FACILITY #: '                            (+1,36)
+print #id_rsrc                                  (+0,48) edit 8888888888888888
+print 'CASE #: '                                (+1,40)
+print #id_case                                  (+0,48) edit 8888888888888888
+
+print 'F/A HOME HISTORY'                        (+2) center
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+                                ! specific to portrait on demand report
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS:     NONE                                                     * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+    move  {ID_STAGE}                            to #input_id_stage    
+
+    move 'Recommend'                            to $Recommend
+    move 'Y'                                    to $counter_flag
+    move '02'					to $02 !***SIR 21732***
+   
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-HEAD-INFO, GET-CHAR, GET-RSRC-HISTORY,             *
+!                    GET-ETHNICITY, GET-RSRC-AUDIT                          *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do GET-HEAD-INFO
+    do GET-RSRC-HISTORY
+    do GET-RSRC-DELETE    !SIR 20387 - Added deleted records to be printed
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-HEAD-INFO                                                           *
+!                                                                           *
+!       This procedure will select the foster/adoptive home name, facility  *
+!       number, and case number to be printed in the header.                *
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-HEAD-INFO 
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.NM_RESOURCE
+    move &A.NM_RESOURCE                             to $res_name
+    
+A.ID_RESOURCE
+    move &A.ID_RESOURCE                             to #id_rsrc
+    
+B.ID_CASE
+    move &B.ID_CASE                                 to #id_case
+
+B.ID_STAGE
+    move &B.ID_STAGE                                to #id_stage
+  
+FROM    CAPS_RESOURCE   A,
+        STAGE           B
+        
+WHERE   B.ID_STAGE = #input_id_stage
+AND     B.ID_STAGE = A.ID_RSRC_FA_HOME_STAGE
+
+END-SELECT    
+
+END-PROCEDURE GET-HEAD-INFO 
+
+!****************************************************************************
+!                                                                           *
+!   GET-RSRC-HISTORY                                                        *
+!                                                                           *
+!       This procedure will get the home history information including the  *
+!       current home.                                                       *
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : PRINT-RSRC-HISTORY                                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-RSRC-HISTORY
+
+    move 0      to #count2             ! initialize the counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.ADDR_RSHS_CITY
+    move &A.ADDR_RSHS_CITY                      to $rshs_city
+
+A.ADDR_RSHS_ST_LN_1
+    move &A.ADDR_RSHS_ST_LN_1                   to $rshs_st1 
+
+A.ADDR_RSHS_ST_LN_2
+    move &A.ADDR_RSHS_ST_LN_2                   to $rshs_st2
+
+A.ADDR_RSHS_ZIP
+    move &A.ADDR_RSHS_ZIP                       to $rshs_zip
+
+CFACATEG.decode &rshs_category
+    move &rshs_category                         to $rshs_category
+
+CFACLOSE.decode &rshs_close_rsn
+    move &rshs_close_rsn                        to $rshs_close_rsn
+
+CCOUNT.decode &rshs_county
+    move &rshs_county                           to $rshs_county
+
+CETHNIC.decode &rshs_ethnic
+    move &rshs_ethnic                           to $rshs_ethnic
+
+CFAHMSTA.decode &rshs_status
+    move &rshs_status                           to $rshs_stat
+
+!SIR 4352 - Use codes tables to get home types
+
+CFAHMTYP1.decode           
+    move &CFAHMTYP1.decode                      to $rshs_type1
+
+CFAHMTYP2.decode           
+    move &CFAHMTYP2.decode                      to $rshs_type2
+
+CFAHMTYP3.decode           
+    move &CFAHMTYP3.decode                      to $rshs_type3
+
+CFAHMTYP4.decode           
+    move &CFAHMTYP4.decode                      to $rshs_type4
+
+CFAHMTYP5.decode           
+    move &CFAHMTYP5.decode                      to $rshs_type5
+
+CFAHMTYP6.decode           
+    move &CFAHMTYP6.decode                      to $rshs_type6
+
+CFAHMTYP7.decode           
+    move &CFAHMTYP7.decode                      to $rshs_type7
+
+CFACLSTP.decode &rshs_invol
+    move &rshs_invol                            to $rshs_invol
+
+CLANG.decode &rshs_lang       
+    move &rshs_lang                             to $rshs_lang
+
+!***SIR 4305***
+
+CFAMSTRC.decode &rshs_marital
+    move &rshs_marital                          to $rshs_marital
+
+CFARCMND.decode &rshs_reopen
+    move &rshs_reopen                           to $rshs_reopen
+
+A.CD_RSHS_REGION
+    move &A.CD_RSHS_REGION                      to $rshs_region
+
+CRELIGNS.decode &rshs_religion
+    move &rshs_religion                         to $rshs_religion
+
+CFARSPIT.decode &rshs_respite
+    move &rshs_respite                          to $rshs_respite
+
+!***SIR 21475***
+
+SC.TXT_SCH_DIST_NAME
+    move &SC.TXT_SCH_DIST_NAME                  to $rshs_school
+
+A.CD_RSHS_SCH_DIST
+    move &A.CD_RSHS_SCH_DIST                    to $rshs_school_dist
+
+CFASRCIN.decode &rshs_src_inq
+    move &rshs_src_inq                          to $rshs_src_inq
+
+CSTATE.decode &rshs_state
+    move &rshs_state                            to $rshs_state
+
+to_char(A.DT_LAST_UPDATE, 'MM/DD/YYYY HH:MI PM') &dt_rshs_update      
+    move &dt_rshs_update                           to $dt_rshs_update       
+
+A.DT_RSHS_EFFECTIVE
+    move &A.DT_RSHS_EFFECTIVE                   to $dt_rshs_effective
+
+NVL(A.DT_RSHS_END, '12/31/4712') &dt_rshs_end
+    move &dt_rshs_end                           to $dt_rshs_end
+
+A.DT_RSHS_MARRIAGE
+    move &A.DT_RSHS_MARRIAGE                    to $dt_rshs_marriage
+
+A.ID_RESOURCE &id_resource_rshs
+    move &id_resource_rshs                      to #id_resource_rshs
+
+A.ID_RESOURCE_HISTORY
+    move &A.ID_RESOURCE_HISTORY                 to #id_resource_history_rshs
+
+A.ID_RSHS_FA_HOME_EVENT
+    move &A.ID_RSHS_FA_HOME_EVENT               to #id_rshs_event
+
+A.ID_RSHS_FA_HOME_STAGE
+    move &A.ID_RSHS_FA_HOME_STAGE               to #id_rshs_stage
+
+A.IND_RSHS_CARE_PROV
+    move &A.IND_RSHS_CARE_PROV                  to $rshs_care_prov
+
+A.IND_RSHS_EMERG_PLACE
+    move &A.IND_RSHS_EMERG_PLACE                to $rshs_emerg_place
+
+A.IND_RSHS_INDIV_STUDY
+    move &A.IND_RSHS_INDIV_STUDY                to $rshs_indiv_study
+
+A.IND_RSHS_NONPRS
+    move &A.IND_RSHS_NONPRS                     to $rshs_nonprs
+
+A.IND_RSHS_TRANSPORT
+    move &A.IND_RSHS_TRANSPORT                  to $rshs_trans
+
+A.NBR_RSHS_ANNUAL_INCOME
+    move &A.NBR_RSHS_ANNUAL_INCOME              to #rshs_income
+
+A.NBR_RSHS_FACIL_CAPACITY    
+    move &A.NBR_RSHS_FACIL_CAPACITY             to #rshs_capacity
+
+A.NBR_RSHS_FM_AGE_MAX
+    move &A.NBR_RSHS_FM_AGE_MAX                 to #rshs_fm_age_max
+
+A.NBR_RSHS_FM_AGE_MIN
+    move &A.NBR_RSHS_FM_AGE_MIN                 to #rshs_fm_age_min
+
+A.NBR_RSHS_INT_CHILDREN
+    move &A.NBR_RSHS_INT_CHILDREN               to #rshs_int_child
+
+A.NBR_RSHS_INT_FE_AGE_MAX
+    move &A.NBR_RSHS_INT_FE_AGE_MAX             to #rshs_int_fe_max
+
+A.NBR_RSHS_INT_FE_AGE_MIN
+    move &A.NBR_RSHS_INT_FE_AGE_MIN             to #rshs_int_fe_min
+
+A.NBR_RSHS_INT_MA_AGE_MAX
+    move &A.NBR_RSHS_INT_MA_AGE_MAX             to #rshs_int_ma_max
+
+A.NBR_RSHS_INT_MA_AGE_MIN
+    move &A.NBR_RSHS_INT_MA_AGE_MIN             to #rshs_int_ma_min
+
+A.NBR_RSHS_MA_AGE_MAX
+    move &A.NBR_RSHS_MA_AGE_MAX                 to #rshs_ma_age_max
+
+A.NBR_RSHS_MA_AGE_MIN
+    move &A.NBR_RSHS_MA_AGE_MIN                 to #rshs_ma_age_min
+
+A.NBR_RSHS_PHN
+    move &A.NBR_RSHS_PHN                        to $rshs_phone
+
+A.NBR_RSHS_PHONE_EXT
+    move &A.NBR_RSHS_PHONE_EXT                  to $rshs_ext
+
+B.NBR_RSRC_ADDR_VID
+    move &B.NBR_RSRC_ADDR_VID                   to $rshs_vid !***SIR 21732***
+
+A.NM_RSHS_LAST_UPDATE
+    move &A.NM_RSHS_LAST_UPDATE                 to $rshs_update
+
+A.NM_RSHS_RESOURCE                       
+    move &A.NM_RSHS_RESOURCE                    to $rshs_rsrc
+
+    let #count2 = #count2 + 1
+    
+    if ($dt_rshs_end = '12/31/4712' and #count2 = 1)
+        print 'CURRENT FOSTER/ADOPTIVE HOME RECORD'             (+3,1)
+        print 'This is the information currently on the system for this Foster and/or' (+1,1)
+        print 'Adoptive Home.'                                  (+1,1)    
+    move 'N'                to $counter_flag
+        do PRINT-RSRC-HISTORY
+        do GET-CHAR
+        do GET-ETHNICITY
+    else
+        NEW-PAGE
+    !********SIR 21181*******
+        print 'HISTORICAL FOSTER/ADOPTIVE HOME RECORDS'         (+1,1)
+        print 'Listed below in reverse chronological order is the system information about' (+1,1)
+        print 'the home during the stated start and end date.'  (+1,1)
+    move 'Y'                to $counter_flag
+        do PRINT-RSRC-HISTORY
+        do GET-RSRC-AUDIT
+    end-if
+
+
+FROM    RESOURCE_HISTORY  A,
+        RESOURCE_ADDRESS  B, !***SIR 21732***
+        SCH_DIST          SC,
+        CFACATEG          CFACATEG,
+        CFACLOSE          CFACLOSE,
+        CCOUNT            CCOUNT,
+        CETHNIC           CETHNIC,
+        CFAHMSTA          CFAHMSTA,
+        CFACLSTP          CFACLSTP,
+        CLANG             CLANG,
+        CFAMSTRC          CFAMSTRC,
+        CFARCMND          CFARCMND,
+        CRELIGNS          CRELIGNS,
+        CFARSPIT          CFARSPIT,
+        CFASRCIN          CFASRCIN,
+        CSTATE            CSTATE,
+        CFAHMTYP          CFAHMTYP1,
+        CFAHMTYP          CFAHMTYP2,
+        CFAHMTYP          CFAHMTYP3,
+        CFAHMTYP          CFAHMTYP4,
+        CFAHMTYP          CFAHMTYP5,
+        CFAHMTYP          CFAHMTYP6,
+        CFAHMTYP          CFAHMTYP7
+
+WHERE   A.ID_RSHS_FA_HOME_STAGE = #input_id_stage
+AND     A.CD_RSHS_SCH_DIST = SC.CD_SCH_DIST(+)   !***SIR 21475***
+AND     A.ID_RESOURCE = B.ID_RESOURCE  !***SIR 21732***
+AND     B.CD_RSRC_ADDR_TYPE = $02      !***SIR 21732***
+AND     CFACATEG.CODE(+) = A.CD_RSHS_CATEGORY
+AND     CFACLOSE.CODE(+) = A.CD_RSHS_CLOSURE_RSN
+AND     CCOUNT.CODE(+)   = A.CD_RSHS_CNTY
+AND     CETHNIC.CODE(+)  = A.CD_RSHS_ETHNICITY
+AND     CFAHMSTA.CODE(+) = A.CD_RSHS_FA_HOME_STATUS
+AND     CFACLSTP.CODE(+) = A.CD_RSHS_INVOL_CLOSURE
+AND     CLANG.CODE(+)    = A.CD_RSHS_LANGUAGE
+AND     CFAMSTRC.CODE(+) = A.CD_RSHS_MARITAL_STATUS
+AND     CFARCMND.CODE(+) = A.CD_RSHS_RECMND_REOPEN
+AND     CRELIGNS.CODE(+) = A.CD_RSHS_RELIGION
+AND     CFARSPIT.CODE(+) = A.CD_RSHS_RESPITE
+AND     CFASRCIN.CODE(+) = A.CD_RSHS_SOURCE_INQUIRY
+AND     CSTATE.CODE(+)   = A.CD_RSHS_STATE
+AND     CFAHMTYP1.CODE(+) = A.CD_RSHS_FA_HOME_TYPE1
+AND     CFAHMTYP2.CODE(+) = A.CD_RSHS_FA_HOME_TYPE2
+AND     CFAHMTYP3.CODE(+) = A.CD_RSHS_FA_HOME_TYPE3
+AND     CFAHMTYP4.CODE(+) = A.CD_RSHS_FA_HOME_TYPE4
+AND     CFAHMTYP5.CODE(+) = A.CD_RSHS_FA_HOME_TYPE5
+AND     CFAHMTYP6.CODE(+) = A.CD_RSHS_FA_HOME_TYPE6
+AND     CFAHMTYP7.CODE(+) = A.CD_RSHS_FA_HOME_TYPE7
+
+ORDER BY A.DT_RSHS_END DESC
+
+END-SELECT    
+
+END-PROCEDURE GET-RSRC-HISTORY
+
+!****************************************************************************
+!                                                                           *
+!   GET-CHAR                                                                *
+!                                                                           *
+!       This procedure will get all of the child characteristics for a F/A  *
+!       home.                                                               *
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : PRINT-CHAR-TITLE, PRINT-CHAR                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CHAR   
+   
+    NEW-PAGE
+
+    print 'SUMMARY OF INTERESTS OF CHILD CHARACTERISTICS AND ETHNICITIES FOR AN F/A HOME' (+1,1)
+    print 'The currently existing interests are displayed, as well as the date each was'  (+1,1)
+    print 'added.  The information below does not contain interests that have been'       (+1,1)
+    print 'deleted.'                                                                      (+1,1)
+
+    move 0      to #count3             ! initialize the counter
+
+!***SIR 4343***
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+
+!***SIR 4305***
+
+CPL.decode      
+    move &CPL.decode                            to $char
+    
+A.DT_RSRC_CHAR_DT_ADDED    
+    move &A.DT_RSRC_CHAR_DT_ADDED               to $dt_char
+
+    let #count3 = #count3 + 1
+    
+    if #count3 = 1
+        do PRINT-CHAR-TITLE
+    else
+        do PRINT-CHAR
+    end-if
+
+FROM    RESOURCE_CHRCTR  A,
+        CPL              CPL
+
+WHERE   A.ID_RESOURCE = #id_resource_rshs
+AND     CPL.CODE(+)   = A.CD_RSRC_CHAR_CHRCTR
+
+END-SELECT    
+
+END-PROCEDURE GET-CHAR     
+
+!****************************************************************************
+!                                                                           *
+!   GET-ETHNICITY                                                           *
+!                                                                           *
+!       This procedure will get all of the ethnicities of the child for a   *
+!       F/A home.                                                           *
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : PRINT-ETHNICITY-TITLE, PRINT-ETHNICITY                 *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ETHNICITY  
+
+    move 0      to #count4             ! initialize the counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.ID_RESOURCE &id_resource_eth
+    move &id_resource_eth                  to #id_resource_eth
+    
+CETHNIC.decode              
+    move &CETHNIC.decode                    to $ethnicity 
+    
+A.DT_LAST_UPDATE    
+    move &A.DT_LAST_UPDATE                  to $dt_ethnicity
+
+    let #count4 = #count4 + 1
+    
+    if #count4 = 1
+        do PRINT-ETHNICITY-TITLE
+    else
+        do PRINT-ETHNICITY
+    end-if
+
+FROM    FA_HOME_INT_ETHNIC  A,
+        CETHNIC             CETHNIC
+
+WHERE   A.ID_RESOURCE = #id_resource_rshs
+AND     CETHNIC.CODE(+) = A.CD_FA_HOME_INT_ETHNICITY
+
+END-SELECT    
+
+END-PROCEDURE GET-ETHNICITY  
+
+!****************************************************************************
+!                                                                           *
+!   GET-RSRC-AUDIT                                                          *
+!                                                                           *
+!       This procedure will get all of the audit table records before they  *
+!       were updated by the worker.                                         *
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : PRINT-RSRC-AUDIT                                       *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-RSRC-AUDIT  
+    
+    move 0      to #count5                    ! initialize the counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.ADDR_RSHS_AUD_CITY
+    move &A.ADDR_RSHS_AUD_CITY                      to $rshs_aud_city
+
+A.ADDR_RSHS_AUD_ST_LN_1
+    move &A.ADDR_RSHS_AUD_ST_LN_1                   to $rshs_aud_st1 
+
+A.ADDR_RSHS_AUD_ST_LN_2
+    move &A.ADDR_RSHS_AUD_ST_LN_2                   to $rshs_aud_st2
+
+A.ADDR_RSHS_AUD_ZIP
+    move &A.ADDR_RSHS_AUD_ZIP                       to $rshs_aud_zip
+
+CFACATEG.decode &rshs_aud_category
+    move &rshs_aud_category                         to $rshs_aud_category
+
+CFACLOSE.decode &rshs_aud_close_rsn
+    move &rshs_aud_close_rsn                        to $rshs_aud_close_rsn
+
+CCOUNT.decode &rshs_aud_county
+    move &rshs_aud_county                           to $rshs_aud_county
+
+CETHNIC.decode &rshs_aud_ethnic
+    move &rshs_aud_ethnic                           to $rshs_aud_ethnic
+
+CFAHMSTA.decode &rshs_aud_status
+    move &rshs_aud_status                           to $rshs_aud_stat
+
+!SIR 4352 - Use codes tables to get home types
+
+CFAHMTYP1.decode &aud1     
+    move &aud1                                      to $rshs_aud_type1
+
+CFAHMTYP2.decode &aud2           
+    move &aud2                                      to $rshs_aud_type2
+
+CFAHMTYP3.decode &aud3           
+    move &aud3                                      to $rshs_aud_type3
+
+CFAHMTYP4.decode &aud4           
+    move &aud4                                      to $rshs_aud_type4
+
+CFAHMTYP5.decode &aud5           
+    move &aud5                                      to $rshs_aud_type5
+
+CFAHMTYP6.decode &aud6           
+    move &aud6                                      to $rshs_aud_type6
+
+CFAHMTYP7.decode &aud7           
+    move &aud7                                      to $rshs_aud_type7
+
+CFACLSTP.decode &rshs_aud_invol
+    move &rshs_aud_invol                            to $rshs_aud_invol
+
+CLANG.decode &rshs_aud_lang
+    move &rshs_aud_lang                             to $rshs_aud_lang
+
+!***SIR 4305***
+
+CFAMSTRC.decode &rshs_aud_marital
+    move &rshs_aud_marital                          to $rshs_aud_marital
+
+CFARCMND.decode &rshs_aud_reopen     
+    move &rshs_aud_reopen                           to $rshs_aud_reopen
+
+A.CD_RSHS_AUD_REGION
+    move &A.CD_RSHS_AUD_REGION                      to $rshs_aud_region
+
+CRELIGNS.decode &rshs_aud_religion
+    move &rshs_aud_religion                         to $rshs_aud_religion
+
+CFARSPIT.decode &rshs_aud_respite
+    move &rshs_aud_respite                          to $rshs_aud_respite
+
+!***SIR 21475***
+
+SC.TXT_SCH_DIST_NAME &aud_sch_dist
+    move &aud_sch_dist                              to $rshs_aud_school
+
+A.CD_RSHS_AUD_SCH_DIST
+    move &A.CD_RSHS_AUD_SCH_DIST                    to $rshs_aud_dist
+
+CFASRCIN.decode &rshs_aud_src_inq
+    move &rshs_aud_src_inq                          to $rshs_aud_src_inq
+
+CSTATE.decode &rshs_aud_state
+    move &rshs_aud_state                            to $rshs_aud_state
+
+to_char(A.DT_LAST_UPDATE, 'MM/DD/YYYY HH:MI PM') &dt_audit_update      
+    move &dt_audit_update                           to $dt_audit_update       
+
+A.DT_RSHS_AUD_EFFECTIVE
+    move &A.DT_RSHS_AUD_EFFECTIVE                   to $dt_rshs_aud_effective
+
+A.DT_RSHS_AUD_END
+    move &A.DT_RSHS_AUD_END                         to $dt_rshs_aud_end
+
+A.DT_RSHS_AUD_MARRIAGE
+    move &A.DT_RSHS_AUD_MARRIAGE                    to $dt_rshs_aud_marriage
+
+A.ID_AUD_RESOURCE &id_aud_rsrc
+    move &id_aud_rsrc                               to #id_aud_rsrc
+
+A.ID_RESOURCE_HISTORY_AUD &id_rshs_aud
+    move &id_rshs_aud                               to #id_rshs_aud
+
+A.ID_RSHS_AUD_FA_HOME_EVENT
+    move &A.ID_RSHS_AUD_FA_HOME_EVENT               to #id_rshs_aud_event
+
+A.ID_RSHS_AUD_FA_HOME_STAGE
+    move &A.ID_RSHS_AUD_FA_HOME_STAGE               to #id_rshs_aud_stage
+
+A.IND_RSHS_AUD_CARE_PROV
+    move &A.IND_RSHS_AUD_CARE_PROV                  to $rshs_aud_care_prov
+
+A.IND_RSHS_AUD_EMERG_PLACE
+    move &A.IND_RSHS_AUD_EMERG_PLACE                to $rshs_aud_emerg_place
+
+A.IND_RSHS_AUD_INDIV_STUDY
+    move &A.IND_RSHS_AUD_INDIV_STUDY                to $rshs_aud_indiv_study
+
+A.IND_RSHS_AUD_NONPRS
+    move &A.IND_RSHS_AUD_NONPRS                     to $rshs_aud_nonprs
+
+A.IND_RSHS_AUD_TRANSPORT
+    move &A.IND_RSHS_AUD_TRANSPORT                  to $rshs_aud_trans
+
+A.NBR_RSHS_AUD_ANNUAL_INCOME
+    move &A.NBR_RSHS_AUD_ANNUAL_INCOME              to #rshs_aud_income
+    
+A.NBR_RSHS_AUD_FACIL_CAPACITY    
+    move &A.NBR_RSHS_AUD_FACIL_CAPACITY             to #rshs_aud_capacity
+
+A.NBR_RSHS_AUD_FM_AGE_MAX
+    move &A.NBR_RSHS_AUD_FM_AGE_MAX                 to #rshs_aud_fm_age_max
+
+A.NBR_RSHS_AUD_FM_AGE_MIN
+    move &A.NBR_RSHS_AUD_FM_AGE_MIN                 to #rshs_aud_fm_age_min
+
+A.NBR_RSHS_AUD_INT_CHILDREN
+    move &A.NBR_RSHS_AUD_INT_CHILDREN               to #rshs_aud_int_child
+
+A.NBR_RSHS_AUD_INT_FE_AGE_MAX
+    move &A.NBR_RSHS_AUD_INT_FE_AGE_MAX             to #rshs_aud_int_fe_max
+
+A.NBR_RSHS_AUD_INT_FE_AGE_MIN
+    move &A.NBR_RSHS_AUD_INT_FE_AGE_MIN             to #rshs_aud_int_fe_min
+
+A.NBR_RSHS_AUD_INT_MA_AGE_MAX
+    move &A.NBR_RSHS_AUD_INT_MA_AGE_MAX             to #rshs_aud_int_ma_max
+
+A.NBR_RSHS_AUD_INT_MA_AGE_MIN
+    move &A.NBR_RSHS_AUD_INT_MA_AGE_MIN             to #rshs_aud_int_ma_min
+
+A.NBR_RSHS_AUD_MA_AGE_MAX
+    move &A.NBR_RSHS_AUD_MA_AGE_MAX                 to #rshs_aud_ma_age_max
+
+A.NBR_RSHS_AUD_MA_AGE_MIN
+    move &A.NBR_RSHS_AUD_MA_AGE_MIN                 to #rshs_aud_ma_age_min
+
+A.NBR_RSHS_AUD_PHN
+    move &A.NBR_RSHS_AUD_PHN                        to $rshs_aud_phone
+
+A.NBR_RSHS_AUD_PHONE_EXT
+    move &A.NBR_RSHS_AUD_PHONE_EXT                  to $rshs_aud_ext
+
+C.NBR_RSRC_ADDR_VID                                 !***SIR 21732***
+    move &C.NBR_RSRC_ADDR_VID                       to $rshs_aud_vid  
+
+A.NM_RSHS_AUD_LAST_UPDATE
+    move &A.NM_RSHS_AUD_LAST_UPDATE                 to $rshs_aud_update
+
+A.NM_RSHS_AUD_RESOURCE                       
+    move &A.NM_RSHS_AUD_RESOURCE                    to $rshs_aud_rsrc
+
+    let #count5 = #count5 + 1
+    
+    if #count5 = 2
+        NEW-PAGE
+        print 'AUDIT TABLE RECORDS'                 (+1,1)
+        print 'Listed below are the F/A Home History Records as they appeared prior to the' (+1,1)
+        print 'update by the stated worker.'        (+1,1)
+        do PRINT-RSRC-AUDIT
+    else
+        if #count5 > 2
+            NEW-PAGE
+            do PRINT-RSRC-AUDIT
+        end-if
+    end-if
+                   
+FROM    RESOURCE_HISTORY_AUDIT  A,
+        RESOURCE_HISTORY        B, !***SIR 21732***
+        RESOURCE_ADDRESS        C, !***************
+        SCH_DIST                SC,
+        CFACATEG                CFACATEG,
+        CFACLOSE                CFACLOSE,
+        CCOUNT                  CCOUNT,
+        CETHNIC                 CETHNIC,
+        CFAHMSTA                CFAHMSTA,
+        CFACLSTP                CFACLSTP,
+        CLANG                   CLANG,
+        CFAMSTRC                CFAMSTRC,
+        CFARCMND                CFARCMND,
+        CRELIGNS                CRELIGNS,
+        CFARSPIT                CFARSPIT,
+        CFASRCIN                CFASRCIN,
+        CSTATE                  CSTATE,
+        CFAHMTYP                CFAHMTYP1,
+        CFAHMTYP                CFAHMTYP2,
+        CFAHMTYP                CFAHMTYP3,
+        CFAHMTYP                CFAHMTYP4,
+        CFAHMTYP                CFAHMTYP5,
+        CFAHMTYP                CFAHMTYP6,
+        CFAHMTYP                CFAHMTYP7
+
+
+WHERE   A.ID_RESOURCE_HISTORY_AUD = #id_resource_history_rshs
+AND     A.CD_RSHS_AUD_SCH_DIST = SC.CD_SCH_DIST(+)   !***SIR 21475*** 
+AND     A.ID_RESOURCE_HISTORY_AUD = B.ID_RESOURCE_HISTORY !*********
+AND     B.ID_RESOURCE = C.ID_RESOURCE                  !***SIR 21732***
+AND     C.CD_RSRC_ADDR_TYPE = $02                         !*********
+AND     CFACATEG.CODE(+) = A.CD_RSHS_AUD_CATEGORY
+AND     CFACLOSE.CODE(+) = A.CD_RSHS_AUD_CLOSURE_RSN
+AND     CCOUNT.CODE(+)   = A.CD_RSHS_AUD_CNTY
+AND     CETHNIC.CODE(+)  = A.CD_RSHS_AUD_ETHNICITY
+AND     CFAHMSTA.CODE(+) = A.CD_RSHS_AUD_FA_HOME_STATUS
+AND     CFACLSTP.CODE(+) = A.CD_RSHS_AUD_INVOL_CLOSURE
+AND     CLANG.CODE(+)    = A.CD_RSHS_AUD_LANGUAGE
+AND     CFAMSTRC.CODE(+) = A.CD_RSHS_AUD_MARITAL_STATUS
+AND     CFARCMND.CODE(+) = A.CD_RSHS_AUD_RECMND_REOPEN
+AND     CRELIGNS.CODE(+) = A.CD_RSHS_AUD_RELIGION
+AND     CFARSPIT.CODE(+) = A.CD_RSHS_AUD_RESPITE
+AND     CFASRCIN.CODE(+) = A.CD_RSHS_AUD_SOURCE_INQUIRY
+AND     CSTATE.CODE(+)   = A.CD_RSHS_AUD_STATE
+AND     CFAHMTYP1.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE1
+AND     CFAHMTYP2.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE2
+AND     CFAHMTYP3.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE3
+AND     CFAHMTYP4.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE4
+AND     CFAHMTYP5.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE5
+AND     CFAHMTYP6.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE6
+AND     CFAHMTYP7.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE7
+
+END-SELECT    
+
+END-PROCEDURE GET-RSRC-AUDIT  
+
+!****************************************************************************
+!                                                                           *
+!   GET-RSRC-DELETE                                                         *
+!                                                                           *
+!       This procedure will get all of the audit table records before they  *
+!       were updated by the worker.                                         *
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : PRINT-RSRC-AUDIT                                       *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-RSRC-DELETE
+    
+    move 0      to #count6                    ! initialize the counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.ADDR_RSHS_AUD_CITY &a
+    move &a                                         to $rshs_aud_city
+
+A.ADDR_RSHS_AUD_ST_LN_1 &b
+    move &b                                         to $rshs_aud_st1 
+
+A.ADDR_RSHS_AUD_ST_LN_2 &c
+    move &c                                         to $rshs_aud_st2
+
+A.ADDR_RSHS_AUD_ZIP &d
+    move &d                                         to $rshs_aud_zip
+
+CFACATEG.decode &e
+    move &e                                         to $rshs_aud_category
+
+CFACLOSE.decode &f
+    move &f                                         to $rshs_aud_close_rsn
+
+CCOUNT.decode &g
+    move &g                                         to $rshs_aud_county
+
+CETHNIC.decode &h
+    move &h                                         to $rshs_aud_ethnic
+
+CFAHMSTA.decode &i
+    move &i                                         to $rshs_aud_stat
+
+!SIR 4352 - Use codes tables to get home types
+
+CFAHMTYP1.decode &aud11     
+    move &aud11                                     to $rshs_aud_type1
+
+CFAHMTYP2.decode &aud21           
+    move &aud21                                     to $rshs_aud_type2
+
+CFAHMTYP3.decode &aud31           
+    move &aud31                                     to $rshs_aud_type3
+
+CFAHMTYP4.decode &aud41           
+    move &aud41                                     to $rshs_aud_type4
+
+CFAHMTYP5.decode &aud51           
+    move &aud51                                     to $rshs_aud_type5
+
+CFAHMTYP6.decode &aud61           
+    move &aud61                                     to $rshs_aud_type6
+
+CFAHMTYP7.decode &aud71           
+    move &aud71                                     to $rshs_aud_type7
+
+CFACLSTP.decode &rshs_aud_invol1
+    move &rshs_aud_invol1                           to $rshs_aud_invol
+
+CLANG.decode &rshs_aud_lang1
+    move &rshs_aud_lang1                            to $rshs_aud_lang
+
+!***SIR 4305***
+
+CFAMSTRC.decode &rshs_aud_marital1
+    move &rshs_aud_marital1                         to $rshs_aud_marital
+
+CFARCMND.decode &rshs_aud_reopen1     
+    move &rshs_aud_reopen1                          to $rshs_aud_reopen
+
+A.CD_RSHS_AUD_REGION &k
+    move &k                                         to $rshs_aud_region
+
+CRELIGNS.decode &rshs_aud_religion1
+    move &rshs_aud_religion1                        to $rshs_aud_religion
+
+CFARSPIT.decode &rshs_aud_respite1
+    move &rshs_aud_respite1                         to $rshs_aud_respite
+
+!***SIR 21475***
+
+SC.TXT_SCH_DIST_NAME &del_sch_dist
+    move &del_sch_dist                              to $rshs_aud_school
+
+A.CD_RSHS_AUD_SCH_DIST &l
+    move &l                                         to $rshs_aud_dist  
+
+CFASRCIN.decode &rshs_aud_src_inq1
+    move &rshs_aud_src_inq1                         to $rshs_aud_src_inq
+
+CSTATE.decode &rshs_aud_state1
+    move &rshs_aud_state1                           to $rshs_aud_state
+
+A.DT_RSHS_AUD_EFFECTIVE &m
+    move &m                                         to $dt_rshs_aud_effective
+
+A.DT_RSHS_AUD_END &n
+    move &n                                         to $dt_rshs_aud_end
+
+A.DT_RSHS_AUD_MARRIAGE &o
+    move &o                                         to $dt_rshs_aud_marriage
+
+A.ID_AUD_RESOURCE &id_aud_rsrc1
+    move &id_aud_rsrc1                              to #id_aud_rsrc
+
+A.ID_RESOURCE_HISTORY_AUD &id_rshs_aud1
+    move &id_rshs_aud1                              to #id_rshs_aud
+
+A.ID_RSHS_AUD_FA_HOME_EVENT &p
+    move &p                                         to #id_rshs_aud_event
+
+A.ID_RSHS_AUD_FA_HOME_STAGE &q
+    move &q                                         to #id_rshs_aud_stage
+
+A.IND_RSHS_AUD_CARE_PROV &r
+    move &r                                         to $rshs_aud_care_prov
+
+A.IND_RSHS_AUD_EMERG_PLACE &s
+    move &s                                         to $rshs_aud_emerg_place
+
+A.IND_RSHS_AUD_INDIV_STUDY &t
+    move &t                                         to $rshs_aud_indiv_study
+
+A.IND_RSHS_AUD_NONPRS &u
+    move &u                                         to $rshs_aud_nonprs
+
+A.IND_RSHS_AUD_TRANSPORT &v
+    move &v                                         to $rshs_aud_trans
+
+A.NBR_RSHS_AUD_ANNUAL_INCOME &w
+    move &w                                         to #rshs_aud_income
+    
+A.NBR_RSHS_AUD_FACIL_CAPACITY &x   
+    move &x                                         to #rshs_aud_capacity
+
+A.NBR_RSHS_AUD_FM_AGE_MAX &y
+    move &y                                         to #rshs_aud_fm_age_max
+
+A.NBR_RSHS_AUD_FM_AGE_MIN &z
+    move &z                                         to #rshs_aud_fm_age_min
+
+A.NBR_RSHS_AUD_INT_CHILDREN &aa
+    move &aa                                        to #rshs_aud_int_child
+
+A.NBR_RSHS_AUD_INT_FE_AGE_MAX &bb
+    move &bb                                        to #rshs_aud_int_fe_max
+
+A.NBR_RSHS_AUD_INT_FE_AGE_MIN &cc
+    move &cc                                        to #rshs_aud_int_fe_min
+
+A.NBR_RSHS_AUD_INT_MA_AGE_MAX &dd
+    move &dd                                        to #rshs_aud_int_ma_max
+
+A.NBR_RSHS_AUD_INT_MA_AGE_MIN &ee
+    move &ee                                        to #rshs_aud_int_ma_min
+
+A.NBR_RSHS_AUD_MA_AGE_MAX &ff
+    move &ff                                        to #rshs_aud_ma_age_max
+
+A.NBR_RSHS_AUD_MA_AGE_MIN &gg
+    move &gg                                        to #rshs_aud_ma_age_min
+
+A.NBR_RSHS_AUD_PHN &hh
+    move &hh                                        to $rshs_aud_phone
+
+A.NBR_RSHS_AUD_PHONE_EXT &ii
+    move &ii                                        to $rshs_aud_ext
+
+A.NBR_RSHS_AUD_VID &jj
+    move &jj                                        to $rshs_aud_vid
+
+A.NM_RSHS_AUD_LAST_UPDATE &kk
+    move &kk                                        to $rshs_aud_update
+
+A.NM_RSHS_AUD_RESOURCE &ll                      
+    move &ll                                        to $rshs_aud_rsrc
+
+    let #count6 = #count6 + 1
+
+    if #count6 = 1
+        NEW-PAGE
+        print 'DELETED AUDIT TABLE RECORDS'         (+1,1)
+        print ''                                    (+1,1)
+    move 'Y'                to $delete_print_flag
+        do PRINT-RSRC-AUDIT
+    else
+        if #count6 > 1
+            NEW-PAGE
+            do PRINT-RSRC-AUDIT
+        end-if
+    end-if
+
+                   
+FROM    RESOURCE_HISTORY_AUDIT  A,
+        SCH_DIST                SC,
+        CFACATEG            CFACATEG,
+        CFACLOSE            CFACLOSE,
+        CCOUNT              CCOUNT,
+        CETHNIC             CETHNIC,
+        CFAHMSTA            CFAHMSTA,
+        CFACLSTP            CFACLSTP,
+        CLANG               CLANG,
+        CFAMSTRC            CFAMSTRC,
+        CFARCMND            CFARCMND,
+        CRELIGNS            CRELIGNS,
+        CFARSPIT            CFARSPIT,
+        CFASRCIN            CFASRCIN,
+        CSTATE              CSTATE,
+        CFAHMTYP            CFAHMTYP1,
+        CFAHMTYP            CFAHMTYP2,
+        CFAHMTYP            CFAHMTYP3,
+        CFAHMTYP            CFAHMTYP4,
+        CFAHMTYP            CFAHMTYP5,
+        CFAHMTYP            CFAHMTYP6,
+        CFAHMTYP            CFAHMTYP7
+
+
+WHERE   A.ID_AUD_RESOURCE = #id_rsrc
+AND A.ID_RESOURCE_HISTORY_AUD not in 
+        (SELECT ID_RESOURCE_HISTORY
+         FROM   RESOURCE_HISTORY
+	 WHERE ID_RESOURCE_HISTORY = A.ID_RESOURCE_HISTORY_AUD
+	 AND ID_RESOURCE = #id_rsrc)
+AND     A.CD_RSHS_AUD_SCH_DIST = SC.CD_SCH_DIST(+)   !***SIR 21475***
+AND     A.DT_RSHS_AUD_END <> '12/31/4712'
+AND     CFACATEG.CODE(+) = A.CD_RSHS_AUD_CATEGORY
+AND     CFACLOSE.CODE(+) = A.CD_RSHS_AUD_CLOSURE_RSN
+AND     CCOUNT.CODE(+)   = A.CD_RSHS_AUD_CNTY
+AND     CETHNIC.CODE(+)  = A.CD_RSHS_AUD_ETHNICITY
+AND     CFAHMSTA.CODE(+) = A.CD_RSHS_AUD_FA_HOME_STATUS
+AND     CFACLSTP.CODE(+) = A.CD_RSHS_AUD_INVOL_CLOSURE
+AND     CLANG.CODE(+)    = A.CD_RSHS_AUD_LANGUAGE
+AND     CFAMSTRC.CODE(+) = A.CD_RSHS_AUD_MARITAL_STATUS
+AND     CFARCMND.CODE(+) = A.CD_RSHS_AUD_RECMND_REOPEN
+AND     CRELIGNS.CODE(+) = A.CD_RSHS_AUD_RELIGION
+AND     CFARSPIT.CODE(+) = A.CD_RSHS_AUD_RESPITE
+AND     CFASRCIN.CODE(+) = A.CD_RSHS_AUD_SOURCE_INQUIRY
+AND     CSTATE.CODE(+)   = A.CD_RSHS_AUD_STATE
+AND     CFAHMTYP1.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE1
+AND     CFAHMTYP2.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE2
+AND     CFAHMTYP3.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE3
+AND     CFAHMTYP4.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE4
+AND     CFAHMTYP5.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE5
+AND     CFAHMTYP6.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE6
+AND     CFAHMTYP7.CODE(+) = A.CD_RSHS_AUD_FA_HOME_TYPE7
+
+END-SELECT    
+
+END-PROCEDURE GET-RSRC-DELETE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-RSRC-HISTORY                                                      *
+!                                                                           *
+!       This procedure prints the home record information including the     *
+!       current home.                                                       *
+!                                                                           * 
+!       CALLED BY  : GET-RSRC-HISTORY                                       *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-RSRC-HISTORY
+
+!*******SIR 20387*******
+let #print_count2 = #count2 -1
+
+if $counter_flag = 'Y'
+  print 'Record: '              (+2,1)
+  print #print_count2               (+0,11) edit 8888
+  print 'Resource History ID: '         (+1,1)
+  print #id_resource_history_rshs           (+0,22) edit 8888888888888888
+end-if
+
+print 'START DATE: '                        (+2,1)
+print $dt_rshs_effective                    (+0,19)
+print 'END DATE: '                          (+0,37)
+
+if $dt_rshs_end <> '12/31/4712'
+    print $dt_rshs_end                      (+0,47)
+end-if
+
+print 'F/A HOME ADDRESS: '                  (+1,1)
+print $rshs_st1                             (+0,19)
+
+if $rshs_st2 <> ''
+  print $rshs_st2                           (+1,19)
+end-if
+
+if $rshs_city <> ''
+  print $rshs_city                          (+1,19)
+  print ', '                                ()
+  print $rshs_state                         ()
+end-if
+
+print $rshs_county                          (+1,19)
+print ' '                                   ()
+print $rshs_zip                             ()
+print 'F/A HOME PHONE: '                    (+1,1)
+
+    if substr($rshs_phone,8,1) = ''   
+        let $rshs_phone_print = substr($rshs_phone,1,3)||'-'||substr($rshs_phone,4,4)
+    else
+        let $rshs_phone_print = '('||substr($rshs_phone,1,3)||') '||substr($rshs_phone,4,3)||'-'||substr($rshs_phone,7,4)
+    end-if
+
+if $rshs_phone <> ''
+  print $rshs_phone_print                   (+0,19)
+end-if
+
+print 'EXT: '                               (+0,37)
+print $rshs_ext                             (+0,42)
+print 'F/A HOME VID: '                      (+1,1)
+print $rshs_vid                             (+0,19)
+
+print 'LICENSING DATA'                      (+2,1)
+print 'CATEGORY: '                          (+1,1)
+print $rshs_category                        (+0,14)
+print 'STATUS: '                            (+0,37)
+print $rshs_stat                            (+0,45)
+print 'HOME TYPE: '                         (+1,1)
+
+  let $type_string = ''
+
+if rtrim($rshs_type1,'') <> ''
+    let $type_string = $rshs_type1 || '  '
+if rtrim($rshs_type2,'') <> ''
+    let $type_string = $type_string || $rshs_type2 || '  '
+if rtrim($rshs_type3,'') <> ''
+    let $type_string = $type_string || $rshs_type3 || '  '
+if rtrim($rshs_type4,'') <> ''
+    let $type_string = $type_string || $rshs_type4 || '  '
+if rtrim($rshs_type5,'') <> ''
+    let $type_string = $type_string || $rshs_type5 || '  '
+if rtrim($rshs_type6,'') <> ''
+    let $type_string = $type_string || $rshs_type6 || '  '
+if rtrim($rshs_type7,'') <> ''
+    let $type_string = $type_string || $rshs_type7
+end-if    
+end-if    
+end-if    
+end-if    
+end-if    
+end-if    
+end-if    
+
+print $type_string                          (+0,14) wrap 64 2
+print 'CAPACITY: '                          (+1,1)
+print #rshs_capacity                        (+0,14) edit 8888
+print 'AGES APPROVED: '                     (+1,1)
+print 'MALE    MIN  '                       (+1,1)
+
+let #ma_min_yr = trunc((#rshs_ma_age_min/ 12),0)
+let #ma_min_mo = mod (#rshs_ma_age_min, 12)
+
+print #ma_min_yr                            (+0,14) edit 99
+if #ma_min_yr = 1
+print 'YEAR'                                (+0,17)
+else
+print 'YEARS'                               (+0,17)
+end-if
+print #ma_min_mo                            (+0,23) edit 99
+if #ma_min_mo = 1
+print 'MONTH'                               (+0,26)
+else
+print 'MONTHS'                              (+0,26)
+end-if
+
+print 'MAX'                                 (+0,38)
+
+let #ma_max_yr = trunc((#rshs_ma_age_max/12),0)
+let #ma_max_mo = mod (#rshs_ma_age_max, 12)
+
+print #ma_max_yr                            (+0,44) edit 999
+if #ma_max_yr = 1
+print 'YEAR'                                (+0,48)
+else
+print 'YEARS'                               (+0,48)
+end-if
+print #ma_max_mo                            (+0,54) edit 99
+if #ma_max_mo = 1
+print 'MONTH'                               (+0,57)
+else
+print 'MONTHS'                              (+0,57)
+end-if
+
+print 'FEMALE  MIN  '                       (+1,1)
+
+let #fm_min_yr = trunc((#rshs_fm_age_min/ 12),0)
+let #fm_min_mo = mod (#rshs_fm_age_min, 12)
+
+print #fm_min_yr                            (+0,14) edit 99
+if #fm_min_yr = 1
+print 'YEAR'                                (+0,17)
+else
+print 'YEARS'                               (+0,17)
+end-if
+print #fm_min_mo                            (+0,23) edit 99
+if #fm_min_mo = 1
+print 'MONTH'                               (+0,26)
+else
+print 'MONTHS'                              (+0,26)
+end-if
+
+print 'MAX'                                 (+0,38)
+
+let #fm_max_yr = trunc((#rshs_fm_age_max/ 12),0)
+let #fm_max_mo = mod (#rshs_fm_age_max, 12)
+
+print #fm_max_yr                            (+0,44) edit 999
+if #fm_max_yr = 1
+print 'YEAR'                                (+0,48)
+else
+print 'YEARS'                               (+0,48)
+end-if
+print #fm_max_mo                            (+0,54) edit 99
+if #fm_max_mo = 1
+print 'MONTH'                               (+0,57)
+else
+print 'MONTHS'                              (+0,57)
+end-if
+
+print 'NONPRS: '                            (+1,1)
+
+if $rshs_nonprs = 'N'
+    print 'NO'                              (+0,15)
+else
+    print 'YES'                             (+0,15)
+end-if
+
+print 'DEMOGRAPHIC DATA'                    (+2,1)
+print 'ETHNICITY: '                         (+1,1)
+print $rshs_ethnic                          (+0,14)
+print 'LANGUAGE: '                          (+0,37)
+print $rshs_lang                            (+0,51)
+print 'MARITAL: '                           (+1,1)
+print $rshs_marital                         (+0,14)
+print 'DATE MARRIED: '                      (+0,37)
+print $dt_rshs_marriage                     (+0,51)
+print 'RESPITE: '                           (+1,1)
+print $rshs_respite                         (+0,14)
+print 'RELIGION: '                          (+0,37)
+print $rshs_religion                        (+0,51)
+print 'SCHOOL DIST: '                       (+1,1)
+print $rshs_school                          (+0,14)
+print 'SRCE INQRY: '                        (+1,1)
+print $rshs_src_inq                         (+0,14)
+print 'INDIV STUDY: '                       (+0,37)
+
+if $rshs_indiv_study = 'Y'
+    print 'INDIVIDUAL'                      (+0,51)
+else
+    print 'GROUP'                           (+0,51)
+end-if
+
+print 'INTERESTS'                           (+2,1)
+print 'NBR OF CHILD: '                      (+1,1)
+print #rshs_int_child                       (+0,15) edit 888
+print 'AGE RANGE: '                         (+1,1)
+print 'MALE    MIN  '                       (+1,1)
+
+let #ma_int_min_yr = trunc((#rshs_int_ma_min/ 12),0)
+let #ma_int_min_mo = mod (#rshs_int_ma_min, 12)
+
+print #ma_int_min_yr                        (+0,14) edit 99
+if #ma_int_min_yr = 1
+print 'YEAR'                                (+0,17)
+else
+print 'YEARS'                               (+0,17)
+end-if
+print #ma_int_min_mo                        (+0,23) edit 99
+if #ma_int_min_mo = 1
+print 'MONTH'                               (+0,26)
+else
+print 'MONTHS'                              (+0,26)
+end-if
+print 'MAX'                                 (+0,38)
+
+let #ma_int_max_yr = trunc((#rshs_int_ma_max/ 12),0)
+let #ma_int_max_mo = mod (#rshs_int_ma_max, 12)
+
+print #ma_int_max_yr                        (+0,44) edit 999
+if #ma_int_max_yr = 1
+print 'YEAR'                                (+0,48)
+else
+print 'YEARS'                               (+0,48)
+end-if
+print #ma_int_max_mo                        (+0,54) edit 99
+if #ma_int_max_mo = 1
+print 'MONTH'                               (+0,57)
+else
+print 'MONTHS'                              (+0,57)
+end-if
+
+print 'FEMALE  MIN  '                       (+1,1)
+
+let #fe_int_min_yr = trunc((#rshs_int_fe_min/ 12),0)
+let #fe_int_min_mo = mod (#rshs_int_fe_min, 12)
+
+print #fe_int_min_yr                        (+0,14) edit 99
+if #fe_int_min_yr = 1
+print 'YEAR'                                (+0,17)
+else
+print 'YEARS'                               (+0,17)
+end-if
+print #fe_int_min_mo                        (+0,23) edit 99
+if #fe_int_min_mo = 1
+print 'MONTH'                               (+0,26)
+else
+print 'MONTHS'                              (+0,26)
+end-if
+
+print 'MAX'                                 (+0,38)
+
+let #fe_int_max_yr = trunc((#rshs_int_fe_max/ 12),0)
+let #fe_int_max_mo = mod (#rshs_int_fe_max, 12)
+
+print #fe_int_max_yr                        (+0,44) edit 999
+if #fe_int_max_yr = 1
+print 'YEAR'                                (+0,48)
+else
+print 'YEARS'                               (+0,48)
+end-if
+print #fe_int_max_mo                        (+0,54) edit 99
+if #fe_int_max_mo = 1
+print 'MONTH'                               (+0,57)
+else
+print 'MONTHS'                              (+0,57)
+end-if
+
+print ''                                    (+1,1)
+
+!SIR 4344 - Only prints when either indicator is 'Y'
+
+if $rshs_trans = 'Y'
+    print 'WILLING TO TRANSPORT'            (+0,1)
+end-if
+
+if $rshs_emerg_place = 'Y'
+    print 'ACCEPTS EMERGENCY PLACEMENTS'    (+0,38)
+end-if
+
+print 'CLOSURE DATA'                        (+2,1)
+print 'CLOSURE RSN: '                       (+1,1)
+print $rshs_close_rsn                       (+0,18)
+print 'CLOSURE TYPE: '                      (+1,1)
+print $rshs_invol                           (+0,18) 
+print ''                                    (+1,1)
+
+if $rshs_reopen = $Recommend
+    print 'RECOMMEND RE-OPENING'                (+0,1)
+else
+
+    if ($rshs_close_rsn = '' and $rshs_invol = '')
+        print ''                                (+0,1)
+    else
+        print 'DOES NOT RECOMMEND RE-OPENING'   (+0,1)  
+    end-if
+
+end-if
+
+if $counter_flag = 'Y'
+  print 'UPDATED BY: '                      (+2,1) !*******SIR 21181*******
+  print 'WORKER:'                           (+1,1) !*******SIR 21475*******
+  print $rshs_update                        (+0,10)
+  print 'DATE:'                             (+1,3)
+  print $dt_rshs_update                     (+0,10)
+end-if
+
+END-PROCEDURE PRINT-RSRC-HISTORY
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CHAR-TITLE                                                        *
+!                                                                           *
+!       This procedure prints the characteristics title and the first       *
+!       characteristic of the child.                                        *
+!                                                                           * 
+!       CALLED BY  : GET-CHAR                                               *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHAR-TITLE
+
+print 'CHARACTERISTICS: '                           (+2,1)
+print $char                                         (+1,1)
+print $dt_char                                      (+0,47)
+
+END-PROCEDURE PRINT-CHAR-TITLE 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CHAR                                                              *
+!                                                                           *
+!       This procedure prints the rest of the characteristics.              *
+!                                                                           * 
+!       CALLED BY  : GET-CHAR                                               *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHAR
+
+print $char                                         (+1,1)
+print $dt_char                                      (+0,47)
+
+END-PROCEDURE PRINT-CHAR
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ETHNICITY-TITLE                                                   *
+!                                                                           *
+!       This procedure prints the ethnicity title and the first ethnicity.  *
+!                                                                           * 
+!       CALLED BY  : GET-ETHNICITY                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ETHNICITY-TITLE
+
+print 'ETHNICITIES: '                               (+2,1)
+print $ethnicity                                    (+1,1)
+print $dt_ethnicity                                 (+0,47)
+
+END-PROCEDURE PRINT-ETHNICITY-TITLE 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ETHNICITY                                                         *
+!                                                                           *
+!       This procedure prints the other ethnicities.                        *
+!                                                                           * 
+!       CALLED BY  : GET-ETHNICITY                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ETHNICITY
+
+print $ethnicity                                    (+1,1)
+print $dt_ethnicity                                 (+0,47)
+
+END-PROCEDURE PRINT-ETHNICITY
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-RSRC-AUDIT                                                        *
+!                                                                           *
+!       This procedure prints the audit table records as they appeared      *
+!       before the update.                                                  *
+!                                                                           * 
+!       CALLED BY  : GET-RSRC-AUDIT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-RSRC-AUDIT
+
+!*******SIR 20387*******
+let #print_count5 = #count5 - 1
+
+if $delete_print_flag <> 'Y'
+    print 'Record: '                    (+2,1)
+    print #print_count2                 (+0,11) edit 8888
+    print '-'                   ()
+    print #print_count5             ()      edit 8888
+end-if
+
+print 'Resource History ID: '               (+1,1)
+print #id_resource_history_rshs             (+0,22) edit 8888888888888888
+print 'START DATE: '                            (+2,1)
+print $dt_rshs_aud_effective                    (+0,19)
+print 'END DATE: '                              (+0,37)
+
+if $dt_rshs_aud_end <> '12/31/4712'
+    print $dt_rshs_aud_end                      (+0,47)
+end-if
+
+print 'F/A HOME ADDRESS: '                      (+1,1)
+print $rshs_aud_st1                             (+0,19)
+if $rshs_aud_st2 <> ''
+  print $rshs_aud_st2                           (+1,19)
+end-if
+
+if $rshs_aud_city <> ''
+  print $rshs_aud_city                          (+1,19)
+  print ',  '                                   ()
+  print $rshs_aud_state                         ()
+end-if
+
+print $rshs_aud_county                          (+1,19)
+print ' '                                       ()
+print $rshs_aud_zip                             ()
+print 'F/A HOME PHONE: '                        (+1,1)
+
+    if substr($rshs_aud_phone,8,1) = ''   
+        let $rshs_aud_phone_print = substr($rshs_aud_phone,1,3)||'-'||substr($rshs_aud_phone,4,4)
+    else
+        let $rshs_aud_phone_print = '('||substr($rshs_aud_phone,1,3)||') '||substr($rshs_aud_phone,4,3)||'-'||substr($rshs_aud_phone,7,4)
+    end-if
+
+if $rshs_aud_phone <> ''
+  print $rshs_aud_phone_print                   (+0,19)
+end-if
+
+print 'EXT: '                                   (+0,37)
+print $rshs_aud_ext                             (+0,42)
+print 'F/A HOME VID: '                          (+1,1)
+print $rshs_aud_vid                             (+0,19)
+
+print 'LICENSING DATA'                          (+2,1)
+print 'CATEGORY: '                              (+1,1)
+print $rshs_aud_category                        (+0,14)
+print 'STATUS: '                                (+0,37)
+print $rshs_aud_stat                            (+0,45)
+print 'HOME TYPE: '                             (+1,1)
+
+if rtrim($rshs_aud_type1,'') <> ''
+    let $type_string2 = $rshs_aud_type1
+else
+if rtrim($rshs_aud_type2,'') <> ''
+    let $type_string2 = $type_string2 || ', ' || $rshs_aud_type2
+else
+if rtrim($rshs_aud_type3,'') <> ''
+    let $type_string2 = $type_string2 || ', ' || $rshs_aud_type3
+else
+if rtrim($rshs_aud_type4,'') <> ''
+    let $type_string2 = $type_string2 || ', ' || $rshs_aud_type4
+else
+if rtrim($rshs_aud_type5,'') <> ''
+    let $type_string2 = $type_string2 || ', ' || $rshs_aud_type5
+else
+if rtrim($rshs_aud_type6,'') <> ''
+    let $type_string2 = $type_string2 || ', ' || $rshs_aud_type6
+else
+if rtrim($rshs_aud_type7,'') <> ''
+    let $type_string2 = $type_string2 || ', ' || $rshs_aud_type7
+end-if    
+end-if    
+end-if    
+end-if    
+end-if    
+end-if    
+end-if    
+
+print $type_string2                         (+0,14)
+print 'CAPACITY: '                          (+1,1)
+print $rshs_aud_capacity                    (+0,14) edit 8888
+print 'AGES APPROVED: '                     (+1,1)
+print 'MALE    MIN  '                       (+1,1)
+
+let #ma_min_yr2 = trunc((#rshs_aud_ma_age_min/ 12),0)
+let #ma_min_mo2 = mod (#rshs_aud_ma_age_min, 12)
+
+print #ma_min_yr2                           (+0,14) edit 99
+print 'YEAR'                                (+0,17)
+print #ma_min_mo2                           (+0,21) edit 99
+print 'MONTH'                               (+0,24)
+print 'MAX'                                 (+0,37)
+
+let #ma_max_yr2 = trunc((#rshs_aud_ma_age_max/ 12),0)
+let #ma_max_mo2 = mod (#rshs_aud_ma_age_max, 12)
+
+print #ma_max_yr2                           (+0,44) edit 999
+print 'YEAR'                                (+0,48)
+print #ma_max_mo2                           (+0,53) edit 99
+print 'MONTH'                               (+0,56)
+
+print 'FEMALE  MIN  '                       (+1,1)
+
+let #fm_min_yr2 = trunc((#rshs_aud_fm_age_min/ 12),0)
+let #fm_min_mo2 = mod (#rshs_aud_fm_age_min, 12)
+
+print #fm_min_yr2                           (+0,14) edit 99
+print 'YEAR'                                (+0,17)
+print #fm_min_mo2                           (+0,21) edit 99
+print 'MONTH'                               (+0,24)
+
+print 'MAX'                                 (+0,37)
+
+let #fm_max_yr2 = trunc((#rshs_aud_fm_age_max/ 12),0)
+let #fm_max_mo2 = mod (#rshs_aud_fm_age_max, 12)
+
+print #fm_max_yr2                           (+0,44) edit 999
+print 'YEAR'                                (+0,48)
+print #fm_max_mo2                           (+0,53) edit 99
+print 'MONTH'                               (+0,56)
+
+print 'NONPRS: '                            (+1,1)
+if $rshs_aud_nonprs = 'N'
+    print 'NO'                              (+0,15)
+else
+    print 'YES'                             (+0,15)
+end-if
+
+print 'DEMOGRAPHIC DATA'                    (+2,1)
+print 'ETHNICITY: '                         (+1,1)
+print $rshs_aud_ethnic                      (+0,14)
+print 'LANGUAGE: '                          (+0,37)
+print $rshs_aud_lang                        (+0,51)
+print 'MARITAL: '                           (+1,1)
+print $rshs_aud_marital                     (+0,14)
+print 'DATE MARRIED: '                      (+0,37)
+print $dt_rshs_aud_marriage                 (+0,51)
+print 'RESPITE: '                           (+1,1)
+print $rshs_aud_respite                     (+0,14)
+print 'RELIGION: '                          (+0,37)
+print $rshs_aud_religion                    (+0,51)
+print 'SCHOOL DIST: '                       (+1,1)
+print $rshs_aud_school                      (+0,14)
+print 'SRCE INQRY: '                        (+1,1)
+print $rshs_aud_src_inq                     (+0,14)
+print 'INDIV STUDY: '                       (+0,37)
+
+if $rshs_aud_indiv_study = 'Y'
+    print 'INDIVIDUAL STUDY'                (+0,51)
+else
+    print 'GROUP'                           (+0,51)
+end-if
+
+print 'INTERESTS'                           (+2,1)
+print 'NBR OF CHILD: '                      (+1,1)
+print #rshs_aud_int_child                   (+0,15) edit 888
+print 'AGE RANGE: '                         (+1,1)
+print 'MALE    MIN  '                       (+1,1)
+
+let #ma_int_min_yr2 = trunc((#rshs_aud_int_ma_min/ 12),0)
+let #ma_int_min_mo2 = mod (#rshs_aud_int_ma_min, 12)
+
+print #ma_int_min_yr2                       (+0,14) edit 99
+print 'YEAR'                                (+0,17)
+print #ma_int_min_mo2                       (+0,21) edit 99
+print 'MONTH'                               (+0,24)
+print 'MAX'                                 (+0,37)
+
+let #ma_int_max_yr2 = trunc((#rshs_aud_int_ma_max/ 12),0)
+let #ma_int_max_mo2 = mod (#rshs_aud_int_ma_max, 12)
+
+print #ma_int_max_yr2                       (+0,44) edit 999
+print 'YEAR'                                (+0,48)
+print #ma_int_max_mo2                       (+0,53) edit 99
+print 'MONTH'                               (+0,56)
+
+print 'FEMALE  MIN  '                       (+1,1)
+
+let #fe_int_min_yr2 = trunc((#rshs_aud_int_fe_min/ 12),0)
+let #fe_int_min_mo2 = mod (#rshs_aud_int_fe_min, 12)
+
+print #fe_int_min_yr2                       (+0,14) edit 99
+print 'YEAR'                                (+0,17)
+print #fe_int_min_mo2                       (+0,21) edit 99
+print 'MONTH'                               (+0,24)
+
+print 'MAX'                                 (+0,37)
+
+let #fe_int_max_yr2 = trunc((#rshs_aud_int_fe_max/ 12),0)
+let #fe_int_max_mo2 = mod (#rshs_aud_int_fe_max, 12)
+
+print #fe_int_max_yr2                       (+0,44) edit 999
+print 'YEAR'                                (+0,48)
+print #fe_int_max_mo2                       (+0,53) edit 99
+print 'MONTH'                               (+0,56)
+
+print ''                                    (+1,1)
+
+!SIR 4344 - Only prints when either indicator is 'T'
+
+if $rshs_aud_trans = 'T'
+    print 'WILLING TO TRANSPORT'            (+0,1)
+end-if
+
+if $rshs_aud_emerg_place = 'T'
+    print 'ACCEPTS EMERGENCY PLACEMENTS'    (+0,37)
+end-if
+
+print 'CLOSURE DATA'                        (+2,1)
+print 'CLOSURE RSN: '                       (+1,1)
+print $rshs_aud_close_rsn                   (+0,18)
+print 'CLOSURE TYPE: '                      (+1,1)
+print $rshs_aud_invol                       (+0,18) 
+print ''                                    (+1,1)
+
+if $rshs_aud_reopen = $Recommend
+    print 'RECOMMENDS RE-OPENING'               (+0,1)
+else
+
+    if ($rshs_aud_close_rsn = '' and $rshs_aud_invol = '')
+        print ''                                (+0,1)
+    else
+        print 'DOES NOT RECOMMEND RE-OPENING'   (+0,1)  
+    end-if
+
+end-if
+
+print 'UPDATED BY: '                        (+2,1) !*******SIR 21181*******
+print 'WORKER:'                             (+1,1) !*******SIR 21475******* 
+print $rshs_aud_update                      (+0,10)
+print 'DATE:'                               (+1,3)
+print $dt_audit_update                      (+0,10)
+
+END-PROCEDURE PRINT-RSRC-AUDIT
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *   
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc'

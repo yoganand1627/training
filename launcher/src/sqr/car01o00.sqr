@@ -1,0 +1,2274 @@
+!*****************************************************************************
+!  SLA PERFORMANCE REPORT                                                    *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccf02o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/wallacbe/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 04/10/96                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brenda Wallace                                       *
+!                                                                            *
+! PROGRAM DESCRIPTION:  Details the CAPS application service level agreement *
+!                       performance results for the previous month.  The     *
+!                       total repsonse, and total response minus network     *
+!                       time are displayed as a percentage which have met    *
+!                       the performance SLA.  The results are displayed by   *
+!                       mail code, region, and statewide within performance  *
+!                       (event) type.                                        *
+!                       The report takes as input the month for which to     *
+!                       report the totals (only the month and year are       *
+!                       extracted from the input, so the day value of the    *
+!                       input date is ignored).  If the input date is blank  *
+!                       (' '), the totals for the current month are reported.*
+!                       The report data is stored from the 21st of the       *
+!                       preceding month to the 20th of the current month.    *
+!                       This means that if a report is produced for April,   *
+!                       (or in April with a blank input date,)               *
+!                       the data will represent totals for March 21 through  *
+!                       April 20.                                            *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 11/20/96   K. Cys       ENH -- Modified code to calculate and print a      *
+!                         count of the figures used to calculate the         *
+!                         percentages for each performance category.         *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!   
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup01b.sqc'            ! control codes for Portrait 
+
+    ask DT_MONTH                       ! input parameter 
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 4
+
+  !Get the current date for the header
+  do GET-CURRENT-DATE
+
+  print  'DEPARTMENT OF FAMILY AND PROTECTIVE SERVICES' (+0) center
+
+  print  'CAPS Application SLA Performance Standards Report'      (+1) center
+
+  let $data_month = 'Data from '||$header_month_from||'/21/'||$header_year_from||' to '||$header_month_to||'/20/'||$header_year_to||'    Printed: '||$print_date||''
+  print  $data_month                                              (+1) center
+
+  print 'PAGE: '          (+0,120)
+  page-number             ()
+
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   GET-CURRENT-DATE                                                        *
+!                                                                           *
+!       This procedure will select the the current date for the report      *
+!       header.                                                             *
+!                                                                           * 
+!       CALLED BY  : BEGIN-HEADING
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CURRENT-DATE
+       
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+    
+TO_CHAR(SYSDATE, 'MM/DD/YYYY') &current_full_date
+     move &current_full_date                       to $print_date
+
+FROM DUAL
+     
+END-SELECT              
+     
+END-PROCEDURE GET-CURRENT-DATE
+
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                            !Set printer environment
+
+    move '{DT_MONTH}'            to $input_dt_month 
+    !If the input month is blank, use the current month
+    let $input_dt_month = ltrim($input_dt_month,' ')
+    if rtrim($input_dt_month,'') = ''
+       do GET-CURRENT-MONTH
+    end-if
+
+    !Get the month previous to the input month with day set to 21 and
+    !the current month with the day set to 20 for use in the report header
+    do GET-HEADER-DATES
+
+
+    move 1                       to #SEARCH_BY_KEY
+    move 2                       to #SEARCH_BY_PRNC_NAME
+    move 3                       to #SEARCH_BY_PRNC_ADDR
+    move 4                       to #NORMAL_UPDATE
+    move 5                       to #COMPLEX_UPDATE
+    move 6                       to #ABUSE_HOTLINE_FUNC
+    move 7                       to #RPC_SEARCH_BY_KEY
+   
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : REPORT-SEARCH-BY-KEY                                   *
+!                    REPORT-SEARCH-BY-PRNC-NAME                             *
+!                    REPORT-SEARCH-BY-PRNC-ADDR                             *
+!                    REPORT-NORMAL-UPDATE                                   *
+!                    REPORT-COMPLEX-UPDATE                                  *
+!                    REPORT-ABUSE-HOTLINE-FUNC                              *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do REPORT-SEARCH-BY-KEY
+    do REPORT-SEARCH-BY-PRNC-NAME
+    do REPORT-SEARCH-BY-PRNC-ADDR
+    do REPORT-NORMAL-UPDATE
+    do REPORT-COMPLEX-UPDATE   
+    do REPORT-ABUSE-HOTLINE-FUNC
+    
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   REPORT-SEARCH-BY-KEY                                                    *
+!                                                                           *
+!       This procedure will retieve and print the percentages for the       *
+!       SEARCH-BY-KEY performance event type                                *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-TOTAL-TITLE                                      *
+!                    PRINT-TOTAL                                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE REPORT-SEARCH-BY-KEY
+
+    
+    print 'Search of Case Information by Record Key:' (+2,1)
+    print '-----------------------------------------' (+1,1)
+
+    print 'Criteria:       Total Response          <= 4 Seconds 75%' (+2, 1)
+    print '                Total Excluding Network <= 3 Seconds 95%' (+1, 1)        
+
+
+    let #event_type =  #SEARCH_BY_KEY
+
+    !Determine if there are any records of this event type in the database
+    do GET-EVENT-COUNT
+    !If there are no record for this event type, display message in the 
+    !report.  Otherwise, produce the report for this event type.
+    if #event_count = 0
+       print 'No data for this performance type has been logged.' (+3, 1)
+       GOTO nodata
+    end-if
+
+!Get total response and total response minus network time criteria for 
+!SEARCH_BY_KEY event type by office:
+
+    move 0                                  to #count1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+O.NM_OFFICE_NAME
+        move &O.NM_OFFICE_NAME        to $office_name
+
+O.CD_OFFICE_MAIL
+        move &O.CD_OFFICE_MAIL        to $mail_code
+
+ROUND (SUM (P.NBR_PRF_LEQ_1) +
+       SUM (P.NBR_PRF_LEQ_2) +
+       SUM (P.NBR_PRF_LEQ_3) +
+       SUM (P.NBR_PRF_LEQ_4)) &numerator  
+       move &numerator           to #numerator
+ROUND  (SUM(P.NBR_PRF_LEQ_1) +
+        SUM (P.NBR_PRF_LEQ_2) +
+        SUM (P.NBR_PRF_LEQ_3) +
+        SUM (P.NBR_PRF_LEQ_4) +
+        SUM (P.NBR_PRF_LEQ_5) +
+        SUM (P.NBR_PRF_LEQ_6) +
+        SUM (P.NBR_PRF_LEQ_7) +
+        SUM (P.NBR_PRF_LEQ_10) +
+        SUM (P.NBR_PRF_LEQ_12) +
+        SUM (P.NBR_PRF_LEQ_20) +
+        SUM (P.NBR_PRF_LEQ_24) +
+        SUM (P.NBR_PRF_LEQ_30) +
+        SUM (P.NBR_PRF_GTR_30)) &denominator 
+    move &denominator        to #denominator
+    
+    let #total = (#numerator/#denominator) * 100
+
+!Get total response minus network criteria for SEARCH_BY_KEY event 
+!type by office:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3)) &nonet_num
+       move &nonet_num             to #nonet_num  
+ROUND  (SUM(P.NBR_PRF_NONET_LEQ_1) +
+        SUM(P.NBR_PRF_NONET_LEQ_2) +
+        SUM(P.NBR_PRF_NONET_LEQ_3) +
+        SUM(P.NBR_PRF_NONET_LEQ_4) +
+        SUM(P.NBR_PRF_NONET_LEQ_5) +
+        SUM(P.NBR_PRF_NONET_LEQ_6) +
+        SUM(P.NBR_PRF_NONET_LEQ_7) +
+        SUM(P.NBR_PRF_NONET_LEQ_10) +
+        SUM(P.NBR_PRF_NONET_LEQ_12) +
+        SUM(P.NBR_PRF_NONET_LEQ_20) +
+        SUM(P.NBR_PRF_NONET_LEQ_24) +
+        SUM(P.NBR_PRF_NONET_LEQ_30) +
+        SUM(P.NBR_PRF_NONET_GTR_30)) &nonet_denom
+       move &nonet_denom            to #nonet_denom
+
+       let #total_nonet = (#nonet_num/#nonet_denom) * 100
+       
+
+    let #count1 = #count1 + 1
+
+    move #numerator to $numerator 8888 
+    move #denominator to $denominator 8888
+
+    move #nonet_num to $nonet_num 8888
+    move #nonet_denom to $nonet_denom 8888
+
+    let $count = $numerator || ' of ' || $denominator
+
+    let $count_nonet = $nonet_num || ' of ' || $nonet_denom
+
+    let $location_name = $mail_code||'  '||$office_name
+           
+    if #count1 = 1          
+       do PRINT-TOTAL-TITLE
+       do PRINT-MAIL-OFFICE-TITLE
+       do PRINT-TOTAL
+    else
+       do PRINT-TOTAL
+    end-if 
+
+FROM      PERF_TALLY  P,
+          OFFICE      O
+
+WHERE     P.ID_EVENT = #event_type and
+          P.ID_OFFICE = O.ID_OFFICE and
+          P.DT_MONTH = $input_dt_month
+
+GROUP BY   CD_OFFICE_MAIL, O.NM_OFFICE_NAME
+ORDER BY   O.NM_OFFICE_NAME
+
+END-SELECT
+
+
+
+
+!Get total response and total response minus network time for
+!SEARCH_BY_KEY event type by region:
+
+    move 0                                  to #count1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+O.CD_OFFICE_REGION 
+        move &O.CD_OFFICE_REGION        to $region
+        let $location_name = 'Region '||$region||''
+
+!Get total response criteria for SEARCH_BY_KEY event type by region:
+ROUND (SUM (P.NBR_PRF_LEQ_1) +
+       SUM (P.NBR_PRF_LEQ_2) +
+       SUM (P.NBR_PRF_LEQ_3) +
+       SUM (P.NBR_PRF_LEQ_4) ) &numerator_reg
+       move &numerator_reg    to #numerator_reg
+ROUND  (SUM(P.NBR_PRF_LEQ_1) +
+        SUM(P.NBR_PRF_LEQ_2) +
+        SUM(P.NBR_PRF_LEQ_3) +
+        SUM(P.NBR_PRF_LEQ_4) +
+        SUM(P.NBR_PRF_LEQ_5) +
+        SUM(P.NBR_PRF_LEQ_6) +
+        SUM(P.NBR_PRF_LEQ_7) +
+        SUM(P.NBR_PRF_LEQ_10) +
+        SUM(P.NBR_PRF_LEQ_12) +
+        SUM(P.NBR_PRF_LEQ_20) +
+        SUM(P.NBR_PRF_LEQ_24) +
+        SUM(P.NBR_PRF_LEQ_30) +
+        SUM(P.NBR_PRF_GTR_30)) &denominator_reg
+       move &denominator_reg  to #denominator_reg 
+       
+       let #total = (#numerator_reg/#denominator_reg) * 100
+
+!Get total response minus network criteria for SEARCH_BY_KEY event 
+!type by region:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) ) &nonet_num_reg
+       move &nonet_num_reg        to #nonet_num_reg
+ROUND (SUM(P.NBR_PRF_NONET_LEQ_1) +
+       SUM(P.NBR_PRF_NONET_LEQ_2) +
+       SUM(P.NBR_PRF_NONET_LEQ_3) +
+       SUM(P.NBR_PRF_NONET_LEQ_4) +
+       SUM(P.NBR_PRF_NONET_LEQ_5) +
+       SUM(P.NBR_PRF_NONET_LEQ_6) +
+       SUM(P.NBR_PRF_NONET_LEQ_7) +
+       SUM(P.NBR_PRF_NONET_LEQ_10) +
+       SUM(P.NBR_PRF_NONET_LEQ_12) +
+       SUM(P.NBR_PRF_NONET_LEQ_20) +
+       SUM(P.NBR_PRF_NONET_LEQ_24) +
+       SUM(P.NBR_PRF_NONET_LEQ_30) +
+       SUM(P.NBR_PRF_NONET_GTR_30)) &nonet_denom_reg
+       move &nonet_denom_reg       to #nonet_denom_reg
+
+       let #total_nonet = (#nonet_num_reg/#nonet_denom_reg) * 100
+      
+
+    let #count1 = #count1 + 1
+           
+    move #numerator_reg to $numerator_reg 8888 
+    move #denominator_reg to $denominator_reg 8888
+
+    move #nonet_num_reg to $nonet_num_reg 8888
+    move #nonet_denom_reg to $nonet_denom_reg 8888
+
+    let $count = $numerator_reg || ' of ' || $denominator_reg
+
+    let $count_nonet = $nonet_num_reg || ' of ' || $nonet_denom_reg
+
+    if #count1 = 1          
+       ! Skip 3 lines
+       print '' (+3,0)
+       do PRINT-TOTAL
+    else
+       do PRINT-TOTAL
+    end-if 
+
+FROM       PERF_TALLY  P,
+           OFFICE             O
+WHERE      P.ID_EVENT = #event_type and
+           P.ID_OFFICE = O.ID_OFFICE and
+           P.DT_MONTH = $input_dt_month
+GROUP BY   O.CD_OFFICE_REGION
+ORDER BY   O.CD_OFFICE_REGION
+
+END-SELECT
+
+
+!Get total response and total response minus network time for
+!SEARCH_BY_KEY event type statewide:
+
+!    move 0                                  to #count1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+!Get total response criteria for SEARCH_BY_KEY event type statewide:
+ROUND(SUM (P.NBR_PRF_LEQ_1) +
+      SUM (P.NBR_PRF_LEQ_2) +
+      SUM (P.NBR_PRF_LEQ_3) +
+      SUM (P.NBR_PRF_LEQ_4) ) &num_state
+      move &num_state       to #num_state
+ROUND (SUM(P.NBR_PRF_LEQ_1) +
+       SUM(P.NBR_PRF_LEQ_2) +
+       SUM(P.NBR_PRF_LEQ_3) +
+       SUM(P.NBR_PRF_LEQ_4) +
+       SUM(P.NBR_PRF_LEQ_5) +
+       SUM(P.NBR_PRF_LEQ_6) +
+       SUM(P.NBR_PRF_LEQ_7) +
+       SUM(P.NBR_PRF_LEQ_10) +
+       SUM(P.NBR_PRF_LEQ_12) +
+       SUM(P.NBR_PRF_LEQ_20) +
+       SUM(P.NBR_PRF_LEQ_24) +
+       SUM(P.NBR_PRF_LEQ_30) +
+       SUM(P.NBR_PRF_GTR_30)) &denom_state
+       move &denom_state    to #denom_state
+     
+       let #total = (#num_state/#denom_state) * 100
+
+!Get total response minus network criteria for SEARCH_BY_KEY event statewide:
+ROUND(SUM (P.NBR_PRF_NONET_LEQ_1) +
+      SUM (P.NBR_PRF_NONET_LEQ_2) +
+      SUM (P.NBR_PRF_NONET_LEQ_3) ) &num_state_nonet
+      move &num_state_nonet       to #num_state_nonet
+ROUND (SUM(P.NBR_PRF_NONET_LEQ_1) +
+       SUM(P.NBR_PRF_NONET_LEQ_2) +
+       SUM(P.NBR_PRF_NONET_LEQ_3) +
+       SUM(P.NBR_PRF_NONET_LEQ_4) +
+       SUM(P.NBR_PRF_NONET_LEQ_5) +
+       SUM(P.NBR_PRF_NONET_LEQ_6) +
+       SUM(P.NBR_PRF_NONET_LEQ_7) +
+       SUM(P.NBR_PRF_NONET_LEQ_10) +
+       SUM(P.NBR_PRF_NONET_LEQ_12) +
+       SUM(P.NBR_PRF_NONET_LEQ_20) +
+       SUM(P.NBR_PRF_NONET_LEQ_24) +
+       SUM(P.NBR_PRF_NONET_LEQ_30) +
+       SUM(P.NBR_PRF_NONET_GTR_30)) &denom_state_nonet
+       move &denom_state_nonet    to #denom_state_nonet
+
+       let #total_nonet = (#num_state_nonet/#denom_state_nonet) * 100
+
+    move #num_state to $num_state 8888 
+    move #denom_state to $denom_state 8888
+
+    move #num_state_nonet to $num_state_nonet 8888
+    move #denom_state_nonet to $denom_state_nonet 8888
+
+    let $count = $num_state || ' of ' || $denom_state
+
+    let $count_nonet = $num_state_nonet || ' of ' || $denom_state_nonet
+
+     let $location_name = 'State Wide'
+     ! Skip 3 lines
+     print '' (+3,0)
+     do PRINT-TOTAL
+
+FROM    PERF_TALLY  P
+
+WHERE   P.ID_EVENT = #event_type and
+        P.DT_MONTH = $input_dt_month
+
+END-SELECT
+
+nodata:
+NEW-PAGE  
+           
+END-PROCEDURE REPORT-SEARCH-BY-KEY
+
+
+
+
+!****************************************************************************
+!                                                                           *
+!   REPORT-SEARCH-BY-PRNC-NAME
+!                                                                           *
+!       This procedure will retieve and print the percentages for the       *
+!       SEARCH-BY-PRNC-NAME performance event type                                *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-TOTAL-TITLE                                      *
+!                    PRINT-TOTAL                                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE REPORT-SEARCH-BY-PRNC-NAME
+
+    
+    print 'Search of Case Information by Principal Name:' (+2,1)
+    print '---------------------------------------------' (+1,1)
+
+    print 'Criteria:       Total Response          <= 7 Seconds 75%' (+2, 1)
+    print '                Total Excluding Network <= 6 Seconds 95%' (+1, 1)        
+
+
+    let #event_type =  #SEARCH_BY_PRNC_NAME
+
+    !Determine if there are any records of this event type in the database
+    do GET-EVENT-COUNT
+    !If there are no record for this event type, display message in the 
+    !report.  Otherwise, produce the report for this event type.
+    if #event_count = 0
+       print 'No data for this performance type has been logged.' (+3, 1)
+       GOTO nodata
+    end-if
+
+!Get total response and total response minus network time criteria for 
+!SEARCH-BY-PRNC-NAME event type by office:
+
+    move 0                                  to #count1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+O.NM_OFFICE_NAME &host_office_name_key
+        move &host_office_name_key        to $office_name
+
+O.CD_OFFICE_MAIL &host_mail_name_key
+        move &host_mail_name_key         to $mail_code
+
+!Get total response criteria for SEARCH-BY-PRNC-NAME event type by office:
+ROUND (SUM (P.NBR_PRF_LEQ_1) +
+       SUM (P.NBR_PRF_LEQ_2) +
+       SUM (P.NBR_PRF_LEQ_3) +
+       SUM (P.NBR_PRF_LEQ_4) +
+       SUM (P.NBR_PRF_LEQ_5) +
+       SUM (P.NBR_PRF_LEQ_6) +
+       SUM (P.NBR_PRF_LEQ_7)) &prnc_numerator
+       move &prnc_numerator       to #numerator
+ROUND  (SUM(P.NBR_PRF_LEQ_1) +
+        SUM(P.NBR_PRF_LEQ_2) +
+        SUM(P.NBR_PRF_LEQ_3) +
+        SUM(P.NBR_PRF_LEQ_4) +
+        SUM(P.NBR_PRF_LEQ_5) +
+        SUM(P.NBR_PRF_LEQ_6) +
+        SUM(P.NBR_PRF_LEQ_7) +
+        SUM(P.NBR_PRF_LEQ_10) +
+        SUM(P.NBR_PRF_LEQ_12) +
+        SUM(P.NBR_PRF_LEQ_20) +
+        SUM(P.NBR_PRF_LEQ_24) +
+        SUM(P.NBR_PRF_LEQ_30) +
+        SUM(P.NBR_PRF_GTR_30)) &prnc_denominator
+    move &prnc_denominator    to #denominator
+    
+        let #total = (#numerator/#denominator) * 100
+
+!Get total response minus network criteria for SEARCH-BY-PRNC-NAME event 
+!type by office:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4) +
+       SUM (P.NBR_PRF_NONET_LEQ_5) +
+       SUM (P.NBR_PRF_NONET_LEQ_6)) &prnc_nonet_num
+       move &prnc_nonet_num           to #nonet_num
+ROUND  (SUM(P.NBR_PRF_NONET_LEQ_1) +
+        SUM(P.NBR_PRF_NONET_LEQ_2) +
+        SUM(P.NBR_PRF_NONET_LEQ_3) +
+        SUM(P.NBR_PRF_NONET_LEQ_4) +
+        SUM(P.NBR_PRF_NONET_LEQ_5) +
+        SUM(P.NBR_PRF_NONET_LEQ_6) +
+        SUM(P.NBR_PRF_NONET_LEQ_7) +
+        SUM(P.NBR_PRF_NONET_LEQ_10) +
+        SUM(P.NBR_PRF_NONET_LEQ_12) +
+        SUM(P.NBR_PRF_NONET_LEQ_20) +
+        SUM(P.NBR_PRF_NONET_LEQ_24) +
+        SUM(P.NBR_PRF_NONET_LEQ_30) +
+        SUM(P.NBR_PRF_NONET_GTR_30)) &prnc_nonet_denom
+        move &prnc_nonet_denom          to #nonet_denom 
+      
+    let #total_nonet = (#nonet_num/#nonet_denom) * 100
+
+    let $location_name = $mail_code||'  '||$office_name
+
+    let #count1 = #count1 + 1
+           
+    move #numerator to $numerator 8888 
+    move #denominator to $denominator 8888
+
+    move #nonet_num to $nonet_num 8888
+    move #nonet_denom to $nonet_denom 8888
+
+    let $count = $numerator || ' of ' || $denominator
+
+    let $count_nonet = $nonet_num || ' of ' || $nonet_denom
+
+    if #count1 = 1          
+       do PRINT-TOTAL-TITLE
+       do PRINT-MAIL-OFFICE-TITLE
+       do PRINT-TOTAL
+    else
+       do PRINT-TOTAL
+    end-if 
+
+FROM      PERF_TALLY  P,
+          OFFICE      O
+
+WHERE     P.ID_EVENT = #event_type and
+          P.ID_OFFICE = O.ID_OFFICE and
+          P.DT_MONTH = $input_dt_month
+
+GROUP BY  CD_OFFICE_MAIL, O.NM_OFFICE_NAME
+ORDER BY  O.NM_OFFICE_NAME
+
+END-SELECT
+
+
+
+!Get total response and total response minus network time for
+!SEARCH-BY-PRNC-NAME event type by region:
+
+    move 0                                  to #count1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+O.CD_OFFICE_REGION &host_region_name_key 
+        move &host_region_name_key        to $region
+        let $location_name = 'Region '||$region||''
+
+!Get total response criteria for event type by region:
+ROUND (SUM (P.NBR_PRF_LEQ_1) +
+       SUM (P.NBR_PRF_LEQ_2) +
+       SUM (P.NBR_PRF_LEQ_3) +
+       SUM (P.NBR_PRF_LEQ_4) +
+       SUM (P.NBR_PRF_LEQ_5) +
+       SUM (P.NBR_PRF_LEQ_6) +
+       SUM (P.NBR_PRF_LEQ_7) ) &prnc_numerator_reg
+       move &prnc_numerator_reg  to #numerator_reg
+ROUND  (SUM(P.NBR_PRF_LEQ_1) +
+        SUM(P.NBR_PRF_LEQ_2) +
+        SUM(P.NBR_PRF_LEQ_3) +
+        SUM(P.NBR_PRF_LEQ_4) +
+        SUM(P.NBR_PRF_LEQ_5) +
+        SUM(P.NBR_PRF_LEQ_6) +
+        SUM(P.NBR_PRF_LEQ_7) +
+        SUM(P.NBR_PRF_LEQ_10) +
+        SUM(P.NBR_PRF_LEQ_12) +
+        SUM(P.NBR_PRF_LEQ_20) +
+        SUM(P.NBR_PRF_LEQ_24) +
+        SUM(P.NBR_PRF_LEQ_30) +
+        SUM(P.NBR_PRF_GTR_30)) &prnc_denominator_reg
+    move &prnc_denominator_reg to #denominator_reg
+     
+        let #total = (#numerator_reg/#denominator_reg) * 100
+
+!Get total response minus network criteria for SEARCH-BY-PRNC-NAME event 
+!type by region:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4) +
+       SUM (P.NBR_PRF_NONET_LEQ_5) +
+       SUM (P.NBR_PRF_NONET_LEQ_6) ) &prnc_nonet_num_reg
+       move &prnc_nonet_num_reg   to #nonet_num_reg
+ROUND (SUM(P.NBR_PRF_NONET_LEQ_1) +
+       SUM(P.NBR_PRF_NONET_LEQ_2) +
+       SUM(P.NBR_PRF_NONET_LEQ_3) +
+       SUM(P.NBR_PRF_NONET_LEQ_4) +
+       SUM(P.NBR_PRF_NONET_LEQ_5) +
+       SUM(P.NBR_PRF_NONET_LEQ_6) +
+       SUM(P.NBR_PRF_NONET_LEQ_7) +
+       SUM(P.NBR_PRF_NONET_LEQ_10) +
+       SUM(P.NBR_PRF_NONET_LEQ_12) +
+       SUM(P.NBR_PRF_NONET_LEQ_20) +
+       SUM(P.NBR_PRF_NONET_LEQ_24) +
+       SUM(P.NBR_PRF_NONET_LEQ_30) +
+       SUM(P.NBR_PRF_NONET_GTR_30)) &prnc_nonet_denom_reg
+       move &prnc_nonet_denom_reg to #nonet_denom_reg
+    
+       let #total_nonet = (#nonet_num_reg/#nonet_denom_reg) * 100
+
+    let #count1 = #count1 + 1
+           
+    move #numerator_reg to $numerator_reg 8888 
+    move #denominator_reg to $denominator_reg 8888
+
+    move #nonet_num_reg to $nonet_num_reg 8888
+    move #nonet_denom_reg to $nonet_denom_reg 8888
+
+    let $count = $numerator_reg || ' of ' || $denominator_reg
+
+    let $count_nonet = $nonet_num_reg || ' of ' || $nonet_denom_reg
+    if #count1 = 1          
+       ! Skip 3 lines
+       print '' (+3,0)
+       do PRINT-TOTAL
+    else
+       do PRINT-TOTAL
+    end-if 
+
+FROM       PERF_TALLY  P,
+           OFFICE             O
+WHERE      P.ID_EVENT = #event_type and
+           P.ID_OFFICE = O.ID_OFFICE and
+           P.DT_MONTH = $input_dt_month
+GROUP BY   O.CD_OFFICE_REGION
+ORDER BY   O.CD_OFFICE_REGION
+
+END-SELECT
+
+
+!Get total response and total response minus network time for
+!SEARCH-BY-PRNC-NAME event type statewide:
+
+    move 0                                  to #count1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+!Get total response criteria for SEARCH-BY-PRNC-NAME event type statewide:
+ROUND (SUM(P.NBR_PRF_LEQ_1) +
+       SUM(P.NBR_PRF_LEQ_2) +
+       SUM(P.NBR_PRF_LEQ_3) +
+       SUM(P.NBR_PRF_LEQ_4) +
+       SUM(P.NBR_PRF_LEQ_5) +
+       SUM(P.NBR_PRF_LEQ_6) +
+       SUM(P.NBR_PRF_LEQ_7) ) &prnc_num_state
+       move &prnc_num_state to #num_state
+ROUND (SUM(P.NBR_PRF_LEQ_1) +
+       SUM(P.NBR_PRF_LEQ_2) +
+       SUM(P.NBR_PRF_LEQ_3) +
+       SUM(P.NBR_PRF_LEQ_4) +
+       SUM(P.NBR_PRF_LEQ_5) +
+       SUM(P.NBR_PRF_LEQ_6) +
+       SUM(P.NBR_PRF_LEQ_7) +
+       SUM(P.NBR_PRF_LEQ_10) +
+       SUM(P.NBR_PRF_LEQ_12) +
+       SUM(P.NBR_PRF_LEQ_20) +
+       SUM(P.NBR_PRF_LEQ_24) +
+       SUM(P.NBR_PRF_LEQ_30) +
+       SUM(P.NBR_PRF_GTR_30)) &prnc_denom_state
+       move &prnc_denom_state to #denom_state
+    
+       let #total = (#num_state/#denom_state) * 100
+
+!Get total response minus network criteria for  SEARCH-BY-PRNC-NAME event
+!statewide:
+ROUND(SUM(P.NBR_PRF_NONET_LEQ_1) +
+      SUM(P.NBR_PRF_NONET_LEQ_2) +
+      SUM(P.NBR_PRF_NONET_LEQ_3) +
+      SUM(P.NBR_PRF_NONET_LEQ_4) +
+      SUM(P.NBR_PRF_NONET_LEQ_5) +
+      SUM(P.NBR_PRF_NONET_LEQ_6) ) &prnc_num_state_nonet
+      move &prnc_num_state_nonet   to #num_state_nonet
+ROUND (SUM(P.NBR_PRF_NONET_LEQ_1) +
+       SUM(P.NBR_PRF_NONET_LEQ_2) +
+       SUM(P.NBR_PRF_NONET_LEQ_3) +
+       SUM(P.NBR_PRF_NONET_LEQ_4) +
+       SUM(P.NBR_PRF_NONET_LEQ_5) +
+       SUM(P.NBR_PRF_NONET_LEQ_6) +
+       SUM(P.NBR_PRF_NONET_LEQ_7) +
+       SUM(P.NBR_PRF_NONET_LEQ_10) +
+       SUM(P.NBR_PRF_NONET_LEQ_12) +
+       SUM(P.NBR_PRF_NONET_LEQ_20) +
+       SUM(P.NBR_PRF_NONET_LEQ_24) +
+       SUM(P.NBR_PRF_NONET_LEQ_30) +
+       SUM(P.NBR_PRF_NONET_GTR_30)) &prnc_denom_state_nonet
+       move &prnc_denom_state_nonet to #denom_state_nonet
+    
+       let #total_nonet = (#num_state_nonet/#denom_state_nonet) * 100
+
+    move #num_state to $num_state 8888 
+    move #denom_state to $denom_state 8888
+
+    move #num_state_nonet to $num_state_nonet 8888
+    move #denom_state_nonet to $denom_state_nonet 8888
+
+    let $count = $num_state || ' of ' || $denom_state
+
+    let $count_nonet = $num_state_nonet || ' of ' || $denom_state_nonet
+
+     let $location_name = 'State Wide'
+     ! Skip 3 lines
+     print '' (+3,0)
+     do PRINT-TOTAL
+
+FROM    PERF_TALLY  P
+
+WHERE   P.ID_EVENT = #event_type and
+        P.DT_MONTH = $input_dt_month
+
+END-SELECT
+
+nodata:
+NEW-PAGE  
+           
+END-PROCEDURE REPORT-SEARCH-BY-PRNC-NAME
+
+
+!****************************************************************************
+!                                                                           *
+!   REPORT-SEARCH-BY-PRNC-ADDR
+!                                                                           *
+!       This procedure will retieve and print the percentages for the       *
+!       SEARCH-BY-PRNC-ADDR performance event type                          *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-TOTAL-TITLE                                      *
+!                    PRINT-TOTAL                                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE REPORT-SEARCH-BY-PRNC-ADDR
+
+    
+    print 'Search of Case Information by Principal Address:' (+2,1)
+    print '------------------------------------------------' (+1,1)
+
+    print 'Criteria:       Total Response          <= 24 Seconds 75%' (+2, 1)
+    print '                Total Excluding Network <= 20 Seconds 95%' (+1, 1)        
+
+
+    let #event_type =  #SEARCH_BY_PRNC_ADDR
+
+    !Determine if there are any records of this event type in the database
+    do GET-EVENT-COUNT
+    !If there are no record for this event type, display message in the 
+    !report.  Otherwise, produce the report for this event type.
+    if #event_count = 0
+       print 'No data for this performance type has been logged.' (+3, 1)
+       GOTO nodata
+    end-if
+
+!Get total response and total response minus network time criteria for 
+!SEARCH-BY-PRNC-ADDR event type by office:
+
+    move 0                                  to #count1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+O.NM_OFFICE_NAME &host_office_addr_key
+        move &host_office_addr_key        to $office_name
+
+O.CD_OFFICE_MAIL  &host_mail_addr_key
+        move &host_mail_addr_key          to $mail_code
+
+!Get total response criteria for SEARCH-BY-PRNC-ADDR event type by office:
+ROUND (SUM (P.NBR_PRF_LEQ_1) +
+       SUM (P.NBR_PRF_LEQ_2) +
+       SUM (P.NBR_PRF_LEQ_3) +
+       SUM (P.NBR_PRF_LEQ_4) +
+       SUM (P.NBR_PRF_LEQ_5) +
+       SUM (P.NBR_PRF_LEQ_6) +
+       SUM (P.NBR_PRF_LEQ_7) +
+       SUM (P.NBR_PRF_LEQ_10) +
+       SUM (P.NBR_PRF_LEQ_12) +
+       SUM (P.NBR_PRF_LEQ_20) +
+       SUM (P.NBR_PRF_LEQ_24)) &addr_num
+       move &addr_num        to #numerator
+ROUND  (SUM(P.NBR_PRF_LEQ_1) +
+        SUM(P.NBR_PRF_LEQ_2) +
+        SUM(P.NBR_PRF_LEQ_3) +
+        SUM(P.NBR_PRF_LEQ_4) +
+        SUM(P.NBR_PRF_LEQ_5) +
+        SUM(P.NBR_PRF_LEQ_6) +
+        SUM(P.NBR_PRF_LEQ_7) +
+        SUM(P.NBR_PRF_LEQ_10) +
+        SUM(P.NBR_PRF_LEQ_12) +
+        SUM(P.NBR_PRF_LEQ_20) +
+        SUM(P.NBR_PRF_LEQ_24) +
+        SUM(P.NBR_PRF_LEQ_30) +
+        SUM(P.NBR_PRF_GTR_30)) &addr_denom
+        move &addr_denom     to #denominator
+        
+        let #total = (#numerator/#denominator) * 100
+
+!Get total response minus network criteria for SEARCH-BY-PRNC-ADDR event 
+!type by office:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4) +
+       SUM (P.NBR_PRF_NONET_LEQ_5) +
+       SUM (P.NBR_PRF_NONET_LEQ_6) +
+       SUM (P.NBR_PRF_NONET_LEQ_7) +
+       SUM (P.NBR_PRF_NONET_LEQ_10) +
+       SUM (P.NBR_PRF_NONET_LEQ_12) +
+       SUM (P.NBR_PRF_NONET_LEQ_20)) &addr_nonet_num
+       move &addr_nonet_num        to #nonet_num
+ROUND  (SUM(P.NBR_PRF_NONET_LEQ_1) +
+        SUM(P.NBR_PRF_NONET_LEQ_2) +
+        SUM(P.NBR_PRF_NONET_LEQ_3) +
+        SUM(P.NBR_PRF_NONET_LEQ_4) +
+        SUM(P.NBR_PRF_NONET_LEQ_5) +
+        SUM(P.NBR_PRF_NONET_LEQ_6) +
+        SUM(P.NBR_PRF_NONET_LEQ_7) +
+        SUM(P.NBR_PRF_NONET_LEQ_10) +
+        SUM(P.NBR_PRF_NONET_LEQ_12) +
+        SUM(P.NBR_PRF_NONET_LEQ_20) +
+        SUM(P.NBR_PRF_NONET_LEQ_24) +
+        SUM(P.NBR_PRF_NONET_LEQ_30) +
+        SUM(P.NBR_PRF_NONET_GTR_30)) &addr_nonet_denom
+        move &addr_nonet_denom     to #nonet_denom
+        
+        let #total_nonet = (#nonet_num/#nonet_denom) * 100
+      
+
+    let $location_name = $mail_code||'  '||$office_name
+
+    let #count1 = #count1 + 1
+    
+    move #numerator to $numerator 8888 
+    move #denominator to $denominator 8888
+
+    move #nonet_num to $nonet_num 8888
+    move #nonet_denom to $nonet_denom 8888
+
+    let $count = $numerator || ' of ' || $denominator
+
+    let $count_nonet = $nonet_num || ' of ' || $nonet_denom
+           
+    if #count1 = 1          
+       do PRINT-TOTAL-TITLE
+       do PRINT-MAIL-OFFICE-TITLE
+       do PRINT-TOTAL
+    else
+       do PRINT-TOTAL
+    end-if 
+
+FROM      PERF_TALLY  P,
+          OFFICE      O
+
+WHERE     P.ID_EVENT = #event_type and
+          P.ID_OFFICE = O.ID_OFFICE and
+          P.DT_MONTH = $input_dt_month
+
+GROUP BY  CD_OFFICE_MAIL, O.NM_OFFICE_NAME
+ORDER BY  O.NM_OFFICE_NAME
+
+END-SELECT
+
+
+
+!Get total response and total response minus network time for
+!SEARCH-BY-PRNC-ADDR event type by region:
+
+    move 0                                  to #count1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+O.CD_OFFICE_REGION &host_region_addr_key 
+        move &host_region_addr_key        to $region
+        let $location_name = 'Region '||$region||''
+
+!Get total response criteria for SEARCH-BY-PRNC-ADDR event type by region:
+ROUND (SUM (P.NBR_PRF_LEQ_1) +
+       SUM (P.NBR_PRF_LEQ_2) +
+       SUM (P.NBR_PRF_LEQ_3) +
+       SUM (P.NBR_PRF_LEQ_4) +
+       SUM (P.NBR_PRF_LEQ_5) +
+       SUM (P.NBR_PRF_LEQ_6) +
+       SUM (P.NBR_PRF_LEQ_7) +
+       SUM (P.NBR_PRF_LEQ_10) +
+       SUM (P.NBR_PRF_LEQ_12) +
+       SUM (P.NBR_PRF_LEQ_20) +
+       SUM (P.NBR_PRF_LEQ_24) ) &addr_num_reg
+       move &addr_num_reg      to #numerator_reg
+ROUND  (SUM(P.NBR_PRF_LEQ_1) +
+        SUM(P.NBR_PRF_LEQ_2) +
+        SUM(P.NBR_PRF_LEQ_3) +
+        SUM(P.NBR_PRF_LEQ_4) +
+        SUM(P.NBR_PRF_LEQ_5) +
+        SUM(P.NBR_PRF_LEQ_6) +
+        SUM(P.NBR_PRF_LEQ_7) +
+        SUM(P.NBR_PRF_LEQ_10) +
+        SUM(P.NBR_PRF_LEQ_12) +
+        SUM(P.NBR_PRF_LEQ_20) +
+        SUM(P.NBR_PRF_LEQ_24) +
+        SUM(P.NBR_PRF_LEQ_30) +
+        SUM(P.NBR_PRF_GTR_30)) &addr_denom_reg
+        move &addr_denom_reg  to #denominator_reg
+     
+        let #total = (#numerator_reg/#denominator_reg) * 100
+
+!Get total response minus network criteria for SEARCH-BY-PRNC-ADDR event 
+!type by region:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4) +
+       SUM (P.NBR_PRF_NONET_LEQ_5) +
+       SUM (P.NBR_PRF_NONET_LEQ_6) +
+       SUM (P.NBR_PRF_NONET_LEQ_7) +
+       SUM (P.NBR_PRF_NONET_LEQ_10) +
+       SUM (P.NBR_PRF_NONET_LEQ_12) +
+       SUM (P.NBR_PRF_NONET_LEQ_20) ) &addr_num_reg_nonet
+       move &addr_num_reg_nonet   to #nonet_num_reg     
+ROUND (SUM(P.NBR_PRF_NONET_LEQ_1) +
+       SUM(P.NBR_PRF_NONET_LEQ_2) +
+       SUM(P.NBR_PRF_NONET_LEQ_3) +
+       SUM(P.NBR_PRF_NONET_LEQ_4) +
+       SUM(P.NBR_PRF_NONET_LEQ_5) +
+       SUM(P.NBR_PRF_NONET_LEQ_6) +
+       SUM(P.NBR_PRF_NONET_LEQ_7) +
+       SUM(P.NBR_PRF_NONET_LEQ_10) +
+       SUM(P.NBR_PRF_NONET_LEQ_12) +
+       SUM(P.NBR_PRF_NONET_LEQ_20) +
+       SUM(P.NBR_PRF_NONET_LEQ_24) +
+       SUM(P.NBR_PRF_NONET_LEQ_30) +
+       SUM(P.NBR_PRF_NONET_GTR_30)) &addr_denom_reg_nonet
+       move &addr_denom_reg_nonet  to #nonet_denom_reg
+    
+       let #total_nonet = (#nonet_num_reg/#nonet_denom_reg) * 100  
+
+    let #count1 = #count1 + 1
+    
+    move #numerator_reg to $numerator_reg 8888 
+    move #denominator_reg to $denominator_reg 8888
+
+    move #nonet_num_reg to $nonet_num_reg 8888
+    move #nonet_denom_reg to $nonet_denom_reg 8888
+
+    let $count = $numerator_reg || ' of ' || $denominator_reg
+
+    let $count_nonet = $nonet_num_reg || ' of ' || $nonet_denom_reg
+           
+    if #count1 = 1          
+       ! Skip 3 lines
+       print '' (+3,0)
+       do PRINT-TOTAL
+    else
+       do PRINT-TOTAL
+    end-if 
+
+FROM       PERF_TALLY  P,
+           OFFICE             O
+WHERE      P.ID_EVENT = #event_type and
+           P.ID_OFFICE = O.ID_OFFICE and
+           P.DT_MONTH = $input_dt_month
+GROUP BY   O.CD_OFFICE_REGION
+ORDER BY   O.CD_OFFICE_REGION
+
+END-SELECT
+
+
+!Get total response and total response minus network time for
+!SEARCH-BY-PRNC-ADDR event type statewide:
+
+    move 0                                  to #count1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+!Get total response criteria for SEARCH-BY-PRNC-ADDR event type statewide:
+ROUND (SUM (P.NBR_PRF_LEQ_1) +
+       SUM (P.NBR_PRF_LEQ_2) +
+       SUM (P.NBR_PRF_LEQ_3) +
+       SUM (P.NBR_PRF_LEQ_4) +
+       SUM (P.NBR_PRF_LEQ_5) +
+       SUM (P.NBR_PRF_LEQ_6) +
+       SUM (P.NBR_PRF_LEQ_7) +
+       SUM (P.NBR_PRF_LEQ_10) +
+       SUM (P.NBR_PRF_LEQ_12) +
+       SUM (P.NBR_PRF_LEQ_20) +
+       SUM (P.NBR_PRF_LEQ_24) ) &addr_num_state
+       move &addr_num_state   to #num_state
+ROUND (SUM(P.NBR_PRF_LEQ_1) +
+       SUM(P.NBR_PRF_LEQ_2) +
+       SUM(P.NBR_PRF_LEQ_3) +
+       SUM(P.NBR_PRF_LEQ_4) +
+       SUM(P.NBR_PRF_LEQ_5) +
+       SUM(P.NBR_PRF_LEQ_6) +
+       SUM(P.NBR_PRF_LEQ_7) +
+       SUM(P.NBR_PRF_LEQ_10) +
+       SUM(P.NBR_PRF_LEQ_12) +
+       SUM(P.NBR_PRF_LEQ_20) +
+       SUM(P.NBR_PRF_LEQ_24) +
+       SUM(P.NBR_PRF_LEQ_30) +
+       SUM(P.NBR_PRF_GTR_30)) &addr_denom_state
+       move &addr_denom_state to #denom_state
+     
+       let #total = (#num_state/#denom_state) * 100
+
+!Get total response minus network criteria for  SEARCH-BY-PRNC-ADDR event
+!statewide:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4) +
+       SUM (P.NBR_PRF_NONET_LEQ_5) +
+       SUM (P.NBR_PRF_NONET_LEQ_6) +
+       SUM (P.NBR_PRF_NONET_LEQ_7) +
+       SUM (P.NBR_PRF_NONET_LEQ_10) +
+       SUM (P.NBR_PRF_NONET_LEQ_12) +
+       SUM (P.NBR_PRF_NONET_LEQ_20) ) &addr_num_state_nonet
+       move &addr_num_state_nonet  to #num_state_nonet
+ROUND (SUM(P.NBR_PRF_NONET_LEQ_1) +
+       SUM(P.NBR_PRF_NONET_LEQ_2) +
+       SUM(P.NBR_PRF_NONET_LEQ_3) +
+       SUM(P.NBR_PRF_NONET_LEQ_4) +
+       SUM(P.NBR_PRF_NONET_LEQ_5) +
+       SUM(P.NBR_PRF_NONET_LEQ_6) +
+       SUM(P.NBR_PRF_NONET_LEQ_7) +
+       SUM(P.NBR_PRF_NONET_LEQ_10) +
+       SUM(P.NBR_PRF_NONET_LEQ_12) +
+       SUM(P.NBR_PRF_NONET_LEQ_20) +
+       SUM(P.NBR_PRF_NONET_LEQ_24) +
+       SUM(P.NBR_PRF_NONET_LEQ_30) +
+       SUM(P.NBR_PRF_NONET_GTR_30)) &addr_denom_state_nonet
+       move &addr_denom_state_nonet to #denom_state_nonet
+       
+       let #total_nonet = (#num_state_nonet/#denom_state_nonet) * 100
+       
+    move #num_state to $num_state 8888 
+    move #denom_state to $denom_state 8888
+
+    move #num_state_nonet to $num_state_nonet 8888
+    move #denom_state_nonet to $denom_state_nonet 8888
+
+    let $count = $num_state || ' of ' || $denom_state
+
+    let $count_nonet = $num_state_nonet || ' of ' || $denom_state_nonet
+
+     let $location_name = 'State Wide'
+     ! Skip 3 lines
+     print '' (+3,0)
+     do PRINT-TOTAL
+
+FROM    PERF_TALLY  P
+
+WHERE   P.ID_EVENT = #event_type and
+        P.DT_MONTH = $input_dt_month
+
+END-SELECT
+
+nodata:
+NEW-PAGE  
+           
+END-PROCEDURE REPORT-SEARCH-BY-PRNC-ADDR
+
+
+
+!****************************************************************************
+!                                                                           *
+!   REPORT-NORMAL-UPDATE                                                    *
+!                                                                           *
+!       This procedure will retieve and print the percentages for the       *
+!       NORMAL-UPDATE performance event type                                *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-TOTAL-TITLE                                      *
+!                    PRINT-TOTAL                                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE REPORT-NORMAL-UPDATE
+
+    
+    print 'Normal Case Data Updates:' (+2,1)
+    print '-------------------------' (+1,1)
+
+    print 'Criteria:       Total Response          <= 5 Seconds 75%' (+2, 1)
+    print '                Total Excluding Network <= 4 Seconds 95%' (+1, 1)        
+
+
+    let #event_type =  #NORMAL_UPDATE
+
+    !Determine if there are any records of this event type in the database
+    do GET-EVENT-COUNT
+    !If there are no record for this event type, display message in the 
+    !report.  Otherwise, produce the report for this event type.
+    if #event_count = 0
+       print 'No data for this performance type has been logged.' (+3, 1)
+       GOTO nodata
+    end-if
+
+!Get total response and total response minus network time criteria for 
+!NORMAL-UPDATE event type by office:
+
+    move 0                                  to #count1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+O.NM_OFFICE_NAME &host_office_normal
+        move &host_office_normal        to $office_name
+
+O.CD_OFFICE_MAIL &host_mail_normal
+        move &host_mail_normal          to $mail_code
+
+!Get total response criteria for NORMAL-UPDATE event type by office:
+ROUND (SUM (P.NBR_PRF_LEQ_1) +
+       SUM (P.NBR_PRF_LEQ_2) +
+       SUM (P.NBR_PRF_LEQ_3) +
+       SUM (P.NBR_PRF_LEQ_4) +
+       SUM (P.NBR_PRF_LEQ_5)) &norm_num
+       move &norm_num        to #numerator
+ROUND  (SUM(P.NBR_PRF_LEQ_1) +
+        SUM(P.NBR_PRF_LEQ_2) +
+        SUM(P.NBR_PRF_LEQ_3) +
+        SUM(P.NBR_PRF_LEQ_4) +
+        SUM(P.NBR_PRF_LEQ_5) +
+        SUM(P.NBR_PRF_LEQ_6) +
+        SUM(P.NBR_PRF_LEQ_7) +
+        SUM(P.NBR_PRF_LEQ_10) +
+        SUM(P.NBR_PRF_LEQ_12) +
+        SUM(P.NBR_PRF_LEQ_20) +
+        SUM(P.NBR_PRF_LEQ_24) +
+        SUM(P.NBR_PRF_LEQ_30) +
+        SUM(P.NBR_PRF_GTR_30)) &norm_denom
+        move &norm_denom     to #denominator
+      
+        let #total = (#numerator/#denominator) * 100
+
+!Get total response minus network criteria for NORMAL-UPDATE event 
+!type by office:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4)) &norm_num_nonet
+       move &norm_num_nonet       to #nonet_num
+ROUND  (SUM(P.NBR_PRF_NONET_LEQ_1) +
+        SUM(P.NBR_PRF_NONET_LEQ_2) +
+        SUM(P.NBR_PRF_NONET_LEQ_3) +
+        SUM(P.NBR_PRF_NONET_LEQ_4) +
+        SUM(P.NBR_PRF_NONET_LEQ_5) +
+        SUM(P.NBR_PRF_NONET_LEQ_6) +
+        SUM(P.NBR_PRF_NONET_LEQ_7) +
+        SUM(P.NBR_PRF_NONET_LEQ_10) +
+        SUM(P.NBR_PRF_NONET_LEQ_12) +
+        SUM(P.NBR_PRF_NONET_LEQ_20) +
+        SUM(P.NBR_PRF_NONET_LEQ_24) +
+        SUM(P.NBR_PRF_NONET_LEQ_30) +
+        SUM(P.NBR_PRF_NONET_GTR_30)) &norm_denom_nonet
+        move &norm_denom_nonet    to #nonet_denom
+      
+        let #total_nonet = (#nonet_num/#nonet_denom) * 100
+
+    let $location_name = $mail_code||'  '||$office_name
+
+    let #count1 = #count1 + 1
+    
+    move #numerator to $numerator 8888 
+    move #denominator to $denominator 8888
+
+    move #nonet_num to $nonet_num 8888
+    move #nonet_denom to $nonet_denom 8888
+
+    let $count = $numerator || ' of ' || $denominator
+
+    let $count_nonet = $nonet_num || ' of ' || $nonet_denom
+           
+    if #count1 = 1          
+       do PRINT-TOTAL-TITLE
+       do PRINT-MAIL-OFFICE-TITLE
+       do PRINT-TOTAL
+    else
+       do PRINT-TOTAL
+    end-if 
+
+FROM      PERF_TALLY  P,
+          OFFICE      O
+
+WHERE     P.ID_EVENT = #event_type and
+          P.ID_OFFICE = O.ID_OFFICE and
+          P.DT_MONTH = $input_dt_month
+GROUP BY  CD_OFFICE_MAIL, O.NM_OFFICE_NAME
+ORDER BY  O.NM_OFFICE_NAME
+
+END-SELECT
+
+
+
+!Get total response and total response minus network time for
+!NORMAL-UPDATE event type by region:
+
+    move 0                                  to #count1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+O.CD_OFFICE_REGION &host_region_normal
+        move &host_region_normal        to $region
+        let $location_name = 'Region '||$region||''
+
+!Get total response criteria for NORMAL-UPDATE event type by region:
+ROUND (SUM (P.NBR_PRF_LEQ_1) +
+       SUM (P.NBR_PRF_LEQ_2) +
+       SUM (P.NBR_PRF_LEQ_3) +
+       SUM (P.NBR_PRF_LEQ_4) +
+       SUM (P.NBR_PRF_LEQ_5) )  &norm_num_reg
+       move &norm_num_reg    to #numerator_reg
+ROUND  (SUM(P.NBR_PRF_LEQ_1) +
+        SUM(P.NBR_PRF_LEQ_2) +
+        SUM(P.NBR_PRF_LEQ_3) +
+        SUM(P.NBR_PRF_LEQ_4) +
+        SUM(P.NBR_PRF_LEQ_5) +
+        SUM(P.NBR_PRF_LEQ_6) +
+        SUM(P.NBR_PRF_LEQ_7) +
+        SUM(P.NBR_PRF_LEQ_10) +
+        SUM(P.NBR_PRF_LEQ_12) +
+        SUM(P.NBR_PRF_LEQ_20) +
+        SUM(P.NBR_PRF_LEQ_24) +
+        SUM(P.NBR_PRF_LEQ_30) +
+        SUM(P.NBR_PRF_GTR_30)) &norm_denom_reg
+        move &norm_denom_reg  to #denominator_reg
+        
+        let #total = (#numerator_reg/#denominator_reg) * 100
+        
+     
+!Get total response minus network criteria for NORMAL-UPDATE event 
+!type by region:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4) )  &nonet_num_reg_norm
+       move &nonet_num_reg_norm     to #nonet_num_reg
+ROUND (SUM(P.NBR_PRF_NONET_LEQ_1) +
+       SUM(P.NBR_PRF_NONET_LEQ_2) +
+       SUM(P.NBR_PRF_NONET_LEQ_3) +
+       SUM(P.NBR_PRF_NONET_LEQ_4) +
+       SUM(P.NBR_PRF_NONET_LEQ_5) +
+       SUM(P.NBR_PRF_NONET_LEQ_6) +
+       SUM(P.NBR_PRF_NONET_LEQ_7) +
+       SUM(P.NBR_PRF_NONET_LEQ_10) +
+       SUM(P.NBR_PRF_NONET_LEQ_12) +
+       SUM(P.NBR_PRF_NONET_LEQ_20) +
+       SUM(P.NBR_PRF_NONET_LEQ_24) +
+       SUM(P.NBR_PRF_NONET_LEQ_30) +
+       SUM(P.NBR_PRF_NONET_GTR_30)) &nonet_denom_reg_norm
+       move &nonet_denom_reg_norm  to #nonet_denom_reg
+       
+       let #total_nonet = (#nonet_num_reg/#nonet_denom_reg) * 100
+     
+    let #count1 = #count1 + 1 
+    
+    move #numerator_reg to $numerator_reg 8888 
+    move #denominator_reg to $denominator_reg 8888
+
+    move #nonet_num_reg to $nonet_num_reg 8888
+    move #nonet_denom_reg to $nonet_denom_reg 8888
+
+    let $count = $numerator_reg || ' of ' || $denominator_reg
+
+    let $count_nonet = $nonet_num_reg || ' of ' || $nonet_denom_reg
+           
+    if #count1 = 1          
+       ! Skip 3 lines
+       print '' (+3,0)
+       do PRINT-TOTAL
+    else
+       do PRINT-TOTAL
+    end-if 
+
+FROM       PERF_TALLY  P,
+           OFFICE             O
+WHERE      P.ID_EVENT = #event_type and
+           P.ID_OFFICE = O.ID_OFFICE and
+           P.DT_MONTH = $input_dt_month
+GROUP BY   O.CD_OFFICE_REGION
+ORDER BY   O.CD_OFFICE_REGION
+
+END-SELECT
+
+
+!Get total response and total response minus network time for
+!NORMAL-UPDATE event type statewide:
+
+    move 0                                  to #count1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+!Get total response criteria for NORMAL-UPDATE event type statewide:
+ROUND (SUM (P.NBR_PRF_LEQ_1) +
+       SUM (P.NBR_PRF_LEQ_2) +
+       SUM (P.NBR_PRF_LEQ_3) +
+       SUM (P.NBR_PRF_LEQ_4) +
+       SUM (P.NBR_PRF_LEQ_5) )  &norm_num_state
+       move &norm_num_state  to #num_state
+ROUND (SUM(P.NBR_PRF_LEQ_1) +
+       SUM(P.NBR_PRF_LEQ_2) +
+       SUM(P.NBR_PRF_LEQ_3) +
+       SUM(P.NBR_PRF_LEQ_4) +
+       SUM(P.NBR_PRF_LEQ_5) +
+       SUM(P.NBR_PRF_LEQ_6) +
+       SUM(P.NBR_PRF_LEQ_7) +
+       SUM(P.NBR_PRF_LEQ_10) +
+       SUM(P.NBR_PRF_LEQ_12) +
+       SUM(P.NBR_PRF_LEQ_20) +
+       SUM(P.NBR_PRF_LEQ_24) +
+       SUM(P.NBR_PRF_LEQ_30) +
+       SUM(P.NBR_PRF_GTR_30)) &norm_denom_state
+       move &norm_denom_state to #denom_state
+       
+       let #total = (#num_state/#denom_state) * 100
+       
+     
+!Get total response minus network criteria for  NORMAL-UPDATE event
+!statewide:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4) )  &norm_num_state_nonet
+       move &norm_num_state_nonet   to #num_state_nonet
+ROUND (SUM(P.NBR_PRF_NONET_LEQ_1) +
+       SUM(P.NBR_PRF_NONET_LEQ_2) +
+       SUM(P.NBR_PRF_NONET_LEQ_3) +
+       SUM(P.NBR_PRF_NONET_LEQ_4) +
+       SUM(P.NBR_PRF_NONET_LEQ_5) +
+       SUM(P.NBR_PRF_NONET_LEQ_6) +
+       SUM(P.NBR_PRF_NONET_LEQ_7) +
+       SUM(P.NBR_PRF_NONET_LEQ_10) +
+       SUM(P.NBR_PRF_NONET_LEQ_12) +
+       SUM(P.NBR_PRF_NONET_LEQ_20) +
+       SUM(P.NBR_PRF_NONET_LEQ_24) +
+       SUM(P.NBR_PRF_NONET_LEQ_30) +
+       SUM(P.NBR_PRF_NONET_GTR_30)) &norm_denom_state_nonet
+       move &norm_denom_state_nonet to #denom_state_nonet
+       
+       let #total_nonet = (#num_state_nonet/#denom_state_nonet) * 100
+       
+    move #num_state to $num_state 8888 
+    move #denom_state to $denom_state 8888
+
+    move #num_state_nonet to $num_state_nonet 8888
+    move #denom_state_nonet to $denom_state_nonet 8888
+
+    let $count = $num_state || ' of ' || $denom_state
+
+    let $count_nonet = $num_state_nonet || ' of ' || $denom_state_nonet
+
+     let $location_name = 'State Wide'
+     ! Skip 3 lines
+     print '' (+3,0)
+     do PRINT-TOTAL
+
+FROM    PERF_TALLY  P
+
+WHERE   P.ID_EVENT = #event_type and
+        P.DT_MONTH = $input_dt_month
+
+END-SELECT
+
+nodata:
+NEW-PAGE  
+           
+END-PROCEDURE REPORT-NORMAL-UPDATE
+
+
+!****************************************************************************
+!                                                                           *
+!   REPORT-COMPLEX-UPDATE
+!                                                                           *
+!       This procedure will retieve and print the percentages for the       *
+!       COMPLEX-UPDATE performance event type                          *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-TOTAL-TITLE                                      *
+!                    PRINT-TOTAL                                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE REPORT-COMPLEX-UPDATE
+
+    
+    print 'Complex Case Updates Involving Multiple Tables:' (+2,1)
+    print '-----------------------------------------------' (+1,1)
+
+    print 'Criteria:       Total Response          <= 12 Seconds 75%' (+2, 1)
+    print '                Total Excluding Network <= 10 Seconds 95%' (+1, 1)        
+
+
+    let #event_type =  #COMPLEX_UPDATE
+
+    !Determine if there are any records of this event type in the database
+    do GET-EVENT-COUNT
+    !If there are no record for this event type, display message in the 
+    !report.  Otherwise, produce the report for this event type.
+    if #event_count = 0
+       print 'No data for this performance type has been logged.' (+3, 1)
+       GOTO nodata
+    end-if
+
+!Get total response and total response minus network time criteria for 
+!COMPLEX-UPDATE event type by office:
+
+    move 0                                  to #count1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+O.NM_OFFICE_NAME &host_office_complex
+        move &host_office_complex        to $office_name
+
+O.CD_OFFICE_MAIL &host_mail_complex
+        move &host_mail_complex        to $mail_code
+
+!Get total response criteria for COMPLEX-UPDATE event type by office:
+ROUND (SUM (P.NBR_PRF_LEQ_1) +
+       SUM (P.NBR_PRF_LEQ_2) +
+       SUM (P.NBR_PRF_LEQ_3) +
+       SUM (P.NBR_PRF_LEQ_4) +
+       SUM (P.NBR_PRF_LEQ_5) +
+       SUM (P.NBR_PRF_LEQ_6) +
+       SUM (P.NBR_PRF_LEQ_7) +
+       SUM (P.NBR_PRF_LEQ_10) +
+       SUM (P.NBR_PRF_LEQ_12)) &comp_numerator
+       move &comp_numerator  to #numerator
+ROUND  (SUM(P.NBR_PRF_LEQ_1) +
+        SUM(P.NBR_PRF_LEQ_2) +
+        SUM(P.NBR_PRF_LEQ_3) +
+        SUM(P.NBR_PRF_LEQ_4) +
+        SUM(P.NBR_PRF_LEQ_5) +
+        SUM(P.NBR_PRF_LEQ_6) +
+        SUM(P.NBR_PRF_LEQ_7) +
+        SUM(P.NBR_PRF_LEQ_10) +
+        SUM(P.NBR_PRF_LEQ_12) +
+        SUM(P.NBR_PRF_LEQ_20) +
+        SUM(P.NBR_PRF_LEQ_24) +
+        SUM(P.NBR_PRF_LEQ_30) +
+        SUM(P.NBR_PRF_GTR_30)) &comp_denominator
+        move &comp_denominator to #denominator
+        
+        let #total = (#numerator/#denominator) * 100
+
+!Get total response minus network criteria for COMPLEX-UPDATE event 
+!type by office:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4) +
+       SUM (P.NBR_PRF_NONET_LEQ_5) +
+       SUM (P.NBR_PRF_NONET_LEQ_6) +
+       SUM (P.NBR_PRF_NONET_LEQ_7) +
+       SUM (P.NBR_PRF_NONET_LEQ_10))  &comp_nonet_num
+       move &comp_nonet_num       to #nonet_num
+ROUND  (SUM(P.NBR_PRF_NONET_LEQ_1) +
+        SUM(P.NBR_PRF_NONET_LEQ_2) +
+        SUM(P.NBR_PRF_NONET_LEQ_3) +
+        SUM(P.NBR_PRF_NONET_LEQ_4) +
+        SUM(P.NBR_PRF_NONET_LEQ_5) +
+        SUM(P.NBR_PRF_NONET_LEQ_6) +
+        SUM(P.NBR_PRF_NONET_LEQ_7) +
+        SUM(P.NBR_PRF_NONET_LEQ_10) +
+        SUM(P.NBR_PRF_NONET_LEQ_12) +
+        SUM(P.NBR_PRF_NONET_LEQ_20) +
+        SUM(P.NBR_PRF_NONET_LEQ_24) +
+        SUM(P.NBR_PRF_NONET_LEQ_30) +
+        SUM(P.NBR_PRF_NONET_GTR_30)) &comp_nonet_denom
+        move &comp_nonet_denom    to #nonet_denom
+        
+        let #total_nonet = (#nonet_num/#nonet_denom) * 100
+        
+    let $location_name = $mail_code||'  '||$office_name
+
+    let #count1 = #count1 + 1
+    
+    move #numerator to $numerator 8888 
+    move #denominator to $denominator 8888
+
+    move #nonet_num to $nonet_num 8888
+    move #nonet_denom to $nonet_denom 8888
+
+    let $count = $numerator || ' of ' || $denominator
+
+    let $count_nonet = $nonet_num || ' of ' || $nonet_denom
+           
+    if #count1 = 1          
+       do PRINT-TOTAL-TITLE
+       do PRINT-MAIL-OFFICE-TITLE
+       do PRINT-TOTAL
+    else
+       do PRINT-TOTAL
+    end-if 
+
+FROM      PERF_TALLY  P,
+          OFFICE      O
+
+WHERE     P.ID_EVENT = #event_type and
+          P.ID_OFFICE = O.ID_OFFICE and
+          P.DT_MONTH = $input_dt_month
+
+GROUP BY  CD_OFFICE_MAIL, O.NM_OFFICE_NAME
+ORDER BY  O.NM_OFFICE_NAME
+
+END-SELECT
+
+
+
+!Get total response and total response minus network time for
+!COMPLEX-UPDATE event type by region:
+
+    move 0                                  to #count1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+O.CD_OFFICE_REGION &host_region_complex
+        move &host_region_complex        to $region
+        let $location_name = 'Region '||$region||''
+
+!Get total response criteria for COMPLEX-UPDATE event type by region:
+ROUND (SUM (P.NBR_PRF_LEQ_1) +
+       SUM (P.NBR_PRF_LEQ_2) +
+       SUM (P.NBR_PRF_LEQ_3) +
+       SUM (P.NBR_PRF_LEQ_4) +
+       SUM (P.NBR_PRF_LEQ_5) +
+       SUM (P.NBR_PRF_LEQ_6) +
+       SUM (P.NBR_PRF_LEQ_7) +
+       SUM (P.NBR_PRF_LEQ_10) +
+       SUM (P.NBR_PRF_LEQ_12) ) &comp_num_reg
+       move &comp_num_reg   to #numerator_reg
+ROUND  (SUM(P.NBR_PRF_LEQ_1) +
+        SUM(P.NBR_PRF_LEQ_2) +
+        SUM(P.NBR_PRF_LEQ_3) +
+        SUM(P.NBR_PRF_LEQ_4) +
+        SUM(P.NBR_PRF_LEQ_5) +
+        SUM(P.NBR_PRF_LEQ_6) +
+        SUM(P.NBR_PRF_LEQ_7) +
+        SUM(P.NBR_PRF_LEQ_10) +
+        SUM(P.NBR_PRF_LEQ_12) +
+        SUM(P.NBR_PRF_LEQ_20) +
+        SUM(P.NBR_PRF_LEQ_24) +
+        SUM(P.NBR_PRF_LEQ_30) +
+        SUM(P.NBR_PRF_GTR_30)) &comp_denom_reg
+        move &comp_denom_reg to #denominator_reg
+        
+        let #total = (#numerator_reg/#denominator_reg) * 100
+        
+!Get total response minus network criteria for COMPLEX-UPDATE event 
+!type by region:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4) +
+       SUM (P.NBR_PRF_NONET_LEQ_5) +
+       SUM (P.NBR_PRF_NONET_LEQ_6) +
+       SUM (P.NBR_PRF_NONET_LEQ_7) +
+       SUM (P.NBR_PRF_NONET_LEQ_10) )  &comp_num_reg_nonet
+       move &comp_num_reg_nonet    to #nonet_num_reg
+ROUND (SUM(P.NBR_PRF_NONET_LEQ_1) +
+       SUM(P.NBR_PRF_NONET_LEQ_2) +
+       SUM(P.NBR_PRF_NONET_LEQ_3) +
+       SUM(P.NBR_PRF_NONET_LEQ_4) +
+       SUM(P.NBR_PRF_NONET_LEQ_5) +
+       SUM(P.NBR_PRF_NONET_LEQ_6) +
+       SUM(P.NBR_PRF_NONET_LEQ_7) +
+       SUM(P.NBR_PRF_NONET_LEQ_10) +
+       SUM(P.NBR_PRF_NONET_LEQ_12) +
+       SUM(P.NBR_PRF_NONET_LEQ_20) +
+       SUM(P.NBR_PRF_NONET_LEQ_24) +
+       SUM(P.NBR_PRF_NONET_LEQ_30) +
+       SUM(P.NBR_PRF_NONET_GTR_30)) &comp_denom_reg_nonet
+       move &comp_denom_reg_nonet  to #nonet_denom_reg
+       
+       let #total_nonet = (#nonet_num_reg/#nonet_denom_reg) * 100
+
+    let #count1 = #count1 + 1
+    
+    move #numerator_reg to $numerator_reg 8888 
+    move #denominator_reg to $denominator_reg 8888
+
+    move #nonet_num_reg to $nonet_num_reg 8888
+    move #nonet_denom_reg to $nonet_denom_reg 8888
+
+    let $count = $numerator_reg || ' of ' || $denominator_reg
+
+    let $count_nonet = $nonet_num_reg || ' of ' || $nonet_denom_reg
+           
+    if #count1 = 1          
+       ! Skip 3 lines
+       print '' (+3,0)
+       do PRINT-TOTAL
+    else
+       do PRINT-TOTAL
+    end-if 
+
+FROM       PERF_TALLY  P,
+           OFFICE             O
+WHERE      P.ID_EVENT = #event_type and
+           P.ID_OFFICE = O.ID_OFFICE and
+           P.DT_MONTH = $input_dt_month
+GROUP BY   O.CD_OFFICE_REGION
+ORDER BY   O.CD_OFFICE_REGION
+
+END-SELECT
+
+
+!Get total response and total response minus network time for
+!COMPLEX-UPDATE event type statewide:
+
+    move 0                                  to #count1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+!Get total response criteria for COMPLEX-UPDATE event type statewide:
+ROUND (SUM (P.NBR_PRF_LEQ_1) +
+       SUM (P.NBR_PRF_LEQ_2) +
+       SUM (P.NBR_PRF_LEQ_3) +
+       SUM (P.NBR_PRF_LEQ_4) +
+       SUM (P.NBR_PRF_LEQ_5) +
+       SUM (P.NBR_PRF_LEQ_6) +
+       SUM (P.NBR_PRF_LEQ_7) +
+       SUM (P.NBR_PRF_LEQ_10) +
+       SUM (P.NBR_PRF_LEQ_12) ) &comp_num_state
+       move &comp_num_state  to #num_state
+ROUND (SUM(P.NBR_PRF_LEQ_1) +
+       SUM(P.NBR_PRF_LEQ_2) +
+       SUM(P.NBR_PRF_LEQ_3) +
+       SUM(P.NBR_PRF_LEQ_4) +
+       SUM(P.NBR_PRF_LEQ_5) +
+       SUM(P.NBR_PRF_LEQ_6) +
+       SUM(P.NBR_PRF_LEQ_7) +
+       SUM(P.NBR_PRF_LEQ_10) +
+       SUM(P.NBR_PRF_LEQ_12) +
+       SUM(P.NBR_PRF_LEQ_20) +
+       SUM(P.NBR_PRF_LEQ_24) +
+       SUM(P.NBR_PRF_LEQ_30) +
+       SUM(P.NBR_PRF_GTR_30)) &comp_denom_state
+       move &comp_denom_state to #denom_state
+       
+       let #total = (#num_state/#denom_state) * 100
+     
+
+!Get total response minus network criteria for  COMPLEX-UPDATE event
+!statewide:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4) +
+       SUM (P.NBR_PRF_NONET_LEQ_5) +
+       SUM (P.NBR_PRF_NONET_LEQ_6) +
+       SUM (P.NBR_PRF_NONET_LEQ_7) +
+       SUM (P.NBR_PRF_NONET_LEQ_10) ) &comp_num_state_nonet
+       move &comp_num_state_nonet  to #num_state_nonet
+ROUND (SUM(P.NBR_PRF_NONET_LEQ_1) +
+       SUM(P.NBR_PRF_NONET_LEQ_2) +
+       SUM(P.NBR_PRF_NONET_LEQ_3) +
+       SUM(P.NBR_PRF_NONET_LEQ_4) +
+       SUM(P.NBR_PRF_NONET_LEQ_5) +
+       SUM(P.NBR_PRF_NONET_LEQ_6) +
+       SUM(P.NBR_PRF_NONET_LEQ_7) +
+       SUM(P.NBR_PRF_NONET_LEQ_10) +
+       SUM(P.NBR_PRF_NONET_LEQ_12) +
+       SUM(P.NBR_PRF_NONET_LEQ_20) +
+       SUM(P.NBR_PRF_NONET_LEQ_24) +
+       SUM(P.NBR_PRF_NONET_LEQ_30) +
+       SUM(P.NBR_PRF_NONET_GTR_30)) &comp_denom_state_nonet
+       move &comp_denom_state_nonet to #denom_state_nonet
+       
+       let #total_nonet = (#num_state_nonet/#denom_state_nonet) * 100
+     
+    move #num_state to $num_state 8888 
+    move #denom_state to $denom_state 8888
+
+    move #num_state_nonet to $num_state_nonet 8888
+    move #denom_state_nonet to $denom_state_nonet 8888
+
+    let $count = $num_state || ' of ' || $denom_state
+
+    let $count_nonet = $num_state_nonet || ' of ' || $denom_state_nonet
+
+     let $location_name = 'State Wide'
+     ! Skip 3 lines
+     print '' (+3,0)
+     do PRINT-TOTAL
+
+FROM    PERF_TALLY  P
+
+WHERE   P.ID_EVENT = #event_type and
+        P.DT_MONTH = $input_dt_month
+
+END-SELECT
+
+nodata:
+NEW-PAGE  
+           
+END-PROCEDURE REPORT-COMPLEX-UPDATE
+
+
+!****************************************************************************
+!                                                                           *
+!   REPORT-ABUSE-HOTLINE-FUNC                                               *
+!                                                                           *
+!       This procedure will retieve and print the percentages for the       *
+!       ABUSE_HOTLINE_FUNC performance event type                           *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-NONET-TITLE                                      *
+!                    PRINT-NONET                                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE REPORT-ABUSE-HOTLINE-FUNC
+
+    
+    print 'Intake Functionality:' (+2,1)
+    print '---------------------' (+1,1)
+
+    print 'Criteria:       Total Excluding Network <= 4 Seconds 95%' (+2, 1)
+
+
+    let #event_type =  #ABUSE_HOTLINE_FUNC
+
+    !Determine if there are any records of this event type in the database
+    do GET-EVENT-COUNT
+    !If there are no record for this event type, display message in the 
+    !report.  Otherwise, produce the report for this event type.
+    if #event_count = 0
+       print 'No data for this performance type has been logged.' (+3, 1)
+       GOTO nodata
+    end-if
+
+!Get total response minus network time criteria for 
+!ABUSE_HOTLINE_FUNC event type by office:
+
+    move 0                                  to #count1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+O.NM_OFFICE_NAME &host_office_intake
+        move &host_office_intake        to $office_name
+
+O.CD_OFFICE_MAIL &host_mail_intake
+        move &host_mail_intake          to $mail_code
+
+!Get total response minus network criteria for ABUSE_HOTLINE_FUNC event 
+!type by office:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4))  &ahf_numerator
+       move &ahf_numerator        to #nonet_num
+ROUND  (SUM(P.NBR_PRF_NONET_LEQ_1) +
+        SUM(P.NBR_PRF_NONET_LEQ_2) +
+        SUM(P.NBR_PRF_NONET_LEQ_3) +
+        SUM(P.NBR_PRF_NONET_LEQ_4) +
+        SUM(P.NBR_PRF_NONET_LEQ_5) +
+        SUM(P.NBR_PRF_NONET_LEQ_6) +
+        SUM(P.NBR_PRF_NONET_LEQ_7) +
+        SUM(P.NBR_PRF_NONET_LEQ_10) +
+        SUM(P.NBR_PRF_NONET_LEQ_12) +
+        SUM(P.NBR_PRF_NONET_LEQ_20) +
+        SUM(P.NBR_PRF_NONET_LEQ_24) +
+        SUM(P.NBR_PRF_NONET_LEQ_30) +
+        SUM(P.NBR_PRF_NONET_GTR_30)) &ahf_denominator
+        move &ahf_denominator     to #nonet_denom
+      
+        let #total_nonet = (#nonet_num/#nonet_denom) * 100
+
+    let $location_name = $mail_code||'  '||$office_name
+
+    let #count1 = #count1 + 1
+    
+     
+    move #nonet_num to $nonet_num 8888
+
+    move #nonet_denom to $nonet_denom 8888
+
+    let $count_nonet = $nonet_num || ' of ' || $nonet_denom
+           
+    if #count1 = 1          
+       do PRINT-NONET-TITLE
+       do PRINT-MAIL-OFFICE-TITLE
+       do PRINT-NONET
+    else
+       do PRINT-NONET
+    end-if 
+
+FROM      PERF_TALLY  P,
+          OFFICE      O
+
+WHERE     P.ID_EVENT = #event_type and
+          P.ID_OFFICE = O.ID_OFFICE and
+          P.DT_MONTH = $input_dt_month
+
+GROUP BY  CD_OFFICE_MAIL, O.NM_OFFICE_NAME
+ORDER BY  O.NM_OFFICE_NAME
+
+END-SELECT
+
+
+
+!Get total response minus network time for
+!ABUSE_HOTLINE_FUNC event type by region:
+
+    move 0                                  to #count1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+O.CD_OFFICE_REGION &host_region_intake
+        move &host_region_intake        to $region
+        let $location_name = 'Region '||$region||''
+
+
+!Get total response minus network criteria for ABUSE_HOTLINE_FUNC event 
+!type by region:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4) ) &ahf_num_reg
+       move &ahf_num_reg          to #nonet_num_reg
+ROUND (SUM(P.NBR_PRF_NONET_LEQ_1) +
+       SUM(P.NBR_PRF_NONET_LEQ_2) +
+       SUM(P.NBR_PRF_NONET_LEQ_3) +
+       SUM(P.NBR_PRF_NONET_LEQ_4) +
+       SUM(P.NBR_PRF_NONET_LEQ_5) +
+       SUM(P.NBR_PRF_NONET_LEQ_6) +
+       SUM(P.NBR_PRF_NONET_LEQ_7) +
+       SUM(P.NBR_PRF_NONET_LEQ_10) +
+       SUM(P.NBR_PRF_NONET_LEQ_12) +
+       SUM(P.NBR_PRF_NONET_LEQ_20) +
+       SUM(P.NBR_PRF_NONET_LEQ_24) +
+       SUM(P.NBR_PRF_NONET_LEQ_30) +
+       SUM(P.NBR_PRF_NONET_GTR_30)) &ahf_denom_reg
+       move &ahf_denom_reg        to #nonet_denom_reg
+       
+       let #total_nonet = (#nonet_num_reg/#nonet_denom_reg) * 100
+      
+    let #count1 = #count1 + 1
+
+    move #nonet_num_reg to $nonet_num_reg 8888
+    move #nonet_denom_reg to $nonet_denom_reg 8888
+
+    let $count_nonet = $nonet_num_reg || ' of ' || $nonet_denom_reg
+           
+    if #count1 = 1          
+       ! Skip 3 lines
+       print '' (+3,0)
+       do PRINT-NONET
+    else
+       do PRINT-NONET
+    end-if 
+
+FROM       PERF_TALLY  P,
+           OFFICE             O
+WHERE      P.ID_EVENT = #event_type and
+           P.ID_OFFICE = O.ID_OFFICE and
+           P.DT_MONTH = $input_dt_month
+GROUP BY   O.CD_OFFICE_REGION
+ORDER BY   O.CD_OFFICE_REGION
+
+END-SELECT
+
+
+!Get total response minus network time for
+!ABUSE_HOTLINE_FUNC event type statewide:
+
+    move 0                                  to #count1
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+!Get total response minus network criteria for  ABUSE_HOTLINE_FUNC event
+!statewide:
+ROUND (SUM (P.NBR_PRF_NONET_LEQ_1) +
+       SUM (P.NBR_PRF_NONET_LEQ_2) +
+       SUM (P.NBR_PRF_NONET_LEQ_3) +
+       SUM (P.NBR_PRF_NONET_LEQ_4) ) &ahf_num_state
+       move &ahf_num_state       to #num_state_nonet
+ROUND (SUM(P.NBR_PRF_NONET_LEQ_1) +
+       SUM(P.NBR_PRF_NONET_LEQ_2) +
+       SUM(P.NBR_PRF_NONET_LEQ_3) +
+       SUM(P.NBR_PRF_NONET_LEQ_4) +
+       SUM(P.NBR_PRF_NONET_LEQ_5) +
+       SUM(P.NBR_PRF_NONET_LEQ_6) +
+       SUM(P.NBR_PRF_NONET_LEQ_7) +
+       SUM(P.NBR_PRF_NONET_LEQ_10) +
+       SUM(P.NBR_PRF_NONET_LEQ_12) +
+       SUM(P.NBR_PRF_NONET_LEQ_20) +
+       SUM(P.NBR_PRF_NONET_LEQ_24) +
+       SUM(P.NBR_PRF_NONET_LEQ_30) +
+       SUM(P.NBR_PRF_NONET_GTR_30)) &ahf_denom_state
+       move &ahf_denom_state     to #denom_state_nonet
+       
+       let #total_nonet = (#num_state_nonet/#denom_state_nonet) * 100
+
+    move #num_state_nonet to $num_state_nonet 8888
+    move #denom_state_nonet to $denom_state_nonet 8888
+
+    let $count_nonet = $num_state_nonet || ' of ' || $denom_state_nonet
+
+     let $location_name = 'State Wide'
+     ! Skip 3 lines
+     print '' (+3,0)
+     do PRINT-NONET
+
+FROM    PERF_TALLY  P
+
+WHERE   P.ID_EVENT = #event_type and
+        P.DT_MONTH = $input_dt_month
+
+END-SELECT
+
+nodata:
+ 
+           
+END-PROCEDURE REPORT-ABUSE-HOTLINE-FUNC
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-EVENT-COUNT                                                         *
+!                                                                           *
+!       This procedure gets the total number of records for the current     *
+!       event type                                                          *
+!                                                                           * 
+!       CALLED BY  : REPORT-SEARCH-BY-KEY                                   *
+!                    REPORT-SEARCH-BY-PRNC-NAME                             *
+!                    REPORT-SEARCH-BY-PRNC-ADDR                             *
+!                    REPORT-NORMAL-UPDATE                                   *
+!                    REPORT-COMPLEX-UPDATE                                  *
+!                    REPORT-ABUSE-HOTLINE-FUNC                              *
+!                                                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-EVENT-COUNT
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+    
+COUNT(*) &host_count
+     move &host_count to #event_count
+
+FROM PERF_TALLY
+
+WHERE ID_EVENT = #event_type and
+      DT_MONTH = $input_dt_month
+     
+END-SELECT              
+
+END-PROCEDURE GET-EVENT-COUNT
+
+
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-MAIL-OFFICE-TITLE                                                 *
+!                                                                           *
+!       This procedure prints the title for the mail code and office name   *
+!       colums                                                              *
+!                                                                           * 
+!       CALLED BY  : REPORT-SEARCH-BY-KEY                                   *
+!                    REPORT-SEARCH-BY-PRNC-NAME                             *
+!                    REPORT-SEARCH-BY-PRNC-ADDR                             *
+!                    REPORT-NORMAL-UPDATE                                   *
+!                    REPORT-COMPLEX-UPDATE                                  *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-MAIL-OFFICE-TITLE
+
+print 'Mail  Office'          (+1,1)  
+print '----  ---------------' (+1,1)  
+
+END-PROCEDURE PRINT-MAIL-OFFICE-TITLE
+
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-TOTAL-TITLE                                                       *
+!                                                                           *
+!       This procedure prints the title for both total and total without    *
+!       network time columns                                                *
+!                                                                           * 
+!       CALLED BY  : REPORT-SEARCH-BY-KEY                                   *
+!                    REPORT-SEARCH-BY-PRNC-NAME                             *
+!                    REPORT-SEARCH-BY-PRNC-ADDR                             *
+!                    REPORT-NORMAL-UPDATE                                   *
+!                    REPORT-COMPLEX-UPDATE                                  *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-TOTAL-TITLE
+
+print 'Met Total Response'                (+4,30)
+print 'Met Total Excluding Network'       (+0,55)
+print 'Percent'                           (+1,30)
+print 'Count'                             (+0,40)
+print 'Percent'                           (+0,55)
+print 'Count'                             (+0,65)
+print '----------------------'            (+1,30)  
+print '---------------------------'       (+0,55)  
+
+END-PROCEDURE PRINT-TOTAL-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-TOTAL                                                             *
+!                                                                           *
+!       This procedure prints both the total and total without network      *
+!       time column totals                                                  *
+!                                                                           *
+!       CALLED BY  : REPORT-SEARCH-BY-KEY                                   *
+!                    REPORT-SEARCH-BY-PRNC-NAME                             *
+!                    REPORT-SEARCH-BY-PRNC-ADDR                             *
+!                    REPORT-NORMAL-UPDATE                                   *
+!                    REPORT-COMPLEX-UPDATE                                  *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-TOTAL
+
+print $location_name    (+1,1)
+print #total            (+0,30)  edit 888
+print '%'               ()
+print $count            (+0,40)  !edit 8888
+!print 'of'              (+0,45)
+!print #denominator      (+0,49)  edit 8888
+print #total_nonet      (+0,55)  edit 888
+print '%'               ()
+print $count_nonet      (+0,65)
+
+END-PROCEDURE PRINT-TOTAL
+
+    
+!****************************************************************************
+!                                                                           *
+!   PRINT-NONET-TITLE                                                       *
+!                                                                           *
+!       This procedure prints the title for the total without network time  *
+!       column                                                              *
+!                                                                           * 
+!       CALLED BY  : REPORT-ABUSE-HOTLINE-FUNC                              *
+!                                                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-NONET-TITLE
+
+print 'Met Total Excluding Network'       (+4,30)
+print 'Percent'                           (+1,30)
+print 'Count'                             (+0,40)  
+print '---------------------------'       (+1,30)  
+
+END-PROCEDURE PRINT-NONET-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-NONET                                                             *
+!                                                                           *
+!       This procedure prints the total without network time column total   *                                                *
+!                                                                           * 
+!       CALLED BY  : REPORT-ABUSE-HOTLINE-FUNC                              *
+!                                                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-NONET
+
+print $location_name    (+1,1)
+print #total_nonet      (+0,30)  edit 888
+print '%'               ()
+print $count_nonet      (+0,40)
+
+END-PROCEDURE PRINT-NONET
+       
+   
+!****************************************************************************
+!                                                                           *
+!   GET-HEADER-DATES                                                        *
+!                                                                           *
+!       This procedure will select the month and year previous to the input *
+!       date and select the input month and year.                           *
+!       These date values are only used in the report header.               *
+!                                                                           *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-HEADER-DATES
+       
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+    
+TO_CHAR(ADD_MONTHS(TO_DATE($input_dt_month, 'MM/DD/YYYY'), -1), 'MM') &prev_month
+     move &prev_month               to $header_month_from
+
+TO_CHAR(ADD_MONTHS(TO_DATE($input_dt_month, 'MM/DD/YYYY'), -1), 'YYYY') &prev_year
+     move &prev_year                            to $header_year_from
+
+TO_CHAR(TO_DATE($input_dt_month, 'MM/DD/YYYY'), 'MM') &curr_month
+     move &curr_month               to $header_month_to
+
+TO_CHAR(TO_DATE($input_dt_month, 'MM/DD/YYYY'), 'YYYY') &curr_year
+     move &curr_year                            to $header_year_to
+
+FROM DUAL
+     
+END-SELECT              
+     
+END-PROCEDURE GET-HEADER-DATES
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-CURRENT-MONTH                                                       *
+!                                                                           *
+!       This procedure will select the the current month as the default    *
+!       when the input month is blank                                       *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CURRENT-MONTH
+       
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+    
+TO_CHAR(TRUNC(SYSDATE,'MM'), 'MM/DD/YYYY') &current_month
+     move &current_month                       to $input_dt_month
+
+FROM DUAL
+     
+END-SELECT              
+     
+END-PROCEDURE GET-CURRENT-MONTH
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+

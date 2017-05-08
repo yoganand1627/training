@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.StagePersonAddHistory" table="STAGE_PERSON_ADD_HISTORY" >
+        <id name="idStagePersonAddHistory" type="integer">
+            <column name="ID_STAGE_PERSON_ADD_HISTORY" precision="16" scale="0" />
+            <generator class="sequence"><param name="sequence">SEQ_STAGE_PERSON_ADD_HISTORY</param></generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="null" source="vm"/>
+        <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select">
+            <column name="ID_PERSON" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <many-to-one name="stageByIdFromStage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select">
+            <column name="ID_FROM_STAGE" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select">
+            <column name="ID_CASE" precision="16" scale="0" />
+        </many-to-one>
+        <many-to-one name="stageByIdToStage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select">
+            <column name="ID_TO_STAGE" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="cdStagePersType" type="string">
+            <column name="CD_STAGE_PERS_TYPE" length="3" />
+        </property>
+        <property name="cdStagePersRelInt" type="string">
+            <column name="CD_STAGE_PERS_REL_INT" length="2" />
+        </property>
+        <property name="dtAdded" type="date">
+            <column name="DT_ADDED" length="7" />
+        </property>
+    </class>
+</hibernate-mapping>

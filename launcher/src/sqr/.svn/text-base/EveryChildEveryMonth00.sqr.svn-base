@@ -1,0 +1,712 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Fri Jan 22 13:02:36 2010 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\EveryChildEveryMonth\EveryChildEveryMonth00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+#define ADOPTIVE_HOME 'ADO'
+#define FACILITY 'FAC'
+#define FOSTER_HOME 'FHO'
+#define RESIDENCE 'RES'
+#define max_months 12
+#define Y1_header_start 238
+#define Y1_header_jump 23
+#define Y1_row_start 238
+#define Y1_row_jump 23
+#define X1_header_start 114! ref. Child Name and Case Manager coord. in heading
+#define X2_header_start 15 
+#define X1_row_start 0! ref. nm_child and nm_casemanage print X coord
+
+Begin-Setup
+ Create-Array
+   name=date_range     size={max_months}
+   field=year_month:char
+ Create-Array
+   name=required      size={max_months}
+   field=monthly_count:number
+ Create-Array
+   name=seen      size={max_months}
+   field=monthly_count:number
+ Create-Array
+   name=seen_in_home      size={max_months}
+   field=monthly_count:number  
+ Create-Array
+   name=child             size={max_months}
+   field=visit_month:number 
+   field=num_visits:number
+   field=num_home_visits:number
+End-Setup
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=156    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'Key' (451,1,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print '0 - Child was not in foster care for full month - Visit with the child not required' (469,1,0)
+ Print '1 - Child was in foster care for full month and visit was made with the child in that month at one of the following locations: facility, residence, foster home, and adoptive home.' (483,1,0)
+ Print '2 - Child was in foster care for full month and visit was made with the child in that month but NOT at any of the following locations: facility, residence, foster, and adoptive home.' (497,1,0)
+ Print '3 - Child was in foster care for full month but no visit made with the child in that month.' (511,1,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (521,669) '' ' of '
+ Last-Page (522,696) 
+ Print 'This report captures monthly caseworker visits status collectively in a series of months of up to 12 months in supporting of the state''s Every Child Every Month (ECEM) program. All children under the age of 18 who were in DFCS custody at any point during the reporting period are listed. However, summary sections only display data pertaining to ECEM. These includes the number of children who were seen every month they were required to be seen (ECEM child), whether the visit was made in the residence of the child, the percentage of ECEM children, and the percentage of ECEM visits made in the residence of the child.' (31,12,150) Wrap 150 6 line-height=12 Keep-Top
+ Print 'The report displays by region and county with ascending order of region, county and child name.' (142,12,0)
+ Print 'Case Manager: ' (169,12,0) Bold 
+ Print 'Visit Req''d Months: ' (185,12,0) Bold 
+ Print 'ECEM Child?: ' (201,12,0) Bold 
+ Print 'Children Required a Visit: ' (328,12,0) Bold 
+ Print 'Seen Every Month: ' (344,12,0) Bold 
+ Print '% Seen Every Month: ' (360,12,0) Bold 
+ Print 'The percentage of ECEM visits that were made in the residence of the ECEM child.' (421,168,0)
+ Print 'ECEM Visits Made: ' (377,12,0) Bold 
+ Print 'ECEM Visits Made in the Home: ' (405,12,0) Bold 
+ Print '% ECEM Seen in Home: ' (421,12,0) Bold 
+ Print 'The collective number of visit months for the ECEM children in which the visits were made in the residence of the ECEM child.' (405,168,0)
+ Print 'The collective number of visit months for the ECEM children. Visit months of children who are not an ECEM child are NOT included in this calculation.' (377,168,111) Wrap 111 2 line-height=12 Keep-Top
+ Print 'The percentage of children who were seen every month a visit is required.' (360,168,0)
+ Print 'The collective number of children in DFCS custody who were seen every month a visit is required.' (344,168,0)
+ Print 'The collective number of children who is in DFCS custody for at least one full calendar month in the entire reporting period.' (328,168,0)
+ Print 'Whether the child was seen each and every calendar month s/he was in care. N/A means the child is not in care any full month during the reporting period; therfore, is not an ECEM candidate.' (201,168,111) Wrap 111 2 line-height=12 Keep-Top
+ Print 'The number of months the child is in DFCS custody for the full calendar month and therefore requires a visit for that month.' (185,168,0)
+ Print 'The last case manager on the child''s most recent foster care stage in the case.' (169,168,0)
+ Print 'Required to be Seen: ' (269,12,0) Bold 
+ Print 'Seen: ' (284,12,0) Bold 
+ Print 'Seen in Home: ' (300,12,0) Bold 
+ Print 'The collective number of children required to be seen and were seen in the month in the residence of the child.' (300,168,0)
+ Print 'The collective number of children required to be seen and were seen in the month.' (284,168,111)
+ Print 'The collective number of children who were in DFCS custody for the full calendar month.' (269,168,0)
+ Print 'The number of ECEM visit months whereas a visit has been made and was made in the residence of the child. If the child is not an ECEM child, this count is defaulted to 0.' (229,168,111) Wrap 111 2 line-height=12 Keep-Top
+ Print '#ECEM Home Visits: ' (229,12,0) Bold 
+ Graphic (251,12,706) Horz-Line 10 
+ Graphic (310,12,706) Horz-Line 10 
+ Print 'A child who was in state''s custody for a full calendar month required a visit by a case manager for that month. The month the child turns 18 is also a required month so long as the child remains in care the full month. A visit for ECEM reporting purposes is an actual face to face contact, announced or unannounced. The residence of the child is defined as one of the followings: facility, residence, foster home and adoptive home.' (96,12,145) Wrap 145 3 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10 
+ Print 'ECEM Formulas' (11,1,0)Bold Underline
+ Print 'Monthly Summary' (+18,12,0) Bold Underline
+ Print 'Required to be Seen:' (+15,12,0) Bold
+ Print 'The count of all ''1''s, ''2''s, and ''3''s in the corresponding month column.' (, 168)
+ Print 'Seen:' (+15,12,0) Bold
+ Print 'The count of all ''1''s and ''2''s in the corresponding month column.' (, 168)
+ Print 'Seen In Home:' (+15,12,0) Bold
+ Print 'The count of all ''1''s in the corresponding month column.' (,168)
+Print 'ECEM Summary'  (+25,12,0) Bold Underline
+Print 'Children Required a Visit: ' (+15,12,0) Bold
+Print 'The count of all non-zero children in the ' (, 168,0)
+Print 'Visit Req''d Months ' (,+135)  Bold 
+Print 'column.' (,+73)   
+Print 'Seen Every Month: ' (+15,12) Bold
+Print 'The count of all ''Y''s in the' (, 168)
+Print ' ECEM Child?' (,+86)  Bold
+Print ' column.' (,+53)
+Print '% Seen Every Month: ' (+15,12) Bold
+Print 'The number of' (, 168)
+Print ' Seen Every Month' (,+54)  Bold
+Print ' divided by the number of' (,+73)  
+Print ' Children Required a Visit .' (,+90)  Bold
+
+Print 'ECEM Visits Made: ' (+15,12) Bold
+Print 'The sum of months from' (, 168)
+Print ' Visit Req''d Months' (,+86)  Bold
+Print ' where' (,+75)  
+Print ' ECEM Child?' (,+25)  Bold
+Print '  is ''Y''.' (,+52)  
+
+Print 'ECEM Visits Made in the Home: ' (+15,12,0) Bold
+Print 'The sum of months from' (, 168)
+Print ' #ECEM Home Visits' (,+87)  Bold
+Print ' where' (,+80)  
+Print ' ECEM Child?' (,+25)  Bold
+Print '  is ''Y''.' (,+52)
+
+Print '% ECEM Seen in Home: ' (+15,12,0) Bold
+Print 'The number of' (, 168)
+Print ' ECEM Visits Made in the Home' (,+53)  Bold
+Print ' divided by the number of' (,+123)  
+Print ' ECEM Visits Made.' (,+90)  Bold
+
+ Page-Number (489,669) '' ' of '
+ Last-Page (489,696) 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=60   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+ Do Get_Input
+ If $date_range_invalid = 'N'
+ Do Master_Query
+ Else
+  Let $invalid_date_range = 'Invalid date range. Please enter a positive date range of maximum of 12 months.'
+ End-If
+End-Program
+Begin-Procedure Get_Input
+! Get inputs - no error checking; it was done in Java launch page.
+Input $dt_start 'Start Month (MM/YYYY)' MaxLen=10 Type=Date Format='MM/YYYY'
+Input $dt_end 'End Month (MM/YYYY)' MaxLen=10 Type=Date Format='MM/YYYY'
+Input $cd_region 'Region ' MaxLen=2  Type=Char
+Input $cd_county 'County ' MaxLen=3  Type=Char
+
+If isnull($cd_region) or isblank($cd_region) or $cd_region = '0'
+  Let $where_clause_region = 'S00.CD_STAGE_REGION IS NOT NULL'
+Else 
+  Let $cd_region_str = '''' || $cd_region || ''''
+  Let $where_clause_region = 'S00.CD_STAGE_REGION = ' || $cd_region_str
+  Let $region_selected = 'Y'
+End-If
+If isnull($cd_county) or isblank($cd_county) or $cd_county = '0'
+  Let $where_clause_county = 'S00.CD_STAGE_CNTY IS NOT NULL'
+Else 
+  Let $cd_county_str = '''' || $cd_county || ''''
+  Let $where_clause_county = 'S00.CD_STAGE_CNTY = ' || $cd_county_str
+  Let $county_selected = 'Y'
+End-If
+
+Let $where_clause_region_county = $where_clause_region || ' AND ' || $where_clause_county
+If $county_selected = 'Y'
+Begin-Select
+decode &county_decode0
+from ccount
+where code = [$cd_county_str]
+End-Select
+ Move &county_decode0 to $region_county_disp
+Else
+ If $region_selected = 'Y'    
+   Let $region_county_disp = 'Region ' || $cd_region
+ Else 
+   Let $region_county_disp = 'Statewide'
+ End-If
+End-If
+
+Let #months_between = datediff(strtodate($dt_end,'mm/yyyy'), strtodate($dt_start,'mm/yyyy'), 'month')
+If #months_between < {max_months} and #months_between >= 0
+  Let $date_range_invalid = 'N'
+  Let #i = 0
+  While #i <= #months_between
+    Let $year_month = datetostr(dateadd(strtodate($dt_start, 'mm/yyyy'),'month',#i), 'yyyy/mm')
+    Let date_range.year_month(#i)= $year_month
+    Add 1 to #i
+  End-While
+Else
+  Let $date_range_invalid = 'Y'
+End-If
+End-Procedure
+
+Begin-Procedure ECEM_Data_Child
+Evaluate #seen_status_code
+   When = 3
+     Add 1 to #child_visit_months     
+     Break
+   When = 2
+     Add 1 to #child_visit_months
+     Add 1 to #child_ecem_visits
+     Break
+   When = 1
+     Add 1 to #child_visit_months
+     Add 1 to #child_ecem_visits
+     Add 1 to #child_ecem_home_visits
+     Break    
+  End-Evaluate
+End-Procedure
+! Use child's all-months visit data to make up ECEM data for child and aggregate for all chidren the entire report period
+Begin-Procedure ECEM_Data_Periodic
+! child ecem visits only added where a child visit month exists (and at least one visit made) so pure number comparison here is good enough
+! Determine if the child is a ECEM child: 0 - not; 1 - ECEM; -1 is N/A - child was not in care full month for all months inthe entire period
+  If #child_visit_months = 0 
+    Move -1 to #ecem_status_code
+  Else
+  If (#child_visit_months > #child_ecem_visits) !or (#child_visit_months = 0 and #child_ecem_visits = 0) 
+    Move 0 to #ecem_status_code
+  Else 
+    Move 1 to #ecem_status_code
+  End-If
+  End-If
+! Add to the number of children who required a visit for the entire period
+  If #child_visit_months > 0
+   Add 1 to #period_required_visit_children
+  End-If
+! This is ECEM child, add 1 to the summary variables
+  If #ecem_status_code > 0
+    Add 1 to #period_ecem_visit_children
+    If #child_ecem_home_visits > 0
+     Add 1 to #period_ecem_home_visit_children
+    End-If
+    Add #child_ecem_visits to #period_ecem_visits
+    Add #child_ecem_home_visits to #period_ecem_home_visits
+  End-If
+End-Procedure 
+
+
+Begin-Procedure Master_Query
+ Move 0 to #1ROW_COUNT
+ Move 0 to #period_visit_months
+ Move 0 to #period_ecem_visits
+ Move 0 to #period_ecem_home_visits
+ Move 0 to #period_required_visit_children
+ Move 0 to #period_ecem_visit_children
+ Move 0 to #period_ecem_home_visit_children
+ Move 0 to #child_month_index
+ Do CreateXML_ManifestFile
+Begin-Select Distinct
+S00.CD_STAGE_REGION &Master_Query_S00.CD_STAGE_REGION2 () On-Break Set=1 Level=1 Print=Never !Before=Master_QueryCD_STAGE_REGION2_BeforeProc101
+S00.CD_STAGE_CNTY &Master_Query_S00.CD_STAGE_CNTY2 () On-Break Set=1 Level=2 Print=Never !Before=Master_QueryCD_STAGE_CNTY2_BeforeProc102
+(P00.NM_PERSON_LAST || ', ' || P00.NM_PERSON_FIRST || ' ' || P00.NM_PERSON_MIDDLE) &nm_child2 () On-Break Set=1 Level=3 Print=Never
+P00.ID_PERSON &id_person00 ()On-Break Set=1 Level=4 Print=Never !After=Master_Querynm_child_AfterProc1032
+S00.ID_CASE &id_case00 () On-Break Set=1 Level=5 Print=Never After=MAster_QueryID_CASE_AfterProc1052
+  Let $child_nameLast = &nm_child2
+  Let $case_idLast = &id_case00
+  Let $child_idLast = &id_person00
+   Let $casemanager_nameLast = &nm_casemanager
+
+(select count(*) FROM EVENT_PERSON_LINK EPL01, CONTACT C01
+WHERE C01.CD_CONTACT_METHOD IN ('ATF','UTF') 
+AND (C01.IND_CONTACT_ATTEMPTED is null or C01.IND_CONTACT_ATTEMPTED <> 'Y')
+AND TO_DATE(TO_CHAR(C01.DT_CONTACT_OCCURRED, 'MM/YYYY'), 'MM/YYYY')=  TO_DATE(MONTH_NUMBER || '/' || YEAR_NUMBER,'MM/YYYY') 
+AND EPL01.ID_EVENT = C01.ID_EVENT
+AND EPL01.ID_PERSON = SPL00.ID_PERSON 
+AND EPL01.ID_CASE = SPL00.ID_CASE  
+)  &visits 
+(select count(*) FROM EVENT_PERSON_LINK EPL01, CONTACT C01
+WHERE C01.CD_CONTACT_METHOD IN ('ATF','UTF') 
+AND (C01.IND_CONTACT_ATTEMPTED is null or C01.IND_CONTACT_ATTEMPTED <> 'Y')
+AND TO_DATE(TO_CHAR(C01.DT_CONTACT_OCCURRED, 'MM/YYYY'), 'MM/YYYY')=  TO_DATE(MONTH_NUMBER || '/' || YEAR_NUMBER,'MM/YYYY') 
+AND C01.CD_CONTACT_LOCATION IN ('FAC', 'RES', 'FHO', 'ADO')  
+AND EPL01.ID_EVENT = C01.ID_EVENT
+AND EPL01.ID_PERSON = SPL00.ID_PERSON 
+AND EPL01.ID_CASE = SPL00.ID_CASE  
+)  &in_home_visits 
+(case when (select count(LS_VIEW_2.ID_PERSON)  from (
+            select LS_VIEW.ID_CASE, LS_VIEW.ID_PERSON, min(LS_VIEW.DT_LEGAL_STAT_STATUS_DT) as DT_LS_START, LS_VIEW.DT_LS_END from (
+                   Select LS01.ID_CASE, LS01.ID_PERSON, LS01.DT_LEGAL_STAT_STATUS_DT
+                          , NVL( (select min(LS02.DT_LEGAL_STAT_STATUS_DT)-1  from legal_status LS02
+                                  where  LS02.DT_LEGAL_STAT_STATUS_DT > LS01.DT_LEGAL_STAT_STATUS_DT
+                                  and LS02.ID_CASE = LS01.ID_CASE 
+                                  and LS02.ID_PERSON = LS01.ID_PERSON
+                                  and LS02.CD_LEGAL_STAT_STATUS not IN ('JCD','PCT','PVL','TCT','TVL','JCP','JCT'))
+                                 , to_date('12/31/4712', 'MM/DD/YYYY')) DT_LS_END  FROM LEGAL_STATUS LS01
+                   WHERE LS01.CD_LEGAL_STAT_STATUS IN ('JCD','PCT','PVL','TCT','TVL','JCP','JCT')) LS_VIEW
+            group by ID_CASE, ID_PERSON, DT_LS_END )  LS_VIEW_2 ! ALLOW 2 CONSECUTIVE IN DFCS CUSTODY LS TO BE TREATED AS ONE
+            where  ID_PERSON = P00.ID_PERSON and ID_CASE = SPL00.ID_CASE 
+            and DT_LS_START <= TO_DATE(MONTH_NUMBER || '/' || YEAR_NUMBER,'MM/YYYY')
+            and DT_LS_END >= LAST_DAY(TO_DATE(MONTH_NUMBER || '/' || YEAR_NUMBER,'MM/YYYY')) ! OK TO BE THE LAST DAY OF THE MONTH 
+            and (S00.DT_STAGE_CLOSE IS NULL OR S00.DT_STAGE_CLOSE >= LAST_DAY(TO_DATE(MONTH_NUMBER || '/' || YEAR_NUMBER,'MM/YYYY')))
+            and SYSDATE >= LAST_DAY(TO_DATE(MONTH_NUMBER || '/' || YEAR_NUMBER,'MM/YYYY')) ! future month IS 0 
+       ) > 0 then 1
+      else 0  end) &visit_required_month
+
+  put &visit_required_month &visits &in_home_visits into child(#child_month_index)
+  add 1 to #child_month_index
+  Add 1 to #1ROW_COUNT ! the number master query returns not necessarily the number children in care at one point during reporting period)
+DECODE &Master_Query_DECODE
+(EMP00.NM_EMPLOYEE_LAST || ', ' ||  EMP00.NM_EMPLOYEE_FIRST || ' ' ||  EMP00.NM_EMPLOYEE_MIDDLE) &nm_casemanager
+(TO_DATE(YEAR_NUMBER || '/' || MONTH_NUMBER, 'YYYY/MM' )) &yyyymm
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ !  Let $casemanager_nameLast = &nm_casemanager
+S00.CD_STAGE_REGION &Master_Query_S00.CD_STAGE_REGION () On-Break Set=1 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc101
+S00.CD_STAGE_CNTY &Master_Query_S00.CD_STAGE_CNTY () On-Break Set=1 Level=2 Print=Never Before=Master_QueryCD_STAGE_CNTY_BeforeProc102
+P00.NM_PERSON_FULL &nm_child () On-Break Set=1 Level=3 Print=Never
+P00.ID_PERSON &Master_Query_P00.ID_PERSON () On-Break Set=1 Level=4 Print=Never
+S00.ID_CASE &Master_Query_S00.ID_CASE () On-Break Set=1 Level=5 Print=Never Before=Master_QueryID_CASE_BeforeProc105
+ Next-Listing 
+From  STAGE_PERSON_LINK SPL00, STAGE S00
+,      PERSON P00, CCOUNT, EMPLOYEE EMP00
+,      STAGE_ASSIGN_HISTORY SAH00, CALENDAR, FOSTER_CARE_CHILDREN
+      Where S00.ID_STAGE = SPL00.ID_STAGE
+            And SPL00.ID_PERSON = P00.ID_PERSON
+            And S00.CD_STAGE_CNTY = CCOUNT.CODE
+            And S00.ID_STAGE = SAH00.ID_STAGE
+            And EMP00.ID_PERSON = SAH00.ID_PERSON
+            And SPL00.ID_STAGE = FOSTER_CARE_CHILDREN.ID_STAGE
+            And SPL00.ID_PERSON = FOSTER_CARE_CHILDREN.PC_PERSON_ID
+ And S00.CD_STAGE IN ('SUB','ADO')
+ And SPL00.CD_STAGE_PERS_ROLE = 'PC'
+ And [$where_clause_region_county]
+ And SAH00.ID_STG_ASSGN_HSTRY = (SELECT  (max( SAH01.ID_STG_ASSGN_HSTRY ))  FROM  STAGE_ASSIGN_HISTORY SAH01 WHERE SAH01.CD_ROLE = 'PR' AND
+      SAH01.ID_STAGE = SAH00.ID_STAGE)
+ And EXISTS(SELECT 1 FROM LEGAL_STATUS_VIEW LSV00 WHERE LSV00.ID_CASE = SPL00.ID_CASE AND LSV00.ID_PERSON = SPL00.ID_PERSON AND LSV00.IN_DFCS_CUSTODY
+     = 'Y' AND LSV00.DT_LEGAL_STAT_STATUS_DT < LAST_DAY(TO_DATE($dt_end,'MM/YYYY'))+1 AND LSV00.DT_LEGAL_STAT_END >= TO_DATE($dt_start,'MM/YYYY')
+     AND TO_DATE(MONTH_NUMBER || '/' || YEAR_NUMBER,'MM/YYYY') >= TO_DATE($dt_start, 'MM/YYYY') AND TO_DATE(MONTH_NUMBER || '/' || YEAR_NUMBER
+    ,'MM/YYYY') < LAST_DAY(TO_DATE($dt_end, 'MM/YYYY'))+1)
+ And (P00.CD_PERSON_STATUS IS NULL  Or P00.CD_PERSON_STATUS <> 'M')
+ And (S00.DT_STAGE_CLOSE IS NULL  Or S00.DT_STAGE_CLOSE >= TO_DATE($dt_start, 'mm/yyyy'))
+ And add_months( P00.DT_PERSON_BIRTH, 12*18 ) >= to_date($dt_start,'mm/yyyy')
+Order By S00.CD_STAGE_REGION
+,      S00.CD_STAGE_CNTY
+,      P00.NM_PERSON_FULL
+,      P00.ID_PERSON
+,      S00.ID_CASE
+,      (TO_DATE(YEAR_NUMBER || '/' || MONTH_NUMBER, 'YYYY/MM' ))
+End-Select
+ Next-Listing
+ Alter-Report Heading=Default Footing=Default
+ New-Page
+ If #1ROW_COUNT > 0
+ Next-Listing Need=60
+   Do Display_Monthly_Summary
+ Next-Listing
+ Next-Listing SkipLines=4 Need=64
+   Do Display_ECEM_Summary
+ End-If
+ Next-Listing 
+
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Display_Monthly_Summary
+
+ Graphic (2,1,718) Horz-Line 20 
+ Position (4,1)
+   Let $monthly_summary_label='Monthly Summary'           
+   Let $required_count_label = 'Required to be seen:'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $monthly_summary_label (23,2,15)Bold Underline
+ Print $required_count_label (23,102,22) Bold 
+   Let $Seen_count_label='Seen: '
+ Print $Seen_count_label (39,102,22) Bold 
+   Let $Seen_in_Home_count_label='Seen in Home:'
+ Print $Seen_in_Home_count_label (54,102,22) Bold 
+ Print $region_county_disp (39, 2, 15) Bold Underline
+
+ ! New code
+  Let #i = 0
+  !Position (, {Y1_row_start})
+  Let #start = {Y1_row_start} + {Y1_row_jump}
+  While #i <= #months_between
+    Let $year_month = date_range.year_month(#i)
+    If strtodate($year_month, 'yyyy/mm') < strtodate(datetostr(datenow(), 'yyyy/mm'), 'yyyy/mm')
+      Let $display_month = 'Y'
+    Else
+      If strtodate($year_month, 'yyyy/mm') = strtodate(datetostr(datenow(), 'yyyy/mm'), 'yyyy/mm')
+         Let $first_day_of_month = $year_month || '/01'
+         Let $last_day_of_month = dateadd(dateadd(strtodate($first_day_of_month,'yyyy/mm/dd'), 'month', 1), 'day', -1)
+         If (datenow() < strtodate($last_daty_of_month,'yyyy/mm/dd'))! last month is not full month yet hence no total computed
+             Let $display_month = 'Y'
+         Else
+             Let $display_month = 'N'
+         End-If
+      Else! future month - do not sdisplay total even it is 0; it is ok for monthly status displays 0 b/c it is a code 
+         Let $display_month = 'N'
+      End-If
+    End-If
+    If $display_month = 'Y'
+      Let #required_count_disp = required.monthly_count(#i) 
+      Let #seen_count_disp = seen.monthly_count(#i)  
+      Let #seen_in_home_count_disp = seen_in_home.monthly_count(#i)
+      Alter-Printer Font=4 Point-Size=10
+      Let #jump = #start+(({Y1_row_jump}+4)*(#i)) ! 4 is length of count field
+      Print #required_count_disp (23,#jump,5) Edit 88888!99999
+      Print #seen_count_disp (39,#jump,5) Edit 88888!99999
+      Print #seen_in_home_count_disp (54,#jump,5) Edit 88888!99999
+      Add 1 to #i
+    Else
+      Let #i = #months_between+1
+    End-If
+  End-While
+End-Procedure
+
+Begin-Procedure Display_ECEM_Summary
+ Graphic (2,1,718) Horz-Line 20 
+ Position (4,1)
+ Let $ECEM_summary_label='ECEM Summary'           
+ Let $required_count_label = 'Children Required a Visit:'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $ECEM_summary_label (23,2,15) Bold Underline
+ Print $required_count_label (23,102) Bold 
+ Let $Seen_count_label='Seen Every Month: '
+ Print $Seen_count_label (39,102) Bold 
+ Let $Seen_percent_label='% Seen Every Month:'
+ Print $Seen_percent_label (54,102) Bold 
+ Print #period_required_visit_children (23, 300) Edit 99999 Bold
+ Print #period_ecem_visit_children (39, 300) Edit 99999 Bold
+ If #period_required_visit_children > 0 
+   Let #period_ecem_visit_children_percent = (#period_ecem_visit_children / #period_required_visit_children) * 100
+   Print #period_ecem_visit_children_percent (54, 295) Edit 999.99na Bold
+   Print '%'(,326)
+End-If
+ Print 'ECEM Visits Made:' (23,402) Bold 
+ Print 'ECEM Visits Made in the Home: ' (39,402) Bold 
+ Print '% Seen in Home:' (54,402) Bold   
+ Print #period_ecem_visits (23,  600) Edit 99999 Bold
+ Print #period_ecem_home_visits (39, 600) Edit 99999 Bold
+ If #period_ecem_visits > 0
+   Let #period_ecem_home_visits_percent = (#period_ecem_home_visits / #period_ecem_visits) * 100
+   Print #period_ecem_home_visits_percent (54, 595) Edit 999.99na Bold
+   Print '%' (,626)
+ End-If
+ Print $region_county_disp (39, 2, 15) Bold Underline
+ Graphic (64,1,718) Horz-Line 20
+End-Procedure
+
+Begin-Procedure Master_QueryID_CASE_AfterProc1052!Master_Querynm_child_AfterProc1032
+ Next-Listing  SkipLines=12 Need=24
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  
+  Print $Child_nameLast ({X1_row_start},2,20) Wrap 20 2 line-height=12 Keep-Top
+  Print $case_idLast ({X1_row_start},110) Edit 8888888888888888na
+  Print $casemanager_nameLast ({X1_row_start},160,20) Wrap 20 2 line-height=12 Keep-Top
+  Position ({X1_row_start}, {Y1_row_start}
+
+  Let #month_num = 0
+  Move 0 to #child_visit_months
+  Move 0 to #child_ecem_visits
+  Move 0 to #child_ecem_home_visits
+
+  While #month_num <= #months_between
+  Let #seen_status_code = 0! initlialize visit monthly visit code to not required
+  Let $year_month = datetostr(dateadd(strtodate($dt_start, 'mm/yyyy'),'month',#month_num), 'yyyy/mm')
+  If strtodate($year_month, 'yyyy/mm') <= strtodate(datetostr(datenow(), 'yyyy/mm'), 'yyyy/mm')
+    If child.visit_month(#month_num) = 1
+      array-add 1 to required(#month_num)
+      add 1 to #child_visit_months
+      if child.num_visits(#month_num) > 0
+         array-add 1 to seen(#month_num)! add to monthly report totals
+         add 1 to #child_ecem_visits! add to all month child totals
+         if child.num_home_visits(#month_num) > 0
+           array-add 1 to seen_in_home(#month_num)
+           add 1 to #child_ecem_home_visits
+           Move 1 to #seen_status_code
+         else 
+           Move 2 to #seen_status_code
+         end-if
+      else
+         Move 3 to #seen_status_code
+      end-if
+   else
+     Move 0 to #seen_status_code
+   end-if    
+  End-If! end checking future months
+  
+  Alter-Printer Font=4 Point-Size=10
+  Print #seen_status_code (,+{Y1_row_jump}) Edit 9
+    Position (, +3)
+  Add 1 to #month_num
+ 
+  End-While! End all months processing for one child
+
+  Do ECEM_Data_Periodic
+  Let #Y1_ECEM_jump = {Y1_header_jump} +20
+  Position (,+#Y1_ECEM_jump)
+  Print #child_visit_months (,, 6) Edit 99
+
+  Evaluate #ecem_status_code
+  When = -1
+    Print 'N/A' (,+#Y1_ECEM_jump, 6)
+    Break
+  When = 1
+    Print 'Y' (,+#Y1_ECEM_jump, 6)
+    Break
+  When = 0 
+    Print 'N' (,+#Y1_ECEM_jump, 6)
+    Move 0 to #child_ecem_visits
+    Move 0 to #child_ecem_home_visits
+  End-Evaluate
+  
+  Let #Y1_ECEM_jump = #Y1_ECEM_jump - 10
+  Print #child_ecem_home_visits (,+#Y1_ECEM_jump,6) Edit 99
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  
+ Move 0 to #child_month_index
+ clear-array name=child
+ Next-Listing 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc101
+ clear-array name=child
+ move 0 to #child_month_index
+ Next-Listing  Need=20
+ Graphic (3,2,719) Horz-Line 20 
+ Position (5,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region'  (20,2) Bold 
+        Print &Master_Query_S00.CD_STAGE_REGION (20,42,2) Bold 
+   Position (+12,)
+ Next-Listing 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_BeforeProc102
+ Next-Listing  Need=17
+ Graphic (1,1,718) Horz-Line 10 
+ Position (2,1)
+        Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_DECODE (17,2,18) Bold 
+   Position (+12,)
+ Next-Listing 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_CASE_BeforeProc105
+if 1 <> 1
+ Next-Listing  SkipLines=55
+    Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_S00.ID_CASE (-43,1) Edit 9999999999999999na
+   Position (+12,)
+ Next-Listing 
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 60 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+  Alter-Printer Font=4 Point-Size=10
+  If $date_range_invalid = 'N'
+
+  If #page-count <=1     
+    Position ({X1_header_start}, {Y1_header_start})
+    Let #i = 0
+    While #i <= #months_between
+      Let $year_month_header = date_range.year_month(#i)
+      Print $year_month_header (, +{Y1_header_jump},4) Bold Underline Wrap 5 2 line-height=12 Keep-Top on=/
+      Add 1 to #i
+    End-While
+  Else
+    Position ({X2_header_start}, {Y1_header_start})
+    Let #i = 0
+    While #i <= #months_between
+      Let $year_month_header = date_range.year_month(#i)
+      Print $year_month_header (, +{Y1_header_jump},4) Bold Underline Wrap 5 2 line-height=12 Keep-Top on=/
+      Add 1 to #i
+    End-While
+  End-If
+  Let #Y1_ECEM_jump = {Y1_header_jump} +10
+  Print 'Visit$Req''d$Months' (,+#Y1_ECEM_jump,6) Bold Underline Wrap 6 3 line-height=12 Keep-Top on=$
+  Print 'ECEM$Child?' (,+#Y1_ECEM_jump,6) Bold Underline Wrap 6 2 line-height=12 Keep-Top on=$
+  Print '#ECEM$Home$Visits' (,+#Y1_ECEM_jump,6) Bold Underline Wrap 6 3 line-height=12 Keep-Top on=$ 
+End-If
+
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Data\SHINES.bmp'
+	Image-size=(102,73)
+ Let $date_range=$dt_start || ' - ' || $dt_end
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $date_range (75,308,18) Bold 
+ Print 'Division of Children and Family Services' (16,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Every Child Every Month' (39,274,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On: ' (16,583,0)
+ Print $current-date (16,653) edit 'MM/DD/YYYY'
+ Let $region_county_disp=$region_county_disp
+ Print $region_county_disp (55,323,13) Bold 
+ If $date_range_invalid = 'Y'
+    ! do nothing
+ Else
+ Print 'Child Name' (114,2,10) Underline  Bold 
+ End-If
+ If $date_range_invalid = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case$Manager' (114,159,12) Underline  Bold  Wrap 12 2 line-height=12 Keep-Top on=$
+ End-If
+ If $date_range_invalid = 'N'
+    ! do nothing
+ Else
+ Let $invalid_date_range=$invalid_date_range
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $invalid_date_range (130,127,85)
+ End-If
+ If $date_range_invalid = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case ID' (114,108,7) Underline  Bold 
+ End-If
+ Else   ! put a non combined page header
+ If $date_range_invalid = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Child Name' (15,2,10) Underline  Bold 
+ End-If
+ If $date_range_invalid = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case$Manager' (15,159,12) Underline  Bold  Wrap 12 2 line-height=12 Keep-Top on=$
+ End-If
+ If $date_range_invalid = 'N'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $invalid_date_range (31,127,85)
+ End-If
+ If $date_range_invalid = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case ID' (15,108,7) Underline  Bold 
+ End-If
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Last-Page (14,696) 
+ Page-Number (14,668) '' ' of '
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

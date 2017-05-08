@@ -1,0 +1,171 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Jun 11 11:00:57 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\sacwis\launcher\src\sqr\PlacementLog00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+Begin-Select Loops=1
+NM_PERSON_FULL &Person_Query_Person_Name
+DT_PERSON_BIRTH &Person_Query_DOB
+EVENT.ID_CASE &Person_Query_Case_ID
+ID_EVENT_STAGE &Person_Query_Stage_ID
+From  PERSON, EVENT
+,      PLACEMENT
+      Where EVENT.ID_EVENT = PLACEMENT.ID_PLCMT_EVENT
+            And PLACEMENT.ID_PLCMT_CHILD = PERSON.ID_PERSON
+ And [$where_clause101]
+End-Select
+ Alter-Report Heading-Size=156    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=12   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input
+ Position (1,1)
+ Do Placement_Query
+End-Program
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I101_ID_EVENT_STAGE 'Enter a value for ID_EVENT_STAGE' MaxLen=16  Type=Number
+If IsNull($_I101_ID_EVENT_STAGE) or IsBlank($_I101_ID_EVENT_STAGE)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Let $brb_tmp = 'ID_EVENT_STAGE'
+Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_ID_EVENT_STAGE
+End-Procedure
+
+Begin-Procedure Placement_Query
+ Do CreateXML_ManifestFile
+Begin-Select
+(decode(CD_PLCMT_ACT_PLANNED, 'A', 'Actual', 'P', 'Attempted', CD_PLCMT_ACT_PLANNED)) &AttActDecode
+(NVL( PLACEMENT.NM_PLCMT_FACIL,  PLACEMENT.NM_PLCMT_PERSON_FULL  )) &PlacementName
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+DT_PLCMT_START &Start_Date_Attempted_Date (16,101) Edit MM/DD/YYYY
+ Print 'Start/Attmpt Date:' (16,9,18) Bold 
+ Print 'Status:' (33,9,7) Bold 
+CD_EVENT_STATUS &Status (33,101,9)
+ Print &AttActDecode (50,101,9)
+ Print 'Actual/Attmptd:' (50,9,15) Bold 
+CPLMNTYP.DECODE &Placement_Type (67,101,40)
+ Print 'Plcmt Type:' (67,9,11) Bold 
+ Print &PlacementName (84,101,60)
+ Print 'Plcmt Name:' (84,9,11) Bold 
+IND_PLCMT_EMERG &Temporary_Placement (101,101,5)
+ Print 'Temp Placement:' (101,8,15) Bold 
+CTMPLTYP.DECODE &Temporary_Placement_Type (118,101,10) Wrap 10 3 line-height=12 Keep-Top
+ Next-Listing   ! Close up the wrapped columns
+ Print 'Temp Plcmt Type:' (,9,16) Bold 
+CCOUNT.DECODE &Boarding_County (16,101,13) Wrap 13 2 line-height=12 Keep-Top
+ Next-Listing   ! Close up the wrapped columns
+ Print 'Boarding County:' (,9,16) Bold 
+DT_PLCMT_END &End_Date () Nop
+ If &End_Date='47121231'
+    ! do nothing
+ Else
+ Print &End_Date (15,101) Edit MM/DD/YYYY
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'End Date:' (16,9,9) Bold 
+CRMRSNAC.DECODE &Removal_Reason (32,101,40)
+ Print 'Removal Reason:' (33,9,16) Bold 
+ Graphic (48,5,527) Horz-Line 10 
+ Next-Listing  SkipLines=14 Need=207
+From  PLACEMENT, EVENT
+,      CTMPLTYP, CRMRSNAC, CPLMNTYP
+,      CCOUNT, CPLCMTAC
+      Where EVENT.ID_EVENT = PLACEMENT.ID_PLCMT_EVENT
+            And PLACEMENT.CD_PLCMT_TYPE = CPLMNTYP.CODE(+)
+            And PLACEMENT.CD_PLCMT_REMOVAL_RSN = CRMRSNAC.CODE(+)
+            And PLACEMENT.CD_TEMP_TYPE = CTMPLTYP.CODE(+)
+            And PLACEMENT.CD_BOARDING_CNTY = CCOUNT.CODE(+)
+            And PLACEMENT.CD_PLCMT_ACT_PLANNED = CPLCMTAC.CODE
+ And [$where_clause101]
+Order By DT_PLCMT_START
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 12 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='App Dev\Reporting\SQR\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Placement Log' (51,218,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (16,184,0)
+ Print $current-date (16,473) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (16,408,0)
+Print &Person_Query_Person_Name (95,62,25)
+Print &Person_Query_DOB (111,27) Edit MM/DD/YYYY
+Print &Person_Query_Case_ID (95,485) Edit 999999999na
+Print &Person_Query_Stage_ID (111,485) Edit 999999999na
+ Print 'Child Name:' (95,1,11) Bold 
+ Print 'DOB:' (111,1,11) Bold 
+ Print 'Case ID:' (95,442,8) Bold 
+ Print 'Stage ID:' (111,439,9) Bold 
+ Graphic (121,1,537) Horz-Line 20 
+ Alter-Printer Font=4 Point-Size=2    ! [SQR.INI] 4=Arial,proportional
+ Print 'do not delete (needed for SQR Developer)' (151,1,0) Foreground=(255,255,255)
+ Else   ! put a non combined page header
+ Print 'do not delete (needed for SQR Developer)' (4,1,0) Foreground=(255,255,255)
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (10,490) '' '  of'
+ Last-Page (10,516) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.LegalStatus" table="LEGAL_STATUS" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idLegalStatEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_LEGAL_STAT_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdLegalStatCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_LEGAL_STAT_CNTY" length="3"/>
+    </property>
+    <property name="cdLegalStatStatus" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_LEGAL_STAT_STATUS" length="3"/>
+    </property>
+    <property name="dtLegalStatStatusDt" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_LEGAL_STAT_STATUS_DT" length="7"/>
+    </property>
+    <property name="indCsupSend" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CSUP_SEND" length="1"/>
+    </property>
+    <property name="cdCourtNbr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_COURT_NBR" length="10"/>
+    </property>
+    <property name="dtLegalStatCrtOdrExpDt" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_LEGAL_STAT_CRT_ODR_EXP_DT" length="7"/>
+    </property>
+    <property name="dtLegalStatCusExpDt" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_LEGAL_STAT_CUS_EXP_DT" length="7"/>
+    </property>
+    <property name="DtLegalStatPMDueDt" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_LEGAL_STAT_P_M_DUE_DT" length="7"/>
+    </property>
+    <property name="indLegalStatRisk" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_LEGAL_STAT_RISK" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

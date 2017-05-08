@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.NonCompliance" table="NON_COMPLIANCE" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idNonCompliance" type="integer" unsaved-value="0">
+            <column name="ID_NON_COMPLIANCE" precision="16" scale="0"/>
+            <generator class="sequence">
+<param name="sequence">SEQ_NON_COMPLIANCE</param>
+</generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <property name="cdNonCompliance" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_NON_COMPLIANCE" length="3"/>
+        </property>
+        <property name="indDocCompleted" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_DOC_COMPLETED" length="1"/>
+        </property>
+        <property name="dtTracking" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_TRACKING" length="7"/>
+        </property>
+        <property name="txtComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_COMMENTS" length="300"/>
+        </property>
+        <property name="cdCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_COUNTY" length="3"/>
+        </property>
+        <property name="dtOfViolation" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_OF_VIOLATION" length="7"/>
+        </property>
+        <property name="dtEffectFrom" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_EFFECT_FROM" length="7"/>
+        </property>
+        <property name="dtEffectTo" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_EFFECT_TO" length="7"/>
+        </property>
+        <property name="indStOffConcurrence" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_ST_OFF_CONCURRENCE" length="1"/>
+        </property>
+        <property name="dtStOffConcurrence" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_ST_OFF_CONCURRENCE" length="7"/>
+        </property>
+        <property name="indCpaConcurrence" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_CPA_CONCURRENCE" length="1"/>
+        </property>
+        <property name="dtCpaConcurrence" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_CPA_CONCURRENCE" length="7"/>
+        </property>
+        <bag name="nonComplianceChilds" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+            <key on-delete="noaction" update="false">
+                <column name="ID_NON_COMPLIANCE" precision="16" scale="0" not-null="true"/>
+            </key>
+            <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.NonComplianceChild" not-found="exception" embed-xml="true"/>
+        </bag>
+        <bag name="nonComplianceCbxes" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+            <key on-delete="noaction" update="false">
+                <column name="ID_NON_COMPLIANCE" precision="16" scale="0" not-null="true"/>
+            </key>
+            <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.NonComplianceCbx" not-found="exception" embed-xml="true"/>
+        </bag>
+    </class>
+</hibernate-mapping>

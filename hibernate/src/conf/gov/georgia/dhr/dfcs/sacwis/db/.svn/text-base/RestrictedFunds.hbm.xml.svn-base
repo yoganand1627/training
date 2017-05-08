@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.RestrictedFunds" table="RESTRICTED_FUNDS" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idPerson" type="integer" unsaved-value="undefined">
+      <column name="ID_PERSON" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">person</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" constrained="true"/>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="amtCheckBal" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CHECK_BAL" precision="13"/>
+    </property>
+    <property name="amtSavBal" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SAV_BAL" precision="13"/>
+    </property>
+    <property name="amtRes" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_RES" precision="13"/>
+    </property>
+    <property name="txtRes" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_RES" length="50"/>
+    </property>
+  </class>
+</hibernate-mapping>

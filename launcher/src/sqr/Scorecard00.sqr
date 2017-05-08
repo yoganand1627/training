@@ -1,0 +1,454 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Thu Feb 26 15:13:30 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\ADAM\Scorecard\Orig\Scorecard00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Variable
+  Text $date_notified_constraint
+ End-Declare
+
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (584,493) '' ' of '
+ Last-Page (584,516) 
+ Print 'Definition' (11,1,0) Underline  Bold 
+ Print 'This report displays county and region percentage of compliance with the Adoption Policy 103.16. The policy requires the completion of a child''s Life History and registration with the Adoption Exchange within 60 calendar days of the surrender or termination of the first parent''s rights (TPR) date. The report addresses only children that were in DFCS custody at any time prior to the end date parameter that were registered with the Adoption Exchange and have a TPR date recorded in the system.' (30,12,115) Wrap 115 6 line-height=12 Keep-Top
+ Print 'Registered Children:' (103,12,0) Bold 
+ Print 'Average Days:' (194,11,0) Bold 
+ Print '% Compliant:' (216,11,0) Bold 
+ Print 'Within 60 days:' (137,11,0) Bold 
+ Print 'More than 60 days:' (165,11,0) Bold 
+ Print 'the average number of days from the first TPR and the first register date.' (195,117,0)
+ Print 'the number of children registered with the Adoption Exchange whose first TPR date is within the start and end date parameters.' (104,117,90) Wrap 90 3 line-height=12 Keep-Top
+ Print 'the number of children registered with the Adoption Exchange within 60 calendar days from the first TPR date.' (137,117,90) Wrap 90 2 line-height=12 Keep-Top
+ Print 'the number of children registered with the Adoption Exchange after 60 calendar days from the first TPR date.' (165,117,90) Wrap 90 2 line-height=12 Keep-Top
+ Print 'the percentage of number of children registered within 60 days from the first TPR date over the number of registered children. ' (215,117,90) Wrap 90 2 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+ Do Get_Date_Range
+ Do Get_Region_County_Input
+ Do Create_Variables
+ 
+ Do Master_Query
+End-Program
+
+! Required Date Range
+Begin-Procedure Get_Date_Range
+Input $_dt_start 'Start Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+If IsNull($_dt_start) or IsBlank($_dt_start)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Input $_dt_end 'End Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+If IsNull($_dt_end) or IsBlank($_dt_end)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+
+End-Procedure
+
+Begin-Procedure Get_Region_County_Input
+Input $_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=3  Type=Char
+If IsNull($_CD_STAGE_REGION) or IsBlank($_CD_STAGE_REGION) or ($_CD_STAGE_REGION = '0')
+ Let $_where_clause_region = ' STAGE00.CD_STAGE_REGION is not null '
+ Let $_region_selected = 'N'
+Else
+ Let $_where_clause_region = ' STAGE00.CD_STAGE_REGION = ' || '''' || $_CD_STAGE_REGION || ''''
+ Let $_region_selected = 'Y'
+End-If
+
+Input $_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_CD_STAGE_CNTY) or IsBlank($_CD_STAGE_CNTY) or ($_CD_STAGE_CNTY = '0')
+ Let $_where_clause_county = ' STAGE00.CD_STAGE_CNTY is not null '
+ Let $_county_selected = 'N'
+Else
+ Let $_where_clause_county = ' STAGE00.CD_STAGE_CNTY = ' || '''' || $_CD_STAGE_CNTY || ''''
+ Let $_county_selected  = 'Y'
+ Let $county_code_string = '''' || $_CD_STAGE_CNTY || ''''
+End-If
+Let $_where_clause_region_county = $_where_clause_region || ' AND ' || $_where_clause_county
+If $_county_selected = 'Y'
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $_region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+Else 
+ If $_region_selected = 'Y'
+  Let $_region_county_header = 'Region ' || $_CD_STAGE_REGION
+ Else
+  Let $_region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($_region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $_region_county_header = ' ' || $_region_county_header 
+   Let #counter = #counter + 1
+ End-while
+
+End-Procedure
+
+
+Begin-Procedure Create_Variables
+Let $Outer_QueryExchange_Child = 'EXCHANGE_CHILD'
+Let $Outer_QueryEvent = 'EVENT'
+
+Let $first_TPR_date = 
+' (SELECT distinct the_first_TPR_date FROM LEGAL_ACTION LA03,' || !EXCHANGE_CHILD EXC01, EVENT E01,' ||
+' (' ||! BEGIN 2
+' SELECT ID_CHILD, ID_CASE_CHILD,' ||
+         ' (CASE WHEN first_VS <= first_TPR THEN first_VS' || 
+               ' WHEN first_VS > first_TPR THEN first_TPR'||
+               ' ELSE NVL(first_VS, first_TPR) END) the_first_TPR_date' ||
+' FROM (' || ! BEGIN 1
+' SELECT distinct LA00.ID_PERSON ID_CHILD, LA00.ID_CASE ID_CASE_CHILD,' ||
+' (Select min(la.DT_CRT_ACT_DATE) from legal_action la, event e ' ||
+' where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT and e.CD_EVENT_STATUS in (' || 
+'''' || 'COMP' || '''' || ',' || '''' || 'APRV' || '''' || ')' ||
+' and la.CD_LEGAL_ACT_ACTION in (' || 
+'''' || 'VLM' || '''' || ',' || 
+'''' || 'VAF' || '''' || ',' || 
+'''' || 'VAM' || '''' || ',' ||
+'''' || 'VBF' || '''' || ',' ||
+'''' || 'VSF' || '''' || ',' ||
+'''' || 'VLS' || '''' || ',' ||
+'''' || 'VLF' || '''' || ')' || 
+' and la.ID_PERSON = LA00.ID_PERSON and la.ID_CASE = LA00.ID_CASE) first_VS, ' ||
+' (Select min(NVL(la.DT_CRT_ORD_DATE,la.DT_CRT_ACT_DATE))  from legal_action la, event e, legal_action_outcome lao ' ||
+' where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT and la.ID_LEGAL_ACT_EVENT = lao.ID_LEGAL_ACT_EVENT ' ||
+' and e.CD_EVENT_STATUS in (' ||
+'''' || 'COMP' || '''' || ',' || '''' || 'APRV' || '''' || ')' ||
+' and (lao.CD_OUTCOME = ' || '''' || 'DPC' || '''' ||
+' or (la.CD_HR_TYP_CRT_ORD in (' ||
+'''' || 'TFB' || '''' || ',' || 
+'''' || 'TFL' || '''' || ',' || 
+'''' || 'TFF' || '''' || ',' ||
+'''' || 'TPM' || '''' || ',' ||
+'''' || 'TPA' || '''' || ',' ||
+'''' || 'TFA' || '''' || ',' ||
+'''' || 'TPF' || '''' || ')' || 
+' and lao.CD_OUTCOME in (' ||
+'''' || 'TPG' || '''' || ',' || 
+'''' || 'TPC' || '''' || ',' || 
+'''' || 'TPS' || '''' || ',' ||
+'''' || 'TPT' || '''' || ')))' ||
+' and la.ID_PERSON = LA00.ID_PERSON and la.ID_CASE = LA00.ID_CASE) first_TPR ' || 
+' FROM  LEGAL_ACTION LA00' ||
+')' || ! end 1
+')' || ! end 2 
+' WHERE LA03.ID_PERSON = ID_CHILD AND LA03.ID_CASE = ID_CASE_CHILD' ||
+' AND LA03.ID_PERSON = ' || $Outer_QueryExchange_Child || '.ID_PERSON ' || ! the exchange child table name needs matched with the sub query
+' AND  LA03.ID_CASE = ' || $Outer_QueryEvent || '.ID_CASE ' || ! the event table name needs matched with one in sub query
+' ) ' ! closing select the_first_TPR_date
+
+Let $start_date = 'to_date(' || '''' || $_dt_start || '''' || ', ' || '''' || 'mm/dd/yyyy' || '''' || ') '
+Let $end_date = 'to_date(' || '''' || $_dt_end || '''' || ', ' || '''' || 'mm/dd/yyyy' || '''' || ') + 1 '
+
+Let $_notified_gte_start_date = $first_TPR_date || ' >= ' || $start_date
+Let $_notified_le_end_date = $first_TPR_date || ' < ' ||$end_date
+Let $date_notified_constraint= $_notified_gte_start_date|| ' and ' || $_notified_le_end_date
+Let $sub = ' (SELECT 1  FROM  DUAL) '
+Let $first_register_date = ' (select min(exc_child_min.DT_REGISTERED) ' || 
+                           ' from exchange_child exc_child_min, event exc_e ' || 
+                           ' where exc_child_min.id_event = exc_e.id_event ' || 
+                           ' and exc_child_min.ID_PERSON = ' || $Outer_QueryExchange_Child || '.ID_PERSON ' || 
+                           ' and exc_e.id_case = ' || $Outer_QueryEvent || '.id_case) '
+Let $TPR_REG_leq_60 = $first_register_date || ' - ' || $first_TPR_date || ' <= 60 '
+Let $TPR_REG_gt_60 = $first_register_date || ' - ' || $first_TPR_date || ' > 60 '
+
+Let $in_DFCS = ' exists(select (1) from legal_status_view lsv ' || 
+               ' where lsv.id_person = ' || $Outer_QueryExchange_Child || '.id_person ' || 
+               ' and lsv.IN_DFCS_CUSTODY = ' || '''' || 'Y' || '''' || 
+               ' and lsv.DT_LEGAL_STAT_STATUS_DT < ' || $end_date || 
+               ' and lsv.id_case = ' || $Outer_QueryEvent || '.ID_CASE ' ||  ')'
+
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select Distinct
+[$sub] &dummy_count=number
+(SELECT  (count( distinct EXCHANGE_CHILD.ID_PERSON ))  FROM  EVENT,  EXCHANGE_CHILD,  STAGE STAGE01 WHERE EVENT.ID_EVENT = EXCHANGE_CHILD.ID_EVENT
+  AND  EVENT.ID_EVENT_STAGE = STAGE01.ID_STAGE
+ AND  DT_REGISTERED IS NOT NULL  AND  [$date_notified_constraint] AND  [$in_DFCS] AND  STAGE01.CD_STAGE_CNTY = CCOUNT00.CODE) &Master_Query_regd_child_cnt
+(SELECT  (count( distinct EXCHANGE_CHILD.ID_PERSON ))  FROM  STAGE STAGE02,  EVENT,  EXCHANGE_CHILD WHERE STAGE02.ID_STAGE = EVENT.ID_EVENT_STAGE
+  AND  EVENT.ID_EVENT = EXCHANGE_CHILD.ID_EVENT
+ AND  DT_REGISTERED IS NOT NULL  AND  [$date_notified_constraint] AND  [$TPR_REG_leq_60] AND  [$in_DFCS] AND  STAGE02.CD_STAGE_CNTY = CCOUNT00.CODE) &Master_Query_regd_le_60_cnt
+(SELECT  (count( distinct EXCHANGE_CHILD.ID_PERSON ))  FROM  EXCHANGE_CHILD,  EVENT,  STAGE STAGE03 WHERE EXCHANGE_CHILD.ID_EVENT = EVENT.ID_EVENT
+  AND  EVENT.ID_EVENT_STAGE = STAGE03.ID_STAGE
+ AND  DT_REGISTERED IS NOT NULL  AND  [$date_notified_constraint] AND  [$TPR_REG_gt_60] AND  [$in_DFCS] AND  STAGE03.CD_STAGE_CNTY = CCOUNT00.CODE) &Master_Query_regd_gt_60_cnt
+(DECODE( CCOUNT00.DECODE , '-None-', '-Multi-County-',  CCOUNT00.DECODE )) &county_decode
+(SELECT  ((avg(to_date(to_char(([$first_register_date]), 'mm/dd/yyyy'), 'mm/dd/yyyy') - to_date(to_char(([$first_TPR_date]), 'mm/dd/yyyy'), 'mm/dd/yyyy'))))  FROM  EXCHANGE_CHILD,  EVENT,  STAGE STAGE05 WHERE EXCHANGE_CHILD.ID_EVENT = EVENT.ID_EVENT
+  AND  EVENT.ID_EVENT_STAGE = STAGE05.ID_STAGE
+ AND  DT_REGISTERED IS NOT NULL  AND  [$date_notified_constraint] AND  [$in_DFCS] AND  STAGE05.CD_STAGE_CNTY = CCOUNT00.CODE) &Master_Query_sum_days
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+! To define custom BeforeProc and AfterProc for Group break on Region 
+STAGE00.CD_STAGE_REGION &Master_Query_STAGE00.CD_STAGE_REGION_2 () On-Break Set=1 Level=2 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc101 After=Master_QueryCD_STAGE_REGION_AfterProc101
+ Move &Master_Query_regd_child_cnt To #Master_Query_regd_child_cnt
+ Move &Master_Query_regd_le_60_cnt to #Master_Query_regd_le_60_cnt
+ Move &Master_Query_regd_gt_60_cnt to #Master_Query_regd_gt_60_cnt
+ Move &Master_Query_sum_days to #Master_Query_sum_days
+
+ Add #Master_Query_regd_child_cnt To #regd_region_total
+ Add #Master_Query_regd_le_60_cnt To #le_60_region_total
+ Add #Master_Query_regd_gt_60_cnt To #gt_60_region_total
+ Add 1 To #101ROW_COUNT
+ Add #Master_Query_sum_days To #101SUM_Master_Query_sum_days
+
+(1) &dummy_break2 () On-Break Set=1 Level=1 Print=Never Before=Master_Querydummy_break_BeforeProc101 After=Master_Querydummy_break_AfterProc101
+ Move &Master_Query_regd_child_cnt To #Master_Query_regd_child_cnt
+ Move &Master_Query_regd_le_60_cnt To #Master_Query_regd_le_60_cnt
+ Move &Master_Query_regd_gt_60_cnt To #Master_Query_regd_gt_60_cnt
+ Move &Master_Query_sum_days To #Master_Query_sum_days
+
+ Add #Master_Query_regd_child_cnt To #regd_statewide_total
+ Add #Master_Query_regd_le_60_cnt To #le_60_statewide_total
+ Add #Master_Query_regd_gt_60_cnt To #gt_60_statewide_total
+ Add 1 To #101ROW_COUNT_statewide
+ Add #Master_Query_sum_days To #101SUM_Master_Query_sum_days_statewide
+
+(1) &dummy_break () On-Break Set=1 Level=1 Print=Never
+STAGE00.CD_STAGE_REGION &Master_Query_STAGE00.CD_STAGE_REGION () On-Break Set=1 Level=2 Print=Never
+ Print &Master_Query_regd_child_cnt (10,109) Edit 9999999999na
+ Print &Master_Query_regd_le_60_cnt (10,196) Edit 9999999999na
+ Print &Master_Query_regd_gt_60_cnt (10,291) Edit 9999999999na
+ Print &county_decode (10,3,15)
+ Let #percent_compliant=#Master_Query_regd_le_60_cnt /  #Master_Query_regd_child_cnt * 100
+ Print #percent_compliant (10,468) Edit 9999.99na
+ Print &Master_Query_sum_days (10,379) Edit 9999999999na
+ Print '%' (10,504,10)
+ Next-Listing  SkipLines=2 Need=12
+From  CCOUNT CCOUNT00, STAGE STAGE00
+,      EVENT EVENT00
+      Where CCOUNT00.CODE = STAGE00.CD_STAGE_CNTY
+            And STAGE00.ID_STAGE = EVENT00.ID_EVENT_STAGE
+ And STAGE00.CD_STAGE IN ('ADO')
+ And (SELECT  (count( distinct EXCHANGE_CHILD.ID_PERSON ))  FROM  EVENT,  EXCHANGE_CHILD,  STAGE STAGE01 WHERE EVENT.ID_EVENT = EXCHANGE_CHILD.ID_EVENT
+
+      AND  EVENT.ID_EVENT_STAGE = STAGE01.ID_STAGE
+ AND  DT_REGISTERED IS NOT NULL  AND  [$date_notified_constraint] AND  [$in_DFCS] AND
+      STAGE01.CD_STAGE_CNTY = CCOUNT00.CODE) > 0
+ And [$_where_clause_region_county]
+Order By STAGE00.CD_STAGE_REGION
+,      (DECODE( CCOUNT00.DECODE , '-None-', '-Multi-County-',  CCOUNT00.DECODE ))
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc101
+ If #101ROW_COUNT < 2
+  Let #avg_days_region_total = #101SUM_Master_Query_sum_days
+ Else
+  Let #avg_days_region_total = #101SUM_Master_Query_sum_days / #101ROW_COUNT
+ End-If
+
+ Next-Listing  Need=18
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region'  (18,1) Bold 
+ Print '%' (18,504,10)Bold
+  Print &Master_Query_STAGE00.CD_STAGE_REGION (18,41,2) Bold 
+ Print #brb_delay_0275BF90 (18,109,12) Delay Bold Edit 9999999999na
+ Print #brb_delay_0275BE48 (18,196,12) Delay Bold Edit 9999999999na
+ Print #brb_delay_02774A90 (18,291,12) Delay Bold Edit 9999999999na
+ Print #brb_delay_02774BD8 (18,379,12) Delay Bold Edit 9999999999na
+ Print #percent_compliant_delay (18, 468, 12) Delay Bold Edit 9999.99na
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Move 0 To #regd_region_total
+ Move 0 To #le_60_region_total
+ Move 0 To #gt_60_region_total
+ Move 0 To #101SUM_Master_Query_sum_days
+ Move 0 to #percent_compliant_region
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc101
+
+ Next-Listing  Need=3
+ Graphic (4,1,536) Horz-Line 10 
+ Position (5,1)
+   Position (+0,)
+ If #101ROW_COUNT < 2
+  Let #avg_days_region_total = #101SUM_Master_Query_sum_days
+ Else
+  Let #avg_days_region_total = #101SUM_Master_Query_sum_days / #101ROW_COUNT
+ End-If
+ Let #percent_compliant_region=#le_60_region_total / #regd_region_total * 100
+ Set-Delay-Print #brb_delay_0275BF90 With #regd_region_total
+ Set-Delay-Print #brb_delay_0275BE48 With #le_60_region_total
+ Set-Delay-Print #brb_delay_02774A90 With #gt_60_region_total
+ Set-Delay-Print #brb_delay_02774BD8 With #avg_days_region_total
+ Set-Delay-Print #percent_compliant_delay With #percent_compliant_region
+ Move 0 To #101ROW_COUNT
+ Move 0 To #regd_region_total
+ Move 0 To #le_60_region_total
+ Move 0 To #gt_60_region_total
+ Move 0 To #101SUM_Master_Query_sum_days
+ Move 0 to #percent_compliant_region
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querydummy_break_BeforeProc101
+ Next-Listing  SkipLines=1 Need=20
+ Graphic (20,1,536) Horz-Line 10 
+ Position (21,1)
+ If $_region_selected = 'N' and $_county_selected = 'N'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Statewide'  (11,1) Bold 
+ Print '%' (11,504,10)Bold
+ Print #regd_statewide_total_delay (11,109,12) Delay Bold Edit 9999999999na
+ Print #le_60_statewide_total_delay (11,196,12) Delay Bold Edit 9999999999na
+ Print #gt_60_statewide_total_delay (11,291,12) Delay Bold Edit 9999999999na
+ Print #101SUM_Master_Query_sum_days_statewide_delay (11,379,12) Delay Bold Edit 9999999999na
+ Print #percent_compliant_statewide_delay (11, 468, 12) Delay Bold Edit 9999.99na
+   Position (+12,)
+ Move 0 To #101ROW_COUNT_statewide
+ Move 0 To #regd_statewide_total
+ Move 0 To #le_60_statewide_total
+ Move 0 To #gt_60_statewide_total
+ Move 0 To #101SUM_Master_Query_sum_days_statewide
+ Move 0 to #percent_compliant_statewide
+ Next-Listing  SkipLines=2 Need=12
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querydummy_break_AfterProc101
+If $_region_selected = 'N' and $_county_selected = 'N'
+ Next-Listing Need=3
+ Position (4,1)
+   Position (+0,)
+ If #101ROW_COUNT_statewide < 2
+   Let #avg_days_statewide_total = #101SUM_Master_Query_sum_days_statewide
+ Else
+   Let #avg_days_statewide_total = #101SUM_Master_Query_sum_days_statewide / #101ROW_COUNT_statewide
+  End-If
+ Let #percent_compliant_statewide=#le_60_statewide_total / #regd_statewide_total * 100
+ Set-Delay-Print #regd_statewide_total_delay With #regd_statewide_total
+ Set-Delay-Print #le_60_statewide_total_delay With #le_60_statewide_total
+ Set-Delay-Print #gt_60_statewide_total_delay With #gt_60_statewide_total
+ Set-Delay-Print #101SUM_Master_Query_sum_days_statewide_delay With #avg_days_statewide_total
+ Set-Delay-Print #percent_compliant_statewide_delay With #percent_compliant_statewide
+ Move 0 To #101ROW_COUNT_statewide
+ Move 0 To #regd_statewide_total
+ Move 0 To #le_60_statewide_total
+ Move 0 To #gt_60_statewide_total
+ Move 0 To #101SUM_Master_Query_sum_days_statewide
+ Move 0 to #percent_compliant_statewide  
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Data\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (10,184,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Scorecard' (58,233,0) Bold 
+ Print 'Overdue Child Life History' (38,179,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (10,472) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (10,407,0)
+ Let $date_range_disp=datetostr(strtodate($_dt_start,'mm/dd/yyyy'), 'mm/dd/yyyy') || ' - ' || datetostr(strtodate($_dt_end,'mm/dd/yyyy'), 'mm/dd/yyyy')
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $date_range_disp (80,204,23) Bold 
+ Let $region_county_header_disp=$_region_county_header
+ Print $region_county_header_disp (104,224,13) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Average Days' (133,389,0) Underline  Bold 
+ Print '% Compliant' (133,461,0) Underline  Bold 
+ Print 'Registered Children' (133,104,0) Underline  Bold 
+ Print 'Within 60 days' (133,206,0) Underline  Bold 
+ Print 'More than 60 days' (133,290,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Average Days' (10,389,0) Underline  Bold 
+ Print '% Compliant' (10,461,0) Underline  Bold 
+ Print 'Registered Children' (10,104,0) Underline  Bold 
+ Print 'Within 60 days' (10,206,0) Underline  Bold 
+ Print 'More than 60 days' (10,290,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (14,493) '' ' of '
+ Last-Page (14,515) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

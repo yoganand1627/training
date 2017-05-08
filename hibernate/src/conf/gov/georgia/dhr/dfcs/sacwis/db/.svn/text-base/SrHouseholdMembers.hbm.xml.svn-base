@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.SrHouseholdMembers" table="SR_HOUSEHOLD_MEMBERS" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idSrHsMember" type="integer" unsaved-value="0">
+            <column name="ID_SR_HS_MEMBER" precision="16" scale="0"/>
+            <generator class="sequence">
+<param name="sequence">SEQ_SR_HOUSEHOLD_MEMBERS</param>
+</generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="safetyResource" class="gov.georgia.dhr.dfcs.sacwis.db.SafetyResource" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_SR_EVENT" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <property name="idPerson" type="integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+        </property>
+    </class>
+</hibernate-mapping>

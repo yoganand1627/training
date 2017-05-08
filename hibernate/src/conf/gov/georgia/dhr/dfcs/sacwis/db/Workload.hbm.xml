@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Workload" table="WORKLOAD" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.WorkloadId" mapped="false" unsaved-value="undefined">
+      <meta attribute="implement-equals">true</meta>
+      <key-property name="idWkldPerson" type="integer">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="ID_WKLD_PERSON" precision="16" scale="0"/>
+      </key-property>
+      <key-property name="idWkldStage" type="integer">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="ID_WKLD_STAGE" precision="16" scale="0"/>
+      </key-property>
+    </composite-id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" update="false" insert="false" fetch="select"
+                 unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_WKLD_STAGE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" update="false" insert="false"
+                 fetch="select" unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_WKLD_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="unit" class="gov.georgia.dhr.dfcs.sacwis.db.Unit" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_WKLD_UNIT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_WKLD_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdWkldStagePersRole" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_WKLD_STAGE_PERS_ROLE" length="2"/>
+    </property>
+    <property name="dtWkldStagePersLink" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_WKLD_STAGE_PERS_LINK" length="7"/>
+    </property>
+    <property name="indWkldStagePersNew" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_WKLD_STAGE_PERS_NEW" length="1"/>
+    </property>
+    <property name="nmWkldStage" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_WKLD_STAGE" length="25"/>
+    </property>
+    <property name="cdWkldStage" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_WKLD_STAGE" length="3"/>
+    </property>
+    <property name="cdWkldStageCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_WKLD_STAGE_CNTY" length="3"/>
+    </property>
+    <property name="cdWkldStageType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_WKLD_STAGE_TYPE" length="5"/>
+    </property>
+    <property name="cdWkldStageRegion" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_WKLD_STAGE_REGION" length="2"/>
+    </property>
+    <property name="cdWkldStageRsnCls" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_WKLD_STAGE_RSN_CLS" length="3"/>
+    </property>
+    <property name="cdWkldStageProgram" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_WKLD_STAGE_PROGRAM" length="3"/>
+    </property>
+    <property name="nbrWkldUnit" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_WKLD_UNIT" length="2"/>
+    </property>
+    <property name="nmWkldCase" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_WKLD_CASE" length="25"/>
+    </property>
+    <property name="indWkldCaseSensitive" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_WKLD_CASE_SENSITIVE" length="1"/>
+    </property>
+    <property name="indWkldSuperintNotif" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_WKLD_SUPERINT_NOTIF" length="1" not-null="true"/>
+    </property>
+    <property name="dtCheckout" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CHECKOUT" length="7"/>
+    </property>
+    <property name="dtCheckin" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CHECKIN" length="7"/>
+    </property>
+    <property name="cdMobileStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_MOBILE_STATUS" length="6"/>
+    </property>
+    <property name="cdRecidivism" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RECIDIVISM" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

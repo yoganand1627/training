@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Contact" table="CONTACT" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CONTACT_STAGE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CONTACT_WORKER" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdContactTcmClient" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CONTACT_TCM_CLIENT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="portalUser" class="gov.georgia.dhr.dfcs.sacwis.db.PortalUser" fetch="select"
+                 unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PORTAL_USER_ENTERED" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="dtContactOccurred" type="timestamp" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CONTACT_OCCURRED" length="7"/>
+    </property>
+    <property name="dtCntctNextSummDue" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CNTCT_NEXT_SUMM_DUE" length="7"/>
+    </property>
+    <property name="indContactAttempted" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CONTACT_ATTEMPTED" length="1"/>
+    </property>
+     <property name="indExtDocNarrAccept" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_EXT_NARR_ACCEPT" length="1"/>
+    </property>
+    <property name="cdContactType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CONTACT_TYPE" length="4"/>
+    </property>
+    <property name="cdContactPurpose" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CONTACT_PURPOSE" length="4"/>
+    </property>
+    <property name="cdContactLocation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CONTACT_LOCATION" length="3"/>
+    </property>
+    <property name="cdContactMethod" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CONTACT_METHOD" length="3"/>
+    </property>
+    <property name="cdContactOthers" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CONTACT_OTHERS" length="4"/>
+    </property>
+    <property name="dtCntctMnthlySummBeg" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CNTCT_MNTHLY_SUMM_BEG" length="7"/>
+    </property>
+    <property name="dtCntctMnthlySummEnd" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="always">
+      <column name="DT_CNTCT_MNTHLY_SUMM_END" length="7"/>
+    </property>
+    <property name="dtContactApprv" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CONTACT_APPRV" length="7"/>
+    </property>
+    <property name="nmAgencyName" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_AGENCY_NAME" length="20"/>
+    </property>
+    <property name="indPermCrossCntyLn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PERM_CROSS_CNTY_LN" length="1"/>
+    </property>
+    <property name="cdContactTcmEligible" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CONTACT_TCM_ELIGIBLE" length="1"/>
+    </property>
+    <property name="cdContactTcmMedSvcs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CONTACT_TCM_MED_SVCS" length="1"/>
+    </property>
+    <property name="cdContactedBy" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CONTACTED_BY" length="4"/>
+    </property>
+    <property name="nmContactedBy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_CONTACTED_BY" length="25"/>
+    </property>
+    <property name="cdContactNarrative" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CONTACT_NARRATIVE" length="4"/>
+    </property>
+    <property name="dtEnteredOn" type="timestamp" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ENTERED_ON" length="7"/>
+    </property>
+    <property name="cdPopFrom" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+    	<column name="CD_POP_FROM" length="1"/>
+    </property>
+    <bag name="contactcbxs" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CONTACT_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ContactCbx" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

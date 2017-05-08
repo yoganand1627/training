@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FamilyAssmtFactors" table="FAMILY_ASSMT_FACTORS" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idFamAssmtFactr" type="integer" unsaved-value="0">
+      <column name="ID_FAM_ASSMT_FACTR" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_FAMILY_ASSMT_FACTORS</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_FAM_ASSMT_PRINCIPAL" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_FAM_ASSMT_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="indFamAssmtResponse" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_FAM_ASSMT_RESPONSE" length="1"/>
+    </property>
+    <property name="cdFamAssmtFactr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_FAM_ASSMT_FACTR" length="3"/>
+    </property>
+    <property name="cdFamAssmtSubject" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FAM_ASSMT_SUBJECT" length="2"/>
+    </property>
+    <property name="cdFamAssmtCategory" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FAM_ASSMT_CATEGORY" length="2"/>
+    </property>
+    <property name="cdFamAssmtFactrType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FAM_ASSMT_FACTR_TYPE" length="3"/>
+    </property>
+  </class>
+</hibernate-mapping>

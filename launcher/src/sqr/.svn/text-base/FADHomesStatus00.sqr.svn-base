@@ -1,0 +1,489 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Tue Aug 16 11:28:20 2011 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2011\Resources\Foster Home Inquiry\FADHomesStatus00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=204    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'Key' (236,5,0) Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Category:' (255,4,10) Underline  Bold 
+ Print 'A - Adoptive' (268,4,0)
+ Print 'F - Foster' (282,4,0)
+ Print 'FA - Foster/Adopt (Legal risk)' (295,4,28)
+ Print 'IA - ICPC Adopt' (309,4,0)
+ Print 'IF - ICPC Foster' (322,4,0)
+ Print 'RA - Relative Adopt' (336,4,22)
+ Print 'RC - Relative Care' (349,4,21)
+ Print 'Status:' (255,172,17) Underline  Bold 
+ Print 'APP - Applicant (Pre-Service Training)' (287,172,0)
+ Print 'ASA - Approved (Special) - Active' (302,172,0)
+ Print 'AUN - Unapproved' (318,172,0)
+ Print 'CSD - Closed' (333,172,0)
+ Print 'FLG - Full Approval 30 Day Gace' (348,172,0)
+ Print 'INQ - Inquiry' (377,172,0)
+ Print 'PUN - Pending Unapproved' (348,339,0)
+ Print 'PSG - Pending Special Approval 30 Day Grace' (333,339,44)
+ Print 'PSA - Pending Special Approval' (318,339,29)
+ Print 'PFG - Pending Full Approval 30 Day Grace' (302,339,39)
+ Print 'PFA - Pending Full Approval' (287,339,34)
+ Print 'FSG - Special Approval 30 Day Grace' (363,172,32)
+ Print 'WTL - Waitlist' (363,339,20)
+ Print 'AFA - Approved (Full) - Active' (272,172,0)
+ Print 'PCL - Pending Closure' (272,339,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'The reporting county is determined by the county of the stage, not the unit county of the primary case manager. When the county of the primary case manager differs' (44,1,174) Wrap 174 3 line-height=12 Keep-Top
+ Print 'from the stage county, the unit county displays in parentheses to the right of the case manager''s name.' (58,1,136)
+ Print 'The report lists all FAD Homes with an Effective Date in a selected Date Range for a Region, County, and/or Staff ID.' (30,1,152) Wrap 152 3 line-height=12 Keep-Top
+ Print 'Effective Date:' (104,1,15) Bold 
+ Print 'Categ:' (121,1,11) Bold 
+ Print 'Status:' (139,1,13) Bold 
+ Print 'Days in Status:' (157,1,16) Bold 
+ Print 'Approval Begin Date:' (175,1,21) Bold 
+ Print 'Approval End Date:' (192,1,18) Bold 
+ Print 'The date when the home reimbursability status is effective.' (104,111,67)
+ Print 'The category of the F/A home.' (121,110,69)
+ Print 'The status of service of a F/A home.' (139,111,70)
+ Print 'The number of days a F/A home has been in a particular status.' (157,111,76)
+ Print 'The date the current approval period begins. The date is pulled from the Approval Begin Date field on the Home Information Page.' (175,111,143)
+ Print 'The date the current approval period ends. The date is pulled from the Approval Begin Date field on the Home Information Page.' (192,111,139)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=48   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+Do Get-Date-Range
+Do Optional-Parameters
+
+ Do Master_Query
+Do DisplayResult
+
+End-Program
+!Get Required Date range parameter
+Begin-Procedure Get-Date-Range
+Input $_StartDate 'Enter Start Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+Input $_EndDate 'Enter End Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+! -----------------------------
+End-Procedure
+!----------------------------------
+Begin-Procedure Optional-Parameters
+! ----Get Region Optional Parameter-----
+Input $_I201_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I201_CD_STAGE_REGION) or IsBlank($_I201_CD_STAGE_REGION) or ($_I201_CD_STAGE_REGION = '0') 
+  Let $_where_clause_region = 'CD_STAGE_REGION is not null'
+  Let $regionSelected = 'N'
+Else
+  Let $_where_clause_region = 'CD_STAGE_REGION= ' || '''' ||  $_I201_CD_STAGE_REGION || ''''
+  Let $regionSelected = 'Y'
+End-If
+!-------------------------------------
+! ----Get county Optional Parameter-----
+Input $_I101_CD_COUNTY 'Enter a value for CD_COUNTY' MaxLen=3  Type=Text
+If IsNull($_I101_CD_COUNTY) or IsBlank($_I101_CD_COUNTY) or ($_I101_CD_COUNTY = '0')
+  Let $_where_clause_county = 'CD_STAGE_CNTY is not null'
+  Let $countySelected = 'N'
+Else
+ Let $_where_clause_county = 'CD_STAGE_CNTY= ' || '''' || $_I101_CD_COUNTY || ''''
+ Let $countySelected = 'Y'
+End-If
+!--------------------------------------------------------------
+!---Get Caseworker ID----
+ !Get Caseworker ID
+ Input $_I101_CAPS_PERSON_ID_PERSON 'Enter a value for ID_PERSON' MaxLen=16  Type=Number
+ If IsNull($_I101_CAPS_PERSON_ID_PERSON) or IsBlank($_I101_CAPS_PERSON_ID_PERSON) or ($_I101_CAPS_PERSON_ID_PERSON = '0')
+   Let $_where_clause_CM = 'CAPS.PERSON.ID_PERSON is not null'
+   Let $cmSelected = 'N'
+   Else
+  Let $cmSelected = 'Y'
+ Let $brb_tmp = 'CAPS.PERSON.ID_PERSON'
+ Let $_where_clause_CM = $brb_tmp  || ' = ' || $_I101_CAPS_PERSON_ID_PERSON
+End-if
+Let $_where_clause_region_county = $_where_clause_region || ' and ' || $_where_clause_county ||  ' and ' || $_where_clause_CM
+!Let $_where_clause_region_county = $_where_clause_county ||  ' and ' || $_where_clause_CM 
+
+Do Make_Header
+End-Procedure
+
+! ----------------------------
+! Creates region county label for page header
+ Begin-Procedure Make_Header
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_I101_CD_COUNTY || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_I101_CD_COUNTY = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_I201_CD_STAGE_REGION
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_I201_CD_STAGE_REGION
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+BEGIN-PROCEDURE RENAME_CATEGORY($CATEGORY2,:$VAR_CATEGORY)
+IF $CATEGORY2 = 'L'
+  LET $TEMP_CATEG = 'FA'
+ELSE 
+  IF $CATEGORY2 = 'J'
+  LET $TEMP_CATEG = 'IA'
+ELSE 
+  IF $CATEGORY2 = 'I'
+  LET $TEMP_CATEG = 'IF'
+ELSE 
+  IF $CATEGORY2 = 'D'
+  LET $TEMP_CATEG = 'RA'
+ELSE 
+  IF $CATEGORY2 = 'O'
+  LET $TEMP_CATEG = 'RC'
+ELSE
+  LET $TEMP_CATEG = $CATEGORY2
+END-IF
+END-IF
+END-IF
+END-IF
+END-IF
+ MOVE $TEMP_CATEG TO $VAR_CATEGORY
+END-PROCEDURE
+
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select
+CD_RSRC_CATEGORY &CATEGORY2
+
+ Do RENAME_CATEGORY(&CATEGORY2,$VAR_CATEGORY)
+
+(round(sysdate- dt_rshs_effective)) &DaysInStatus
+(CAPS_RESOURCE.ADDR_RSRC_ST_LN_1 || ', ' ||  CAPS_RESOURCE.ADDR_RSRC_CITY  || ', ' ||   CAPS_RESOURCE.CD_RSRC_STATE || ', ' ||   CAPS_RESOURCE.ADDR_RSRC_ZIP) &Address
+CAPS.PERSON.ID_PERSON &Master_Query_CAPS.PERSON.ID_PERSON
+CD_RSRC_CATEGORY &Master_Query_CD_RSRC_CATEGORY
+ADDR_RSRC_ST_LN_1 &Master_Query_ADDR_RSRC_ST_LN_1
+ADDR_RSRC_ST_LN_2 &Master_Query_ADDR_RSRC_ST_LN_2
+ADDR_RSRC_CITY &Master_Query_ADDR_RSRC_CITY
+CD_RSRC_STATE &Master_Query_CD_RSRC_STATE
+ADDR_RSRC_ZIP &Master_Query_ADDR_RSRC_ZIP
+NBR_RSRC_PHONE_EXT &Master_Query_NBR_RSRC_PHONE_EXT
+CAPS.CFACATEG.DECODE &Master_Query_CAPS.CFACATEG.DECODE
+(PERSON.ID_PERSON || '    ' ||  PERSON.NM_PERSON_FULL) &CaseWorkerNameID
+CD_STAGE_CNTY &Master_Query_CD_STAGE_CNTY
+CD_COUNTY &Master_Query_CD_COUNTY
+(decode( CCOUNT.DECODE, '-None-', 'Multi-County',  CCOUNT.DECODE  )) &unit_county_decode_masked
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+CD_STAGE_REGION &Master_Query_CD_STAGE_REGION () On-Break Set=1 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc101 After=Master_QueryCD_STAGE_REGION_AfterProc101
+CCOUNT_COUNTY.DECODE &Master_Query_CCOUNT_COUNTY.DECODE () On-Break Set=1 Level=2 Print=Never Before=Master_QueryDECODE_BeforeProc102 After=Master_QueryDECODE_AfterProc102
+NM_PERSON_FULL &Master_Query_NM_PERSON_FULL () On-Break Set=1 Level=3 Print=Never Before=Master_QueryNM_PERSON_FULL_BeforeProc103 After=Master_QueryNM_PERSON_FULL_AfterProc103
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+NM_RESOURCE &Master_Query_NM_RESOURCE (13,1,25) Wrap 25 2 line-height=12 Keep-Top
+ Next-Listing   ! Close up the wrapped columns
+CAPS.CAPS_RESOURCE.ID_RESOURCE &Master_Query_CAPS.CAPS_RESOURCE.ID_RESOURCE (,124) Edit 999999999na
+DT_INQUIRY &Master_Query_DT_INQUIRY (,189) Edit MM/DD/YYYY
+NBR_RSRC_PHN &Master_Query_NBR_RSRC_PHN (,666) Edit (xxx)bxxx-xxxx
+ Print &DaysInStatus (,368) Edit 88888na
+CD_RSRC_FA_HOME_STATUS &Master_Query_CD_RSRC_FA_HOME_STATUS (,329,3)
+DT_RSHS_EFFECTIVE &Master_Query_DT_RSHS_EFFECTIVE (,245) Edit MM/DD/YYYY
+ Let $VAR_CATEGORY=$VAR_CATEGORY
+ Print $VAR_CATEGORY (,310,2)
+ Print &Address (,519,25) Wrap 25 2 line-height=12 Keep-Top
+CAPS.RESOURCE_HISTORY.DT_LIC_END &Master_Query_CAPS.RESOURCE_HISTORY.DT_LIC_END (,462) Edit MM/DD/YYYY
+CAPS.RESOURCE_HISTORY.DT_LIC_BEGIN &Master_Query_CAPS.RESOURCE_HISTORY.DT_LIC_BEGIN (,405) Edit MM/DD/YYYY
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Add 1 To #103ROW_COUNT
+ Next-Listing  Need=34
+From  CAPS.CAPS_RESOURCE, CAPS.HOME_APPLICANT_INFO
+,      CAPS.PERSON, CAPS.STAGE, CAPS.UNIT
+,      CAPS.WORKLOAD, CAPS.CFACATEG, CAPS.CCOUNT
+,      CAPS.CFAHMSTA, CAPS.RESOURCE_HISTORY, CAPS.CCOUNT CCOUNT_COUNTY
+      Where CAPS.HOME_APPLICANT_INFO.ID_RESOURCE = CAPS.CAPS_RESOURCE.ID_RESOURCE
+            And CAPS.UNIT.ID_UNIT = CAPS.STAGE.ID_UNIT
+            And CAPS.WORKLOAD.ID_WKLD_PERSON = CAPS.PERSON.ID_PERSON
+            And CAPS.WORKLOAD.ID_WKLD_STAGE = CAPS.STAGE.ID_STAGE
+            And CAPS.CFACATEG.CODE = CAPS.CAPS_RESOURCE.CD_RSRC_CATEGORY
+            And CAPS.CAPS_RESOURCE.ID_RSRC_FA_HOME_STAGE = CAPS.STAGE.ID_STAGE
+            And CAPS.UNIT.CD_COUNTY = CAPS.CCOUNT.CODE
+            And CAPS.CFAHMSTA.CODE = CAPS.CAPS_RESOURCE.CD_RSRC_FA_HOME_STATUS
+            And CAPS.RESOURCE_HISTORY.ID_RESOURCE = CAPS.CAPS_RESOURCE.ID_RESOURCE
+            And CAPS.STAGE.CD_STAGE_CNTY = CCOUNT_COUNTY.CODE
+ And CD_WKLD_STAGE_PERS_ROLE = 'PR'
+ And [$_where_clause_region_county]
+ And RESOURCE_HISTORY.DT_RSHS_EFFECTIVE  >= to_date($_StartDate,'MM/DD/YYYY')
+ And RESOURCE_HISTORY.DT_RSHS_EFFECTIVE  < to_date($_EndDate, 'MM/DD/YYYY') + 1
+ And (RESOURCE_HISTORY.DT_RSHS_END = to_date('12/31/4712','MM/DD/YYYY') Or RESOURCE_HISTORY.DT_RSHS_END is null)
+ And CAPS_RESOURCE.CD_RSRC_TYPE = 06
+Order By CD_STAGE_REGION
+,      CCOUNT_COUNTY.DECODE
+,      NM_PERSON_FULL
+End-Select
+ Next-Listing
+ Next-Listing  Need=22
+ If #1ROW_COUNT > 0
+ Graphic (2,2,719) Horz-Line 20 
+ Position (4,1)
+ let #ReportTotal = #1ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #ReportTotal (22,67) Bold  Edit 88888888na
+  Print 'Report Total:'  (22,1) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+!Display no data message on page header
+Begin-procedure DisplayResult
+if #1ROW_COUNT = 0
+ Let $textdisp = 'No results matching the report parameter are available'
+end-if
+Move $textdisp to $outText
+end-procedure
+
+
+Begin-Procedure Master_QueryNM_PERSON_FULL_BeforeProc103
+ Next-Listing  Need=21
+ Graphic (2,1,720) Horz-Line 15 
+ Position (3,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Manager:'  (21,1) Bold 
+  Print &CaseWorkerNameID (21,83,34)
+  If &Master_Query_CD_STAGE_CNTY=&Master_Query_CD_COUNTY
+    ! do nothing
+ Else
+ Let $unit_county_dsp='( ' || &unit_county_decode_masked || ' )'
+ Print $unit_county_dsp (21,270,18)
+ End-If
+   Position (+12,)
+ Next-Listing  Need=34
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryNM_PERSON_FULL_AfterProc103
+ Next-Listing  Need=27
+ Graphic (5,1,719) Horz-Line 10 
+ Position (6,1)
+ let #CountResourceID = #103ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #CountResourceID (27,36) Bold  Edit 88888888na
+ Print 'Total:'  (27,1) Bold 
+   Position (+12,)
+ Move 0 To #103ROW_COUNT
+ Next-Listing  Need=34
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_BeforeProc102
+If $countySelected = 'N'
+!Do nothing
+
+ Next-Listing  Need=18
+ Graphic (2,1,720) Horz-Line 15 
+ Position (3,1)
+    Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CCOUNT_COUNTY.DECODE (18,1,30) Bold 
+   Position (+12,)
+ Next-Listing  Need=34
+end-if
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc102
+If $countySelected = 'N'
+!Do nothing
+
+ Next-Listing  Need=18
+ Graphic (1,1,720) Horz-Line 15 
+ Position (2,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'County Total:'  (18,1) Bold 
+ let #CountyTotal = #102ROW_COUNT
+ Print #CountyTotal (18,71) Bold  Edit 88888888na
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  Need=34
+end-if
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc101
+If $countySelected = 'N' and $regionSelected = 'N'
+!Do nothing
+
+ Next-Listing  Need=19
+ Graphic (3,1,720) Horz-Line 20 
+ Position (5,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CD_STAGE_REGION (19,43,2) Bold 
+ Print 'Region:'  (19,1) Bold 
+   Position (+12,)
+ Next-Listing  Need=34
+end-if
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc101
+If $countySelected = 'N' and $regionSelected = 'N'
+
+ Next-Listing  Need=18
+ Graphic (1,2,719) Horz-Line 15 
+ Position (2,1)
+ let #TotRegion = #101ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #TotRegion (18,71) Bold  Edit 88888888na
+ Print 'Region Total:'  (18,1) Bold 
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=34
+end-if
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 48 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (13,651) edit 'MM/DD/YYYY'
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Print 'Division of Family and Children Services' (13,274,0)
+ Print 'Produced On:' (13,581,12)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'FAD Homes Status Report' (52,272,24) Bold 
+ Let $StartDate=$_StartDate
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $StartDate (69,285,15) Bold 
+ Let $EndDate=$_EndDate
+ Print $EndDate (69,416,15) Bold 
+ Let $region_county_header=$region_county_header
+ Print $region_county_header (86,326,15) Bold 
+ Let $region_header=$region_header
+ Print $region_header (105,342,11) Bold 
+ Let $outText=$outText
+ Print $outText (124,221,69) Bold 
+ Print 'From:' (69,250,5) Bold 
+ Print 'To:' (69,394,5) Bold 
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+ Print $current-date (171,6) edit 'MM/DD/YYYY' Foreground=(255,255,255)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Resource ID' (171,124,11) Underline  Bold 
+ Print 'Categ' (171,293,0) Underline  Bold 
+ Print 'Inquiry' (171,189,9) Underline  Bold 
+ Print 'Phone ' (171,666,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top
+ Print 'Resource Name' (172,1,0) Underline  Bold 
+ Print 'Status' (171,325,7) Underline  Bold 
+ Print 'Days In' (171,361,7) Underline  Bold  Wrap 7 3 line-height=12 Keep-Top
+ Print 'Effective' (171,245,9) Underline  Bold 
+ Print 'Date' (185,245,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'Date' (185,189,5) Underline  Bold  Wrap 5 4 line-height=12 Keep-Top
+ Print 'Status' (185,361,9) Underline  Bold 
+ Print 'Approval' (171,405,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'Begin Date' (185,405,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'Approval' (171,462,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'End Date' (185,462,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'Address' (171,519,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+ Print $current-date (12,6) edit 'MM/DD/YYYY' Foreground=(255,255,255)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Resource ID' (12,124,11) Underline  Bold 
+ Print 'Categ' (12,293,0) Underline  Bold 
+ Print 'Inquiry' (12,189,9) Underline  Bold 
+ Print 'Phone ' (12,666,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top
+ Print 'Resource Name' (13,1,0) Underline  Bold 
+ Print 'Status' (12,325,7) Underline  Bold 
+ Print 'Days In' (12,361,7) Underline  Bold  Wrap 7 3 line-height=12 Keep-Top
+ Print 'Effective' (12,245,9) Underline  Bold 
+ Print 'Date' (26,245,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'Date' (26,189,5) Underline  Bold  Wrap 5 4 line-height=12 Keep-Top
+ Print 'Status' (26,361,9) Underline  Bold 
+ Print 'Approval' (12,405,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'Begin Date' (26,405,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'Approval' (12,462,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'End Date' (26,462,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'Address' (12,519,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (21,672) '' ' of'
+ Last-Page (21,694) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

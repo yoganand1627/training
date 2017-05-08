@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FccpFamily" table="FCCP_FAMILY" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdPlanType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLAN_TYPE" length="3"/>
+    </property>
+    <property name="nmAssgnJudge" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_ASSGN_JUDGE" length="50"/>
+    </property>
+    <property name="indInitReview" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_INIT_REVIEW" length="1"/>
+    </property>
+    <property name="dtInitDue" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INIT_DUE" length="7"/>
+    </property>
+    <property name="dtOrigSub" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ORIG_SUB" length="7"/>
+    </property>
+    <property name="dtPrevRev" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PREV_REV" length="7"/>
+    </property>
+    <property name="dtCurrRev" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CURR_REV" length="7"/>
+    </property>
+    <property name="dtNextReview" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_NEXT_REV" length="7"/>
+    </property>
+    <property name="cdPrimPermPlan" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PRIM_PERM_PLAN" length="3"/>
+    </property>
+    <property name="txtPrimCompRsns" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_PRIM_COMP_RSNS" length="500"/>
+    </property>
+    <property name="cdSecndPermPlan" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SECND_PERM_PLAN" length="3"/>
+    </property>
+    <property name="txtSecndCompRsns" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_SECND_COMP_RSNS" length="500"/>
+    </property>
+    <property name="cdRevTyp" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_REV_TYP" length="3"/>
+    </property>
+    <property name="txtRsnsProt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_RSNS_PROT" length="500"/>
+    </property>
+    <property name="txtHarm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_HARM" length="500"/>
+    </property>
+    <property name="dtPermAchvd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PERM_ACHVD" length="7"/>
+    </property>
+    <property name="indPrntPrtcpt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PRNT_PRTCPT" length="1"/>
+    </property>
+    <property name="txtPrntPrtcpt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_PRNT_PRTCPT" length="500"/>
+    </property>
+    <property name="indChildPrtcpt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CHILD_PRTCPT" length="1"/>
+    </property>
+    <property name="txtChildPrtcpt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CHILD_PRTCPT" length="500"/>
+    </property>
+    <property name="indPrntPresent" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PRNT_PRESENT" length="1"/>
+    </property>
+    <property name="indHearingSub" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_HEARING_SUB" length="1"/>
+    </property>
+    <property name="dtHearingReqstd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_HEARING_REQSTD" length="7"/>
+    </property>
+    <property name="indAsstnc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_ASSTNC" length="1"/>
+    </property>
+    <property name="dtBeginAftercare" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_BEGIN_AFTERCARE" length="7"/>
+    </property>
+    <property name="dtEndAftercare" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_END_AFTERCARE" length="7"/>
+    </property>
+    <property name="txtRsnDschrgAftercare" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_RSN_DSCHRG_AFTERCARE" length="500"/>
+    </property>
+    <property name="txtHearingRequestCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_HEARING_REQUEST_COMMENT" length="500"/>
+    </property>
+    <property name="indUpdatePlan" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_UPDATE_PLAN" length="1"/>
+    </property>
+    <property name="cdAssgnJudge" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ASSGN_JUDGE" length="20"/>
+    </property>
+  </class>
+</hibernate-mapping>

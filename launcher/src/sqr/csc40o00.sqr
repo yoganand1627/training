@@ -1,0 +1,2953 @@
+!*****************************************************************************
+! Eligibility Data                                                           *
+!*****************************************************************************
+
+!*****************************************************************************
+! PROGRAM NAME:         csc40o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/millersr/work/sqr                        *
+!                                                                            *
+! DATE:                 08/30/05                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Susie Miller                                         *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The FC Eligibility Appl/Determination Summary Report *
+!         allows  the user to produce a hardcopy of the foster care eligibili*
+!        ty information for the child. This summary includes information from*
+!         the following IMPACT pages, Application and Background, Age and    *
+!         Citizenship, Domicile and Deprivation, Income and Expenditures,    *
+!         Eligibility Determination Worksheet and Eligibility Summary. The   *
+!         info that is displayed on each page is stored in one or more of the*
+!         following tables: FCE_APPLICATION, FCE_ELIGIBILITY, FCE_PERSON,    *
+!         FCE_INCOME, PLACEMENT, PERSON, FCE_NARRTIVE, EVENT AND PERSON      *
+!                                                                            *
+! NOTE:  Question: "Using the AFDC eligibility rules in effect on July 16th  *
+!                   1996, would the .. Is commented out because the database *
+!                   current is not storing the data.  Needs to be fixed      *
+!                   on the page before this will work.                       *
+!*****************************************************************************
+
+!*****************************************************************************
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ------------   -----------------------------------------------  *
+! 08/30/05   Susie Miller   Coded original program. SIR 22562.               *
+! 01/17/06   Fraserkr       SIR 22562.                                       *
+!                            Moved get of MEDICAID # to own procedure since  *
+!                            medicaid # not required of child.  Moved get    *
+!                            and print of Reason Not Eligible to own proce-  *
+!                            dure.  Corrected typos noticed.  Added footer.  *
+!                            Changed passed parameter from id_fce_eligibility*
+!                            to id_fce_application.                          *
+!*****************************************************************************
+
+!*****************************************************************************
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!   This procedure defines the beginning and end of the report processing.   *
+!   Housekeeping initializes all report values, Processing processes the     *
+!   body of the report, and Wrap-Up prints the end of report message and     *
+!   other wrap up functions.                                                 *
+!*****************************************************************************
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+! SETUP-SECTION                                                              *
+!                                                                            *
+!   This section sets up common parameters including page size and printer   *
+!   as well as input parameters                                              *
+!*****************************************************************************
+BEGIN-SETUP
+
+   #ifdef ORACLE                           !compiler directive
+      ask dbname 'Database Name'
+      use {dbname}
+   #endif
+
+   ask ID_PERSON                           !input parameter
+   ask ID_FCE_APPLICATION
+
+   dollar-symbol $                         !dollar format parameter
+   
+END-SETUP
+
+!*****************************************************************************
+! HEADER                                                                     *
+!                                                                            *
+!   These commands will be processed every time SQR writes a page. They      *
+!   include the report title, date, time, page number, report id, and        *
+!   column headers. XXX lines are reserved to print the heading at the       *
+!   top of each page. This includes blank lines. A common setup header       *
+!   has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait    *
+!   reports.                                                                 *
+!*****************************************************************************
+BEGIN-HEADING 4
+
+   print 'csc40o00'                     (1,1)
+   print 'FC ELIGIBILITY APPLICATION DETERMINATION SUMMARY'    (1) center bold
+   print    'Child''s Name:'               (2,50) bold
+   print    $full_name                      (2,64) bold
+
+   page-number (1,120) 'Page '
+
+END-HEADING
+
+!*****************************************************************************
+! FOOTER                                                                     *
+!                                                                            *
+!   These commands will be processed every time SQR writes a page. They      *
+!   include a footer that must be in place in all pages of some reports      *
+!*****************************************************************************
+BEGIN-FOOTING 9
+
+ !  #INCLUDE 'footer03.sqc'       ! Include file with footer information
+                                  ! For Landscape On Demand Reports
+ 
+END-FOOTING
+
+!*****************************************************************************
+! HOUSEKEEPING                                                               *
+!                                                                            *
+!   Set environment variables, initialize report id, initialize title        *
+!   id, initialize date and time, initialize variables, and define           *
+!   constants                                                                *
+!                                                                            *
+! CALLED BY: BEGIN-REPORT                                                    *
+!*****************************************************************************
+BEGIN-PROCEDURE HOUSEKEEPING
+
+
+   #INCLUDE 'setenv.sqc'        !Set printer environment
+
+   move {ID_PERSON}             to #input_id_person
+   move {ID_FCE_APPLICATION}    to #id_fce_application
+
+END-PROCEDURE HOUSEKEEPING
+
+!*****************************************************************************
+! PROCESS-REPORT                                                             *
+!                                                                            *
+!   This procedure includes the main processing logic of the report.         *
+!                                                                            *
+! CALLED BY  : BEGIN-REPORT                                                  *
+! CALLS      :GET-PERSON-DATA                                                *
+!         PRINT-COLUMN-NAMES                                                 *
+!         PRINT-RESPONSE-PLCMT-CARE-DATA                                     *
+!         GET-PLCMT-EVENT                                                    *
+!         GET-AGE-AND-CITIZENSHIP-DATA                                       *
+!         PRINT-HEADING-AGE-AND-CITIZENSHIP-DATA                             *
+!         PRINT-DOMICILE-AND-DEPRIVATION                                     *
+!         PRINT-INCOME-AND-EXPENDITURES                                      *
+!         PRINT-ELIGIBILITY-DETERMINATION-WORKSHEET                          *
+!         GET-APP-EVENT                                                      *
+!         GET-ELIG-EVENT                                                     *
+!         GET-ELIG-SUMMARY                                                   *
+!                                                                            *
+!                                                                            *
+!*****************************************************************************
+BEGIN-PROCEDURE PROCESS-REPORT
+
+   do GET-PERSON-DATA
+   do PRINT-COLUMN-NAMES
+   do PRINT-RESPONSE-PLCMT-CARE-DATA
+   do GET-PLCMT-EVENT
+   do GET-AGE-AND-CITIZENSHIP-DATA
+   do GET-APP-EVENT
+   do PRINT-HEADING-AGE-AND-CITIZENSHIP-DATA
+   do PRINT-DOMICILE-AND-DEPRIVATION
+   do PRINT-INCOME-AND-EXPENDITURES
+   do PRINT-ELIGIBILITY-DETERMINATION-WORKSHEET
+   do GET-ELIG-SUMMARY
+  !show #fce_person_id_person
+  !show #input_id_person
+END-PROCEDURE PROCESS-REPORT
+!*****************************************************************************
+! GET-PERSON-DATA                                                            *
+!                                                                            *
+!   This procedure pulls the proper Identification info from PERSON Table    *
+!                                                                            *
+! CALLED BY  : PROCESS-REPORT                                                *
+! CALLS      :     do GET-CHILD-MEDICAID-NUMBER                              *
+!                  do PRINT-DATA                                             *
+!                                                                            *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-PERSON-DATA
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+P.NM_PERSON_FULL
+    move &P.NM_PERSON_FULL          to $full_name
+
+P.ID_PERSON
+    move &P.ID_PERSON               to $id_person
+
+P.NBR_PERSON_ID_NUMBER
+    move &P.NBR_PERSON_ID_NUMBER    to $child_ssn
+
+P.DT_PERSON_BIRTH
+    move &P.DT_PERSON_BIRTH         to $birthdate
+
+FCEA1.ADDR_REMOVAL_ST_LN_1
+    move &FCEA1.ADDR_REMOVAL_ST_LN_1    to $rmadd1
+
+FCEA1.ID_STAGE
+    move &FCEA1.ID_STAGE            to $id_stage
+
+FCEA1.ADDR_REMOVAL_ST_LN_2
+    move &FCEA1.ADDR_REMOVAL_ST_LN_2    to $rmadd2
+
+FCEA1.ADDR_REMOVAL_CITY
+    move &FCEA1.ADDR_REMOVAL_CITY       to $rmcity
+
+FCEA1.ADDR_REMOVAL_ADDR_ZIP
+    move &FCEA1.ADDR_REMOVAL_ADDR_ZIP   to $rmzip
+
+FCEA1.IND_MINOR_PARENT
+     move &FCEA1.IND_MINOR_PARENT   to $minor
+
+FCEA1.IND_MANAGING_CVS
+     move &FCEA1.IND_MANAGING_CVS   to $cvs
+
+FCEA1.IND_HOSPITAL
+     move &FCEA1.IND_HOSPITAL       to $hospital
+
+FCEA1.DT_HOSPITAL_ADMISSION
+     move &FCEA1.DT_HOSPITAL_ADMISSION to $dt_admission
+
+FCEA1.DT_HOSPITAL_DISCHARGE
+     move &FCEA1.DT_HOSPITAL_DISCHARGE to $dt_discharge
+
+FCEA1.IND_OTHER_HEALTH_INSURANCE
+  move &FCEA1.IND_OTHER_HEALTH_INSURANCE to $ins
+
+FCEA1.NM_HEALTH_COMPANY
+  move &FCEA1.NM_HEALTH_COMPANY     to $company
+
+FCEA1.ADDR_HEALTH_ADDR_ST_LN_1
+   move &FCEA1.ADDR_HEALTH_ADDR_ST_LN_1 to $health_addr
+
+FCEA1.ADDR_HEALTH_ADDR_ST_LN_2
+   move &FCEA1.ADDR_HEALTH_ADDR_ST_LN_2 to $health_addr2
+
+FCEA1.ADDR_HEALTH_ADDR_CITY
+   move &FCEA1.ADDR_HEALTH_ADDR_CITY    to $health_city
+
+FCEA1.ADDR_HEALTH_ADDR_ZIP
+   move &FCEA1.ADDR_HEALTH_ADDR_ZIP to $health_zip
+
+FCEA1.NBR_HEALTH_POLICY
+   move &FCEA1.NBR_HEALTH_POLICY    to $health_policy
+
+FCEA1.NBR_HEALTH_GROUP
+   move &FCEA1.NBR_HEALTH_GROUP     to $health_group
+
+FCEA1.NM_HEALTH_POLICY_HLDR_NM
+   move &FCEA1.NM_HEALTH_POLICY_HLDR_NM to $policy_holder
+
+FCEA1.DT_HEALTH_BEGIN_DATE
+   move &FCEA1.DT_HEALTH_BEGIN_DATE to $health_begin
+
+FCEA1.DT_HEALTH_END_DATE
+     move &FCEA1.DT_HEALTH_END_DATE to $health_end
+
+FCEA1.NM_HEALTH_EMPLOYEE_NM
+     move &FCEA1.NM_HEALTH_EMPLOYEE_NM to $health_employee
+
+FCEA1.NM_HEALTH_EMPLOYER_NM
+     move &FCEA1.NM_HEALTH_EMPLOYER_NM to $health_employer
+
+FCEA1.ID_FCE_ELIGIBILITY
+    move &FCEA1.ID_FCE_ELIGIBILITY  to $id_fce_eligibility
+
+CCOUNT.DECODE
+    move &CCOUNT.DECODE                 to $rmcnty
+
+CSTATE.DECODE
+    move &CSTATE.DECODE                to $rmstate
+
+CSTATE3.DECODE
+    move &CSTATE3.DECODE        to $health_state
+
+    do GET-CHILD-MEDICAID-NUMBER
+    !show '$id_fce_eligibility =' $id_fce_eligibility
+    !show '$medicaid=' $medicaid
+    do PRINT-DATA
+
+FROM    PERSON P,
+        FCE_APPLICATION FCEA1,
+        CCOUNT,
+        CSTATE  CSTATE3,
+        CSTATE
+
+WHERE   P.ID_PERSON               = #input_id_person
+AND     FCEA1.ID_PERSON           = P.ID_PERSON
+AND     FCEA1.ID_FCE_APPLICATION  = #id_fce_application
+AND     CCOUNT.CODE(+)            = FCEA1.CD_REMOVAL_ADDR_COUNTY
+AND     CSTATE.CODE(+)            = FCEA1.CD_STATE
+AND     CSTATE3.CODE(+)           = FCEA1.CD_HEALTH_ADDR_STATE
+
+END-SELECT
+
+END-PROCEDURE GET-PERSON-DATA
+
+!*****************************************************************************
+!   GET-CHILD-MEDICAID-NUMBER
+!
+!   Gets the medicaid number associated with fce_application.id_person
+!       (which is the primary child of the SUB stage)
+!
+!CALLED BY: GET-PERSON-DATA
+!CALLS: nothing
+!*****************************************************************************
+
+BEGIN-PROCEDURE GET-CHILD-MEDICAID-NUMBER
+!SHOW 'GET-CHILD-MEDICAID-NUMBER'
+let $medicaid = ''
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+PID.NBR_PERSON_ID_NUMBER
+    move &PID.NBR_PERSON_ID_NUMBER      to $medicaid
+
+FROM    PERSON_ID PID
+WHERE   PID.ID_PERSON               = #input_id_person
+AND     PID.CD_PERSON_ID_TYPE       = 'Medicaid #'
+AND     PID.IND_PERSON_ID_INVALID   = 'N'            ! not invalid
+AND     PID.DT_PERSON_ID_END        = '12/31/4712'   ! not end-dated
+END-SELECT
+END-PROCEDURE GET-CHILD-MEDICAID-NUMBER
+
+!*****************************************************************************
+!GET PLCMT EVENTS
+!
+!Gets the placement event information
+!
+!CALLED BY: PROCESS-REPORT
+!CALLS: PRINT-PLACEMENTS
+!*****************************************************************************
+
+BEGIN-PROCEDURE GET-PLCMT-EVENT
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+E.TXT_EVENT_DESCR
+    move &E.TXT_EVENT_DESCR     to $event_descr
+
+E.DT_EVENT_OCCURRED
+    move &E.DT_EVENT_OCCURRED   to $dt_event
+
+E.CD_EVENT_STATUS
+    move &E.CD_EVENT_STATUS    to $status
+
+P3.NM_PERSON_FULL
+    move &P3.NM_PERSON_FULL    to $event_worker
+
+P3.ID_PERSON
+    move &P3.ID_PERSON         to $worker_id
+
+   do PRINT-PLACEMENTS
+
+FROM    EVENT E,
+    EVENT_PERSON_LINK EPL,
+    PERSON P3
+
+WHERE   EPL.ID_PERSON        = #input_id_person
+AND     E.ID_EVENT           = EPL.ID_EVENT
+AND     E.CD_TASK            = '3080'
+AND     P3.ID_PERSON         = E.ID_EVENT_PERSON
+AND     E.ID_EVENT_STAGE     = $id_stage
+END-SELECT
+
+END-PROCEDURE GET-PLCMT-EVENT
+
+!*****************************************************************************
+!GET ELIGIBILITY EVENT
+!
+!Gets the eligibility worker information from the event table.
+!
+!CALLED BY: PROCESS-REPORT
+!CALLS: PRINT-ELIGIBILITY-SUMMARY
+!*****************************************************************************
+BEGIN-PROCEDURE GET-ELIG-EVENT
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+P4.NM_PERSON_FULL
+   move &P4.NM_PERSON_FULL      to $worker
+
+P4.ID_PERSON
+   move &P4.ID_PERSON           to $es_id
+
+    do PRINT-ELIGIBILITY-SUMMARY
+
+FROM    EVENT E2,
+        PERSON P4
+
+WHERE  E2.ID_EVENT      = $2elg_event
+AND   P4.ID_PERSON         = E2.ID_EVENT_PERSON
+
+END-SELECT
+
+END-PROCEDURE GET-ELIG-EVENT
+
+!*****************************************************************************
+!GET APPLICATION EVENT
+!
+!Gets the eligibility worker information from the event table.
+!
+!CALLED BY: PROCESS-REPORT
+!CALLS: 
+!*****************************************************************************
+BEGIN-PROCEDURE GET-APP-EVENT
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+P9.NM_PERSON_FULL
+   move &P9.NM_PERSON_FULL      to $app_worker
+
+P9.ID_PERSON
+   move &P9.ID_PERSON           to $app_id
+
+FROM    PERSON P9,
+        WORKLOAD W,
+        STAGE_PERSON_LINK SPL
+
+WHERE  W.ID_WKLD_STAGE    = $id_stage
+AND    SPL.ID_STAGE = W.ID_WKLD_STAGE
+AND    SPL.CD_STAGE_PERS_ROLE = 'PR' 
+AND    P9.ID_PERSON = SPL.ID_PERSON
+
+END-SELECT
+
+!show $id_stage
+!show $app_id
+
+END-PROCEDURE GET-APP-EVENT
+
+!*****************************************************************************
+!GET RELATIVE NAME                                                           *
+!                                                                            *
+!CALLED BY: PRINT-DOMICILE-AND-DEPRIVATION                                   *
+!CALLS:nothing                                                               *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-RELATIVE-NAME
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+P5.NM_PERSON_FULL
+   move &P5.NM_PERSON_FULL      to $relative
+
+FROM    PERSON P5, 
+        FCE_PERSON FCE6
+
+WHERE  FCE6.ID_FCE_PERSON = $other_relative
+AND    P5.ID_PERSON       = FCE6.ID_PERSON
+
+END-SELECT
+
+END-PROCEDURE GET-RELATIVE-NAME
+!*****************************************************************************
+!GET CVS RELATIVE NAME                                                       *
+!                                                                            *
+!CALLED BY: PRINT-DOMICILE-AND-DEPRIVATION                                   *
+!CALLS:nothing                                                               *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-CVS-RELATIVE-NAME
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+P10.NM_PERSON_FULL
+   move &P10.NM_PERSON_FULL      to $cvs_relative
+
+FROM    PERSON P10,
+        FCE_PERSON FCE7
+
+WHERE  FCE7.ID_FCE_PERSON = $mngng_relative
+AND    P10.ID_PERSON = FCE7.ID_PERSON
+END-SELECT
+
+END-PROCEDURE GET-CVS-RELATIVE-NAME
+
+!*****************************************************************************
+! GET-PERSONS-LIST-DATA                                                      *
+!                                                                            *
+!   This procedure pulls the proper Identification info from PERSON Table    *
+!   NOTE:  Be very careful if you need to change this procedure!!! It may    *
+!          the wrong information.  TEST, TEST, TEST any changes.             *
+!                                                                            *
+! CALLED BY  : PRINT_PERSON_DATA                                             *
+! CALLS      : PRINT-PERSON-LIST-DATA                                        *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-PERSONS-LIST-DATA
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+P1.NM_PERSON_FULL
+    move &P1.NM_PERSON_FULL         to $full_name2
+
+P1.ID_PERSON
+    move &P1.ID_PERSON              to $id_person2
+
+P1.DT_PERSON_BIRTH
+    move &P1.DT_PERSON_BIRTH        to $birth_date2
+
+P1.ADDR_PERSON_ST_LN_1
+    move &P1.ADDR_PERSON_ST_LN_1        to $add1
+
+P1.ADDR_PERSON_CITY
+    move &P1.ADDR_PERSON_CITY       to $city2
+
+P1.ADDR_PERSON_ZIP
+    move &P1.ADDR_PERSON_ZIP        to $zip2
+
+CSTATE2.DECODE
+    move &CSTATE2.DECODE                to $state2
+
+FP.IND_CERTIFIED_GROUP
+    move &FP.IND_CERTIFIED_GROUP        to $group
+
+FP.IND_PERSON_HM_REMOVAL
+    move &FP.IND_PERSON_HM_REMOVAL      to $at_home
+
+FP.CD_REL_INT
+	move &FP.CD_REL_INT                to $ind_role
+
+CRPTRINT.DECODE
+    move &CRPTRINT.DECODE               to $role
+
+    do PRINT-PERSON-LIST-DATA
+
+FROM    PERSON P1,
+    FCE_PERSON FP,
+    CRPTRINT,
+    CSTATE                  CSTATE2
+
+WHERE   FP.ID_FCE_ELIGIBILITY    = $id_fce_eligibility
+AND     FP.IND_PERSON_HM_REMOVAL = 'Y'
+AND     P1.ID_PERSON        = FP.ID_PERSON
+AND     CRPTRINT.CODE(+)    = FP.CD_REL_INT
+AND     CSTATE2.CODE(+)     = P1.CD_PERSON_STATE
+ORDER BY FP.NBR_AGE
+
+END-SELECT
+
+!show $ind_role
+!show $group
+!show $id_person2
+!show $role
+END-PROCEDURE GET-PERSONS-LIST-DATA
+
+!*****************************************************************************
+! GET-AGE-AND-CITIZENSHIP-DATA                                               *
+!                                                                            *
+!   This procedure pulls the proper age and citizenship data                 *
+!                                                                            *
+! CALLED BY  : PROCESS-REPORT                                                *
+! CALLS      : PRINT-AGE-AND-CITIZENSHIP-DATA                                *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-AGE-AND-CITIZENSHIP-DATA
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+FP2.IND_DOB_APPROX
+    move &FP2.IND_DOB_APPROX        to $approx
+
+FP2.DT_BIRTH
+    move &FP2.DT_BIRTH          to $dob
+
+FP2.NBR_AGE
+    move &FP2.NBR_AGE           to $fce_person_age
+
+FP2.ID_PERSON
+    move &FP2.ID_PERSON         to #fce_person_id_person
+
+FP2.CD_REL_INT
+    move &FP2.CD_REL_INT	to $role_int
+
+FP2.ID_FCE_PERSON
+    move &FP2.ID_FCE_PERSON     to $id_fce_person
+  
+FCE.ID_FCE_PERSON
+        move &FCE.ID_FCE_PERSON             to $es_worker
+
+FCE.ID_LAST_UPDATE_PERSON
+    move &FCE.ID_LAST_UPDATE_PERSON        to $id_elg_worker
+
+FCE.IND_CTZNSHP_ATTORNEY_REVIEW
+    move &FCE.IND_CTZNSHP_ATTORNEY_REVIEW   to $ind_review
+
+FCE.IND_CTZNSHP_BAPTISMAL_CRTFCT
+    move &FCE.IND_CTZNSHP_BAPTISMAL_CRTFCT  to $ind_baptismal
+
+FCE.IND_CTZNSHP_BIRTH_CRTFCT_FOR
+    move &FCE.IND_CTZNSHP_BIRTH_CRTFCT_FOR  to $for_birth_cert
+
+FCE.IND_CTZNSHP_BIRTH_CRTFCT_US
+    move &FCE.IND_CTZNSHP_BIRTH_CRTFCT_US   to $us_cert
+
+FCE.IND_CTZNSHP_CHLD_FOUND
+    move &FCE.IND_CTZNSHP_CHLD_FOUND        to $child_found
+
+FCE.IND_CTZNSHP_CITIZEN_CRTFCT
+    move &FCE.IND_CTZNSHP_CITIZEN_CRTFCT    to $citzen_cert
+
+FCE.IND_CTZNSHP_DHS_OTHER
+    move &FCE.IND_CTZNSHP_DHS_OTHER     to $dhs_other
+
+FCE.IND_CTZNSHP_DHS_US
+    move &FCE.IND_CTZNSHP_DHS_US        to $dhs_us
+
+FCE.IND_CTZNSHP_EVALUATION
+    move &FCE.IND_CTZNSHP_EVALUATION    to $ctznshp_eval
+
+FCE.IND_CTZNSHP_FOR_DOCUMENTATION
+    move &FCE.IND_CTZNSHP_FOR_DOCUMENTATION to $for_ctznshp_doc
+
+FCE.IND_CTZNSHP_HOSPITAL_CRTFCT
+    move &FCE.IND_CTZNSHP_HOSPITAL_CRTFCT   to $hosp_cert
+
+FCE.IND_CTZNSHP_NO_DOCUMENTATION
+    move &FCE.IND_CTZNSHP_NO_DOCUMENTATION  to $ctznshp_no_doc
+
+FCE.IND_CTZNSHP_NTRLZTN_CRTFCT
+    move &FCE.IND_CTZNSHP_NTRLZTN_CRTFCT    to $ctznsp_ntrlztn_cert
+
+FCE.IND_CTZNSHP_PASSPORT
+    move &FCE.IND_CTZNSHP_PASSPORT          to $ctznshp_passport
+
+FCE.IND_CTZNSHP_RESIDENT_CARD
+    move &FCE.IND_CTZNSHP_RESIDENT_CARD     to $res_ctznshp_card
+
+FCE.IND_MEETS_DP_OR_NOT_SYSTEM
+        move &FCE.IND_MEETS_DP_OR_NOT_SYSTEM    to $ive_system_determined
+
+FCE.IND_MEETS_DP_OR_NOT_ES
+        move &FCE.IND_MEETS_DP_OR_NOT_ES    to $ive_es_determined
+
+FCE.IND_PARENT_DISABLED
+    move &FCE.IND_PARENT_DISABLED       to $parent_disable
+
+FCE.IND_SSI_VERIFICATION
+    move &FCE.IND_SSI_VERIFICATION      to $ssi_verification
+
+FCE.IND_RSDI_VERIFICATION
+        move &FCE.IND_RSDI_VERIFICATION     to $rsdi_verification
+
+FCE.IND_OTHER_VERIFICATION
+    move &FCE.IND_OTHER_VERIFICATION    to $other_verifciation
+
+FCE.IND_MOTHER_PWE
+    move &FCE.IND_MOTHER_PWE        to $mother_pwe
+
+FCE.IND_FATHER_PWE
+    move &FCE.IND_FATHER_PWE        to $father_pwe
+
+FCE.CD_PWE_STEADY_UNDER_100
+    move &FCE.CD_PWE_STEADY_UNDER_100   to $under_100
+
+FCE.CD_PWE_IRREGULAR_UNDER_100
+    move &FCE.CD_PWE_IRREGULAR_UNDER_100    to $pwe_under_100
+
+FCE.AMT_PWE_INCOME
+    move &FCE.AMT_PWE_INCOME        to $pwe_amt
+
+FCE.IND_ABSENT_MOTHER
+        move &FCE.IND_ABSENT_MOTHER     to $absent_mom
+
+FCE.IND_ABSENT_FATHER
+        move &FCE.IND_ABSENT_FATHER     to $absent_dad
+
+FCE.IND_ABSENT_MILITARY_WORK
+    move &FCE.IND_ABSENT_MILITARY_WORK  to $military_work
+
+FCE.IND_ABSENT_INCARCERATED
+    move &FCE.IND_ABSENT_INCARCERATED   to $incarcerated
+
+FCE.IND_ABSENT_SEPARATED
+    move &FCE.IND_ABSENT_SEPARATED      to $seperated
+
+FCE.IND_ABSENT_DESERTED
+    move &FCE.IND_ABSENT_DESERTED       to $deserted
+
+FCE.IND_ABSENT_DEPORTED
+    move &FCE.IND_ABSENT_DEPORTED       to $deported
+
+FCE.IND_ABSENT_DIED
+    move &FCE.IND_ABSENT_DIED       to $died
+
+FCE.IND_ABSENT_DIVORCED
+    move &FCE.IND_ABSENT_DIVORCED       to $divorced
+
+FCE.IND_ABSENT_HOSPITALIZED
+    move &FCE.IND_ABSENT_HOSPITALIZED   to $hospitalized
+
+FCE.IND_ABSENT_ALTRNT_CUSTODY
+    move &FCE.IND_ABSENT_ALTRNT_CUSTODY to $custody
+
+FCE.IND_ABSENT_WORK_RELATED
+    move &FCE.IND_ABSENT_WORK_RELATED   to $work_related
+
+FCE.IND_ABSENT_NEVER_COHABITATED
+    move &FCE.IND_ABSENT_NEVER_COHABITATED  to $never_cohabit
+
+FCE.IND_CHILD_LIVING_PRNT_6_MNTHS
+    move &FCE.IND_CHILD_LIVING_PRNT_6_MNTHS to $6_mnths
+
+FCE.IND_CHILD_QUALIFIED_CITIZEN
+    move &FCE.IND_CHILD_QUALIFIED_CITIZEN   to $qualified_citizen
+
+FCE.IND_CHILD_UNDER_18
+    move &FCE.IND_CHILD_UNDER_18        to $under_18
+
+FCE.DT_RSNBL_EFFORT_PREVENT_REM
+    move &FCE.DT_RSNBL_EFFORT_PREVENT_REM   to $dt_rsnbl_effor
+
+FCE.IND_PARENTAL_DEPRIVATION
+    move &FCE.IND_PARENTAL_DEPRIVATION  to $deprivation
+
+FCE.IND_REMOVAL_CHILD_ORDERED
+    move &FCE.IND_REMOVAL_CHILD_ORDERED     to $best_interest
+
+FCE.IND_RSNBL_EFFORT_PRVT_REMOVAL
+    move &FCE.IND_RSNBL_EFFORT_PRVT_REMOVAL to $ind_rsnbl_effor
+
+FCE.IND_PRS_MANAGING_CVS
+    move &FCE.IND_PRS_MANAGING_CVS      to $cvs_prs
+
+FCE.IND_HOME_INCOME_AFDC_ELGBLTY
+    move &FCE.IND_HOME_INCOME_AFDC_ELGBLTY  to $home_elig
+
+FCE.IND_ELIGIBILITY_COURT_MONTH
+    move &FCE.IND_ELIGIBILITY_COURT_MONTH  to $afdc_elig
+
+FCE.IND_ELIGIBLE
+    move &FCE.IND_ELIGIBLE          to $eligible
+
+FCE.DT_REMOVAL_CHILD_ORDERED
+    move &FCE.DT_REMOVAL_CHILD_ORDERED  to $dt_removal_ordered
+
+FCE.AMT_STEPPARENT_ALIMONY
+    move &FCE.AMT_STEPPARENT_ALIMONY    to #alimony
+
+FCE.NBR_STEPPARENT_CHILDREN
+    move &FCE.NBR_STEPPARENT_CHILDREN   to $nbr_childern
+
+FCE.AMT_STEPPARENT_OUTSIDE_PMNT
+    move &FCE.AMT_STEPPARENT_OUTSIDE_PMNT   to #amt_step_outside_pmnt
+
+FCE.IND_EQUITY
+    move &FCE.IND_EQUITY            to $equity
+
+FCE.AMT_SSI
+    move &FCE.AMT_SSI           to $amt_ssi
+
+FCE.DT_ELIG_DTRMNTN_START
+    move &FCE.DT_ELIG_DTRMNTN_START     to $dt_start
+
+FCE.DT_ELIGIBILITY_END
+    move &FCE.DT_ELIGIBILITY_END        to $dt_end
+
+FCE.DT_REVIEW_DATE
+    move &FCE.DT_REVIEW_DATE        to $dt_review
+
+FCE.TXT_DETERMINATION_COMMENTS
+    move &FCE.TXT_DETERMINATION_COMMENTS    to $detm_comments
+
+FCE.AMT_COUNTABLE_INCOME
+    move &FCE.AMT_COUNTABLE_INCOME      to $amt_count
+
+FCE.AMT_GROSS_EARNED_CRTFD_GRP
+    move &FCE.AMT_GROSS_EARNED_CRTFD_GRP    to $amt_gross_crt
+
+FCE.AMT_GROSS_UNEARNED_CRTFD_GRP
+    move &FCE.AMT_GROSS_UNEARNED_CRTFD_GRP  to $amt_gross_unearned
+
+FCE.AMT_INCOME_LIMIT
+    move &FCE.AMT_INCOME_LIMIT      to $amt_income_limit
+
+FCE.AMT_STEPPARENT_ALLOWANCE
+    move &FCE.AMT_STEPPARENT_ALLOWANCE      to $amt_step_allow
+
+FCE.AMT_STEPPARENT_APPLIED_INCOME
+    move &FCE.AMT_STEPPARENT_APPLIED_INCOME to $amt_step_applied
+
+FCE.AMT_STEPPARENT_CNTBL_UNEARNED
+    move &FCE.AMT_STEPPARENT_CNTBL_UNEARNED to $amt_step_cntbl
+
+FCE.AMT_STEPPARENT_GROSS_EARNED
+    move &FCE.AMT_STEPPARENT_GROSS_EARNED   to #amt_step_gross_earned
+
+FCE.AMT_STEPPARENT_TOTAL_CNTBL
+    move &FCE.AMT_STEPPARENT_TOTAL_CNTBL    to $amt_step_total_cntbl
+
+FCE.AMT_STEPPARENT_WORK_DEDUCT
+    move &FCE.AMT_STEPPARENT_WORK_DEDUCT    to $amt_step_work_deduct
+
+FCE.NBR_CERTIFIED_GROUP
+    move &FCE.NBR_CERTIFIED_GROUP       to $nbr_cert_group
+
+FCE.NBR_PARENTS_HOME
+    move &FCE.NBR_PARENTS_HOME      to $nbr_parents
+
+CCTZNSTA.DECODE
+    move &CCTZNSTA.DECODE           to $person_ctznshp
+
+FCEA2.NBR_COURT_MONTH
+    move &FCEA2.NBR_COURT_MONTH     to $court_month
+
+FCEA2.NBR_COURT_YEAR
+    move &FCEA2.NBR_COURT_YEAR      to $court_year
+
+FCEA2.ID_OTHER_RELATIVE_PERSON
+    move &FCEA2.ID_OTHER_RELATIVE_PERSON    to $other_relative
+
+FCEA2.ID_LAST_UPDATE_PERSON
+    move &FCEA2.ID_LAST_UPDATE_PERSON     to $id_app_worker
+
+FCEA2.ID_MNGNG_CVS_PERSON
+    move &FCEA2.ID_MNGNG_CVS_PERSON    to $mngng_relative
+
+CFCELIV.DECODE
+    move &CFCELIV.DECODE            to $living_arr
+
+CFCELIV6.DECODE
+    move &CFCELIV6.DECODE            to $living_arr2
+
+FCEA2.IND_LIVING_RELATIVE_SIX_MONTH
+    move &FCEA2.IND_LIVING_RELATIVE_SIX_MONTH to $six_months
+
+FCEA2.IND_AGE_VRFD_BAPTISM_CERT
+    move &FCEA2.IND_AGE_VRFD_BAPTISM_CERT   to $age_baptism_cert
+
+FCEA2.IND_AGE_VRFD_FOREIGN_CERT
+    move &FCEA2.IND_AGE_VRFD_FOREIGN_CERT   to $age_foreign_cert
+
+FCEA2.IND_AGE_VRFD_US_BIRTH_CERT
+    move &FCEA2.IND_AGE_VRFD_US_BIRTH_CERT  to $age_birth_cert
+
+FCEA2.IND_AGE_VRFD_DHS
+    move &FCEA2.IND_AGE_VRFD_DHS        to $age_dhs_us
+
+FCEA2.IND_AGE_JUSTIFIED_EVAL
+    move &FCEA2.IND_AGE_JUSTIFIED_EVAL  to $age_just_eval
+
+FCEA2.IND_AGE_VRFD_HOSPITAL_CERT
+    move &FCEA2.IND_AGE_VRFD_HOSPITAL_CERT  to $age_hospital_cert
+
+FCEA2.IND_AGE_VRFD_NTRLZTN_CERT
+    move &FCEA2.IND_AGE_VRFD_NTRLZTN_CERT   to $age_ntrlztn_cert
+
+FCEA2.IND_AGE_VRFD_PASSPORT
+    move &FCEA2.IND_AGE_VRFD_PASSPORT       to $age_vrfd_passport
+
+FCEA2.IND_AGE_VRFD_RESIDENT_CARD
+    move &FCEA2.IND_AGE_VRFD_RESIDENT_CARD  to $age_vrfd_card
+
+FCEA2.IND_EVALUATION_CONCLUSION
+    move &FCEA2.IND_EVALUATION_CONCLUSION   to $ind_eval_concl
+
+FCEA2.NM_HOSPITAL
+    move &FCEA2.NM_HOSPITAL         to $nm_hospital
+
+FCEA2.NM_MOTHER_MAIDEN
+    move &FCEA2.NM_MOTHER_MAIDEN        to $nm_mother_maiden
+
+FCEA2.NM_HOSPITAL_CITY
+    move &FCEA2.NM_HOSPITAL_CITY        to $nm_hospital_city
+
+FCEA2.IND_NOTIFIED_DHS_WORKER
+    move &FCEA2.IND_NOTIFIED_DHS_WORKER   to $ind_notified_dhs_worker
+
+FCEA2.NM_NOTIFIED_DHS_WRKR_FIRST
+    move &FCEA2.NM_NOTIFIED_DHS_WRKR_FIRST  to $nm_dhs_worker_first
+    
+FCEA2.NM_NOTIFIED_DHS_WRKR_LAST
+    move &FCEA2.NM_NOTIFIED_DHS_WRKR_LAST  to $nm_dhs_worker_last
+
+FCEA2.NM_NOTIFIED_DHS_WRKR_MIDDLE
+    move &FCEA2.NM_NOTIFIED_DHS_WRKR_MIDDLE  to $nm_dhs_worker_middle
+
+FCEA2.DT_NOTIFIED_WORKER
+    move &FCEA2.DT_NOTIFIED_WORKER         to $dt_dhs_worker
+    
+FCEA2.NBR_NOTIFIED_DHS_WRKR_PHN
+    move &FCEA2.NBR_NOTIFIED_DHS_WRKR_PHN  to $nbr_dhs_worker_phn
+
+FCEA2.IND_INCOME_ASSISTANCE
+    move &FCEA2.IND_INCOME_ASSISTANCE   to $income_assistance
+
+FCEA2.IND_PROOF_AGE_SENT_ES
+    move &FCEA2.IND_PROOF_AGE_SENT_ES       to $age_sent_es
+
+FCEA2.DT_PROOF_AGE_SENT_ES
+    move &FCEA2.DT_PROOF_AGE_SENT_ES        to $dt_age_sent_es
+
+FCEA2.TXT_PROOF_AGE_SENT_ES
+    move &FCEA2.TXT_PROOF_AGE_SENT_ES       to $txt_age_sent_es
+
+FCEA2.TXT_PROOF_CITIZENSHIP_SENT_ES
+    move &FCEA2.TXT_PROOF_CITIZENSHIP_SENT_ES to $txt_proof
+
+FCEA2.IND_PROOF_CITIZENSHIP_SENT_ES
+    move &FCEA2.IND_PROOF_CITIZENSHIP_SENT_ES to $ind_proof
+
+FCEA2.DT_PROOF_CITIZENSHIP_SENT_ES
+    move &FCEA2.DT_PROOF_CITIZENSHIP_SENT_ES  to $dt_proof
+
+FCEA2.IND_LEGAL_DOCS_SENT_ES
+    move &FCEA2.IND_LEGAL_DOCS_SENT_ES    to $ind_legal_docs
+
+FCEA2.TXT_LEGAL_DOCS_SENT_ES
+    move &FCEA2.TXT_LEGAL_DOCS_SENT_ES    to $txt_legal_docs
+
+FCEA2.TXT_MEETS_DD_OR_NOT_COMMENTS
+    move &FCEA2.TXT_MEETS_DD_OR_NOT_COMMENTS   to $txt_meets_dd_or_not
+
+FCEA2.IND_CHILD_SUPPORT_ORDER
+    move &FCEA2.IND_CHILD_SUPPORT_ORDER   to $ind_child_support
+
+FCEA2.TXT_INCOME_DTRMNTN_COMMENTS
+    move &FCEA2.TXT_INCOME_DTRMNTN_COMMENTS   to $txt_income_dtrm
+
+FCEA2.TXT_NO_INCOME_EXPLANATION
+        move &FCEA2.TXT_NO_INCOME_EXPLANATION     to $txt_no_income
+
+FCEA2.ID_FCE_APPLICATION
+       move &FCEA2.ID_FCE_APPLICATION         to $id_fce_application
+
+FCEA2.ID_EVENT
+       move &FCEA2.ID_EVENT         to $id_event
+
+CCOUNT2.DECODE
+    move &CCOUNT2.DECODE              to $nm_hospital_county
+
+CSTATE4.DECODE
+    move &CSTATE4.DECODE              to $hospital_state
+
+FROM    FCE_PERSON      FP2,
+        FCE_ELIGIBILITY FCE,
+    	FCE_APPLICATION FCEA2,
+    	CCTZNSTA ,
+    	CCOUNT          CCOUNT2,
+    	CSTATE          CSTATE4,
+    	CFCELIV,
+    	CFCELIV6
+
+WHERE FP2.ID_PERSON             = #input_id_person
+and   FCEA2.ID_FCE_APPLICATION = #id_fce_application
+AND   FCE.ID_FCE_ELIGIBILITY  = $id_fce_eligibility
+AND   FP2.ID_FCE_PERSON     = FCE.ID_FCE_PERSON
+AND   CCTZNSTA.CODE(+)      = FCE.CD_PERSON_CITIZENSHIP
+AND   FCEA2.ID_PERSON       = FCE.ID_PERSON
+AND   CCOUNT2.CODE(+)       = FCEA2.CD_COUNTY_HOSPITAL
+AND   CSTATE4.CODE(+)       = FCEA2.CD_STATE
+AND   CFCELIV.CODE(+)       = FCEA2.CD_LIVING_MONTH_REMOVAL
+AND   CFCELIV6.CODE(+)      = FCEA2.CD_NOTA_MOST_RECENT
+
+END-SELECT
+!show $fce_person_age
+!show 'id_fce_person and age fce app and fce elg'
+!show $id_fce_person
+!show #id_fce_application
+!show $id_fce_eligibility
+!show 'home elig'
+!show $home_elig
+!show $id_event
+!show 'amt ssi ' $amt_ssi
+END-PROCEDURE GET-AGE-AND-CITIZENSHIP-DATA
+!*****************************************************************************
+! GET-CHILD-INCOME                                                           *
+! CALLS PRINT-INCOME-CHILD                                                   *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-CHILD-INCOME
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+FCEI.AMT_INCOME
+    move &FCEI.AMT_INCOME               to $amt_income
+
+FCEI.IND_INCOME_SOURCE
+    move &FCEI.IND_INCOME_SOURCE        to $ind_inc_source
+
+FCEI.IND_RESOURCE_SOURCE
+    move &FCEI.IND_RESOURCE_SOURCE      to $ind_rsrc_source
+
+FCEI.IND_COUNTABLE
+    move &FCEI.IND_COUNTABLE            to $ind_countable
+
+FCEI.IND_EARNED
+    move &FCEI.IND_EARNED               to $ind_earned
+
+FCEI.IND_NOT_ACCESSIBLE
+    move &FCEI.IND_NOT_ACCESSIBLE       to $ind_not_access
+
+FCEI.IND_CHILD
+    move &FCEI.IND_CHILD                to $ind_child
+
+FCEI.IND_FAMILY
+    move &FCEI.IND_FAMILY               to $ind_family
+
+FCEI.IND_NONE
+    move &FCEI.IND_NONE                 to $ind_none
+
+FCEI.TXT_VERIFICATION_METHOD
+    move &FCEI.TXT_VERIFICATION_METHOD      to $verification_method
+
+FCEI.TXT_COMMENTS
+    move &FCEI.TXT_COMMENTS                 to $income_comments
+
+FCEI.TXT_SOURCE
+    move &FCEI.TXT_SOURCE                 to $txt_source
+
+CINC.DECODE
+   move &CINC.DECODE                  to $cd_type  
+   
+    do PRINT-INCOME-CHILD
+
+FROM FCE_INCOME FCEI,
+     CINC
+
+WHERE  FCEI.ID_PERSON       = #input_id_person
+AND    FCEI.IND_CHILD       = 'Y'
+AND    FCEI.IND_INCOME_SOURCE      = 'Y'
+AND    FCEI.ID_FCE_ELIGIBILITY = $id_fce_eligibility
+AND    CINC.CODE(+)        = FCEI.CD_TYPE
+
+
+END-SELECT
+
+END-PROCEDURE GET-CHILD-INCOME
+
+!*****************************************************************************
+! GET-FAMILY-INCOME                                                          *
+!CALLS: PRINT-INCOME-FAMILY                                                  *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-FAMILY-INCOME
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+P6.NM_PERSON_FULL
+    move &P6.NM_PERSON_FULL             to $full_name4
+
+FCEI2.AMT_INCOME
+    move &FCEI2.AMT_INCOME              to $2amt_income
+
+FCEI2.ID_PERSON
+    move &FCEI2.ID_PERSON               to $parent_id
+
+FCEI2.IND_INCOME_SOURCE
+    move &FCEI2.IND_INCOME_SOURCE       to $2ind_inc_source
+
+FCEI2.IND_RESOURCE_SOURCE
+    move &FCEI2.IND_RESOURCE_SOURCE     to $2ind_rsrc_source
+
+FCEI2.IND_COUNTABLE
+    move &FCEI2.IND_COUNTABLE           to $2ind_countable
+
+FCEI2.IND_EARNED
+    move &FCEI2.IND_EARNED              to $2ind_earned
+
+FCEI2.IND_NOT_ACCESSIBLE
+    move &FCEI2.IND_NOT_ACCESSIBLE      to $2ind_not_access
+
+FCEI2.IND_FAMILY
+    move &FCEI2.IND_FAMILY              to $2ind_family
+
+FCEI2.IND_NONE
+    move &FCEI2.IND_NONE                to $2ind_none
+  
+FCEI2.TXT_VERIFICATION_METHOD
+    move &FCEI2.TXT_VERIFICATION_METHOD to $2verification_method
+
+FCEI2.TXT_COMMENTS
+    move &FCEI2.TXT_COMMENTS            to $2income_comments
+
+FCEI2.TXT_SOURCE
+    move &FCEI2.TXT_SOURCE              to $2txt_source
+
+FP3.NBR_AGE
+    move &FP3.NBR_AGE                   to $2age
+
+CINC2.DECODE
+   move &CINC2.DECODE                  to $2cd_type
+
+CRPTRINT3.DECODE
+    move &CRPTRINT3.DECODE              to $role_int2
+
+    do PRINT-INCOME-FAMILY
+
+FROM FCE_INCOME FCEI2,
+     PERSON     P6,
+     FCE_PERSON FP3,
+     CINC      CINC2,
+     CRPTRINT   CRPTRINT3
+
+WHERE  FCEI2.ID_FCE_ELIGIBILITY = $id_fce_eligibility
+AND    FCEI2.IND_FAMILY         = 'Y'
+AND    FCEI2.IND_INCOME_SOURCE  = 'Y'
+AND    FP3.ID_FCE_PERSON        = FCEI2.ID_FCE_PERSON
+AND    FP3.ID_PERSON            = FCEI2.ID_PERSON
+AND    P6.ID_PERSON             = FP3.ID_PERSON      
+AND    CRPTRINT3.CODE(+)        = FP3.CD_REL_INT
+AND    CINC2.CODE(+)            = FCEI2.CD_TYPE
+
+END-SELECT
+
+END-PROCEDURE GET-FAMILY-INCOME
+!*****************************************************************************
+! GET-FAMILY-RESOURCES                                                       *
+! CALLS PRINT-RESOURCE-FAMILY                                                *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-FAMILY-RESOURCES
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+P7.NM_PERSON_FULL
+    move &P7.NM_PERSON_FULL             to $full_name5
+
+FCEI3.AMT_INCOME
+    move &FCEI3.AMT_INCOME              to $3amt_income
+
+FCEI3.ID_PERSON
+    move &FCEI3.ID_PERSON               to $3parent_id
+
+FCEI3.IND_INCOME_SOURCE
+    move &FCEI3.IND_INCOME_SOURCE       to $3ind_inc_source
+
+FCEI3.IND_RESOURCE_SOURCE
+    move &FCEI3.IND_RESOURCE_SOURCE     to $3ind_rsrc_source
+
+FCEI3.IND_COUNTABLE
+    move &FCEI3.IND_COUNTABLE           to $3ind_countable
+
+FCEI3.IND_EARNED
+    move &FCEI3.IND_EARNED              to $3ind_earned
+
+FCEI3.IND_NOT_ACCESSIBLE
+    move &FCEI3.IND_NOT_ACCESSIBLE      to $3ind_not_access
+
+FCEI3.IND_FAMILY
+    move &FCEI3.IND_FAMILY              to $3ind_family
+
+FCEI3.IND_NONE
+    move &FCEI3.IND_NONE                to $3ind_none
+
+FCEI3.TXT_VERIFICATION_METHOD
+    move &FCEI3.TXT_VERIFICATION_METHOD     to $3verification_method
+
+FCEI3.TXT_COMMENTS
+    move &FCEI3.TXT_COMMENTS                to $3income_comments
+
+FCEI3.TXT_SOURCE
+    move &FCEI3.TXT_SOURCE          to $3txt_source
+
+CRSRC3.DECODE
+   move &CRSRC3.DECODE             to $3cd_type
+
+    do PRINT-RESOURCE-FAMILY
+
+FROM FCE_INCOME FCEI3,
+     PERSON     P7,
+     CRSRC       CRSRC3
+
+WHERE  FCEI3.ID_FCE_ELIGIBILITY = $id_fce_eligibility
+AND    FCEI3.IND_FAMILY         = 'Y'
+AND    CRSRC3.CODE(+)            = FCEI3.CD_TYPE
+AND    P7.ID_PERSON             = FCEI3.ID_PERSON
+AND    FCEI3.IND_RESOURCE_SOURCE = 'Y'
+
+
+END-SELECT
+
+END-PROCEDURE GET-FAMILY-RESOURCES
+
+!*****************************************************************************
+! GET-CHILD-RESOURCES                                                        *
+! CALLS: PRINT-RESOURCE-CHILD                                                *
+!*****************************************************************************
+BEGIN-PROCEDURE GET-CHILD-RESOURCES
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+P8.NM_PERSON_FULL
+    move &P8.NM_PERSON_FULL             to $full_name6
+
+FCEI4.AMT_INCOME
+    move &FCEI4.AMT_INCOME              to $4amt_income
+
+FCEI4.IND_INCOME_SOURCE
+    move &FCEI4.IND_INCOME_SOURCE       to $4ind_inc_source
+
+FCEI4.IND_RESOURCE_SOURCE
+    move &FCEI4.IND_RESOURCE_SOURCE     to $4ind_rsrc_source
+
+FCEI4.IND_COUNTABLE
+    move &FCEI4.IND_COUNTABLE           to $4ind_countable
+
+FCEI4.IND_EARNED
+    move &FCEI4.IND_EARNED              to $4ind_earned
+
+FCEI4.IND_NOT_ACCESSIBLE
+    move &FCEI4.IND_NOT_ACCESSIBLE      to $4ind_not_access
+
+FCEI4.IND_NONE
+    move &FCEI4.IND_NONE                to $4ind_none
+
+FCEI4.TXT_VERIFICATION_METHOD
+    move &FCEI4.TXT_VERIFICATION_METHOD to $4verification_method
+
+FCEI4.TXT_COMMENTS
+    move &FCEI4.TXT_COMMENTS            to $4income_comments
+
+FCEI4.TXT_SOURCE
+    move &FCEI4.TXT_SOURCE              to $4txt_source
+
+CRSRC4.DECODE
+   move &CRSRC4.DECODE                  to $4cd_type
+
+    do PRINT-RESOURCE-CHILD
+
+FROM FCE_INCOME FCEI4,
+     PERSON     P8,
+     CRSRC       CRSRC4
+
+  
+WHERE FCEI4.ID_FCE_ELIGIBILITY = $id_fce_eligibility 
+AND   FCEI4.ID_PERSON          = #input_id_person 
+AND   FCEI4.IND_CHILD          ='Y'
+AND   CRSRC4.CODE(+)            = FCEI4.CD_TYPE
+AND   P8.ID_PERSON             = FCEI4.ID_PERSON
+AND   FCEI4.IND_RESOURCE_SOURCE = 'Y'
+
+
+END-SELECT
+
+END-PROCEDURE GET-CHILD-RESOURCES
+
+!*************************************************************************
+! GET-ELIG-SUMMARY
+! Gets the eligibility summary information.
+!
+! CALLED BY: PROCESS-REPORT
+! CALLS:     PRINT-ELIGIBILITY-SUMMARY
+!*************************************************************************
+BEGIN-PROCEDURE GET-ELIG-SUMMARY
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+FCE2.ID_ELIGIBILITY_EVENT
+    move &FCE2.ID_ELIGIBILITY_EVENT         to $2elg_event
+
+FCE2.IND_ELIGIBLE
+    move &FCE2.IND_ELIGIBLE                 to $2eligible
+
+FCE2.DT_REMOVAL_CHILD_ORDERED
+    move &FCE2.DT_REMOVAL_CHILD_ORDERED     to $2dt_removal_ordered
+
+FCE2.AMT_SSI
+    move &FCE2.AMT_SSI                       to $2amt_ssi
+
+FCE2.IND_REMOVAL_CHILD_ORDERED
+    move &FCE2.IND_REMOVAL_CHILD_ORDERED    to $2ind_child_remove
+
+FCE2.IND_CHILD_SUPPORT_ORDERED
+    move &FCE2.IND_CHILD_SUPPORT_ORDERED     to $child_support_ordered
+
+E.DT_ELIG_START
+    move &E.DT_ELIG_START                   to $2dt_start
+
+E.DT_ELIG_END
+    move &E.DT_ELIG_END                     to $2dt_end
+
+E.DT_ELIG_REVIEW
+    move &E.DT_ELIG_REVIEW                  to $2dt_review
+
+E.TXT_ELIG_COMMENT
+    move &E.TXT_ELIG_COMMENT               to $2detm_comments
+
+CELIGIBI.DECODE
+    move &CELIGIBI.DECODE                   to $2actual_elig
+
+CELIGIBI2.DECODE
+    move &CELIGIBI2.DECODE                  to $2select_elig
+
+CELIGMED.DECODE
+    move &CELIGMED.DECODE                   to $2med_elig
+
+CBILPLOC.DECODE
+    move &CBILPLOC.DECODE                   to $2ploc
+
+    do GET-ELIG-EVENT
+    
+FROM    FCE_ELIGIBILITY FCE2,
+        ELIGIBILITY     E,
+        CELIGIBI,
+        CELIGIBI        CELIGIBI2,
+        CELIGMED,
+        CBILPLOC
+
+WHERE FCE2.ID_FCE_APPLICATION   = $id_fce_application
+AND   E.ID_ELIG_EVENT       = FCE2.ID_ELIGIBILITY_EVENT
+AND   CELIGIBI.CODE(+)      = E.CD_ELIG_ACTUAL
+AND   CELIGMED.CODE(+)      = E.CD_ELIG_MED_ELIG_GROUP
+AND   CBILPLOC.CODE(+)      = FCE2.CD_BLOC_CHILD
+AND   CELIGIBI2.CODE(+)     = E.CD_ELIG_SELECTED
+
+END-SELECT
+ !show 'id fce appl '
+ !show $id_fce_eligibility
+ !show 'amt ssi ' $2amt_ssi
+ !show $2elg_event
+END-PROCEDURE GET-ELIG-SUMMARY
+
+!*************************************************************************
+!       PRINT-DATA
+!       Prints Child's Information and Address of Home of Removal
+!
+!       CALLED BY:  GET-PERSON-DATA
+!       CALLS:  NONE
+!*************************************************************************
+BEGIN-PROCEDURE PRINT-DATA
+
+print    'Application and Background'     (1)center bold
+position                 (+2)
+print    'Child''s Information'          (3,1)bold
+print    'Child''s Name: '               (4,1)
+print    $full_name                      (4,25)
+print    'Date of Birth: '               (4,50)
+print    $birthdate                      (4,70)
+print    'Social Security Number: '      (5,1)
+print    $child_ssn                      (5,25)
+print    'Medicaid Number: '             (5,50)
+print    $medicaid                       (5,70)
+print    'Person ID: '                   (6,1)
+print    $id_person                      (0,25)
+print    'Address of Home of Removal'    (8,1)bold
+print    'Street:'                       (10,1)
+print    $rmadd1                         ()
+print    'City:  '                       (11,1)
+print    $rmcity                         ()
+print    'State: '                       (11,30)
+print    $rmstate                        ()
+print    'Zip:   '                       (11,50)
+print    $rmzip                          ()
+print    'County:'                       (12,1)
+print    $rmcnty                         ()
+!TEMP DATA FOR TESTING ************************
+!print    'APPLICATION ID (passed): '             (12,1)
+!print    #id_fce_application                     (12,30)
+!print    'ELIGIBILITY ID (retrieved): '          (12,40)
+!print    $id_fce_eligibility                     (12,75)
+!TEMP DATA FOR TESTING ************************
+
+END-PROCEDURE PRINT-DATA
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-COLUMN-NAMES                                                      *
+!                                                                           *
+!       This procedure will print the report column names for the list of   *
+!       people living in the home at the time of removal.                   *
+!                                                                           *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-PERSON-LIST-DATA                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-COLUMN-NAMES
+    print    'List of Principals in Home of Removal' (14,1)bold
+
+        print  'Living In Home '               (16,1)bold
+        print  'of Removal'                    (17,1)bold
+        print  'Name'                          (16,20)bold
+        print  'Relationship'                 (16,45)bold
+        print  'Date of Birth'                (16,62)bold
+        print  'Current Address'              (16,80)bold
+        print  'Member of '                   (16,115)bold
+        print  'Certified Group'              (17,115)bold
+
+     do GET-PERSONS-LIST-DATA
+
+ END-PROCEDURE PRINT-COLUMN-NAMES
+!*************************************************************************
+!       PRINT-PERSON-LIST-DATA                                           *
+!       Prints all data found in the SQL query                           *
+!                                                                        *
+!       CALLED BY:  GET-MATCH-DATA                                       *
+!       CALLS:  NONE                                                     *
+!*************************************************************************
+BEGIN-PROCEDURE PRINT-PERSON-LIST-DATA
+
+        if $id_person2  = $new_id_person
+                position (+4)
+        else
+                position (+1)
+        end-if
+ next-listing need = 1
+ !show $id_person2
+ !show $new_id_person
+
+        print    $at_home                      (,1)
+        print    $full_name2                   (,20)
+        print    $role                         (,45)
+        print    $birth_date2                  (,65)
+        print    $add1                         (,80)
+        print    $group                        (,115)
+        print    $city2                        (+1,80)
+        print ', '                             ()
+        print    $state2                       ()
+        print ' '                              ()
+        print    $zip2                         ()
+
+       let $new_id_person  = $id_person2
+
+
+END-PROCEDURE PRINT-PERSON-LIST-DATA
+
+!*************************************************************************
+!       PRINT-RESPONSE-PLCMT-CARE-DATA                                   *
+!       Prints all placement data                                        *
+!                                                                        *
+!       CALLED BY:  PROCESS-REPORT                                       *
+!       CALLS:      none                                                 *
+!*************************************************************************
+BEGIN-PROCEDURE PRINT-RESPONSE-PLCMT-CARE-DATA
+next-listing need = 1
+
+position                                            (+3)
+print    'Responsibility for Placement and Care'                        (,1)bold
+position                                            (+2)
+print $minor                                            (,1)
+print    'Does the child live with a minor parent who is in FPS''s managing conservatorship? '    (,5)
+print   $hospital                                       (+1,1)
+print   'Was the child in a hospital when FPS was appointed conservator? '          (,5)
+
+!show $hospital
+if $hospital = 'Y'
+ next-listing need = 1
+ position                                           (+1)
+ print 'Admission Date:'                                    (,5)
+ print $dt_admission                                        (,25)
+ print 'Discharge Date: '                                   (,40)
+ print $dt_discharge                                        (,60)
+end-if
+
+print $cvs                                          (+1,1)
+print 'At Removal did another person besides the Parent(s) have managing conservatorship of the Child?' (,5)
+print 'If yes, ensure this person appears in the List of Principals above.  '       (+1,5)
+position                                            (+3)
+next-listing need = 7
+
+print    'Health Insurance'                                         (,1)bold
+position                                            (+1)
+print $ins                                          (,1)
+print    'Is the child covered by any health insurance other than Medicaid? '           (,5)
+
+if $ins = 'Y'
+
+print    'Company Name:'    (+2,5)
+print     $company          (,20)
+print    'Policy No: '      (,50)
+print    $health_policy     (,65)
+print    'Group No: '       (,80)
+print    $health_group      (,95)
+print    'Street: '       (+1,5)
+print    $health_addr     (,20)
+print    $health_addr2    (+1,20)
+print    'City: '       (+1,5)
+print    $health_city   (,20)
+print    'State:'       (,50)
+print     $health_state (,65)
+print    'Zip: '        (,95)
+print    $health_zip    (,100)
+print    'Policy Holder: '  (+1,5)
+print    $policy_holder     (,20)
+print    'Begin Date: '     (,50)
+print    $health_begin      (,65)
+print    'End Date: '       (,80)
+print    $health_end        (,95)
+print    'Employer''s Name:'(+1,5)
+print     $health_employer  (,22)
+print    'Employee''s Name:' (,50)
+print    $health_employee   (,67)
+end-if
+
+!next-listing need = 3 skiplines=1
+
+
+! PRINT PLACEMENT HEADINGS
+print 'Placements '         (+2,1)bold
+position                    (+2)
+print 'Date Entered'            (,1)bold
+print 'Status '                 (,15)bold
+print 'Description'             (,25)bold
+print 'Entered By '             (,105)bold
+
+
+END-PROCEDURE PRINT-RESPONSE-PLCMT-CARE-DATA
+
+!****************************************************************************
+!PRINT PLACEMENT EVENTS
+!
+!
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PLACEMENTS
+position            (+1)
+print $dt_event     (,1)
+print $status       (,15)
+print $event_descr  (,25)
+print $event_worker (,105)
+END-PROCEDURE PRINT-PLACEMENTS
+
+!****************************************************************************
+!PRINT--HEADING-AGE-AND-CITIZENSHIP-DATA                                    *
+!                                                                           *
+!  CALLED BY: PROCESS-REPORT                                                *
+!  CALLS:     NONE                                                          *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-HEADING-AGE-AND-CITIZENSHIP-DATA
+ next-listing need = 1
+     new-page
+
+position                        (+2)
+print 'Age and Citizenship'     (,1)center bold
+print 'Child''s Age '       (+2,1)bold
+position                    (+1)
+if $role_int = 'SL'
+!show $fce_person_age
+  print 'Age'                 (,1)
+  print $fce_person_age       (,20)
+end-if
+
+position                    (+1)
+print 'Date of Birth'      (,1)
+print $dob              (,20)
+position                    (+1)
+!if $approx = 'Y'
+print 'Approximate? '       (,1)
+print  $approx              (,20)
+!end-if
+position            (+2)
+print 'Method of Verification'  (,1)bold
+
+position                        (+1)
+if
+$age_birth_cert = 'Y'
+	print 'US Birth Certificate'    (+1,2)
+end-if
+if $age_baptism_cert = 'Y'
+print 'Baptismal Certificate'   (+1,2)
+end-if 
+
+if $age_foreign_cert    = 'Y'
+    print 'Birth Certificate (Foreign)'  (+1,2)
+end-if
+
+if $age_dhs_us = 'Y'
+   print 'DHS System'          (+1,2)
+end-if
+
+if $age_just_eval = 'Y'
+   print 'Evaluative Conclusion'   (+1,2)
+end-if
+
+if $age_hospital_cert  = 'Y'
+   print 'Hospital Certificate '   (+1,2)
+end-if
+
+if $age_ntrlztn_cert  = 'Y'
+  print 'Naturalization/Citizenship Certificate ' (+1,2)
+end-if
+
+if $age_vrfd_passport    = 'Y'
+      print 'Passport (US) '          (+1,2)
+end-if
+
+if $age_vrfd_card       = 'Y'
+print 'Permanent Resident Card'           (+1,2)
+end-if
+
+!show $nm_hospital
+if  $nm_hospital <> ''
+ next-listing need = 1
+	print 'Birth verification document is not being sent to worker. '(+1,1)bold
+	print 'Hospital Name: '         (+2,1)
+	print $nm_hospital               (,25)
+	print 'Mother''s Maiden Name: ' (+1,1)
+	print $nm_mother_maiden         (,25)
+	print 'City: '                  (,40)
+	print $nm_hospital_city         (,50)
+	print 'State:'                  (+1,1)
+	print $hospital_state           (,25)
+	print 'County: '                (,40)
+	print $nm_hospital_county       (,50)
+end-if
+
+ next-listing need = 1
+print 'Child''s Citizenship/Alien Status '(+3,1)bold
+print 'Child''s Citizenship/Alien Status '(+1,1)
+print $person_ctznshp           (,40)
+print 'Method of Verification'  (+3,1)bold
+
+!if $ctznshp_eval = 'N'
+
+    if $us_cert = 'Y'
+        print 'US Birth Certificate'    (+1,2)
+    end-if
+    
+    if $ctznsp_ntrlztn_cert = 'Y'
+        print 'Naturalization Certificate ' (+1,2)
+    end-if
+    
+    if $citzen_cert = 'Y'
+	print 'Citizenship Certificate'  (+1,2)
+   end-if	
+     
+    if $ctznshp_passport    = 'Y'
+        print 'US Passport '            (+1,2)
+    end-if
+
+   if $hosp_cert  = 'Y'
+        print 'Record of birth in US Hospital ' (+1,2)
+    end-if
+
+    if $ind_baptismal = 'Y'
+        print 'Baptismal Certificate Showing US Birth'  (+1,2)
+    end-if
+
+ 
+    if $child_found = 'Y'
+        print 'Child found in US under age five, parents unknown' (+1,2)
+    end-if
+
+   if $ctznshp_eval = 'Y'
+        print 'Evaluative Conclusion'   (+1,2)
+    end-if
+
+    if $dhs_us = 'Y'
+        print 'DHS System (SIG code 4 or 5)' (+1,2)
+    end-if
+
+ next-listing need = 1
+
+if $res_ctznshp_card = 'Y'
+    print 'Permanent Resident  '    (+1,1)bold
+    print 'Alien Registration Receipt Card/I-551 (green card)' (+1,1)
+end-if
+ next-listing need = 1
+
+if $ind_review = 'Y' or $dhs_other = 'Y'
+      print 'Other Qualified Alien'   (+1,1)bold
+end-if
+
+if $ind_review = 'Y'
+   print 'Document Reviewed by Attorney'      (+1,1)
+end-if
+
+if $dhs_other = 'Y'
+   print 'DHS System (SIG Code 4S, 4H, 5S, or 5H)' (+1,1)
+end-if
+ next-listing need = 1
+
+if $ctznshp_no_doc = 'Y' or $for_birth_cert = 'Y' or $for_ctznshp_doc = 'Y'
+   print 'Undetermined Status'     (+1,1)bold
+end-if
+
+if $for_birth_cert = 'Y'
+   print 'Foreign Birth Certificate/Record' (+1,1)
+end-if
+
+if $for_ctznshp_doc = 'Y'
+   print 'Foreign/Other documents - Status unclear ' (+1,1)
+end-if
+
+if $ctznshp_no_doc = 'Y'
+   print 'No documents'            (+1,1)
+end-if
+
+ next-listing need = 4
+
+ print 'Evaluative Conclusion'   (+1,1)bold
+    print 'If the child''s age or U.S. citizenship cannot be verified by one of the verification methods, check if the child meets the criteria for evaluative conclusion (see Narrative).'  (+1,1)wrap 120 2
+if $ind_eval_concl = 'Y'
+print $ind_eval_concl         (+2,1) 
+print 'Evaluative Conclusion Approved' (,5)
+end-if
+
+END-PROCEDURE PRINT-HEADING-AGE-AND-CITIZENSHIP-DATA
+
+!*****************************************************************************
+! PRINT-DOMICILE-AND-DEPRIVATION                                             *
+!                                                                            *
+!   This procedure prints the domicile and derivation information which is   *
+!   pulled in the GET-AGE-AND-CITIZENSHIP-DATA.                              *
+!                                                                            *
+! CALLED BY  : PROCESS-REPORT                                                *
+! CALLS      : GET-RELATIVE-NAME                                             *
+!*****************************************************************************
+BEGIN-PROCEDURE PRINT-DOMICILE-AND-DEPRIVATION
+       move 0 to #count1
+  new-page
+print 'Domicile and Deprivation' (,1)bold center
+position            (+1)
+print 'Eligibility Specialist Confirmation ' (+2,1)bold
+
+if $ive_system_determined = 'Y'
+   position         (+1)
+   print 'The system has determined the child meets Title IV-E Requirements for Deprivation.' (,1)
+else
+   position         (+1)
+   print 'The system has determined the child does not meet Title IV-E Requirements for Deprivation.'(,1)
+end-if
+
+ next-listing need = 1
+
+position            (+1)
+print 'Please confirm: '    (,1)
+
+position            (+1)
+  next-listing need = 1
+
+if $ive_es_determined = 'Y'
+   print 'Child meets Title IV-E Requirements for Deprivation' (,1)
+else
+   print 'Child does not meet Title IV-E Requirements for Deprivation.' (,1)
+end-if
+  next-listing need = 1
+  
+if $txt_meets_dd_or_not<> '' 
+   print 'Comments:'          (+1,1)
+   print $txt_meets_dd_or_not (+1,1)
+end-if
+
+if $determination_comments <> ''
+   Position         (+1)
+   print 'Comments: '       (,1)
+   print $determination_comments   (1,15)
+end-if
+
+ next-listing need = 2
+position            (+1)
+print 'Determination of Domicile and Deprivation of Parental Support' (,1)bold
+ next-listing need = 2
+position            (+2)
+print 'Enter the month and year the court proceedings were initiated:' (2,1)
+print '* Month: '                           (2,65)
+if $court_month = '1'
+  print  'January'                        (2,75)
+end-if
+if $court_month = '2'
+  print  'February'                        (2,75)
+end-if
+if $court_month = '3'
+  print  'March'                        (2,75)
+end-if
+if $court_month = '4'
+  print  'April'                        (2,75)
+end-if
+if $court_month = '5'
+  print  'May'                        (2,75)
+end-if
+if $court_month = '6'
+  print  'June'                        (2,75)
+end-if
+if $court_month = '7'
+  print  'July'                        (2,75)
+end-if
+if $court_month = '8'
+  print  'August'                        (2,75)
+end-if
+if $court_month = '9'
+  print  'September'                        (2,75)
+end-if
+if $court_month = '10'
+  print  'October'                        (2,75)
+end-if
+if $court_month = '11'
+  print  'November'                        (2,75)
+end-if
+if $court_month = '12'
+  print  'December'                        (2,75)
+end-if
+
+
+print '* Year:'                             (2,83)
+print $court_year                           (2,91)
+
+print 'Specify the child''s living arrangement during the month the court proceedings were initiated.' (+2,1)
+next-listing need = 1 skiplines = 1
+
+!show 'parent disable '
+!show $parent_disable
+position (+1)
+if  $living_arr = 'Both Parents'
+    print 'Living with Both Parents'                       (+1,1)underline
+    position                                               (+1)
+    print 'Is either parent disabled or incapacitated?'    (,1)
+    print $parent_disable                                  (,45)
+next-listing need = 1
+  if $parent_disable = 'N'
+     print 'Who is the Primary Wage Earner* (PWE) in the home of removal?'  (+1,1)
+       if $mother_pwe ='Y'
+           print 'Mother'                           (,65)
+       else
+       if  $father_pwe = 'Y'
+           print 'Father'                           (,65)
+       end-if
+       end-if
+
+    print '*Primary Wage Earner is defined as the legal parent who has earned the most income in the last two years.' (+1,25)
+    !show 'PWE currently unemployed'
+    !show $under_100
+       next-listing need = 1
+
+    print 'Is the PWE currently unemployed?'            (+2,1)
+    if $under_100 = 'Y'
+        print   'Yes'                                   (,45)
+    else
+    if $under_100 = 'N'
+        print 'No'                                      (,45)
+
+    else
+    if $under_100 = 'A'
+        print 'A/N'                                     (,45)
+   end-if
+   end-if
+   end-if
+     if $under_100 = 'N'
+          next-listing need = 2
+
+          print 'Does the PWE work, on average**,less than 100 hours per month?'(+1,1)
+
+              if $pwe_under_100 = 'Y'
+            print   'Yes'                           (,65)
+          else
+          if $pwe_under_100 = 'N'
+            print 'No'                              (,65)
+
+          else
+          if $pwe_under_100 = 'A'
+            print 'A/N'                             (,65)
+
+         end-if
+         end-if
+        end-if
+          print '** Average the hours worked for the last three months.'  (+1,25)
+
+            if $pwe_under_100 = 'N'
+                      next-listing need = 1
+
+               print 'What is his/her gross monthly earned income?'     (+1,1)
+               print $pwe_amt                           (,50)edit $$$,999.99
+         end-if
+     end-if
+  else
+    print 'Check the appropriate box to specify how you verified it.'   (+1,1)
+    if $ssi_verification = 'Y'
+     print 'SSI'                        (,70)bold
+    end-if
+   if $rsdi_verification = 'Y'
+     print 'RSDI'                       (,80) bold
+   end-if
+    if $other_verifciation = 'Y'
+     print 'Other*'                     (,90)bold
+    end-if
+
+    next-listing need = 1
+
+    print '*A Doctor''s Letter must verify the disability and inability of the parent to work for at least 30 days.' (+1,25)
+  end-if
+end-if
+
+!show 'military work'
+!show $military_work
+!show 'work related '
+!show $work_related
+if  $living_arr = 'One Legal or Biological Parent'
+    print 'Living with One Legal or Biological Parent'         (,1)underline
+    position                                    (+2)
+    print 'Which Parent? '                      (,1)
+    if   $absent_mom  = 'Y'
+         print 'Father '                        (,30)
+    else
+         print 'Mother'                         (,30)
+    end-if
+   position                                      (+1)
+   print 'Is the other parent''s absence because of employment outside the community or active military duty?' (,1)
+   if $military_work = 'Y' or $military_work = 'N'
+      print $military_work                          (,100)
+   else
+   if $work_related = 'Y'or $work_related = 'N'
+      print $work_related                                                  (,100)
+   end-if
+   end-if
+            next-listing need = 1
+
+   if $military_work = 'Y'
+    print 'In this situation, the section for "Living with Both Parents" radio button should have been selected.'                           (+1,1)
+   else
+      if $military_work = 'N'
+        print 'What is the reason for the parent''s absence? '  (+1,1)
+        next-listing need = 1
+     if $died = 'Y'
+            print 'Death'                       (+1,1)
+    end-if
+
+    if $divorced = 'Y'
+                print 'Divorce'                 (+1,1)
+    end-if
+
+    if $never_cohabit = 'Y'
+           print 'Never lived in the home '     (+1,1)
+    end-if
+
+    if $deported = 'Y'
+        print 'Deportation'                     (+1,1)
+    end-if
+
+    if $hospitalized = 'Y'
+            print 'Hospitalized over 30 days'   (+1,1)
+    end-if
+
+    if $custody = 'Y'
+            print 'Separated with alternating Custody'      (+1,1)
+    end-if
+
+    if $deserted = 'Y'
+        print 'Desertion'                      (+1,1)
+    end-if
+
+    if $incarcerated ='Y'
+        print  'Incarcerated over 30 days'     (+1,1)
+    end-if
+
+    if $seperated ='Y'
+        print  'Separated over 30 days'        (+1,1)
+    end-if
+      end-if
+    end-if
+end-if
+
+ if  $living_arr = 'Other Relative'
+
+    do GET-RELATIVE-NAME
+     !show 'relative id'
+     !show $other_relative
+     next-listing need = 1
+     print 'Living with Other Relative'         (,1)underline
+     position                                   (+1)
+     print 'Name of Relative: '                 (,1)
+     print $relative                           (,30)
+ end-if
+
+!show 'living arr'
+!show $living_arr
+!show 'Living with parent'
+!show '6_mnth or cvs'
+ if  $living_arr = 'None of the Above'
+     next-listing need = 1
+     position                           (+1)
+     print $living_arr                  (,1)underline
+ 
+       print 'At any the time during the six months before the court proceedings were initiated was the child living with a parent or relative with managing conservatorship of the child? ' (+1,1)wrap 120 2
+       print $6_mnths (,55)
+              position (+1)
+      if $6_mnths    = 'Y'
+       print 'Select the most recent situation that applies:' (+1,1)bold
+      end-if
+     next-listing need = 2 
+       
+       
+if  $living_arr2 = 'Both Parents'
+    print 'Living with Both Parents'                       (+2,1)underline
+    position                                               (+1)
+    print 'Is either parent disabled or incapacitated?'    (,1)
+    print $parent_disable                                  (,45)
+    next-listing need = 1
+  if $parent_disable = 'N'
+     print 'Who is the Primary Wage Earner* (PWE) in the home of removal?'  (+1,1)
+       if $mother_pwe ='Y'
+           print 'Mother'                           (,65)
+       else
+       if  $father_pwe = 'Y'
+           print 'Father'                           (,65)
+       end-if
+       end-if
+
+     print '*Primary Wage Earner is defined as the legal parent who has earned the most income in the last two years.' (+1,25)
+     !show 'PWE currently unemployed'
+     !show $under_100
+       next-listing need = 1
+      print 'Is the PWE currently unemployed?'            (+2,1)
+      if $under_100 = 'Y'
+        print   'Yes'                                   (,45)
+      else
+      if $under_100 = 'N'
+        print 'No'                                      (,45)
+      else
+      if $under_100 = 'A'
+        print 'A/N'                                     (,45)
+      end-if
+      end-if
+      end-if
+     if $under_100 = 'N'
+          next-listing need = 2
+
+          print 'Does the PWE work, on average**,less than 100 hours per month?'(+1,1)
+
+              if $pwe_under_100 = 'Y'
+            print   'Yes'                           (,65)
+          else
+          if $pwe_under_100 = 'N'
+            print 'No'                              (,65)
+
+          else
+          if $pwe_under_100 = 'A'
+            print 'A/N'                             (,65)
+
+         end-if
+         end-if
+        end-if
+          print '** Average the hours worked for the last three months.'  (+1,25)
+
+            if $pwe_under_100 = 'N'
+                      next-listing need = 1
+
+               print 'What is his/her gross monthly earned income?'     (+1,1)
+               print $pwe_amt                           (,50)edit $$$,999.99
+         end-if
+     end-if
+  else
+    print 'Check the appropriate box to specify how you verified it.'   (+1,1)
+    if $ssi_verification = 'Y'
+     print 'SSI'                        (,70)bold
+    end-if
+   if $rsdi_verification = 'Y'
+     print 'RSDI'                       (,80) bold
+   end-if
+    if $other_verifciation = 'Y'
+     print 'Other*'                     (,90)bold
+    end-if
+
+    next-listing need = 1
+
+    print '*A Doctor''s Letter must verify the disability and inability of the parent to work for at least 30 days.' (+1,25)
+  end-if
+end-if
+
+!show 'military work'
+!show $military_work
+!show 'work related '
+!show $work_related
+if  $living_arr2 = 'One Legal or Biological Parent'
+    print 'Living with One Legal or Biological Parent'         (,1)underline
+    position                                    (+1)
+    print 'Which Parent? '                      (,1)
+    if   $absent_mom  = 'Y'
+         print 'Father '                        (,30)
+    else
+         print 'Mother'                         (,30)
+    end-if
+   position                                      (+1)
+   print 'Is the other parent''s absence because of employment outside the community or active military duty?' (,1)
+   if $military_work = 'Y' or $military_work = 'N'
+      print $military_work                          (,100)
+   else
+   if $work_related = 'Y'or $work_related = 'N'
+      print $work_related                                                  (,100)
+   end-if
+   end-if
+            next-listing need = 1
+
+   if $military_work = 'Y'
+    print 'In this situation, the section for "Living with Both Parents" radio button should have been selected.'                           (+1,1)
+   else
+      if $military_work = 'N'
+        print 'What is the reason for the parent''s absence? '  (+1,1)
+        next-listing need = 1
+     if $died = 'Y'
+            print 'Death'                       (+1,1)
+    end-if
+
+    if $divorced = 'Y'
+                print 'Divorce'                 (+1,1)
+    end-if
+
+    if $never_cohabit = 'Y'
+           print 'Never lived in the home '     (+1,1)
+    end-if
+
+    if $deported = 'Y'
+        print 'Deportation'                     (+1,1)
+    end-if
+
+    if $hospitalized = 'Y'
+            print 'Hospitalized over 30 days'   (+1,1)
+    end-if
+
+    if $custody = 'Y'
+            print 'Separated with alternating Custody'      (+1,1)
+    end-if
+
+    if $deserted = 'Y'
+        print 'Desertion'                      (+1,1)
+    end-if
+
+    if $incarcerated ='Y'
+        print  'Incarcerated over 30 days'     (+1,1)
+    end-if
+
+      if $seperated ='Y'
+        print  'Separated over 30 days'        (+1,1)
+      end-if
+      end-if
+    end-if
+end-if
+
+   if  $living_arr2 = 'Other Relative with Managing Convervatorship'
+
+     do GET-CVS-RELATIVE-NAME
+      !show 'cvs relative id'
+      !show $cvs_relative
+       next-listing need = 1
+       print 'Other Relative with Managing Conservatorship'         (,1)underline
+       position                                   (+1)
+       print 'Name of Relative with Managing Conservatorship: '     (,1)
+       print $cvs_relative                                         (,50)
+   end-if
+ end-if
+
+
+END-PROCEDURE PRINT-DOMICILE-AND-DEPRIVATION
+
+!*****************************************************************************
+! PRINT-HEADING-INCOME-CHILD
+!
+!
+!
+!
+!*****************************************************************************
+ BEGIN-PROCEDURE PRINT-HEADING-INCOME-CHILD
+    next-listing need = 1
+
+ print 'Income for Child'   (+1,1)bold
+    next-listing need = 2
+ print 'Name'               (+1,1)bold
+ print 'Type'               (,46)bold
+ print 'Amount'             (,70)bold
+ print 'Source '            (,85)bold
+ print 'Earned/'            (,109)bold
+ print 'Countable/'         (,120)bold
+ print 'Unearned'           (+1,109)bold
+ print 'Exempt'             (,120)bold
+ 
+   do GET-CHILD-INCOME
+   
+ END-PROCEDURE PRINT-HEADING-INCOME-CHILD
+!*****************************************************************************
+!PRINT-INCOME-CHILD
+!
+!
+!*****************************************************************************
+
+BEGIN-PROCEDURE PRINT-INCOME-CHILD
+     next-listing need = 1
+
+print $full_name        (1,1)
+print $cd_type          (,45)
+
+if $ind_none ='Y'
+    print 'No Income'   (,70)
+else
+    print $amt_income   (,70)edit $$$,999,999.99
+
+    print $txt_source   (,85)
+
+    if $ind_earned = 'Y'
+       print 'Earned '     (,109)
+    else
+       print 'Unearned '   (,109)
+    end-if
+    if $ind_countable = 'Y'
+       print 'Countable '  (,120)
+    else
+       print 'Exempt'     (,120)
+    end-if
+end-if
+
+!show 'income ind '
+!show $ind_none
+ END-PROCEDURE PRINT-INCOME-CHILD
+!*****************************************************************************
+! PRINT-HEADING-INCOME-FAMILY
+!
+!
+!
+!
+!*****************************************************************************
+
+
+ BEGIN-PROCEDURE PRINT-HEADING-INCOME-FAMILY
+   next-listing need = 1
+
+ print 'Income for Family'  (+1,1)bold
+  next-listing need = 2
+
+ print 'Name'               (+1,1)bold
+ print 'Relationship'       (,22)bold
+ print 'Age'                (,42)bold
+ print 'Type'               (,46)bold
+ print 'Amount'             (,70)bold
+ print 'Source'             (,85)bold
+ print 'Earned/'            (,109)bold
+ print 'Countable/'         (,120)bold
+ print 'to Child '          (+1,22,9)bold
+ print 'Exempt'             (,120)bold
+ print 'Unearned'           (,109)bold
+   do GET-FAMILY-INCOME
+
+
+ END-PROCEDURE PRINT-HEADING-INCOME-FAMILY
+
+!*****************************************************************************
+!PRINT-INCOME-FAMILY
+!
+!
+!*****************************************************************************
+
+BEGIN-PROCEDURE PRINT-INCOME-FAMILY
+
+    print $full_name4       (+1,1)
+    print $role_int2        (,22)
+    print $2age             (,42)
+    print $2cd_type         (,45)
+
+    if $2ind_none ='Y'
+        print 'No Income'   (,70)
+    else
+        print $2amt_income  (,70)edit $$$,999,999.99
+    end-if
+
+    print $2txt_source      (,85)
+
+    if $2ind_earned = 'Y'
+        print 'Earned '     (,109)
+     else
+       if $2ind_earned = 'N'
+        print 'Unearned '   (,109)
+       end-if
+    end-if
+      if $2ind_countable = 'Y'
+        print 'Countable '  (,120)
+    else
+      if $2ind_countable = 'N'
+        print 'Exempt'      (,120)
+      end-if
+    end-if
+
+END-PROCEDURE PRINT-INCOME-FAMILY
+
+
+!*****************************************************************************
+! PRINT-HEADING-RESOURCES-FAMILY
+!
+!
+!
+!
+!*****************************************************************************
+
+
+ BEGIN-PROCEDURE PRINT-HEADING-RESOURCES-FAMILY
+   next-listing need = 10
+
+ print 'Resources for Family'   (+1,1)bold
+  next-listing need = 1
+
+ print 'Name'                   (+1,1)bold
+ print 'Type'                    (,23)bold
+ print 'Amount'                  (,47)bold
+ print 'Source'                  (,64)bold
+ print 'Verification'            (,85)bold
+ print 'Inaccessible?'           (,107)bold
+ print 'Countable'               (,123)bold
+ print 'Method'                 (+1,85)bold
+ print '/Exempt'                (,123)bold
+
+   do GET-FAMILY-RESOURCES
+
+ END-PROCEDURE PRINT-HEADING-RESOURCES-FAMILY
+!*****************************************************************************
+! PRINT-HEADING-RESOURCES-CHILD
+!
+!
+!
+!
+!*****************************************************************************
+ BEGIN-PROCEDURE PRINT-HEADING-RESOURCES-CHILD
+
+   next-listing need = 10
+
+  print 'Resources for Child'    (+1,1)bold
+  next-listing need = 1
+
+  print 'Name'                    (+1,1)bold
+  print 'Type'                     (,23)bold
+  print 'Amount'                   (,47)bold
+  print 'Source'                   (,64)bold
+  print 'Verification'             (,85)bold
+  print 'Inaccessible?'            (,107)bold
+  print 'Countable'               (,123)bold
+  print 'Method'                  (+1,85)bold
+  print '/Exempt'                  (,123)bold
+
+   do GET-CHILD-RESOURCES
+   
+ END-PROCEDURE PRINT-HEADING-RESOURCES-CHILD
+!*****************************************************************************
+!PRINT-RESOURCE-FAMILY
+!
+!
+!*****************************************************************************
+
+BEGIN-PROCEDURE PRINT-RESOURCE-FAMILY
+        !show '3parent id '
+        !show $3parent_id
+        !show 'no income '
+        !show $3ind_none
+    print $full_name5               (+1,1)
+  if $3cd_type = ''
+    print 'No Resources'            (,23)
+  else
+    print $3cd_type                 (,23)
+  end-if
+    
+    if $3ind_rsrc_source = 'Y'
+        print $3amt_income          (,47)edit $$$,999,999.99
+        print $3txt_source          (,64)
+        print $3verification_method (,85)
+
+      if $3ind_not_access = '' or $3ind_not_access = 'N'
+        print 'No'                  (,107)
+       else
+         if $3ind_not_access = 'Y'
+            print 'Yes'             (,107)
+         end-if
+      end-if
+      
+     if $3ind_countable = 'Y' 
+        print 'Countable'           (,123)
+     else
+       if $3ind_countable = 'N'
+        print 'Exempt'              (,123)
+       end-if
+     end-if
+    end-if
+
+END-PROCEDURE PRINT-RESOURCE-FAMILY
+
+!*****************************************************************************
+!PRINT-RESOURCE-CHILD
+!
+!
+!*****************************************************************************
+
+BEGIN-PROCEDURE PRINT-RESOURCE-CHILD
+        !show 'no income '
+        !show $4ind_none
+    print $full_name6               (+1,1)
+
+    print $4cd_type                 (,23)
+    if $4ind_rsrc_source = 'Y'
+        print $4amt_income          (,47)edit $$$,999,999.99
+        print $4txt_source          (,64)
+        print $4verification_method (,85)
+
+      if $4ind_not_access = '' or $4ind_not_access = 'N'
+        print 'No'                  (,107)
+       else
+         if $4ind_not_access = 'Y'
+            print 'Yes'             (,107)
+         end-if
+      end-if
+     if $4ind_countable = 'Y'
+        print 'Countable'           (,123)
+     else
+       if $4ind_countable = 'N'
+        print 'Exempt'              (,123)
+       end-if
+     end-if
+    end-if
+
+END-PROCEDURE PRINT-RESOURCE-CHILD
+
+!*****************************************************************************
+! PRINT-INCOME-AND-EXPENDITURES
+! The income and expenditures data is pulled by the GET-AGE-AND-CITIZENSHIP-DATA
+! procedure.
+!
+! CALLED BY: PROCESS-REPORT
+! CALLS: PRINT-HEADING-INCOME-CHILD
+!        PRINT-HEADING-INCOME-FAMILY
+!        PRINT-HEADING-RESOURCES-CHILD
+!        PRINT-HEADING-RESOURCES-FAMILY
+!*****************************************************************************
+BEGIN-PROCEDURE PRINT-INCOME-AND-EXPENDITURES
+
+  new-page
+print 'Income and Expenditures' (,1)bold center
+position            (+2)
+print 'Received Income Assistance at Time of Removal ' (+1,1)bold
+position            (+1)
+
+print 'The court proceedings that resulted from the Child''s removal were initiated in ' (+1,1)
+
+if $court_month = '1'
+  print  'January'                    (,85)
+end-if
+if $court_month = '2'
+  print  'February'                    (,85)
+end-if
+if $court_month = '3'
+  print  'March'                      (,85)
+end-if
+if $court_month = '4'
+  print  'April'                         (,85)
+end-if
+if $court_month = '5'
+  print  'May'                         (,85)
+end-if
+if $court_month = '6'
+  print  'June'                         (,85)
+end-if
+if $court_month = '7'
+  print  'July'                        (,85)
+end-if
+if $court_month = '8'
+  print  'August'                         (,85)
+end-if
+if $court_month = '9'
+  print  'September'                        (,85)
+end-if
+if $court_month = '10'
+  print  'October'                         (,85)
+end-if
+if $court_month = '11'
+  print  'November'                        (,85)
+end-if
+if $court_month = '12'
+  print  'December'                        (,85)
+end-if
+
+
+print  $court_year       (,100)
+print $income_assistance        (+1,1)
+print 'Did the child receive Income Assistance during that month? (TANF, Food Stamps, Medicaid)' (,5)
+if $income_assistance = 'Y'
+  print $ind_notified_dhs_worker  (+1,1)
+  print 'Was the DHS worker notified of the child''s removal from the home?' (,5)
+ 
+ if $ind_notified_dhs_worker = 'Y'
+next-listing need = 5
+  print 'Income Assistance Worker or Person Notified Information' (+1,5)bold
+  print 'First:'             (+2,5)bold
+  print $nm_dhs_worker_first (,12)
+  print 'Middle:'            (,25)bold
+  print $nm_dhs_worker_middle (,33)
+  print 'Last:'              (,45)bold
+  print $nm_dhs_worker_last  (,51)
+  print 'Phone Number:'      (+1,5)bold  
+  print $nbr_dhs_worker_phn  (,18) edit (xxx)bxxx-xxxx
+  print 'Date Notified:'      (,45)bold  
+  print $dt_dhs_worker       (,60)
+ end-if
+end-if 
+
+
+    do PRINT-HEADING-INCOME-CHILD
+
+    do PRINT-HEADING-INCOME-FAMILY
+
+
+  next-listing need = 4 skiplines = 1
+
+if $txt_no_income <> ''
+position                        (+2)
+    print 'If the child and family have $0 monthly income, explain how the family''s monthly living expenses including housing, food, and clothing are met.  Worker should use best judgment based on observation of the home environment and social history to determine how the family''s needs are being met.  (For example, do they receive government benefits or cash contributions from someone outside the home, or does someone else they live with provide their living expenses.) ' (+0,1)wrap 120 6
+
+    print $txt_no_income  (+2,1) wrap 110 5
+end-if
+
+if $txt_income_dtrm <> ''
+   next-listing need = 4
+   print 'Specify how the family''s and child''s income(s) were determined:' (+1,1)
+   print $txt_income_dtrm                                (+1,1) wrap 110 5
+end-if
+
+      do PRINT-HEADING-RESOURCES-CHILD
+
+      do PRINT-HEADING-RESOURCES-FAMILY
+
+ next-listing need = 1 skiplines = 1
+
+print $equity (+1,1)
+print 'Does the household have $10,000 or more equity in property and accessible resources? ' (,5)
+
+ next-listing need = 1
+
+
+print 'Deductions Allowed for Stepparent'          (+1,1)bold
+print 'If there was not a stepparent living in the home during the month of removal, do not complete this section.  If a stepparent was living in the home, you must complete the three fields below.  Enter 0 for number of children and 0.00 if no payments were made during the month of removal. ' (+1,1) wrap 120 4
+position            (+1)
+
+print 'Number of Children Living in Home of Removal belonging to Stepparent Only: ' (+1,1)
+print $nbr_childern                                (,80)
+
+print 'Court Ordered Alimony and Child Support Payments Made by Stepparent:'       (+1,1)
+print #alimony                                     (,80) edit $$$,999.99
+
+print 'Other Payments Stepparent Made to Dependents Outside the Home:'         (+1,1)
+print #amt_step_outside_pmnt                       (,80) edit $$$,999.99
+
+!show 'ind proof age sent ' $age_sent_es
+ next-listing need = 1
+print 'Documentation Checklist'                            (+1,1)bold
+print $age_sent_es                                 (+1,1)
+print 'Is the proof of birth/child''s age being sent to the Eligibility Specialist?' (,5)
+if $dt_age_sent_es <> ''
+   print 'Date:'                                   (+1,1)
+   print $dt_age_sent_es                           (,15)
+  end-if
+   
+  if $txt_age_sent_es <> ''
+   next-listing need = 1
+   print 'Comments:'                               (+1,1)
+   print $txt_age_sent_es                          (,15)wrap 75 5
+end-if
+
+!show 'ind proof '$show $ind_proof
+
+ next-listing need = 1
+print $ind_proof                                   (+1,1)
+print 'Are copies of all documents used to verify the child''s Citizenship/Alien Status being sent to the Eligibility Specialist?' (,5)
+
+if $dt_proof <> ''
+   print 'Date:'                                      (+1,1)
+   print $dt_proof                                    (,15)
+ end-if
+ if $txt_proof <>''
+   next-listing need = 1
+   print 'Comments:'                                  (+1,1)
+   print $txt_proof                                   (,15)wrap 75 5
+
+end-if
+
+ next-listing need = 1
+print $ind_legal_docs                                   (+1,1)
+print 'Have all legal documents been sent to the Eligibility Specialist including the Affidavit, Petition, and Court Order? ' (,5)
+
+ if $txt_legal_docs <>''
+   next-listing need = 1
+   print 'Comments:'                                  (+1,1)
+   print $txt_legal_docs                              (,15)wrap 75 5
+end-if
+
+ 
+
+ next-listing need = 2
+print 'Referral for Child Support to Attorney General''s Office'          (+1,1)bold
+print $ind_child_support                                                  (+1,1)
+print 'Was child support court ordered to be paid to FPS?'                  (,5)
+
+
+ next-listing need = 2
+
+print 'Worker Information'                            (+1,1)bold
+print 'Worker''s Name:  '                             (+1,1)
+print $app_worker                                     (,20)
+!print 'Worker''s Phone:'                             (,45)
+!print $worker_phone                                  (,50)
+print 'Worker ID:'                                    (,70)
+print $app_id                                      (,86)
+
+END-PROCEDURE   PRINT-INCOME-AND-EXPENDITURES
+!*****************************************************************************
+! PRINT-ELIGIBILITY-DETERMINATION-WORKSHEET
+! Data is pulled by GET-AGE-AND-CITIZENSHIP-DATA
+!
+!
+! CALLED BY: PROCESS-REPORT
+! CALLS:     NONE
+!*****************************************************************************
+BEGIN-PROCEDURE PRINT-ELIGIBILITY-DETERMINATION-WORKSHEET
+  new-page
+
+print 'Eligibility Determination Worksheet '(1,1)bold center
+ next-listing need = 1
+
+if $eligible = 'Y'
+    print 'Child is Eligible for Title IV-E' (+1,1)bold
+else
+    print 'Child is not Eligible for Title IV-E' (+1,1)bold
+    do GET-REASONS-NOT-ELIGIBLE
+end-if
+
+ next-listing need = 2
+
+print 'Child & Family Certified Group'                 (+2,1)bold
+print 'Applied Income of Stepparent'                   (,55)bold
+print '1. Number of People in Certified Group'         (+1,1)
+print $nbr_cert_group                                  (,41)
+print '1. Stepparent Monthly Gross Earned Income'      (,55)
+print  #amt_step_gross_earned                          (,119)underline edit $$$,999.99
+print '2. Number of Parents'                           (+1,1)
+print $nbr_parents                                     (,41)underline
+print '2. Work Related Expenses Standard Deduction '   (,55)
+print  $amt_step_work_deduct                           (,119)underline edit $$$,999.99
+print '3. Income Limits'                               (+1,1)
+print  $amt_income_limit                               (,41)underline edit  $$$,999.99
+print '3. Countable, Unearned Monthly Income'          (,55)
+print   $amt_step_cntbl                                (,119)underline edit $$$,999.99
+print '4. Total Monthly Gross Earned Income'           (+1,1)
+print  $amt_gross_crt                                  (,41)underline edit $$$,999.99
+print '4. Total Countable Monthly Income'              (,55)
+print $amt_step_total_cntbl                            (,119)underline edit $$$,999.99
+print '5. Total Monthly Unearned Income'               (+1,1)
+print  $amt_gross_unearned                             (,41)underline edit $$$,999.99
+print '5. Alimony, Child Support, and Other '          (,55)
+print 'Monthly Payments to Dependents outside the Home' (+1,58)
+move #alimony to #total
+!show #total
+!show $ind_role
+if $ind_role = 'ST' 
+   and $group = 'Y'
+add #amt_step_outside_pmnt to #total round = 2
+print  #total                                          (,119)underline edit $$$,999.99
+else 
+move '0.00' to #total
+print  #total                                          (,119)underline edit $$$,999.99
+end-if
+!show #total
+print '6. Applied Income of Stepparent '               (+1,1)
+print  $amt_step_applied                               (,41)underline edit $$$,999.99
+print '6. Allowance Amount for Stepparent and Non-certified Dependents'   (,55)
+print  $amt_step_allow                                 (,119)underline edit $$$,999.99
+print '7. Total Countable Income'                      (+1,1)
+print $amt_count                                       (,41)underline edit $$$,999.99
+print '7. Applied Income of Stepparent '               (,55)
+print $amt_step_applied                                (,119)underline edit $$$,999.99
+
+
+print 'Foster Care Eligibility Checklist '  (+3,1)bold
+position                                    (+1)
+ next-listing need = 2
+
+print 'Requirements'                        (+1,5)bold
+ next-listing need = 2
+
+print $under_18                             (+1,1)
+print 'Was the child under age 18?'         (,5)
+
+!show 'qualified citizen'
+
+print $qualified_citizen                    (+1,1)
+print 'Was the child a U.S. Citizen, Legal Resident, Qualified Alien or was Evaluative Conclusion used to verify the child''s Citizenship status?' (+0,5) wrap 120 2
+
+print $deprivation                                  (+1,1)
+print 'Did Parental Deprivation exist in the home of removal? ' (,5)
+
+!show '6 months'
+!show $6_mnths
+!print $6_mnths                              (+1,1)
+
+!show 'qualified citizen'
+!show $qualified_
+!show $living_arr
+if ($living_arr  = 'One Legal or Biological Parent' 
+or  $living_arr = 'Other Relative' 
+or  $living_arr = 'Both Parents'
+or  $6_mnths     = 'Y'
+or  $six_months = 'Y')
+!show $six_months
+   print  'Y'                   (+1,1)
+else 
+   print 'N'                    (+1,1)
+end-if
+print 'Was the child physically removed by court order from a Parent or Specified Relative OR did the child live with a Parent or Specified Relative with Managing Conservatorship at any time during the six months before the court proceedings were initiated? '(,5) wrap 120 3
+
+!show 'home elig'
+!show $home_elig
+print $home_elig                            (+1,1)
+print 'Did the household''s or certified group''s income meet the AFDC eligibility limits? '(,5)
+
+if $equity = 'N'
+print 'Y'                              (+1,1)
+else
+print 'N'                              (+1,1)
+end-if
+print 'Did the household have $10,000 or less equity in property or resources? ' (,5)
+
+!NOTE: This is commented out per meeting with Joann Cajas and Kathy Cambpell.  Since the data is not being stored in the DB
+!currently, the question should not be on the report until this is fixed in IMPACT.
+!show 'afdc elig'
+!show $afdc_elig
+!print $afdc_elig                           (+1,1)
+!print 'Using the AFDC eligibility rules in effect on July 16th 1996, would the child have been eligible for AFDC benefits had application been made during the month in which court proceedings were initiated?' (,5) wrap 120 2
+! next-listing need = 2
+
+position                                    (+2)
+
+print ' Y  N   Requirements'                (+1,2)bold
+
+if $best_interest = 'Y'
+    print $best_interest                    (+1,3)
+    else
+    print $best_interest                    (+1,6)
+end-if
+print 'Did the first order ordering the child''s removal from the home contain the judicial determination that removal was "In the Child''s Best Interest" or that "Remaining in the Home was Contrary to the Welfare of the Child"?' (,9) wrap 115 2
+print 'Date of First Court Order: '                 (+1,9)
+print $dt_removal_ordered                           (0,45)
+if $ind_rsnbl_effor ='Y'
+    print $ind_rsnbl_effor                          (+1,3)
+else
+    print $ind_rsnbl_effor                          (+1,6)
+end-if
+
+print 'Was there a judicial determination that "Reasonable Efforts were made to Prevent Removal" within 60 days of the child''s court-ordered removal from the home?'           (,9) wrap 115 2
+print 'Date of Judicial Determination: '            (+1,9)
+print $dt_rsnbl_effor                               (0,45)
+
+if $cvs_prs = 'Y'
+    print $cvs_prs                      (+1,3)
+else
+    print $cvs_prs                      (+1,6)
+end-if
+print 'Did a court order give FPS responsibility for the child''s placement and care, or managing conservatorship of the child? '                           (,9) wrap 115 2
+
+
+END-PROCEDURE PRINT-ELIGIBILITY-DETERMINATION-WORKSHEET
+
+!*****************************************************************************
+! PRINT-ELIGIBILITY-SUMMARY
+!
+!
+! CALLED BY: PROCESS-REPORT
+! CALLS:     NONE
+!
+!*****************************************************************************
+BEGIN-PROCEDURE PRINT-ELIGIBILITY-SUMMARY
+  new-page
+print 'Eligibility Summary '                (1,1)bold center
+print 'System Derived Eligibility'          (+2,1)bold
+if $eligible = 'Y'
+    print 'This child is eligible for Title IV-E Assistance.'    (+2,1)bold
+else
+    print 'This child is not eligible for Title IV-E Assistance.'(+2,1)bold
+    print 'Reasons Not Eligible'         (+2,1)bold
+
+    do GET-AND-PRINT-REASONS-NOT-ELIGIBLE
+
+end-if
+!show '2amt ' $2amt_ssi
+!show 'amt '  $amt_ssi
+next-listing need = 2
+print 'Actual'                      (+1,1)bold
+print 'Actual Eligibility: '        (+1,1)
+If $2actual_elig = ''
+print 'State-paid'                  (,30)
+
+else
+print $2actual_elig                 (,30)
+end-if
+
+print 'Reimbursability  '           (+3,1)bold
+print 'BLS:'                        (+1,1)
+
+if $2ploc = '' and $2select_elig = '' and $2med_elig = ''
+print 'State Paid'                  (,30)
+else
+print $2ploc                        (,30)
+ end-if
+print 'SSI:'                        (,60)
+print $2amt_ssi                     (,65)edit $$$,999,999.99
+print '* Selected Eligibility: '    (+1,1)
+if $2ploc = '' and $2select_elig = '' and $2med_elig = ''
+print 'State Paid'                  (,30)
+else
+print $2select_elig                 (,30)
+end-if
+
+print 'Medicaid Eligibility Type: '  (,60)
+if $2ploc = '' and $2select_elig = '' and $2med_elig = ''
+print 'State Paid'                  (,30)
+else
+print $2med_elig                    (,90)
+end-if
+print 'Eligibility Dates'           (+2,1)bold
+print 'Start Date: '                (+1,1)
+print $2dt_start                    (,30)
+print 'End Date:'                   (,60)
+if $2dt_end <> '12/31/4712'
+   print $2dt_end                   (,70)
+end-if
+print 'Review Date: '               (+1,1)
+print $2dt_review                   (,30)
+print 'Child Support Referral'      (+2,1)bold
+
+!show 'child support ordered ' $child_support_ordered
+!show 'fcea child support ' $ind_child_support
+if  $child_support_ordered = '' or $child_support_ordered = 'N'
+  print 'N'                         (+1,1)
+else
+  print 'Y'                         (+1,1)
+end-if
+print 'Child Support has been court ordered for a child.' (,5)
+print 'Foster Care Eligibility Approval'        (+2,1)bold
+print 'Comments:'                   (+1,1)
+print $2detm_comments               (,12) wrap 120 6
+!show 'child support ' $2ind_child_remove 
+!show 'es_worker' $es_worker
+next-listing need = 1
+print 'Eligibility Specialist Information'      (+1,1)bold
+print 'Name:    '                   (+1,1)
+print $worker                       (,20)
+print 'ID:'                         (,60)
+print $es_id                        (,80)
+
+END-PROCEDURE PRINT-ELIGIBILITY-SUMMARY
+
+!*************************************************************************
+! GET-AND-PRINT-REASONS-NOT-ELIGIBLE
+! Gets the reasons why the child is not eligible for Title IV-E
+!
+! CALLED BY: PRINT-ELIGIBILITY-SUMMARY
+! CALLS:     nothing
+!*************************************************************************
+BEGIN-PROCEDURE GET-AND-PRINT-REASONS-NOT-ELIGIBLE
+!show '$id_fce_elgibility=' $id_fce_eligibility
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+CFCERNE.DECODE
+    move &CFCERNE.DECODE      to $cd_reason_not_elig
+
+     do PRINT-REASONS-NOT-ELIGIBLE
+
+FROM    FCE_REASON_NOT_ELIGIBLE RNE,
+        CFCERNE
+WHERE RNE.ID_FCE_ELIGIBILITY =  $id_fce_eligibility
+AND   CFCERNE.CODE(+) = RNE.CD_REASON_NOT_ELIGIBLE
+
+END-SELECT
+
+!show '$cd_reason_not_elig='  $cd_reason_not_elig
+!show $id_fce_eligibility
+END-PROCEDURE GET-AND-PRINT-REASONS-NOT-ELIGIBLE
+!*****************************************************************************
+! PRINT-REASONS-NOT-ELIGIBLE
+!
+!FOR ELIGIBILITY SUMMARY PAGE
+!
+!
+!*****************************************************************************
+
+
+ BEGIN-PROCEDURE PRINT-REASONS-NOT-ELIGIBLE
+   next-listing need = 1
+    print 'At intial application,'       (,5)
+    print $cd_reason_not_elig            (,28)wrap 90 2
+    !show '$cd_reason_not_elig='  $cd_reason_not_elig
+
+ END-PROCEDURE PRINT-REASONS-NOT-ELIGIBLE
+!*************************************************************************
+! GET-AND-PRINT-REASONS-NOT-ELIGIBLE
+! Gets the reasons why the child is not eligible for Title IV-E for
+! the Worksheet page 
+!
+!*************************************************************************
+BEGIN-PROCEDURE GET-REASONS-NOT-ELIGIBLE
+!show '$id_fce_elgibility=' $id_fce_eligibility
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+CFCERNE2.DECODE
+    move &CFCERNE2.DECODE      to $2cd_reason_not_elig
+
+     do PRINT-REASONS-ELIGIBLE
+
+FROM    FCE_REASON_NOT_ELIGIBLE RNE,
+        CFCERNE    CFCERNE2
+WHERE RNE.ID_FCE_ELIGIBILITY =  $id_fce_eligibility
+AND   CFCERNE2.CODE(+) = RNE.CD_REASON_NOT_ELIGIBLE
+
+END-SELECT
+
+END-PROCEDURE GET-REASONS-NOT-ELIGIBLE
+
+!*****************************************************************************
+! PRINT-REASONS-NOT-ELIGIBLE
+!
+! PRINTS the reasons not eligibile on the Worksheet page
+!
+!
+!*****************************************************************************
+ BEGIN-PROCEDURE PRINT-REASONS-ELIGIBLE
+   next-listing need = 1
+    print $2cd_reason_not_elig            (,5)wrap 90 2
+
+ END-PROCEDURE PRINT-REASONS-ELIGIBLE
+!*****************************************************************************
+! WRAP-UP                                                                    *
+!                                                                            *
+!   This procedure prints the messages for the end of the report as well     *
+!   as over all totals.                                                      *
+!                                                                            *
+! CALLED BY  : BEGIN-REPORT                                                  *
+! CALLS      : NONE                                                          *
+!*****************************************************************************
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!*****************************************************************************
+! SqlErrorHandle                                                             *
+!                                                                            *
+!   This section handles formatting of messages for SQL errors.              *
+!   When an SQL error is encountered, the program will write to               *
+!   the log file, program processing does not stop for SQL errors.           *
+!                                                                            *
+! CALLS:  None                                                               *
+!*****************************************************************************
+BEGIN-PROCEDURE SqlErrorHandle
+
+   print 'SQL error - Processing Terminated'            (+1,2)
+   print $error                                         (+1,2)
+   print 'ERROR: SQL error halted loader processing'    (+0)
+   print $error                                         (+1,2)
+   print 'SQL Error: '                                  (+0)
+   print $sql-error                                     (+0)
+   print $error                                         (+1,2)
+   print 'SQL Status: '                                 (+0)
+   print #sql-status                                    (+0)
+
+   STOP
+
+END-PROCEDURE SqlErrorHandle
+
+!*****************************************************************************
+! INCLUDE SECTION                                                            *
+!                                                                            *
+!   Include all files that contain common modules or procedures that         *
+!   will be used in the report                                               *
+!*****************************************************************************
+
+#INCLUDE 'cfpstamp.sqc'

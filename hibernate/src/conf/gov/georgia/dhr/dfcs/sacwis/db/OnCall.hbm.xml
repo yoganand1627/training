@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.OnCall" table="ON_CALL" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idOnCall" type="integer" unsaved-value="0">
+      <column name="ID_ON_CALL" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_ON_CALL</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="dtOnCallStart" type="timestamp" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ON_CALL_START" length="7"/>
+    </property>
+    <property name="dtOnCallEnd" type="timestamp" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ON_CALL_END" length="7"/>
+    </property>
+    <property name="cdOnCallType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ON_CALL_TYPE" length="2"/>
+    </property>
+    <property name="cdOnCallProgram" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ON_CALL_PROGRAM" length="3"/>
+    </property>
+    <property name="cdOnCallCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ON_CALL_COUNTY" length="3"/>
+    </property>
+    <property name="indOnCallFilled" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_ON_CALL_FILLED" length="1"/>
+    </property>
+    <property name="onCallRegion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ON_CALL_REGION" length="2"/>
+    </property>
+    <bag name="empOnCallLinks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ON_CALL" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.EmpOnCallLink" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="onCallCounties" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ON_CALL" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.OnCallCounty" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

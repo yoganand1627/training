@@ -1,0 +1,417 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Sun Nov 27 22:39:24 2011 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\OverdueLifeHistory\Nov27\ChildrenWithOverdueLifeHistories00.sqr
+! Format  : Tabular
+! Username: JPOTTAMMEL
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=120    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'The report lists all children under 18 years of age, in Adoption stage, and in DFCS custody who do not have an approved child life history checklist record on the case and it has been more than 60 days since the Termination of Parental Rights (TPR) or Voluntary Surrender (VS) of the first parent. ' (34,6,103) Wrap 103 4 line-height=12 Keep-Top on= 
+ Print 'The date that the child was free for adoption.' (113,87,80) Wrap 80 5 line-height=12 Keep-Top on= 
+ Page-Number (507,488) '' ' of '
+ Last-Page (507,516) 
+ Print 'Months Since Free:' (217,7,12) Bold  Wrap 12 2 line-height=12 Keep-Top
+ Print 'Number of months since the first free date.' (217,85,0)
+ Print 'First Free Date:' (113,7,0) Bold 
+ Print 'Report runs for Region, County or Statewide.' (90,5,0)
+ Print 'This is the earliest voluntary surrender date or termination of parental rights date on the first parent.' (130,87,0)
+ Print 'For TPR, it is the earliest Court Order Date where the Action is Hearing or Received Court Order, the Hearing Type/Court Order is TPR on any parent type and Outcome is TPR Granted. ' (148,87,90) Wrap 90 3 line-height=12 Keep-Top
+ Print 'For VS, it is the earliest Court Action Date where the Action is Voluntary Surrender on any parent type.' (179,87,0)
+ Print 'If both TPR and VS exist, it is the earliest date of the two.' (197,87,0)
+ Print 'Definitions' (18,2,12) Underline  Bold 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do LoadLookupTables
+ Position (1,1)
+ Do Get-Input
+ Do Master_Query
+End-Program
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I401_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I401_CD_STAGE_REGION) or IsBlank($_I401_CD_STAGE_REGION) or ($_I401_CD_STAGE_REGION) = '0'
+  Let $where_clause401 = 'CD_STAGE_REGION is not null'
+  Let $region_selected = 'N'
+Else
+  Let $_region = $_I401_CD_STAGE_REGION
+  Let $_I401_CD_STAGE_REGION = '''' || $_I401_CD_STAGE_REGION || ''''
+  Let $brb_tmp = 'CD_STAGE_REGION'
+  Let $where_clause401 = $brb_tmp  || ' = ' || $_I401_CD_STAGE_REGION
+  Let $region_selected = 'Y'
+End-if
+! -----------------------------
+Input $_I402_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_I402_CD_STAGE_CNTY) or IsBlank($_I402_CD_STAGE_CNTY) or ($_I402_CD_STAGE_CNTY) = '0'
+  Let $where_clause402 = 'CD_STAGE_CNTY is not null'
+  Let $county_selected = 'N'
+Else
+  Let $_I402_CD_STAGE_CNTY = '''' || $_I402_CD_STAGE_CNTY || ''''
+  Let $brb_tmp = 'CD_STAGE_CNTY'
+  Let $where_clause402 = $brb_tmp  || ' = ' || $_I402_CD_STAGE_CNTY
+  Let $county_selected = 'Y'
+End-If
+
+If $county_selected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From  CCOUNT
+Where CCOUNT.CODE = [$_I402_CD_STAGE_CNTY]
+End-Select
+  Move &_County_Decode to $_header_disp
+Else
+  If $region_selected = 'Y'
+    Let $_header_disp = 'Region ' || $_region
+  Else 
+    Let $_header_disp = 'Statewide'
+  End-If
+End-If
+!Let $trimDate =datetostr($current-date,'MM/DD/YYYY')
+!Let $_reportheader ='Monthly Family Management Report as of ' || $trimDate
+Let $WHERE_CLAUSE_TPR = 
+' (SELECT min(TPR_UNION.TPR_date) FROM ' ||
+' ((Select la.DT_CRT_ACT_DATE TPR_date, la.ID_PERSON ID_CHILD, la.ID_CASE ID_CASE_CHILD ' || 
+' from legal_action la, event e ' ||
+' where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT and e.CD_EVENT_STATUS in (' || 
+'''' || 'COMP' || '''' || ',' || '''' || 'APRV' || '''' || ')' ||
+' and la.CD_LEGAL_ACT_ACTION in (' || 
+'''' || 'VLM' || '''' || ',' || 
+'''' || 'VAF' || '''' || ',' || 
+'''' || 'VAM' || '''' || ',' ||
+'''' || 'VBF' || '''' || ',' ||
+'''' || 'VSF' || '''' || ',' ||
+'''' || 'VLS' || '''' || ',' ||
+'''' || 'VPF' || '''' || '))' || 
+' UNION ' || 
+' (Select la.DT_CRT_ORD_DATE TPR_date, la.ID_PERSON ID_CHILD, la.ID_CASE ID_CASE_CHILD ' || 
+' from legal_action la, event e, legal_action_outcome lao ' ||
+' where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT and la.ID_LEGAL_ACT_EVENT = lao.ID_LEGAL_ACT_EVENT' ||
+' and e.CD_EVENT_STATUS in (' ||
+'''' || 'COMP' || '''' || ',' || '''' || 'APRV' || '''' || ')' ||
+' and (la.CD_HR_TYP_CRT_ORD in (' ||
+'''' || 'TFB' || '''' || ',' || 
+'''' || 'TFL' || '''' || ',' || 
+'''' || 'TFF' || '''' || ',' ||
+'''' || 'TPM' || '''' || ',' ||
+'''' || 'TPA' || '''' || ',' ||
+'''' || 'TFA' || '''' || ',' ||
+'''' || 'TPP' || '''' || ')' || 
+' and la.cd_legal_act_action in (' ||
+'''' || 'HRG' || '''' || ',' ||
+'''' || 'RCO' || '''' || ')' ||
+' and lao.CD_OUTCOME in (' ||
+'''' || 'TPG' || '''' || ')))' ||
+' ) TPR_UNION ' || 
+' WHERE TPR_UNION.ID_CHILD = EXCHANGE_CHILD.ID_PERSON ' || ! the exchange child table name needs matched with the sub query
+' AND TPR_UNION.ID_CASE_CHILD = STAGE.ID_CASE ' || ! the event table name needs matched with one in sub query
+' )'
+End-Procedure
+
+! Retrieve first free date: it is the earliest court action date of any TPR court action or the earliest court order date of any 
+! VS hearing type. Including old codes for past or converted data. If a VS does not have court order date recorded, use court action
+! date instead due to the current page logic that court order date is not required field where as court action date is
+Begin-Procedure Get_TPR_Date(#id_person_child, #id_case_stage)
+Begin-Select 
+min(TPR_UNION.TPR_date) &_first_TPR_date
+FROM ( 
+                 (Select la.DT_CRT_ACT_DATE TPR_date, la.id_person ID_CHILD, la.id_case ID_CASE_CHILD
+                  from legal_action la, event e 
+                  where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT 
+                  and e.CD_EVENT_STATUS in ('COMP','APRV') and la.CD_LEGAL_ACT_ACTION in ('VLM','VAF','VAM','VBF','VSF','VLS','VPF')
+                 ) 
+                  UNION 
+                 (Select la.DT_CRT_ORD_DATE TPR_date, la.id_person ID_CHILD, la.id_case ID_CASE_CHILD
+                  from legal_action la, event e, legal_action_outcome lao 
+                  where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT and la.ID_LEGAL_ACT_EVENT = lao.ID_LEGAL_ACT_EVENT
+                  and e.CD_EVENT_STATUS in ('COMP','APRV') 
+                  and ( la.cd_legal_act_action in ('HRG','RCO')
+                  and (la.CD_HR_TYP_CRT_ORD in ('TFB','TFL','TFF','TPM','TPA','TFA','TPP') 
+                 and lao.CD_OUTCOME in ('TPG'))) ) 
+) TPR_UNION
+WHERE TPR_UNION.ID_CHILD = #id_person_child AND TPR_UNION.ID_CASE_CHILD = #id_case_stage     
+   
+End-Select
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #4ROW_COUNT
+Begin-Select Distinct
+EXCHANGE_CHILD.ID_PERSON &id_child_exchange
+STAGE.ID_CASE &id_case_stage
+  DO Get_TPR_Date(&id_child_exchange, &id_case_stage)
+CAPS.EXCHANGE_CHILD.ID_PERSON &Master_Query_CAPS.EXCHANGE_CHILD.ID_PERSON
+DECODE &Master_Query_DECODE
+CODE &Master_Query_CODE
+DT_NOTIFIED &Master_Query_DT_NOTIFIED
+((sysdate - EXCHANGE_CHILD.DT_NOTIFIED)/30) &since_notify
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_STAGE_REGION &Master_Query_CD_STAGE_REGION () On-Break Set=4 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc401 After=Master_QueryCD_STAGE_REGION_AfterProc401
+CD_STAGE_CNTY &Master_Query_CD_STAGE_CNTY () On-Break Set=4 Level=2 Print=Never Before=Master_QueryCD_STAGE_CNTY_BeforeProc402 After=Master_QueryCD_STAGE_CNTY_AfterProc402
+DT_PERSON_BIRTH &Master_Query_DT_PERSON_BIRTH (15,311) Edit MM/DD/YYYY
+CAPS.STAGE.ID_CASE &Master_Query_CAPS.STAGE.ID_CASE (15,162) Edit 9999999999na
+ If isnull(&first_TPR_date) or isblank(&first_TPR_date)
+    ! do nothing
+ Else
+ Let #sincendd=(datediff(  datenow()  , strtodate(datetostr(&first_TPR_date,'mm/dd/yyyy'),'mm/dd/yyyy'), 'day'))/30
+ Print #sincendd (15,473) Edit 9999.9
+ End-If
+ Let $first_TPR_date=datetostr(&first_TPR_date,'mm/dd/yyyy')
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $first_TPR_date (15,384,10)
+NM_PERSON_FULL &Master_Query_NM_PERSON_FULL (15,20,25)
+CAPS.PERSON.ID_PERSON &child_ID (15,240) Edit 9999999999na
+ Add 1 To #4ROW_COUNT
+ Add 1 To #401ROW_COUNT
+ Add 1 To #402ROW_COUNT
+ Next-Listing  Need=15
+From  CAPS.EXCHANGE_CHILD, CAPS.PERSON
+,      CAPS.STAGE, CAPS.STAGE_PERSON_LINK, CAPS.CCOUNT
+,      CAPS.LEGAL_STATUS_VIEW
+      Where CAPS.EXCHANGE_CHILD.ID_PERSON = CAPS.PERSON.ID_PERSON
+            And CAPS.STAGE_PERSON_LINK.ID_STAGE = CAPS.STAGE.ID_STAGE
+            And CAPS.PERSON.ID_PERSON = CAPS.STAGE_PERSON_LINK.ID_PERSON
+            And CAPS.STAGE.CD_STAGE_CNTY = CAPS.CCOUNT.CODE
+            And CAPS.LEGAL_STATUS_VIEW.ID_PERSON = CAPS.PERSON.ID_PERSON
+ And CD_STAGE_PERS_ROLE = 'PC'
+ And [$where_clause401]
+ And [$where_clause402]
+ And IN_DFCS_CUSTODY = 'Y'
+ And STAGE.DT_STAGE_CLOSE is null
+ And exists (select distinct lsv.id_person from legal_status_view lsv where lsv.dt_legal_stat_status_dt= (select max(lsvc.dt_legal_stat_status_dt)
+     from legal_status_view lsvc where lsvc.id_person = lsv.id_person) and lsv.in_dfcs_custody = 'Y' and lsv.id_person = CAPS.EXCHANGE_CHILD.ID_PERSON)
+
+ And (sysdate- PERSON.DT_PERSON_BIRTH )/365 < 18
+ And (STAGE.CD_STAGE IN ('ADO')
+ And exists (select distinct TPR_UNION.ID_CHILD from ( (Select la.DT_CRT_ACT_DATE TPR_date, la.id_person ID_CHILD, la.id_case ID_CASE_CHILD
+     from legal_action la, event e where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT and e.CD_EVENT_STATUS in ('COMP','APRV') and la.CD_LEGAL_ACT_ACTION
+     in ('VLM','VAF','VAM','VBF','VSF','VLS','VPF')) UNION (Select la.DT_CRT_ORD_DATE TPR_date, la.id_person ID_CHILD, la.id_case ID_CASE_CHILD
+     from legal_action la, event e, legal_action_outcome lao where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT and la.ID_LEGAL_ACT_EVENT = lao.ID_LEGAL_ACT_EVENT
+     and e.CD_EVENT_STATUS in ('COMP','APRV') and ( la.cd_legal_act_action in ('HRG','RCO') and (la.CD_HR_TYP_CRT_ORD in ('TFB','TFL','TFF'
+    ,'TPM','TPA','TFA','TPP') and lao.CD_OUTCOME in ('TPG'))) ) ) TPR_UNION  where TPR_UNION.ID_CHILD = PERSON.ID_PERSON AND TPR_UNION.ID_CASE_CHILD
+     =STAGE.ID_CASE)
+ And (sysdate-  [$WHERE_CLAUSE_TPR] )> 60)
+ And (not exists (select * from event,event_person_link epl,stage s where s.cd_stage in ('ADO') and s.id_case=event.id_case and event.id_case
+     = epl.id_case and event.id_event=epl.id_event and epl.id_person =  EXCHANGE_CHILD.ID_PERSON and s.id_case = STAGE.ID_CASE and event.cd_event_type
+     = 'CCK' and event.cd_event_status='APRV')
+ And not exists (select distinct id_person from exchange_child ec where ec.dt_approved is not null and ec.id_person =  EXCHANGE_CHILD.ID_PERSON)
+)
+Order By CD_STAGE_REGION
+,      CD_STAGE_CNTY
+,      NM_PERSON_FULL
+End-Select
+ Next-Listing
+ Next-Listing  Need=22
+ If #4ROW_COUNT > 0
+ Graphic (6,2,538) Horz-Line 20 
+ Position (8,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Total:'  (22,1) Bold 
+ let #Total = #4ROW_COUNT
+  Print #Total (22,37) Bold  Edit 88888888na
+ let #Total_2 = #4ROW_COUNT
+  Print #Total_2 (22,37) Bold  Edit 88888888na
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_BeforeProc402
+If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=29
+ Graphic (6,2,536) Horz-Line 12 
+ Position (7,1)
+ Graphic (30,2,536) Horz-Line 12 
+ Position (31,1)
+  Lookup CountyLookUp &Master_Query_CD_STAGE_CNTY $DecCounty
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $DecCounty (23,8,15) Bold 
+   Position (+12,)
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_AfterProc402
+If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=22
+ Graphic (6,2,537) Horz-Line 12 
+ Position (7,1)
+ let #countyTotal = #402ROW_COUNT
+ If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #countyTotal (22,77) Bold  Edit 88888888na
+ End-If
+  If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Let $County_Total='County Total:'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $County_Total (22,8,14) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #402ROW_COUNT
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc401
+If $county_selected = 'Y' or $region_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=18
+ Graphic (4,2,536) Horz-Line 20 
+ Position (6,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CD_STAGE_REGION (18,46,3) Bold 
+ Print 'Region'  (18,5) Bold 
+   Position (+12,)
+ Next-Listing  Need=15
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc401
+If $county_selected = 'Y' or $region_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=28
+ Graphic (5,2,536) Horz-Line 20 
+ Position (7,1)
+ let #regTotal = #401ROW_COUNT
+ If $county_selected = 'Y' or $region_selected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #regTotal (28,76) Bold  Edit 88888888na
+ End-If
+  If $county_selected = 'Y' or $region_selected = 'Y'
+    ! do nothing
+ Else
+ Let $Region_Total='Region Total:'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $Region_Total (28,5,15) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #401ROW_COUNT
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=CountyLookUp
+      Table=CAPS.CCOUNT
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SC
+      Quiet
+
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (4,2)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (14,173,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Children with Overdue Life Histories' (37,145,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (14,475) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (14,410,0)
+ Let $headerDisplay=$_header_disp
+ Print $headerDisplay (54,241,15) Bold 
+ Print 'Child Name' (109,20,0) Underline  Bold 
+ Print 'Date of Birth' (109,311,0) Underline  Bold 
+ Print 'First Free Date' (109,384,11) Underline  Bold  Wrap 11 2 line-height=12 Keep-Top on= 
+ Print 'Months Since Free' (109,473,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Case ID' (109,181,0) Underline  Bold 
+ Print 'Person ID' (109,249,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Child Name' (22,20,0) Underline  Bold 
+ Print 'Date of Birth' (22,311,0) Underline  Bold 
+ Print 'First Free Date' (22,384,11) Underline  Bold  Wrap 11 2 line-height=12 Keep-Top on= 
+ Print 'Months Since Free' (22,473,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Case ID' (22,181,0) Underline  Bold 
+ Print 'Person ID' (22,249,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (19,489) '' ' of '
+ Last-Page (19,515) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

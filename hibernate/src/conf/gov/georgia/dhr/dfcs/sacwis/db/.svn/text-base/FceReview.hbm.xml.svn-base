@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FceReview" table="FCE_REVIEW" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idFceReview" type="integer" unsaved-value="0">
+      <column name="ID_FCE_REVIEW" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_FCE_REVIEW</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="fceApplication" class="gov.georgia.dhr.dfcs.sacwis.db.FceApplication" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_FCE_APPLICATION" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="eventByIdEvent" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="placementByIdPlacementRateEvent" class="gov.georgia.dhr.dfcs.sacwis.db.Placement" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_PLACEMENT_RATE_EVENT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="fceEligibility" class="gov.georgia.dhr.dfcs.sacwis.db.FceEligibility" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_FCE_ELIGIBILITY" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="eventByIdPlacementRateEvent" class="gov.georgia.dhr.dfcs.sacwis.db.Event" update="false"
+                 insert="false" fetch="select" unique="false" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_PLACEMENT_RATE_EVENT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="placementByIdCurrentPlacementEvent" class="gov.georgia.dhr.dfcs.sacwis.db.Placement"
+                 fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_CURRENT_PLACEMENT_EVENT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="eventByIdCurrentPlacementEvent" class="gov.georgia.dhr.dfcs.sacwis.db.Event" update="false"
+                 insert="false" fetch="select" unique="false" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_CURRENT_PLACEMENT_EVENT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_LAST_UPDATE_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="amtSavings" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SAVINGS" precision="10"/>
+    </property>
+    <property name="cdChangeCtznStatus" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CHANGE_CTZN_STATUS" length="1"/>
+    </property>
+    <property name="cdLivingConditionCurrent" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_LIVING_CONDITION_CURRENT" length="2"/>
+    </property>
+    <property name="cdPersonCitizenship" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERSON_CITIZENSHIP" length="3"/>
+    </property>
+    <property name="dtChildEnterHigher" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CHILD_ENTER_HIGHER" length="7"/>
+    </property>
+    <property name="dtChildCmpltHighSchool" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CHILD_CMPLT_HIGH_SCHOOL" length="7"/>
+    </property>
+    <property name="dtReviewComplete" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REVIEW_COMPLETE" length="7"/>
+    </property>
+    <property name="dtRightsTerminated" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_RIGHTS_TERMINATED" length="7"/>
+    </property>
+    <property name="indChildAccptdHigher" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CHILD_ACCPTD_HIGHER" length="1"/>
+    </property>
+    <property name="indChildEnrolled" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CHILD_ENROLLED" length="1"/>
+    </property>
+    <property name="indChildCmplt19" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CHILD_CMPLT_19" length="1"/>
+    </property>
+    <property name="indCmpltSchlMaxAge" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CMPLT_SCHL_MAX_AGE" length="1"/>
+    </property>
+    <property name="indCurrentParentSit" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CURRENT_PARENT_SIT" length="1"/>
+    </property>
+    <property name="indPermanencyHearings" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PERMANENCY_HEARINGS" length="1"/>
+    </property>
+    <property name="indPrmncyHearingsDue" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PRMNCY_HEARINGS_DUE" length="1"/>
+    </property>
+    <property name="indPrmncyHrngs12Month" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PRMNCY_HRNGS_12_MONTH" length="1"/>
+    </property>
+    <property name="indRightsTerminated" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RIGHTS_TERMINATED" length="1"/>
+    </property>
+    <property name="indSavingsAcct" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_SAVINGS_ACCT" length="1"/>
+    </property>
+    <property name="indChildIncomeGtFcPay" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CHILD_INCOME_GT_FC_PAY" length="1"/>
+    </property>
+    <property name="indTdprsResponsibility" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_TDPRS_RESPONSIBILITY" length="1"/>
+    </property>
+    <property name="indNoActivePlacement" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_NO_ACTIVE_PLACEMENT" length="1"/>
+    </property>
+    <property name="indNonPrsPaidPlacement" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_NON_PRS_PAID_PLACEMENT" length="1"/>
+    </property>
+    <property name="indNoActiveBloc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_NO_ACTIVE_BLOC" length="1"/>
+    </property>
+    <property name="indNoOpenPaidEligibility" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_NO_OPEN_PAID_ELIGIBILITY" length="1"/>
+    </property>
+    <property name="indReviewInappropriate" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_REVIEW_INAPPROPRIATE" length="1"/>
+    </property>
+    <property name="txtInappropriateComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_INAPPROPRIATE_COMMENTS" length="80"/>
+    </property>
+    <property name="cdRate" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RATE" length="10"/>
+    </property>
+    <property name="amtFosterCareRate" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_FOSTER_CARE_RATE" precision="10"/>
+    </property>
+    <property name="indShowChecklist" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_SHOW_CHECKLIST" length="1"/>
+    </property>
+    <property name="indChildCareCourtOrder" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CHILD_CARE_COURT_ORDER" length="1"/>
+    </property>
+    <property name="indBestInterestLang" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_BEST_INTEREST_LANG" length="1"/>
+    </property>
+    <property name="indResnablEfrtReunify" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RESNABL_EFRT_REUNIFY" length="1"/>
+    </property>
+    <property name="indResnablEfrtPrvntRmval" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RESNABL_EFRT_PRVNT_RMVAL" length="1"/>
+    </property>
+    <property name="indExtnsionProvided12Mnths" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_EXTNSION_PROVIDED_12_MNTHS" length="1"/>
+    </property>
+    <property name="nbrMhnNumber" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_MHN_NUMBER" precision="15" scale="0"/>
+    </property>
+    <property name="dtPrmncyHrngs12Month" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PRMNCY_HRNGS_12_MONTH" length="7"/>
+    </property>
+    <property name="dtCourtOrder" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_COURT_ORDER" length="7"/>
+    </property>
+    <property name="dtBestInterestLang" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_BEST_INTEREST_LANG" length="7"/>
+    </property>
+    <property name="dtResnablEfrtRenuify" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_RESNABL_EFRT_REUNIFY" length="7"/>
+    </property>
+    <property name="dtResnablEfrtPrvntRmval" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_RESNABL_EFRT_PRVNT_RMVAL" length="7"/>
+    </property>
+    <property name="dtExtnsionProvided12Mnths" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_EXTNSION_PROVIDED_12_MNTHS" length="7"/>
+    </property>
+    <bag name="fceEligibilities" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FCE_REVIEW" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceEligibility" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

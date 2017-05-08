@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FamilyPlanItem" table="FAMILY_PLAN_ITEM" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idFamilyPlanItem" type="integer" unsaved-value="0">
+      <column name="ID_FAMILY_PLAN_ITEM" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_FAMILY_PLAN_ITEM</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdAreaConcern" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_AREA_CONCERN" length="3"/>
+    </property>
+    <property name="cdInitialLevelConcern" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INITIAL_LEVEL_CONCERN" length="1"/>
+    </property>
+    <property name="cdCurrentLevelConcern" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CURRENT_LEVEL_CONCERN" length="1"/>
+    </property>
+    <property name="txtItemGoals" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_ITEM_GOALS" length="1000"/>
+    </property>
+    <property name="dtInitiallyAddressed" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_INITIALLY_ADDRESSED" length="7"/>
+    </property>
+    <property name="indIdentifiedInRiskAssmnt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_IDENTIFIED_IN_RISK_ASSMNT" length="1"/>
+    </property>
+    <property name="dtGoalComp" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_GOAL_COMP" length="7"/>
+    </property>
+    <bag name="familyPlanEvalItems" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FAMILY_PLAN_ITEM" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FamilyPlanEvalItem" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="familyPlanTasks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FAMILY_PLAN_ITEM" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FamilyPlanTask" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

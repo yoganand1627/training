@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="rdbms" default="all" basedir=".">
+  <!-- Project-specific overrides. -->
+  <property file="build.properties"/>
+
+  <!-- Determine the directory in which this file resides. -->
+  <dirname property="ant.dir.rdbms" file="${ant.file.rdbms}"/>
+
+  <!-- Location of the template directory. -->
+  <property name="rdbms.template" location="${ant.dir.rdbms}/template"/>
+
+  <!-- Common properties; only required when building (not for installing), so it's optional. -->
+  <property name="build-common-file" location="${ant.dir.rdbms}/../build-common.xml"/>
+  <import file="${build-common-file}" optional="true"/>
+
+  <!-- Common properties; only required when installing (not for building), so it's optional. -->
+  <condition property="build-install-file" value="${ant.dir.rdbms}/../build.xml">
+    <!-- If ../build-common.xml is available, we use that instead of the instal file. -->
+    <not>
+      <available file="${build-common-file}"/>
+    </not>
+  </condition>
+  <import file="${build-install-file}" optional="true"/>
+
+  <property name="generate.codestables.java"
+            location="${core.src.java}/gov/georgia/dhr/dfcs/sacwis/core/lookup/CodesTables.java"/>
+  <property name="generate.codestables.package"
+            location="${core.src.java}/gov/georgia/dhr/dfcs/sacwis/core/lookup/codestables"/>
+  <property name="generate.messages.java"
+            location="${core.src.java}/gov/georgia/dhr/dfcs/sacwis/core/message/Messages.java"/>
+  <property name="generate.tabconstants.java"
+            location="${main-war.src.java}/gov/georgia/dhr/dfcs/sacwis/web/core/metaphor/TabConstants.java"/>
+  <property name="generate.portal.tabconstants.java"
+            location="${portal-war.src.java}/gov/georgia/dhr/dfcs/sacwis/web/core/metaphor/TabConstants.java"/>
+  <property name="generate.mobile.tabconstants.java"
+            location="${mobile-war.src.java}/gov/georgia/dhr/dfcs/sacwis/web/core/metaphor/TabConstants.java"/>
+
+  <target name="clean" description="Delete generated code.">
+    <!-- Delete generated code. -->
+    <delete file="${generate.codestables.java}"/>
+    <delete dir="${generate.codestables.package}"/>
+    <delete file="${generate.messages.java}"/>
+    <delete file="${generate.tabconstants.java}"/>
+    <delete file="${generate.portal.tabconstants.java}"/>    
+    <delete file="${generate.mobile.tabconstants.java}"/>    
+  </target>
+
+  <target name="clean.all" depends="clean" description="Removes all build artifacts.">
+    <!-- Nothing else necessary. -->
+  </target>
+
+  <target name="prepare" depends="ant-tasks">
+    <!-- Prompt for username and password if they are not set at this point. -->
+    <input addproperty="update.username" message="Please input the database's administrative username: "/>
+    <input addproperty="update.password" message="Please input the database's administrative password: "/>
+    <check-database-connection property="rdbms.available" driver="${jdbc.driverClassName}" url="${jdbc.url}"
+                               userid="${update.username}" password="${update.password}"
+                               classpathref="custom.tasks.path"/>
+    <fail if="rdbms.required" unless="rdbms.available"
+          message="The database is unreachable or the creditials are incorrect.${line.separator}URL: ${jdbc.url}${line.separator}Username: ${update.username}${line.separator}Password: ${update.password}"/>
+  </target>
+
+  <target name="update" depends="prepare" if="rdbms.available" unless="rdbms.update.disable"
+          description="Updates database schema if it is out of date.">
+    <!-- By default, do not log verbose information; override in build.properties, if required. -->
+    <property name="update-database.verbose" value="false"/>
+    <execute-dbcr-updates property="rdbms.updated" scriptprefix="sacwis_" updatedir="${rdbms.update}" url="${jdbc.url}"
+                          driver="${jdbc.driverClassName}" userid="${update.username}" password="${update.password}"
+                          classpathref="custom.tasks.path" verbose="${update-database.verbose}"/>
+    <!-- The generated code is current if we did NOT update the DB and the generated files are available. -->
+    <condition property="rdbms.current">
+      <and>
+        <not>
+          <isset property="rdbms.updated"/>
+        </not>
+        <available file="${generate.codestables.java}"/>
+        <available file="${generate.messages.java}"/>
+        <available file="${generate.tabconstants.java}"/>
+      </and>
+    </condition>
+  </target>
+
+  <target name="template" depends="prepare" if="rdbms.available" unless="rdbms.update.disable"
+          description="Updates database templates.">
+    <load-document-templates templateDir="${rdbms.template}" metadata="${ant.dir.rdbms}/TemplateMetaData.xml"
+                             url="${jdbc.url}" driver="${jdbc.driverClassName}"
+                             userid="${update.username}" password="${update.password}"
+                             classpathref="custom.tasks.path"/>
+  </target>
+
+  <target name="generate" depends="prepare" if="rdbms.available" unless="rdbms.current"
+          description="Generates constants classes from the database.">
+    <!-- Clean out the codes tables package before generation, so removed code types disappear. -->
+    <delete dir="${generate.codestables.package}"/>
+    <mkdir dir="${generate.codestables.package}"/>
+    <generate-codes-tables srcdir="${core.src.java}" classname="gov.georgia.dhr.dfcs.sacwis.core.lookup.CodesTables"
+                           driver="${jdbc.driverClassName}" url="${jdbc.url}" userid="${jdbc.username}"
+                           password="${jdbc.password}" classpathref="custom.tasks.path"
+                           deprecation="false"/>
+    <generate-messages srcdir="${core.src.java}" classname="gov.georgia.dhr.dfcs.sacwis.core.message.Messages"
+                       driver="${jdbc.driverClassName}" url="${jdbc.url}" userid="${jdbc.username}"
+                       password="${jdbc.password}" classpathref="custom.tasks.path"/>
+    <generate-tabconstants srcdir="${main-war.src.java}"
+                           classname="gov.georgia.dhr.dfcs.sacwis.web.core.metaphor.TabConstants"
+                           driver="${jdbc.driverClassName}" url="${jdbc.url}" userid="${jdbc.username}"
+                           password="${jdbc.password}" classpathref="custom.tasks.path"/>
+    <generate-portal-tabconstants srcdir="${portal-war.src.java}"
+                           classname="gov.georgia.dhr.dfcs.sacwis.web.core.metaphor.TabConstants"
+                           driver="${jdbc.driverClassName}" url="${jdbc.url}" userid="${jdbc.username}"
+                           password="${jdbc.password}" classpathref="custom.tasks.path"/>                            
+    <generate-mobile-tabconstants srcdir="${mobile-war.src.java}"
+                           classname="gov.georgia.dhr.dfcs.sacwis.web.core.metaphor.TabConstants"
+                           driver="${jdbc.driverClassName}" url="${jdbc.url}" userid="${jdbc.username}"
+                           password="${jdbc.password}" classpathref="custom.tasks.path"/>                            
+  </target>
+
+  <target name="all" depends="update, template, generate" description="Performs all DB update operations."/>
+</project>

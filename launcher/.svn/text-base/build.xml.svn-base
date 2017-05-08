@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="launcher" default="all" basedir=".">
+  <!-- Project-specific overrides. -->
+  <property file="build.properties"/>
+
+  <!-- Common properties. -->
+  <import file="../build-common.xml"/>
+
+  <!-- Report source directories. -->
+  <property name="launcher.src.sqr" location="${launcher.src}/sqr"/>
+  <property name="launcher.src.sqc" location="${launcher.src}/sqc"/>
+  <property name="launcher.src.images" location="${launcher.src}/images"/>
+  <property name="launcher.src.test" location="${launcher.src}/test"/>
+
+  <!-- Report bin, logs directories. -->
+  <property name="launcher.bin" location="${launcher}/bin"/>
+  <property name="launcher.logs" location="${launcher}/logs"/>
+
+  <!-- Report output directories; these are appropriate locations for development. -->
+  <property name="launcher.src.pdf" location="${launcher.src}/pdf"/>
+  <property name="launcher.src.log" location="${launcher.src}/log"/>
+  <property name="launcher.src.xls" location="${launcher.src}/xls"/>
+
+  <!-- jslx output directories; these are appropriate locations for development. -->
+  <property name="launcher.src.jxls" location="${launcher.src}/jxls"/>
+  <property name="launcher.src.xls" location="${launcher.src}/xls"/>
+
+  <!-- Define library filesets here for use in constructing paths later. -->
+  <fileset id="lib.launcher.jarset" dir="${launcher.lib}">
+    <include name="commons-dbcp-1.2.2.jar"/>
+    <include name="wrapper.jar"/>
+  </fileset>
+  <!-- Define library filesets here for use in constructing paths later. -->
+  <fileset id="lib.launcher.fileset" dir="${launcher.lib}">
+    <include name="libwrapper.so"/>
+    <include name="wrapper.dll"/>
+  </fileset>
+
+  <path id="launcher.build.path">
+    <pathelement location="${dao.exploded}"/>
+    <pathelement location="${core.exploded}"/>
+    <dirset refid="hibernate.exploded.dirset"/>
+    <dirset refid="structs.exploded.dirset"/>
+    <fileset refid="xmlstructs.exploded.dirset"/>
+    <fileset refid="lib.fileset"/>
+    <fileset refid="lib.oracle.fileset"/>
+    <fileset refid="lib.commons-logging.fileset"/>
+    <fileset refid="lib.j2ee.fileset"/>
+    <fileset refid="lib.launcher.jarset"/>
+  </path>
+
+  <!-- Macro Definitions-->
+  <macrodef name="set-property">
+    <attribute name="filesets" description="The file to be updated."/>
+    <attribute name="property" description="The property to be updated."/>
+    <attribute name="value" description="The value to set to the property."/>
+    <sequential>
+      <replaceregexp flags="s" match="(@{property})=(.*)" replace="\1=@{value}" byline="true">
+        <fileset dir="@{filesets}" includes="**/*.sqr"/>
+      </replaceregexp>
+    </sequential>
+  </macrodef>
+
+  <macrodef name="comment-property">
+    <attribute name="filesets" description="The file to be updated."/>
+    <attribute name="uncommentedpropertyname" description="The unCommented property name to be commented."/>
+    <attribute name="commentedpropertyname" description="The commented property name."/>
+    <sequential>
+      <replaceregexp flags="s" match="@{uncommentedpropertyname}" replace="@{commentedpropertyname}" byline="true">
+        <fileset dir="@{filesets}" includes="**/*.sqr"/>
+      </replaceregexp>
+    </sequential>
+  </macrodef>
+
+  <macrodef name="search-replace">
+    <attribute name="filesets" description="The file to be updated."/>
+    <attribute name="search" description="The search attribute."/>
+    <attribute name="replace" description="The replace attribute."/>
+    <sequential>
+      <replaceregexp flags="gi" match="@{search}" replace="@{replace}" byline="true">
+        <fileset dir="@{filesets}" includes="**/*.sqr"/>
+      </replaceregexp>
+    </sequential>
+  </macrodef>
+
+  <target name="clean" description="Removes files used to build the launcher client and server.">
+    <!-- Do not delete the whole launcher/build directory becuase IDEs use it.. -->
+    <delete failonerror="false">
+      <fileset dir="${launcher.build}" includes="*"/>
+    </delete>
+    <delete dir="${launcher.build.test}"/>
+    <delete dir="${launcher-api.exploded}"/>
+    <delete dir="${launcher-impl.exploded}"/>
+    <delete dir="${launcher-shutdown.exploded}"/>
+    <delete file="${launcher-api.jar}"/>
+    <delete file="${launcher-impl.jar}"/>
+    <delete file="${launcher-shutdown.jar}"/>
+  </target>
+
+  <target name="clean.all" depends="clean" description="Removes all build artifacts.">
+    <delete dir="${launcher.build}"/>
+  </target>
+
+  <target name="prepare" depends="ant-tasks" description="Prepares for generation of launcher classes">
+    <mkdir dir="${launcher.build}"/>
+    <mkdir dir="${launcher.build.test}"/>
+    <mkdir dir="${launcher-api.exploded}"/>
+    <mkdir dir="${launcher-impl.exploded}"/>
+    <mkdir dir="${launcher-shutdown.exploded}"/>
+    <!-- Define this here because the directories must exist. -->
+    <path id="launcher.test.path">
+      <!-- Add configuration directory. -->
+      <pathelement location="${test}/"/>
+      <pathelement location="${launcher.test.conf}"/>
+      <pathelement location="${launcher.build.test}"/>
+      <!-- The tests use the server classes. -->
+      <pathelement location="${launcher-impl.exploded}"/>
+      <path refid="base.test.libs"/>
+      <path refid="launcher.build.path"/>
+    </path>
+  </target>
+
+  <target name="compile" depends="prepare" description="Compiles the launcher classes.">
+    <!-- Compile just the interface. -->
+    <javac source="1.5" target="1.5" debug="${build.debug}"
+           srcdir="${launcher.src.java}" destdir="${launcher-api.exploded}" classpathref="launcher.build.path">
+      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation,unchecked"/>
+      <include name="**/*.java"/>
+      <!-- The api excludes the impl but not vice-versa. -->
+      <exclude name="**/impl/**"/>
+      <exclude name="**/main/**"/>
+    </javac>
+    <!-- Compile the implementation. -->
+    <javac source="1.5" target="1.5" debug="${build.debug}"
+           srcdir="${launcher.src.java}" destdir="${launcher-impl.exploded}">
+      <classpath>
+        <pathelement location="${launcher-api.exploded}"/>
+        <path refid="launcher.build.path"/>
+        <fileset refid="lib.commons-logging.fileset"/>
+      </classpath>
+      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation,unchecked"/>
+      <include name="**/impl/**"/>
+      <include name="**/main/**"/>
+    </javac>
+    <!-- Compile the control classes. -->
+    <javac source="1.5" target="1.5" debug="${build.debug}"
+           srcdir="${launcher.src.java}" destdir="${launcher-shutdown.exploded}">
+      <classpath>
+        <fileset dir="${core.lib}">
+          <patternset refid="lib.spring.patternset"/>
+        </fileset>
+        <fileset refid="lib.commons-logging.fileset"/>
+      </classpath>
+      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation,unchecked"/>
+      <!-- By only selecting the main class, it will pull in the required interface. -->
+      <include name="**/control/**"/>
+    </javac>
+  </target>
+
+  <target name="package.exploded" depends="compile"
+          description="Copies compiled classes to the exploded ear directory.">
+    <!-- Copy the launcher properties file separately so it can be updated. -->
+    <copy todir="${launcher-api.exploded}" file="${launcher.src.conf}/launcher.properties">
+      <filterchain>
+        <expandproperties/>
+        <replacestring from="\" to="/"/>
+        <override-properties overrideproperties="${environment.overrirdes}"/>
+        <replacestring from="\" to="/"/>
+      </filterchain>
+    </copy>
+    <!-- Assemble the the API. -->
+    <copy todir="${launcher-api.exploded}" failonerror="true" preservelastmodified="true">
+      <fileset file="${launcher.src.conf}/launcher-client-context.xml"/>
+    </copy>
+    <!-- Copy the log4j properties; do not overwrite, so we can allow local changes. -->
+    <copy tofile="${launcher.src.conf}/log4j.properties" file="${launcher.src.conf}/log4j.properties.sample"
+          preservelastmodified="true"/>
+    <!-- Assemble the implementation. -->
+    <copy todir="${launcher-impl.exploded}" failonerror="true" preservelastmodified="true">
+      <fileset file="${launcher.src.conf}/log4j.properties"/>
+      <fileset file="${launcher.src.conf}/launcher-server-context.xml"/>
+      <!-- Copy the properties file out of the api build directory since it's identical. -->
+      <fileset file="${launcher-api.exploded}/launcher.properties"/>
+    </copy>
+    <!-- Assemble the control jar. -->
+    <copy todir="${launcher-shutdown.exploded}" failonerror="true" preservelastmodified="true">
+      <fileset file="${launcher.src.conf}/launcher-control-context.xml"/>
+      <!-- Copy the properties file out of the api build directory since it's identical. -->
+      <fileset file="${launcher-api.exploded}/launcher.properties"/>
+    </copy>
+  </target>
+
+  <target name="package.ear" depends="package.exploded,training" description="Jars classes to the ear directory.">
+    <jar destfile="${launcher-api.jar}" basedir="${launcher-api.exploded}"/>
+    <!-- Copy all the support libraries to a directory for assembly. -->
+    <sync todir="${build.launcher.lib}">
+      <!-- Need the api jar. -->
+      <fileset file="${launcher-api.jar}"/>
+      <!-- TODO: 99% of these files are unnecessary; figure out a clean way to strip out what isn't necessary-->
+      <fileset file="${dao.jar}"/>
+      <fileset file="${core.jar}"/>
+      <!-- Reference these as sets now since they already exist. -->
+      <fileset refid="hibernate.ear.fileset"/>
+      <fileset refid="structs.ear.fileset"/>
+      <fileset refid="xmlstructs.ear.fileset"/>
+      <!-- Libraries. -->
+      <!-- // TODO: Define the minimum required set of 3rd party libraries. -->
+      <fileset refid="lib.fileset"/>
+      <fileset refid="lib.oracle.fileset"/>
+      <fileset refid="lib.commons-logging.fileset"/>
+      <fileset refid="lib.j2ee.fileset"/>
+      <fileset refid="lib.launcher.jarset"/>
+      <fileset refid="lib.launcher.fileset"/>
+    </sync>
+    <!-- Package an implementation jar that assumes that all required jars are in the same directory. -->
+    <pathconvert property="launcher.build.path.property" pathsep=" " dirsep="/">
+      <path>
+        <fileset dir="${build.launcher.lib}" excludes="launcher-impl.jar"/>
+      </path>
+      <flattenmapper/>
+    </pathconvert>
+    <jar destfile="${launcher-impl.jar}" basedir="${launcher-impl.exploded}">
+      <manifest>
+        <attribute name="Class-Path" value="${launcher.build.path.property}"/>
+        <attribute name="Main-Class" value="gov.georgia.dhr.dfcs.sacwis.launcher.main.ReportLauncherMain"/>
+      </manifest>
+    </jar>
+    <!-- Package the control jar. -->
+    <jar destfile="${launcher-shutdown.jar}" basedir="${launcher-shutdown.exploded}">
+      <!-- Add required jars directly to the jar. -->
+      <zipgroupfileset dir="${core.lib}">
+        <patternset refid="lib.spring.patternset"/>
+      </zipgroupfileset>
+      <zipgroupfileset dir="${sjsas.lib}">
+        <patternset refid="lib.commons-logging.patternset"/>
+      </zipgroupfileset>
+      <manifest>
+        <attribute name="Main-Class" value="gov.georgia.dhr.dfcs.sacwis.launcher.control.ReportLauncherShutdownMain"/>
+      </manifest>
+    </jar>
+    <!-- Commenting the unwanted lines from the auto generated sqr files using Hyperion Developer -->
+    <!-- Following lines in each of the sqr files are commented just before packing it as ear -->
+    <!-- 1. Do CreateXML_ManifestFile, 2. Write 1 from '<output>', 3. Write 1 from '</output>' and 4. Close 1 -->
+    <comment-property filesets="${launcher.src.sqr}" uncommentedpropertyname="Do CreateXML_ManifestFile"
+      commentedpropertyname="! Do CreateXML_ManifestFile"/>
+    <comment-property filesets="${launcher.src.sqr}" uncommentedpropertyname="Write 1"
+      commentedpropertyname="! Write 1"/>
+    <comment-property filesets="${launcher.src.sqr}" uncommentedpropertyname="Close 1"
+      commentedpropertyname="! Close 1"/>
+	<!--In order to support the training environment, the schema references has been removed from all the SQL
+	    using a global macro. -->
+	<search-replace filesets="${launcher.src.sqr}" search="caps\." replace=""/>
+    <!-- Set the Shines logo location from the absolute path to the relative path for all the sqr files-->
+    <set-property filesets="${launcher.src.sqr}" property="Source" value="'images/SHINES.bmp'"/>
+    <!-- Put all of the launcher, the required jars, and reports in a tar file. -->
+    <tar destfile="${build.launcher.archive}" compression="gzip">
+      <tarfileset dir="${launcher.bin}" prefix="bin">
+        <exclude name="**/*.bat"/>
+        <exclude name="**/*.exe"/>
+      </tarfileset>
+      <tarfileset dir="${launcher.src.conf}" prefix="conf">
+        <include name="**/*.conf"/>
+      </tarfileset>
+      <tarfileset dir="${launcher.src.images}" prefix="images"/>
+      <tarfileset dir="${build.launcher.lib}" prefix="lib"/>
+      <tarfileset dir="${launcher.logs}" prefix="logs"/>
+      <tarfileset dir="${launcher.src.sqr}" prefix="sqr">
+          <exclude name="**/*.srm"/>
+      </tarfileset>
+      <tarfileset dir="${launcher.src.sqc}" prefix="sqc"/>
+	  <tarfileset dir="${launcher.src}">
+	  	<include name="jxls"/>
+	  	<include name="jxls/**/*"/>
+	  	<include name="xls"/>
+	  	<include name="xls/**/*"/>
+	  </tarfileset>
+    </tar>
+  </target>
+
+  <target name="training" if="perUserSchemaSupport.flag"
+	description="Add Training message to the reports for training environment">
+	<echo message="Inside Training target of launcher project to training message..."/>
+    <replaceregexp byline="false" flags="m">
+	   <regexp pattern="(.*Begin-Footing.*&#10;.*Alter-Printer.*Font=4.*Point-Size=10.*&#10;)"/>
+	   <substitution expression="\1 Print 'FOR TRAINING PURPOSES ONLY' (15,174,0) Bold&#10;" />
+  	   <fileset dir="${launcher.src.sqr}" includes="**/*.sqr" />
+    </replaceregexp>
+  </target>
+
+  <target name="test.spring" depends="compile" description="Tests the Spring configuration.">
+    <!-- None currently. -->
+  </target>
+
+  <target name="test.fast" depends="test.spring" description="Runs only tests that can be executed quickly."/>
+
+  <target name="test.all" depends="compile" description="Copies generated jar to build dir.">
+    <!-- None currently. -->
+  </target>
+
+  <target name="update" depends="package.exploded" description="Incremental build for development."/>
+
+  <target name="all" depends="clean,package.exploded,test.fast"
+          description="Cleans, builds, runs basic tests and packages to the exploded ear directory."/>
+
+  <target name="dist" depends="all,package.ear"
+          description="Cleans, builds, runs basic tests and packages to the ear directory."/>
+
+  <target name="start" description="Starts the RMI server locally (for development).">
+    <java classname="gov.georgia.dhr.dfcs.sacwis.launcher.main.ReportLauncherMain"
+          dir="${launcher.build}" fork="true" spawn="true">
+      <classpath>
+        <pathelement location="${launcher-api.exploded}"/>
+        <pathelement location="${launcher-impl.exploded}"/>
+        <fileset dir="${build.launcher.lib}"/>
+        <path refid="launcher.build.path"/>
+      </classpath>
+      <!-- Always run in debug mode locally. -->
+      <jvmarg value="-Xdebug"/>
+      <jvmarg value="-Xnoagent"/>
+      <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9199"/>
+    </java>
+  </target>
+
+  <target name="stop" description="Stops the RMI server locally (for development).">
+    <java fork="true" classname="gov.georgia.dhr.dfcs.sacwis.launcher.control.ReportLauncherShutdownMain"
+          dir="${launcher.build}" failonerror="true">
+      <classpath>
+        <dirset dir="${launcher-shutdown.exploded}"/>
+        <fileset dir="${core.lib}">
+          <patternset refid="lib.spring.patternset"/>
+        </fileset>
+      </classpath>
+    </java>
+  </target>
+
+</project>

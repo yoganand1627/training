@@ -1,0 +1,288 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Mon Sep 29 10:25:22 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\TCM Counts_New\Denied Re-billed Claim\TCMStatewideBillingCountsDeniedRebilled00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=168    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'CPS - Child Protective Services' (155,1,0)
+ Print 'YPS - Youth Protective Services' (171,1,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definition' (11,1,0) Underline  Bold 
+ Print 'This report displays all denied re-billed TCM claims for a service month that were billed at a specific date. A small date range is used to address this specific billing date. The reporting region and county are the unit region and county of the case worker who performs the TCM claim. When the case worker is of multi-county or non-county specific unit, the stage county and region will be used in counting.$Note that the unit region and county reflects the current staffing assignment at the time the report is run. For example, if a case worker changes county assignment after submitting TCM claims, this report generates different numbers when it is run before vs. after the change in county assignment. The total claims for statewide, however, stay the same in each case. ' (26,12,100) Wrap 100 9 line-height=12 Keep-Top on=$
+ Print 'Key' (139,1,0) Underline  Bold 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Date-Input
+ Do Get-Region-Input
+ Do Init-Var
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Region-Input
+! -----------------------------
+Input $_I101_CD_UNIT_REGION 'Enter a value for CD_UNIT_REGION' MaxLen=3  Type=Char
+If ($_I101_CD_UNIT_REGION = '0')
+  Let $where_clause101 = ' CCNTYREG00.DECODE NOT IN ( ' || '''' || '99' || '''' || ', ' || '''' || '97' || '''' || ')' ! not in ('99', '97'): state office and out-of-state code
+Else
+If SubStr($_I101_CD_UNIT_REGION, 1, 1) != ''''
+  Let $_I101_CD_UNIT_REGION = '''' || $_I101_CD_UNIT_REGION || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CD_UNIT_REGION,'''',0) = 0 and instr($_I101_CD_UNIT_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CCNTYREG00.DECODE'
+   Let $where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I101_CD_UNIT_REGION || '''' 
+ Else
+   If (instr($_I101_CD_UNIT_REGION,'''',0) = 0 and instr($_I101_CD_UNIT_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CCNTYREG00.DECODE'
+     Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_CD_UNIT_REGION
+   End-If
+ End-If
+End-If
+End-Procedure
+
+Begin-Procedure Get-Date-Input
+Input $dt_process_lower_range 'Enter Billing Start (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+Input $dt_process_upper_range 'Enter Billing End (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+Input $dt_report 'Enter TCM Billing Month (MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+
+End-Procedure
+
+Begin-Procedure Init-Var
+Let $_I17_BLANKS = '                 '
+Let $_PROVIDER_ID_UNDER_18 =  '000560711A' ! PROVIDER HANDLING SERVICES FOR CHILD = 18
+Let $_PROVIDER_ID_OVER_18 = '000560722A'   ! FOR CHILD > 18
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+ Move 0 To #total_sum
+ Move 0 To #YPS_sum
+ Move 0 To #Pla_sum
+ Move 0 To #SR_sum
+ Move 0 To #CPS_sum
+Begin-Select Distinct
+(SELECT  (count( distinct TCM_CLAIM.ID_TCM_CLAIM ))  FROM  EMPLOYEE,  TCM_CLAIM,  SACWISIFC.TCM_CLAIM_OUTBOUND_ENC,  UNIT UNIT01,  EVENT,  STAGE,  CCOUNT CCOUNT_DUMMY WHERE EMPLOYEE.ID_PERSON = TCM_CLAIM.ID_STAFF
+  AND  TCM_CLAIM.ID_TCM_CLAIM = SACWISIFC.TCM_CLAIM_OUTBOUND_ENC.ID_TCM_CLAIM
+  AND  EMPLOYEE.ID_EMP_UNIT = UNIT01.ID_UNIT
+  AND  TCM_CLAIM.ID_STAGE = STAGE.ID_STAGE
+  AND  TCM_CLAIM.ID_STAGE = EVENT.ID_EVENT_STAGE
+ AND  (TCM_CLAIM.DT_SERVICE >= TO_DATE($dt_report, 'MM/YYYY') AND  TCM_CLAIM.DT_SERVICE < LAST_DAY(TO_DATE($dt_report,'MM/YYYY') )+ 1) AND  DT_PROCESS >= TO_DATE($dt_process_lower_range,'MM/DD/YYYY') AND  DT_PROCESS <= TO_DATE($dt_process_upper_range,'MM/DD/YYYY') AND  TCM_CLAIM_OUTBOUND_ENC.NBR_TCN <> $_I17_BLANKS AND  ( TCM_CLAIM.CD_STATUS = 'RSU'  OR  TCM_CLAIM.CD_STATUS = 'DND') AND  (CCOUNT_DUMMY.CODE = UNIT01.CD_COUNTY OR  (UNIT01.CD_COUNTY IN ('XXX','999') AND  CD_STAGE_CNTY = CCOUNT_DUMMY.CODE)) AND  CD_DENIAL IS NOT NULL  AND  CCOUNT_DUMMY.CODE = CCNTYREG00.CODE) &Master_Query_All_Claims
+(SELECT  (count( DISTINCT TCM_CLAIM.ID_TCM_CLAIM ))  FROM  EMPLOYEE,  PERSON,  TCM_CLAIM,  UNIT UNIT05,  SACWISIFC.TCM_CLAIM_OUTBOUND_ENC,  CCOUNT CCOUNT_DUMMY,  EVENT,  STAGE WHERE EMPLOYEE.ID_PERSON = TCM_CLAIM.ID_STAFF
+  AND  TCM_CLAIM.ID_PERSON = PERSON.ID_PERSON
+  AND  EMPLOYEE.ID_EMP_UNIT = UNIT05.ID_UNIT
+  AND  TCM_CLAIM.ID_STAGE = EVENT.ID_EVENT_STAGE
+  AND  TCM_CLAIM.ID_STAGE = STAGE.ID_STAGE
+  AND  TCM_CLAIM.ID_TCM_CLAIM = SACWISIFC.TCM_CLAIM_OUTBOUND_ENC.ID_TCM_CLAIM
+ AND  (TCM_CLAIM.DT_SERVICE >= TO_DATE($dt_report, 'MM/YYYY') AND  TCM_CLAIM.DT_SERVICE < LAST_DAY(TO_DATE($dt_report,'MM/YYYY')) + 1) AND  TCM_CLAIM_OUTBOUND_ENC.TXT_PROVIDER_ID = $_PROVIDER_ID_OVER_18 AND  DT_PROCESS >= TO_DATE($dt_process_lower_range,'MM/DD/YYYY') AND  DT_PROCESS <= TO_DATE($dt_process_upper_range,'MM/DD/YYYY') AND  (TCM_CLAIM.CD_STATUS = 'RSU'  OR  TCM_CLAIM.CD_STATUS = 'DND') AND  TCM_CLAIM_OUTBOUND_ENC.NBR_TCN <> $_I17_BLANKS AND  (CCOUNT_DUMMY.CODE = UNIT05.CD_COUNTY OR  (UNIT05.CD_COUNTY IN ('XXX','999') AND  CD_STAGE_CNTY = CCOUNT_DUMMY.CODE)) AND  CD_DENIAL IS NOT NULL  AND  CCOUNT_DUMMY.CODE = CCNTYREG00.CODE) &Master_Query_YPS_Claims
+(SELECT  (count( DISTINCT TCM_CLAIM.ID_TCM_CLAIM ))  FROM  EMPLOYEE,  EVENT,  PERSON,  TCM_CLAIM,  UNIT UNIT04,  SACWISIFC.TCM_CLAIM_OUTBOUND_ENC,  STAGE,  CCOUNT CCOUNT_DUMMY WHERE EMPLOYEE.ID_PERSON = TCM_CLAIM.ID_STAFF
+  AND  TCM_CLAIM.ID_PERSON = PERSON.ID_PERSON
+  AND  TCM_CLAIM.ID_TCM_CLAIM = SACWISIFC.TCM_CLAIM_OUTBOUND_ENC.ID_TCM_CLAIM
+  AND  TCM_CLAIM.ID_STAGE = STAGE.ID_STAGE
+  AND  TCM_CLAIM.ID_STAGE = EVENT.ID_EVENT_STAGE
+  AND  EMPLOYEE.ID_EMP_UNIT = UNIT04.ID_UNIT
+ AND  (TCM_CLAIM.DT_SERVICE >= TO_DATE($dt_report, 'MM/YYYY') AND  TCM_CLAIM.DT_SERVICE < LAST_DAY(TO_DATE($dt_report,'MM/YYYY') ) + 1) AND  TCM_CLAIM_OUTBOUND_ENC.TXT_PROVIDER_ID = $_PROVIDER_ID_UNDER_18 AND  (CD_STAGE = 'SUB' OR  CD_STAGE = 'ADO') AND  DT_PROCESS >= TO_DATE($dt_process_lower_range,'MM/DD/YYYY') AND  DT_PROCESS <= TO_DATE($dt_process_upper_range,'MM/DD/YYYY') AND  (TCM_CLAIM.CD_STATUS = 'RSU'  OR TCM_CLAIM.CD_STATUS = 'DND') AND  (CCOUNT_DUMMY.CODE = UNIT04.CD_COUNTY OR  (UNIT04.CD_COUNTY IN ('XXX','999') AND  CD_STAGE_CNTY = CCOUNT_DUMMY.CODE)) AND  TCM_CLAIM_OUTBOUND_ENC.NBR_TCN <> $_I17_BLANKS AND  CD_DENIAL IS NOT NULL  AND  CCOUNT_DUMMY.CODE = CCNTYREG00.CODE) &Master_Query_Pla_Claims
+(SELECT  (count( DISTINCT TCM_CLAIM.ID_TCM_CLAIM ))  FROM  EMPLOYEE,  TCM_CLAIM,  UNIT UNIT02,  SACWISIFC.TCM_CLAIM_OUTBOUND_ENC,  EVENT,  PERSON,  STAGE,  CCOUNT CCOUNT_DUMMY WHERE EMPLOYEE.ID_PERSON = TCM_CLAIM.ID_STAFF
+  AND  TCM_CLAIM.ID_STAGE = STAGE.ID_STAGE
+  AND  TCM_CLAIM.ID_PERSON = PERSON.ID_PERSON
+  AND  EMPLOYEE.ID_EMP_UNIT = UNIT02.ID_UNIT
+  AND  TCM_CLAIM.ID_TCM_CLAIM = SACWISIFC.TCM_CLAIM_OUTBOUND_ENC.ID_TCM_CLAIM
+  AND  TCM_CLAIM.ID_STAGE = EVENT.ID_EVENT_STAGE
+ AND  (TCM_CLAIM.DT_SERVICE >= TO_DATE($dt_report, 'MM/YYYY') AND  TCM_CLAIM.DT_SERVICE < LAST_DAY(TO_DATE($dt_report,'MM/YYYY') )+ 1) AND  DT_PROCESS >= TO_DATE($dt_process_lower_range,'MM/DD/YYYY') AND  DT_PROCESS <= TO_DATE($dt_process_upper_range,'MM/DD/YYYY') AND  CD_STAGE = 'FPR' AND  STAGE.ID_STAGE  NOT IN (SELECT ID_STAGE FROM STAGE_PERSON_LINK WHERE IND_STAGE_PERS_SFTY_RESOURCE = 'Y' AND ID_CASE = STAGE.ID_CASE) AND  ( TCM_CLAIM.CD_STATUS = 'RSU'  OR  TCM_CLAIM.CD_STATUS = 'DND')  AND  TCM_CLAIM_OUTBOUND_ENC.NBR_TCN <> $_I17_BLANKS AND  (CCOUNT_DUMMY.CODE = UNIT02.CD_COUNTY OR  (UNIT02.CD_COUNTY IN ('XXX','999') AND  CD_STAGE_CNTY = CCOUNT_DUMMY.CODE)) AND  PERSON.ID_PERSON NOT IN (SELECT ID_CHILD FROM CAPS.SAFETY_RESOURCE_CHILD WHERE DT_START <= TCM_CLAIM.DT_SERVICE AND NVL(DT_END,TO_DATE('12/31/4712','MM/DD/YYYY')) >= TCM_CLAIM.DT_SERVICE) AND  TCM_CLAIM_OUTBOUND_ENC.TXT_PROVIDER_ID = $_PROVIDER_ID_UNDER_18 AND  CD_DENIAL IS NOT NULL  AND  CCOUNT_DUMMY.CODE = CCNTYREG00.CODE) &Master_Query_CPS_Claims
+(SELECT  (count( DISTINCT TCM_CLAIM.ID_TCM_CLAIM ))  FROM  EMPLOYEE,  TCM_CLAIM,  UNIT UNIT03,  EVENT,  STAGE,  PERSON,  SACWISIFC.TCM_CLAIM_OUTBOUND_ENC,  CCOUNT CCOUNT_DUMMY WHERE EMPLOYEE.ID_PERSON = TCM_CLAIM.ID_STAFF
+  AND  TCM_CLAIM.ID_PERSON = PERSON.ID_PERSON
+  AND  TCM_CLAIM.ID_TCM_CLAIM = SACWISIFC.TCM_CLAIM_OUTBOUND_ENC.ID_TCM_CLAIM
+  AND  EMPLOYEE.ID_EMP_UNIT = UNIT03.ID_UNIT
+  AND  TCM_CLAIM.ID_STAGE = EVENT.ID_EVENT_STAGE
+  AND  EVENT.ID_EVENT_STAGE = STAGE.ID_STAGE
+ AND  (TCM_CLAIM.DT_SERVICE >= TO_DATE($dt_report, 'MM/YYYY') AND  TCM_CLAIM.DT_SERVICE < LAST_DAY(TO_DATE($dt_report,'MM/YYYY') )+ 1) AND  CD_STAGE = 'FPR' AND  (STAGE.ID_STAGE  IN (SELECT ID_STAGE FROM STAGE_PERSON_LINK WHERE IND_STAGE_PERS_SFTY_RESOURCE = 'Y' AND ID_CASE = STAGE.ID_CASE) OR  (PERSON.ID_PERSON IN (SELECT ID_CHILD FROM CAPS.SAFETY_RESOURCE_CHILD WHERE DT_START <= TCM_CLAIM.DT_SERVICE AND NVL(DT_END,TO_DATE('12/31/4712','MM/DD/YYYY')) >= TCM_CLAIM.DT_SERVICE))) AND  DT_PROCESS >= TO_DATE($dt_process_lower_range,'MM/DD/YYYY') AND  DT_PROCESS <= TO_DATE($dt_process_upper_range,'MM/DD/YYYY') AND  ((TCM_CLAIM.CD_STATUS = 'RSU'  OR TCM_CLAIM.CD_STATUS = 'DND')) AND  TCM_CLAIM_OUTBOUND_ENC.TXT_PROVIDER_ID = $_PROVIDER_ID_UNDER_18 AND  TCM_CLAIM_OUTBOUND_ENC.NBR_TCN <> $_I17_BLANKS AND  (CCOUNT_DUMMY.CODE = UNIT03.CD_COUNTY OR  (UNIT03.CD_COUNTY IN ('XXX','999') AND  CD_STAGE_CNTY = CCOUNT_DUMMY.CODE)) AND  CD_DENIAL IS NOT NULL  AND  CCOUNT_DUMMY.CODE = CCNTYREG00.CODE) &Master_Query_SR_Claims
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CCNTYREG00.DECODE &Master_Query_CCNTYREG00.DECODE (15,31,6) On-Break Set=1 Level=1 After=Master_QueryDECODE_AfterProc101 Bold 
+ Print &Master_Query_All_Claims (15,460) Edit 8888na
+CCOUNT.DECODE &Master_Query_CCOUNT.DECODE (15,73,17)
+ Print &Master_Query_YPS_Claims (15,388) Edit 8888na
+ Print &Master_Query_Pla_Claims (15,316) Edit 8888na
+ Print &Master_Query_CPS_Claims (15,177) Edit 8888na
+ Print &Master_Query_SR_Claims (15,244) Edit 8888na
+ Add &Master_Query_All_Claims To #total_sum
+ Add &Master_Query_YPS_Claims To #YPS_sum
+ Add &Master_Query_Pla_Claims To #Pla_sum
+ Add &Master_Query_SR_Claims To #SR_sum
+ Add &Master_Query_CPS_Claims To #CPS_sum
+ Add 1 To #1ROW_COUNT
+ Add &Master_Query_All_Claims To #cnty_total
+ Add &Master_Query_Pla_Claims To #cnty_pla_tot
+ Add &Master_Query_SR_Claims To #cnty_SR_tot
+ Add &Master_Query_CPS_Claims To #cnty_CPS_tot
+ Add &Master_Query_YPS_Claims To #cnty_YPS_tot
+ Next-Listing  Need=15
+From  CCOUNT, CCNTYREG CCNTYREG00
+      Where CCOUNT.CODE = CCNTYREG00.CODE
+ And [$where_clause101]
+Order By CCNTYREG00.DECODE
+,      CCOUNT.DECODE
+End-Select
+ Next-Listing
+ Next-Listing  Need=20
+ If #1ROW_COUNT > 0
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #total_sum (20,462) Bold  Edit 8888888888na
+  Print #YPS_sum (20,388) Bold  Edit 8888888888na
+  Print #Pla_sum (20,316) Bold  Edit 8888888888na
+  Print #SR_sum (20,244) Bold  Edit 8888888888na
+  Print #CPS_sum (20,177) Bold  Edit 8888888888na
+  Print 'Query Total'  (20,31) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+!
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc101
+ Next-Listing  Need=32
+ Graphic (7,71,469) Horz-Line 10 
+ Position (8,1)
+ Graphic (34,20,520) Horz-Line 20 
+ Position (36,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #cnty_total (25,460) Edit 8888888888na
+ Print #cnty_pla_tot (25,316) Edit 8888888888na
+ Print #cnty_SR_tot (25,244) Edit 8888888888na
+ Print 'Total'  (25,74) Bold 
+ Print #cnty_CPS_tot (25,177) Edit 8888888888na
+ Print #cnty_YPS_tot (25,388) Edit 8888888888na
+   Position (+12,)
+ Move 0 To #cnty_total
+ Move 0 To #cnty_pla_tot
+ Move 0 To #cnty_SR_tot
+ Move 0 To #cnty_CPS_tot
+ Move 0 To #cnty_YPS_tot
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ Alter-Printer Font=4 Point-Size=10
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'TCM Statewide Billing Counts' (46,176,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (15,184,0)
+ Print $current-date (15,473) edit 'MM/DD/YYYY'
+ Print 'Produced On: ' (15,409,0)
+ Let $dt_lower=$dt_process_lower_range
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $dt_lower (119,86,10)
+ Let $dt_upper=$dt_process_upper_range
+ Print $dt_upper (119,167,10)
+ Let $dt_billing_month=$dt_report
+ Print $dt_billing_month (99,86,15)
+ Print 'Billing Month:' (99,3,0) Bold 
+ Print 'Billing Date: ' (119,3,0) Bold 
+ Print '-' (119,155,0)
+ Let $dt_lower=$dt_process_lower_range
+ Print $dt_lower (119,86,10)
+ Print 'Denied Re-billed Claims' (66,203,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Placement' (150,316,0) Underline  Bold 
+ Print 'Total' (150,460,0) Underline  Bold 
+ Print 'CPS' (150,177,0) Underline  Bold 
+ Print 'County' (150,74,0) Underline  Bold 
+ Print 'Region' (150,20,0) Underline  Bold 
+ Print 'YPS' (150,388,5) Underline  Bold 
+ Print 'Safety$Resource' (150,244,15) Underline  Bold  Wrap 15 2 line-height=12 Keep-Top on=$
+ Else   ! put a non combined page header
+ Print 'Placement' (15,316,0) Underline  Bold 
+ Print 'Total' (15,460,0) Underline  Bold 
+ Print 'CPS' (15,177,0) Underline  Bold 
+ Print 'County' (15,74,0) Underline  Bold 
+ Print 'Region' (15,20,0) Underline  Bold 
+ Print 'YPS' (15,388,5) Underline  Bold 
+ Print 'Safety$Resource' (15,244,15) Underline  Bold  Wrap 15 2 line-height=12 Keep-Top on=$
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 60 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (55,494) '' ' of '
+ Last-Page (55,515) 
+ Alter-Printer Font=901 Point-Size=10
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

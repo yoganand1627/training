@@ -1,0 +1,631 @@
+!*****************************************************************************
+!  EVENT LIST                                                                *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccm02o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 10/20/04                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Eric Dickman                                         *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The Event Type Event List Report produces            *
+!                       the entire list of events by event type for a case   *  
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 10/11/04   E. Dickman   SIR 15547 - This report will give the user the     *
+!                         ability to search by event type.                   *
+! 10/21/04   DICKMAEC     SIR 23159 - Added CONTACT DATE for events types of * 
+!                         Contact.                                           *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                       !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'             ! control codes for Portrait 
+                                        ! On Demand Reports              
+
+    ask ID_CASE
+    
+    !SIR 15547
+    ask EVENT_TYPE
+    ask RPT_LAUNCH
+    
+                                    
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 5 
+
+  #INCLUDE 'header04.sqc'               !Include file with Header Information
+                    !Specific to portrait on demand reports
+
+  print 'EVENT TYPES LIST FOR CASE'                       (+2) center
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+                    ! specific to portrait on demand report
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS:     GET-CASE-NAME-NUMBER                                     * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'            !Set printer environment
+
+   move  '{ID_CASE}'                to #input_id_case
+   
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-CASE-NAME-NUMBER, GET-EVENT-RECORDS                *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+   
+   move '{EVENT_TYPE}'                 to $searched_event_type
+   move '{RPT_LAUNCH}'                 to $rpt_launch
+   	 
+   !SIR 15547 - Translate ~CON@|~ASG@ to 'CON','ASG'	 
+   let $searched_event_type_1 = translate( $searched_event_type, '@|' , ''',')
+   let $searched_event_type_2 = translate( $searched_event_type_1, '~' , '''')
+
+	 !SIR 15547 - Create Dynamic Sql    
+	 if $rpt_launch = 'true'
+	  let $event_type_sql = ' AND E.CD_EVENT_TYPE IN ( ' || $searched_event_type_2 || ' ) '
+	 else
+	  let $event_type_sql = ''
+	 end-if	
+	 
+	 
+	  do GET-CASE-NAME-NUMBER
+    do GET-EVENT-RECORDS 
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-CASE-NAME-NUMBER                                                    *
+!                                                                           *
+!       This procedure will get the case name and case number using the     *
+!       id_stage asked for.                                                 *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CASE-NAME-NUMBER
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.NM_CASE                   
+    move &A.NM_CASE     to $Case_Name         
+                
+A.ID_CASE
+    move &A.ID_CASE     to #Case_Number           
+
+FROM  CAPS_CASE         A
+
+WHERE A.ID_CASE  = #input_id_case       
+
+END-SELECT
+    
+END-PROCEDURE GET-CASE-NAME-NUMBER
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-EVENT-RECORDS                                                       *
+!                                                                           *
+!       This procedure will get all the event records using the id_case     *
+!       the input.  This also calls the procedure to print the stage        *
+!       name if it suffices one of the conditions.                          *
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : PRINT-EVENT-RECORDS, PRINT-STAGE-NAME                  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-EVENT-RECORDS 
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+E.ID_EVENT
+    move &E.ID_EVENT                            to #id_event
+    
+to_char(E.DT_EVENT_OCCURRED, 'MM/DD/YYYY') &date1
+    move &date1                                 to $event_date
+
+CEVNTTYP.decode    
+    move &CEVNTTYP.decode                       to $event_type
+    
+E.CD_EVENT_STATUS    
+    move &E.CD_EVENT_STATUS                     to $status
+    
+E.TXT_EVENT_DESCR    
+    move &E.TXT_EVENT_DESCR                     to $description
+    
+CSTAGES.decode    
+    move &CSTAGES.decode                        to $stage
+    
+CSTGTYPE.decode    
+    move &CSTGTYPE.decode                       to $stage_type
+    
+!SIR 23159 
+to_char(C.DT_CONTACT_OCCURRED, 'MM/DD/YYYY')    &dateContact 
+		move &dateContact                           to $dt_contact_occurred    
+    
+N.NM_NAME_FIRST &update_by_first                
+    move &update_by_first                       to $update_by_first
+
+N.NM_NAME_MIDDLE &update_by_middle
+    move &update_by_middle                      to $update_by_middle
+
+N.NM_NAME_LAST &update_by_last                 
+    move &update_by_last                        to $update_by_last
+
+CSUFFIX2.decode                                 
+    move &CSUFFIX2.decode                       to $update_suff
+    
+S.NM_STAGE    
+    move &S.NM_STAGE                            to $stage_name
+
+S.CD_STAGE
+    move &S.CD_STAGE                            to $cd_stage
+
+  if $update_suff <> '' 
+     let $up_suff_act = ', ' || $update_suff
+  end-if
+
+  if $update_by_middle = ''
+     let $update_by = $update_by_first || ' ' || $update_by_last || $up_suff_act
+  else
+     let $update_by = $update_by_first || ' ' || $update_by_middle || ' ' || $update_by_last || $up_suff_act
+  end-if
+
+  if rtrim($update_by,' ') = ''  !***SIR 20090 ***
+    let $update_by = 'SYSTEM'
+  end-if
+
+       next-listing skiplines=2 need=8 no-advance
+    do PRINT-EVENT-RECORDS
+    
+    if (  $cd_stage = 'SUB'
+       or $cd_stage = 'PAL'
+       or $cd_stage = 'PAD'
+       or $cd_stage = 'ADO' )
+          do PRINT-STAGE-NAME
+    end-if
+
+FROM    CEVNTTYP        CEVNTTYP,
+        CSTAGES         CSTAGES,
+        CSTGTYPE        CSTGTYPE,
+	      CSUFFIX2        CSUFFIX2, 
+        EVENT           E,
+        NAME            N,
+        STAGE           S,
+        CONTACT         C !SIR23159       
+WHERE       S.ID_CASE              = #input_id_case
+AND         E.ID_EVENT_STAGE       = S.ID_STAGE
+[$event_type_sql] !dynamic sql for event types
+AND         N.ID_PERSON(+)         = E.ID_EVENT_PERSON
+AND         N.IND_NAME_PRIMARY(+)  = 'Y'
+AND         N.DT_NAME_END_DATE(+)  = '12/31/4712' 
+AND         CSUFFIX2.CODE(+)       = N.CD_NAME_SUFFIX 
+AND         CEVNTTYP.CODE(+)       = E.CD_EVENT_TYPE
+AND         CSTAGES.CODE(+)        = S.CD_STAGE
+AND         CSTGTYPE.CODE(+)       = S.CD_STAGE_TYPE
+AND         C.ID_EVENT(+)          = E.ID_EVENT !SIR23159 
+            
+ORDER BY    E.DT_EVENT_OCCURRED    DESC
+
+END-SELECT    
+
+END-PROCEDURE GET-EVENT-RECORDS 
+
+!****************************************************************************
+!                                                                           *
+!   GET-EVENT-PERSONS                                                       *
+!                                                                           *
+!       This procedure retrieves the person names and inserts a certain     *
+!       number of blank spaces if the person count is less than four in     *
+!       order to provide enough space for the description to wrap four times*
+!                                                                           * 
+!       CALLED BY  : PRINT-EVENT-RECORDS                                    *
+!       CALLS      : PRINT-PERSONS                                          *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-EVENT-PERSONS
+
+    move 0      to #count_2             ! initialize the counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                      
+N1.NM_NAME_FIRST &name
+    move &name                                  to $persons_first
+
+N1.NM_NAME_MIDDLE &persons_middle
+    move &persons_middle                        to $persons_middle
+
+N1.NM_NAME_LAST &persons_last
+    move &persons_last                          to $persons_last
+
+CSUFFIX2.decode &suffix                         !***ENH***
+    move &suffix                                to $pers_suff
+
+    let #count_2 = #count_2 + 1
+
+    do PRINT-PERSONS
+
+FROM    NAME                N1,
+	      CSUFFIX2            CSUFFIX2, 
+        EVENT_PERSON_LINK   EPL
+
+WHERE   EPL.ID_EVENT        = #id_event
+AND     N1.ID_PERSON        = EPL.ID_PERSON
+AND     CSUFFIX2.CODE(+)    = N1.CD_NAME_SUFFIX 
+AND     N1.IND_NAME_INVALID = 'N'
+AND     N1.IND_NAME_PRIMARY = 'Y'
+AND	    N1.DT_NAME_END_DATE = '12/31/4712' !SIR 20959 - Gets only the current 
+					   !name for each id_person selected
+    
+ORDER BY    EPL.ID_PERSON DESC 
+    
+END-SELECT   
+
+    move 0 to #stage_row
+
+  if #count_2 = 0 and #print_row = 0
+    move 0 to #stage_row
+  else
+  if #count_2 = 0 and #print_row = -1
+    move 1 to #stage_row
+  else
+  if #count_2 = 0 and #print_row = -2
+    move 2 to #stage_row
+  else
+  if #count_2 = 0 and #print_row = -3
+    move 3 to #stage_row
+  end-if
+  end-if
+  end-if
+  end-if
+  
+  
+  if #count_2 = 1 and #print_row = 0
+    move 0 to #stage_row
+  else
+  if #count_2 = 1 and #print_row = -1
+    move 1 to #stage_row
+  else
+  if #count_2 = 1 and #print_row = -2
+    move 2 to #stage_row
+  else
+  if #count_2 = 1 and #print_row = -3
+    move 3 to #stage_row
+  end-if
+  end-if
+  end-if
+  end-if
+  
+  
+  if #count_2 = 2 and #print_row = 0
+    move 0 to #stage_row
+  else
+  if #count_2 = 2 and #print_row = -1
+    move 0 to #stage_row
+  else
+  if #count_2 = 2 and #print_row = -2
+    move 1 to #stage_row
+  else
+  if #count_2 = 2 and #print_row = -3
+    move 2 to #stage_row
+  end-if
+  end-if
+  end-if
+  end-if
+  
+  
+  if #count_2 = 3 and #print_row = 0
+    move 0 to #stage_row
+  else
+  if #count_2 = 3 and #print_row = -1
+    move 0 to #stage_row
+  else
+  if #count_2 = 3 and #print_row = -2
+    move 0 to #stage_row
+  else
+  if #count_2 = 3 and #print_row = -3
+    move 1 to #stage_row
+  end-if
+  end-if
+  end-if
+  end-if
+
+END-PROCEDURE GET-EVENT-PERSONS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-EVENT-RECORDS                                                     *
+!                                                                           *
+!       This procedure prints the event information and calls the person    *
+!       procedure in order to print the names associated with each event.   *
+!                                                                           * 
+!       CALLED BY  : GET-EVENT-RECORDS                                      *
+!       CALLS      : GET-EVENT-PERSONS                                      *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-EVENT-RECORDS
+
+  columns 1 15 33 39 42 45 54 66 74
+
+print 'EVENT DATE: '                            (+0,1)
+  next-column at-end=newline
+print $event_date                               (+0,1) 
+  next-column at-end=newline
+print 'TYPE: '                                  (+0,1) 
+  next-column at-end=newline
+print $event_type                               (+0,1) 
+  next-column at-end=newline
+  next-column at-end=newline
+  next-column at-end=newline
+  next-column at-end=newline
+print 'STATUS: '                                (+0,1) 
+  next-column at-end=newline
+print $status                                   (+0,1) 
+  next-column at-end=newline
+print 'DESCRIPTION: '                           (+0,1)
+  next-column goto-top=3 at-end=newline
+let #before_line = #current-line
+let $description2 = rtrim($description,'')
+print $description2                             (+0,1)  wrap 26 4
+let #print_row = #before_line - #current-line
+  next-column goto-top=3 at-end=newline
+  next-column at-end=newline
+  next-column at-end=newline
+  next-column at-end=newline
+print 'PERSONS: '                               (+#print_row,1)
+  next-column goto-top=3 at-end=newline
+  do GET-EVENT-PERSONS
+  next-column at-end=newline
+  next-column at-end=newline
+  next-column at-end=newline
+print 'STAGE: '                                 (+#stage_row,1)
+  next-column at-end=newline
+print $stage                                    (0,1) 
+  next-column at-end=newline
+  next-column at-end=newline
+  next-column at-end=newline
+print 'STAGE TYPE: '                            (0,1) 
+  next-column at-end=newline
+  next-column at-end=newline
+print $stage_type                               (0,1) 
+  next-column at-end=newline
+  next-column at-end=newline
+  next-column at-end=newline
+print 'LAST UPDT BY: '                          (0,1)
+  next-column at-end=newline
+print $update_by                                (0,1)
+!SIR 23159
+if $event_type = 'Contact'
+  next-column at-end=newline
+  next-column at-end=newline
+  next-column at-end=newline
+	next-column at-end=newline
+  next-column at-end=newline
+  next-column at-end=newline
+  next-column at-end=newline
+  next-column at-end=newline
+  
+  print 'CONTACT DATE: '                        (0,1)
+  next-column at-end=newline    
+  print  $dt_contact_occurred							  		(0,1)
+end-if  
+
+move '' to $up_suff_act  !***ENH***
+
+END-PROCEDURE PRINT-EVENT-RECORDS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-STAGE-NAME                                                        *
+!                                                                           *
+!       This procedure prints the stage name if it meets the criteria in    *
+!       the get event records procedure.                                    *
+!                                                                           * 
+!       CALLED BY  : GET-EVENT-RECORDS                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-STAGE-NAME
+
+print 'STAGE NAME: '                                (+0,28)
+print $stage_name                                   (+0,40)
+
+
+END-PROCEDURE PRINT-STAGE-NAME
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PERSONS                                                           *
+!                                                                           *
+!       This procedure prints the persons associated with each stage.       *
+!                                                                           * 
+!       CALLED BY  : GET-EVENT-PERSONS                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PERSONS
+
+if $pers_suff <> '' !***ENH***
+  let $pers_suff_act = ', ' || $pers_suff
+end-if
+
+if $persons_middle = ''
+  let $persons = $persons_first || ' ' || $persons_last || $pers_suff_act
+else
+  let $persons = $persons_first || ' ' || $persons_middle || ' ' || $persons_last || $pers_suff_act
+end-if
+  
+  let $persons2 = rtrim($persons,'')
+
+  if #count_2 = 1
+    print $persons2                     (0,1) wrap 24 4
+  else
+    position (+1,1)
+    if #current-line = 7
+       next-column
+       next-column
+       next-column
+       next-column
+       next-column
+       next-column
+    end-if
+    print $persons2                     (0,1) wrap 24 4
+  end-if
+
+move '' to $pers_suff_act !***ENH***
+                             
+END-PROCEDURE PRINT-PERSONS   
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *   
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+
+
+#INCLUDE 'cfpstamp.sqc'

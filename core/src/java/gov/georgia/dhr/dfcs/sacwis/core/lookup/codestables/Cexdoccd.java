@@ -1,0 +1,60 @@
+package gov.georgia.dhr.dfcs.sacwis.core.lookup.codestables;
+
+public interface Cexdoccd {
+
+  public static final String CEXDOCCD = "CEXDOCCD";
+  public static final String CEXDOCCD_AC = "AC";
+  public static final String CEXDOCCD_AR = "AR";
+  public static final String CEXDOCCD_AX = "AX";
+  public static final String CEXDOCCD_CA = "CA";
+  public static final String CEXDOCCD_CC = "CC";
+  public static final String CEXDOCCD_CF = "CF";
+  public static final String CEXDOCCD_CH = "CH";
+  public static final String CEXDOCCD_CM = "CM";
+  public static final String CEXDOCCD_CN = "CN";
+  public static final String CEXDOCCD_CO = "CO";
+  public static final String CEXDOCCD_CR = "CR";
+  public static final String CEXDOCCD_CW = "CW";
+  public static final String CEXDOCCD_DL = "DL";
+  public static final String CEXDOCCD_DR = "DR";
+  public static final String CEXDOCCD_DS = "DS";
+  public static final String CEXDOCCD_EA = "EA";
+  public static final String CEXDOCCD_FM = "FM";
+  public static final String CEXDOCCD_FO = "FO";
+  public static final String CEXDOCCD_GR = "GR";
+  public static final String CEXDOCCD_IB = "IB";
+  public static final String CEXDOCCD_IC = "IC";
+  public static final String CEXDOCCD_ID = "ID";
+  public static final String CEXDOCCD_IT = "IT";
+  public static final String CEXDOCCD_IV = "IV";
+  public static final String CEXDOCCD_LF = "LF";
+  public static final String CEXDOCCD_MT = "MT";
+  public static final String CEXDOCCD_PE = "PE";
+  public static final String CEXDOCCD_PH = "PH";
+  public static final String CEXDOCCD_PL = "PL";
+  public static final String CEXDOCCD_PM = "PM";
+  public static final String CEXDOCCD_PS = "PS";
+  public static final String CEXDOCCD_PT = "PT";
+  public static final String CEXDOCCD_PV = "PV";
+  public static final String CEXDOCCD_PW = "PW";
+  public static final String CEXDOCCD_RB = "RB";
+  public static final String CEXDOCCD_RF = "RF";
+  public static final String CEXDOCCD_RG = "RG";
+  public static final String CEXDOCCD_RM = "RM";
+  public static final String CEXDOCCD_RP = "RP";
+  public static final String CEXDOCCD_RX = "RX";
+  public static final String CEXDOCCD_SA = "SA";
+  public static final String CEXDOCCD_SD = "SD";
+  public static final String CEXDOCCD_SF = "SF";
+  public static final String CEXDOCCD_SU = "SU";
+  public static final String CEXDOCCD_SX = "SX";
+  public static final String CEXDOCCD_TS = "TS";
+  public static final String CEXDOCCD_VD = "VD";
+  public static final String CEXDOCCD_VO = "VO";
+  public static final String CEXDOCCD_WS = "WS";
+  public static final String CEXDOCCD_WT = "WT";
+  public static final String CEXDOCCD_XC = "XC";
+  public static final String CEXDOCCD_XF = "XF";
+  public static final String CEXDOCCD_XI = "XI";
+
+}

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.CwFcCpReviewFactors" table="CW_FC_CP_REVIEW_FACTORS" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idCwFcCpReviewFactors" type="integer" unsaved-value="0">
+            <column name="ID_CW_FC_CP_REVIEW_FACTORS" precision="16" scale="0"/>
+            <generator class="sequence">
+<param name="sequence">SEQ_CW_FC_CP_REVIEW_FACTORS</param>
+</generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_CURRENT_PLAN_EVENT" precision="16" scale="0"/>
+        </many-to-one>
+        <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <property name="cdPrimPermGoal" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_PRIM_PERM_GOAL" length="3"/>
+        </property>
+        <property name="indPrimPermGoalError" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_PRIM_PERM_GOAL_ERROR" length="1"/>
+        </property>
+        <property name="cdConcurPermGoal" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_CONCUR_PERM_GOAL" length="3"/>
+        </property>
+        <property name="indConcurPermGoalError" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_CONCUR_PERM_GOAL_ERROR" length="1"/>
+        </property>
+        <property name="dtLastCasePlanReview" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_LAST_CASE_PLAN_REVIEW" length="7"/>
+        </property>
+        <property name="indLastCasePlanReviewErr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_LAST_CASE_PLAN_REVIEW_ERR" length="1"/>
+        </property>
+        <property name="dtLastPermanencyReview" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_LAST_PERMANENCY_REVIEW" length="7"/>
+        </property>
+        <property name="indLastPermanencyReviewErr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_LAST_PERMANENCY_REVIEW_ERR" length="1"/>
+        </property>
+        <property name="dtLastFtm" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_LAST_FTM" length="7"/>
+        </property>
+        <property name="indErrorFtm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_ERROR_FTM" length="1"/>
+        </property>
+        <property name="dtEligDueDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_ELIG_DUE_DATE" length="7"/>
+        </property>
+        <property name="indEligDueDateError" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_ELIG_DUE_DATE_ERROR" length="1"/>
+        </property>
+    </class>
+</hibernate-mapping>

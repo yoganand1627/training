@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+       default-dependency-check="all"
+       default-lazy-init="false">
+  <bean id="deleteReportList" class="gov.georgia.dhr.dfcs.sacwis.service.reports.impl.DeleteReportListImpl"
+        parent="baseService">
+    <property name="reportListDAO" ref="reportListDAO"/>
+  </bean>
+  <!-- Dependency check is off because the report launcher is failing. -->
+  <bean id="launchReportAsync" class="gov.georgia.dhr.dfcs.sacwis.service.reports.impl.LaunchReportAsyncImpl"
+        parent="baseService">
+    <property name="capsCaseDAO" ref="capsCaseDAO"/>    
+    <property name="reportParameterDAO" ref="reportParameterDAO"/>
+    <property name="reportsDAO" ref="reportsDAO"/>
+    <property name="reportListDAO" ref="reportListDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <!-- Special service that uses RMI to launch reports on a separate server. -->
+    <property name="reportLauncher" ref="reportLauncher"/>
+  </bean>
+  <bean id="retrieveOutputLaunch" class="gov.georgia.dhr.dfcs.sacwis.service.reports.impl.RetrieveOutputLaunchImpl"
+        parent="baseService">
+    <property name="chldDthCauseCbxDAO" ref="chldDthCauseCbxDAO"/>      
+    <property name="chldDthNrFltySeriInjDAO" ref="chldDthNrFltySeriInjDAO"/>    
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO"/>
+    <property name="personDAO" ref="personDAO"/>    
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="taskDAO" ref="taskDAO"/>
+    <property name="outputLaunchEventLinkDAO" ref="outputLaunchEventLinkDAO"/>
+    <property name="visitationTypeDAO" ref="visitationTypeDAO"/>
+    
+     
+  </bean>
+  <bean id="retrieveReportList" class="gov.georgia.dhr.dfcs.sacwis.service.reports.impl.RetrieveReportListImpl"
+        parent="baseService">
+    <property name="reportListDAO" ref="reportListDAO"/>
+  </bean>
+  <bean id="retrieveReportParmlist" class="gov.georgia.dhr.dfcs.sacwis.service.reports.impl.RetrieveReportParmlistImpl"
+        parent="baseService">
+    <property name="reportListDAO" ref="reportListDAO"/>
+    <property name="launchReportAsync" ref="launchReportAsync"/>
+    <property name="reportParameterDAO" ref="reportParameterDAO"/>
+  </bean>
+  <bean id="retrieveReport" class="gov.georgia.dhr.dfcs.sacwis.service.reports.impl.RetrieveReportImpl"
+        parent="baseService">
+    <property name="reportLauncher" ref="reportLauncher"/>
+    <property name="reportsDAO" ref="reportsDAO"/>
+    <property name="checkIfUserHasRight" ref="checkIfUserHasRight"/>
+  </bean>
+  <bean id="saveOutputLaunch" class="gov.georgia.dhr.dfcs.sacwis.service.reports.impl.SaveOutputLaunchImpl"
+        parent="baseService">
+    <property name="approvalEventLinkDAO" ref="approvalEventLinkDAO"/>          
+    <property name="approversDAO" ref="approversDAO"/>
+    <property name="complexStageDAO" ref="complexStageDAO"/>
+    <property name="checkStageEventStatus" ref="checkStageEventStatus"/>
+    <property name="chldDthCauseCbxDAO" ref="chldDthCauseCbxDAO"/>      
+    <property name="chldDthNrFltySeriInjDAO" ref="chldDthNrFltySeriInjDAO"/>
+    <property name="eventPersonLinkDAO" ref="eventPersonLinkDAO"/>
+    <property name="invalidateApproval" ref="invalidateApproval"/>
+    <property name="personDAO" ref="personDAO"/>        
+    <property name="postEvent" ref="postEvent"/>
+     <property name="stageDAO" ref="stageDAO"/>   
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="outputLaunchEventLinkDAO" ref="outputLaunchEventLinkDAO"/>
+    <property name="visitationTypeDAO" ref="visitationTypeDAO"/>
+  </bean>
+</beans>

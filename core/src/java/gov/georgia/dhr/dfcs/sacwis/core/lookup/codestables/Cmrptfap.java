@@ -1,0 +1,61 @@
+package gov.georgia.dhr.dfcs.sacwis.core.lookup.codestables;
+
+public interface Cmrptfap {
+
+  public static final String CMRPTFAP = "CMRPTFAP";
+  public static final String CMRPTFAP_FA01 = "FA01";
+  public static final String CMRPTFAP_FA02 = "FA02";
+  public static final String CMRPTFAP_FA03 = "FA03";
+  public static final String CMRPTFAP_FA04 = "FA04";
+  public static final String CMRPTFAP_FA05 = "FA05";
+  public static final String CMRPTFAP_FA06 = "FA06";
+  public static final String CMRPTFAP_FA07 = "FA07";
+  public static final String CMRPTFAP_FA08 = "FA08";
+  public static final String CMRPTFAP_FA09 = "FA09";
+  public static final String CMRPTFAP_FA10 = "FA10";
+  public static final String CMRPTFAP_FA11 = "FA11";
+  public static final String CMRPTFAP_FA12 = "FA12";
+  public static final String CMRPTFAP_FA13 = "FA13";
+  public static final String CMRPTFAP_FA14 = "FA14";
+  public static final String CMRPTFAP_FA15 = "FA15";
+  public static final String CMRPTFAP_FA16 = "FA16";
+  public static final String CMRPTFAP_FA17 = "FA17";
+  public static final String CMRPTFAP_FA18 = "FA18";
+  public static final String CMRPTFAP_FA19 = "FA19";
+  public static final String CMRPTFAP_FA20 = "FA20";
+  public static final String CMRPTFAP_FA21 = "FA21";
+  public static final String CMRPTFAP_FA22 = "FA22";
+  public static final String CMRPTFAP_FA23 = "FA23";
+  public static final String CMRPTFAP_FA24 = "FA24";
+  public static final String CMRPTFAP_FA25 = "FA25";
+  public static final String CMRPTFAP_FA26 = "FA26";
+  public static final String CMRPTFAP_FA27 = "FA27";
+  public static final String CMRPTFAP_FA28 = "FA28";
+  public static final String CMRPTFAP_FA29 = "FA29";
+  public static final String CMRPTFAP_FA30 = "FA30";
+  public static final String CMRPTFAP_FA31 = "FA31";
+  public static final String CMRPTFAP_FA32 = "FA32";
+  public static final String CMRPTFAP_FA33 = "FA33";
+  public static final String CMRPTFAP_FA34 = "FA34";
+  public static final String CMRPTFAP_FA35 = "FA35";
+  public static final String CMRPTFAP_FA36 = "FA36";
+  public static final String CMRPTFAP_FA37 = "FA37";
+  public static final String CMRPTFAP_FA38 = "FA38";
+  public static final String CMRPTFAP_FA39 = "FA39";
+  public static final String CMRPTFAP_FA40 = "FA40";
+  public static final String CMRPTFAP_FA41 = "FA41";
+  public static final String CMRPTFAP_FA42 = "FA42";
+  public static final String CMRPTFAP_FA43 = "FA43";
+  public static final String CMRPTFAP_FA44 = "FA44";
+  public static final String CMRPTFAP_FA45 = "FA45";
+  public static final String CMRPTFAP_FA46 = "FA46";
+  public static final String CMRPTFAP_FA47 = "FA47";
+  public static final String CMRPTFAP_FA48 = "FA48";
+  public static final String CMRPTFAP_FA49 = "FA49";
+  public static final String CMRPTFAP_FA50 = "FA50";
+  public static final String CMRPTFAP_FA51 = "FA51";
+  public static final String CMRPTFAP_FA52 = "FA52";
+  public static final String CMRPTFAP_FA53 = "FA53";
+  public static final String CMRPTFAP_FA54 = "FA54";
+
+}

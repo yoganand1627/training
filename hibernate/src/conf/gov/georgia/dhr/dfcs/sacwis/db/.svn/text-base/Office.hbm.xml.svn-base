@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Office" table="OFFICE" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idOffice" type="integer" unsaved-value="0">
+      <column name="ID_OFFICE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_OFFICE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="mailCode" class="gov.georgia.dhr.dfcs.sacwis.db.MailCode" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="CD_OFFICE_MAIL" length="4" not-null="true"/>
+    </many-to-one>
+    <property name="cdOfficeProgram" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_OFFICE_PROGRAM" length="3" not-null="true"/>
+    </property>
+    <property name="cdOfficeRegion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_OFFICE_REGION" length="3" not-null="true"/>
+    </property>
+    <property name="cdOfficePrinter" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_OFFICE_PRINTER" length="8"/>
+    </property>
+    <property name="nmOfficeName" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_OFFICE_NAME" length="15"/>
+    </property>
+    <bag name="caseFileManagements" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CASE_FILE_OFFICE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CaseFileManagement" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="officePhones" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_OFFICE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.OfficePhone" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="employees" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EMP_OFFICE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Employee" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.PersonAddress" table="PERSON_ADDRESS" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idPersonAddr" type="integer" unsaved-value="0">
+      <column name="ID_PERSON_ADDR" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_PERSON_ADDRESS</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="addrPersonAddrZip" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_PERSON_ADDR_ZIP" length="10"/>
+    </property>
+    <property name="cdPersonAddrState" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERSON_ADDR_STATE" length="2"/>
+    </property>
+    <property name="nbrPersonAddrHash" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PERSON_ADDR_HASH" precision="6" scale="0"/>
+    </property>
+    <property name="addrPersonAddrCity" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_PERSON_ADDR_CITY" length="20"/>
+    </property>
+    <property name="addrPersonAddrAttn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_PERSON_ADDR_ATTN" length="45"/>
+    </property>
+    <property name="addrPersAddrStLn1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_PERS_ADDR_ST_LN_1" length="30"/>
+    </property>
+    <property name="addrPersAddrStLn2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_PERS_ADDR_ST_LN_2" length="30"/>
+    </property>
+    <property name="cdPersonAddrCounty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERSON_ADDR_COUNTY" length="3"/>
+    </property>
+    <property name="txtPersonEmail" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_PERSON_EMAIL" length="70"/>
+    </property>
+    <bag name="addressPersonLinks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PERSON_ADDR" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AddressPersonLink" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

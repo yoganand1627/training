@@ -1,0 +1,1100 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Mon Apr 11 14:45:05 2011 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2011\MR75\DFCS Foste Home Monthly Status\DFCSFosterHomeMonthlyStatus00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=192    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Active First day of Month:' (86,1,28) Bold 
+ Print 'Number of DFCS homes as of the first day of the month.' (86,228,0)
+ Print 'Approved during Month' (104,1,0) Bold 
+ Print 'Number of DFCS homes approved for the first time at any point during the month.' (119,228,0)
+ Print 'Closed during Month:' (156,1,0) Bold 
+ Print 'Number of DFCS homes closed at any point during the month and are not active at the end of the month.' (156,228,0)
+ Print 'Active last day of Month:' (305,1,0) Bold 
+ Print 'Number of DFCS homes active as per the last day of the month (EOM).' (305,228,0)
+ Print 'Beds licensed As of First day of month:' (329,1,0) Bold 
+ Print 'Capacity of the active DFCS homes as of first day of reporting month.' (329,228,0)
+ Print 'Beds occupied  As of First day  of month:' (346,1,0) Bold 
+ Print 'Number of occupied slots/current placements in the DFCS homes as of first day of  reporting month.' (346,228,0)
+ Print 'Beds open As of First day of month:' (362,1,0) Bold 
+ Print 'Number of slots vacant in the DFCS homes as of first day of reporting month' (362,228,0)
+ Print 'Beds licensed As of last day of month:' (390,1,0) Bold 
+ Print 'Capacity of the active DFCS homes as per the last day of reporting month.' (390,228,0)
+ Print 'Beds occupied as of last day of month:' (407,1,0) Bold 
+ Print 'Number of occupied slots/current placements in the DFCS homes as per the last day of in the reporting month.' (407,228,0)
+ Print 'Beds open  As of last day of month:' (423,1,0) Bold 
+ Print 'Number of slots vacant in the DFCS homes as per the last day of  in the reporting month' (423,228,0)
+ Print 'Number of homes on Hold as of first day of month:' (449,1,34) Bold  Wrap 34 2 line-height=12 Keep-Top
+ Print 'Number of homes which are in inactive status as of first day of reporting month' (449,228,0)
+ Print 'Number of homes on hold as of last day of month:' (476,1,34) Bold  Wrap 34 2 line-height=12 Keep-Top on= 
+ Print 'Number of homes which are in inactive status as of last day of reporting month' (476,228,0)
+ Print 'New:' (119,106,0) Bold 
+ Print 'Re-Approved:' (137,67,0) Bold 
+ Print 'Number of DFCS homes re-approved at any point during the month.' (137,228,0)
+ Print 'Pending:' (176,1,0) Bold 
+ Print 'Number of homes that were active at the beginning of the month that were not active at the end of the month and are not included in the ''Closed during Month'' count. This includes homes that were pending re-approval at the end of the month and homes pending closure.' (177,228,87) Wrap 87 5 line-height=12 Keep-Top on= 
+ Print 'Full:' (254,96,5) Bold 
+ Print 'Moved to Unaprvd:' (288,1,30) Bold 
+ Print 'Special:' (271,78,15) Bold 
+ Print 'Aprvl 30 Day Grace' (233,1,28) Bold 
+ Print 'Number of DFCS homes with a full 30 day grace approval status for the first time at any point during the month.' (254,228,187)
+ Print 'Number of DFCS homes with a special 30 day grace approval status for the first time at any point during the month.' (271,228,127)
+ Print 'Number of DFCS homes moved to an unapproved status for the first time at any point during the month.' (288,228,121)
+ Print 'Definition' (11,5,18) Underline  Bold 
+ Print 'This report gives a monthly status view of the number of Active- Approved(Full) and Approved(Special)- DFCS Foster Homes in the County, Region or Statewide. Foster Homes include active approved homes with home status-Full or Special - in Foster, Adoptive and Foster to Adopt (Legal Risk) category. The reporting county is the FAD stage county.' (33,4,125) Wrap 125 5 line-height=12 Keep-Top on=  
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+Do Get-Input
+Do Get_FourCounts('A',$_dt_report,$_where_clause101,$_where_clause102,#facount,#cacount,#lomacount)
+Do Get_FourCounts('F',$_dt_report,$_where_clause101,$_where_clause102,#ffcount,#cfcount,#lomfcount)
+Do Get_FourCounts('L',$_dt_report,$_where_clause101,$_where_clause102,#flcount,#clcount,#lomlcount)
+
+Do Get_HoldCounts('A',$_dt_report,$_where_clause101,$_where_clause102,#fahcount,#lomahcount)
+Do Get_HoldCounts('F',$_dt_report,$_where_clause101,$_where_clause102,#ffhcount,#lomfhcount)
+Do Get_HoldCounts('L',$_dt_report,$_where_clause101,$_where_clause102,#flhcount,#lomlhcount)
+
+Do Get_BedsLicensed('A',$_dt_report,$_where_clause101,$_where_clause102,#fabedcount,#lomabedcount)
+Do Get_BedsLicensed('F',$_dt_report,$_where_clause101,$_where_clause102,#ffbedcount,#lomfbedcount)
+Do Get_BedsLicensed('L',$_dt_report,$_where_clause101,$_where_clause102,#flbedcount,#lomlbedcount)
+
+Do Get_BedsOccupied('A',$_dt_report,$_where_clause101,$_where_clause102,#faoccucount,#lomaoccucount)
+Do Get_BedsOccupied('F',$_dt_report,$_where_clause101,$_where_clause102,#ffoccucount,#lomfoccucount)
+Do Get_BedsOccupied('L',$_dt_report,$_where_clause101,$_where_clause102,#floccucount,#lomloccucount)
+
+
+Do Get_Aprved_Month('A',$_dt_report,$_where_clause101,$_where_clause102,#aprvamonth)
+Do Get_Aprved_Month('F',$_dt_report,$_where_clause101,$_where_clause102,#aprvfmonth)
+Do Get_Aprved_Month('L',$_dt_report,$_where_clause101,$_where_clause102,#aprvlmonth)
+
+Do Get_ReAprved_Month('A',$_dt_report,$_where_clause101,$_where_clause102,#reaprvamonth)
+Do Get_ReAprved_Month('F',$_dt_report,$_where_clause101,$_where_clause102,#reaprvfmonth)
+Do Get_ReAprved_Month('L',$_dt_report,$_where_clause101,$_where_clause102,#reaprvlmonth)
+
+Do Get_Aprved_Grace_Month('A',$_dt_report,$_where_clause101,$_where_clause102,#aprvAgracemonth)
+Do Get_Aprved_Grace_Month('F',$_dt_report,$_where_clause101,$_where_clause102,#aprvFgracemonth)
+Do Get_Aprved_Grace_Month('L',$_dt_report,$_where_clause101,$_where_clause102,#aprvLgracemonth)
+
+Do Get_Aprved_Special_Grace_Month('A',$_dt_report,$_where_clause101,$_where_clause102,#aprvAspecgracemonth)
+Do Get_Aprved_Special_Grace_Month('F',$_dt_report,$_where_clause101,$_where_clause102,#aprvFspecgracemonth)
+Do Get_Aprved_Special_Grace_Month('L',$_dt_report,$_where_clause101,$_where_clause102,#aprvLspecgracemonth)
+
+
+Do Get_Unapproved_Month('A',$_dt_report,$_where_clause101,$_where_clause102,#UnapprovedAmonth)
+Do Get_Unapproved_Month('F',$_dt_report,$_where_clause101,$_where_clause102,#UnapprovedFmonth)
+Do Get_Unapproved_Month('L',$_dt_report,$_where_clause101,$_where_clause102,#UnapprovedLmonth)
+
+
+Do Get_FourCounts_Temp($_dt_report,$_where_clause101,$_where_clause102,#ftempcount,#ctempcount,#lomtempcount)
+Do Get_HoldCounts_Temp($_dt_report,$_where_clause101,$_where_clause102,#ftemphcount,#lomtemphcount)
+Do Get_BedsLicensed_Temp($_dt_report,$_where_clause101,$_where_clause102,#ftempbedcount,#lomtempbedcount)
+Do Get_BedsOccupied_Temp($_dt_report,$_where_clause101,$_where_clause102,#ftempoccucount,#lomtempoccucount)
+Do Get_Aprved_Month_Temp($_dt_report,$_where_clause101,$_where_clause102,#aprvtempmonth)
+Do Get_ReAprved_Month_Temp($_dt_report,$_where_clause101,$_where_clause102,#reaprvtempmonth)
+
+ Do Master_Query
+End-Program
+Begin-Procedure Get-Input
+!------------------------------
+Input $_dt_report 'Enter month and year (MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+If IsNull($_dt_report) or IsBlank($_dt_report)
+ Show 'Input Error (7734): No value was enterred. A value is required.'
+ Let #return-status = 7734
+ Stop
+End-If
+
+Input $_I101_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I101_CD_STAGE_REGION) or IsBlank($_I101_CD_STAGE_REGION) or ($_I101_CD_STAGE_REGION) = '0'   
+   Let $_where_clause101 = 'CD_STAGE_REGION is not null'
+   Let $region_selected = 'N'
+else
+If SubStr($_I101_CD_STAGE_REGION, 1, 1) != ''''
+  Let $_region = $_I101_CD_STAGE_REGION
+  Let $_I101_CD_STAGE_REGION = '''' || $_I101_CD_STAGE_REGION || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CD_STAGE_REGION,'''',0) = 0 and instr($_I101_CD_STAGE_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_STAGE_REGION'
+   Let $_where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I101_CD_STAGE_REGION || '''' 
+ Else
+   If (instr($_I101_CD_STAGE_REGION,'''',0) = 0 and instr($_I101_CD_STAGE_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_STAGE_REGION'
+     Let $_where_clause101 = $brb_tmp  || ' = ' || $_I101_CD_STAGE_REGION
+   End-If
+ End-If
+Let $region_selected = 'Y'
+End-If
+! -----------------------------
+Input $_I102_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_I102_CD_STAGE_CNTY) or IsBlank($_I102_CD_STAGE_CNTY) or ($_I102_CD_STAGE_CNTY) = '0'
+  Let $_where_clause102 = 'CD_STAGE_CNTY is not null'
+  Let $county_selected = 'N'
+else
+If SubStr($_I102_CD_STAGE_CNTY, 1, 1) != ''''
+  Let $_I102_CD_STAGE_CNTY = '''' || $_I102_CD_STAGE_CNTY || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I102_CD_STAGE_CNTY,'''',0) = 0 and instr($_I102_CD_STAGE_CNTY,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_STAGE_CNTY'
+   Let $_where_clause102 = $brb_tmp  || ' = ' ||  '''' || $_I102_CD_STAGE_CNTY || '''' 
+ Else
+   If (instr($_I102_CD_STAGE_CNTY,'''',0) = 0 and instr($_I102_CD_STAGE_CNTY,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_STAGE_CNTY'
+     Let $_where_clause102 = $brb_tmp  || ' = ' || $_I102_CD_STAGE_CNTY
+   End-If
+ End-If
+Let $county_selected = 'Y'
+End-If
+
+If $county_selected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From CCOUNT
+Where CCOUNT.CODE=[$_I102_CD_STAGE_CNTY]
+End-Select
+ Move &_County_Decode to $_headerdisp
+Else
+ If $region_selected='Y'  
+  Let $_headerdisp = 'Region ' || $_region
+ Else
+  Let $_headerdisp = 'Statewide'
+ End-If
+End-If
+End-Procedure
+
+
+Begin-Procedure Get_FourCounts($HomeType,$dt_rpt,$where_clause101,$where_clause102,:#facount,:#cacount,:#lomacount)
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &active_first_cnt
+from resource_history, stage 
+where 
+resource_history.cd_rshs_category = $HomeType and 
+stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE and
+resource_history.CD_RSHS_FA_HOME_STATUS in ('AFA','ASA') and 
+resource_history.IND_RSRC_NONDFCS = 'N' and
+(resource_history.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') and 
+((resource_history.DT_RSHS_END is null) or (resource_history.DT_RSHS_END >= to_date($dt_rpt, 'MM/YYYY'))) 
+)
+and [$where_clause101]
+and [$where_clause102]
+End-Select
+
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &closed_AFS_during_month_cnt
+FROM resource_history, stage 
+WHERE 
+resource_history.DT_RSHS_END >= (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.CD_RSHS_FA_HOME_STATUS IN ('CSD')
+and resource_history.CD_RSHS_CATEGORY= $HomeType
+and stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE 
+and resource_history.IND_RSRC_NONDFCS = 'N' 
+AND resource_history.DT_RSHS_CLOSE >= to_date($dt_rpt, 'MM/YYYY') 
+AND resource_history.DT_RSHS_CLOSE < (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+and [$where_clause101]
+and [$where_clause102]
+and exists
+(
+ select res_his.id_resource
+ from resource_history res_his
+ where res_his.CD_RSHS_FA_HOME_STATUS in ('AFA','ASA')
+  and res_his.ID_RESOURCE_HISTORY=
+   (
+    select max(rshs.ID_RESOURCE_HISTORY)
+ from resource_history rshs
+ where 
+  rshs.CD_RSHS_FA_HOME_STATUS in ('AFA','ASA','ATA') 
+  and rshs.ID_RESOURCE_HISTORY <> resource_history.ID_RESOURCE_HISTORY 
+  and rshs.ID_RESOURCE = res_his.id_resource
+   )
+   and res_his.id_resource = resource_history.ID_RESOURCE
+)
+End-Select
+
+
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &lastom_during_cnt
+from resource_history, stage  
+where 
+resource_history.cd_rshs_category = $HomeType and 
+stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE and
+resource_history.CD_RSHS_FA_HOME_STATUS in ('AFA','ASA') and 
+resource_history.IND_RSRC_NONDFCS = 'N' and
+(
+((resource_history. DT_RSHS_END >=(LAST_DAY(TO_DATE($dt_rpt, 'MM/YYYY'))+1)) or (resource_history. DT_RSHS_END is null)) 
+and resource_history.DT_RSHS_EFFECTIVE < (LAST_DAY(TO_DATE($dt_rpt, 'MM/YYYY'))+1)
+)
+and [$where_clause101]
+and [$where_clause102]
+End-Select
+
+
+
+Move &active_first_cnt to #facount
+Move &closed_AFS_during_month_cnt to #cacount
+Move &lastom_during_cnt to #lomacount
+  
+End-Procedure
+
+Begin-Procedure Get_HoldCounts($HomeType,$dt_rpt,$where_clause101,$where_clause102,:#fahcount,:#lomahcount)
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &active_first_hold_cnt
+from resource_history, stage  
+where 
+resource_history.cd_rshs_category = $HomeType and 
+stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE and
+resource_history.CD_RSHS_FA_HOME_STATUS in ('AFA','ASA') and 
+resource_history.CD_RSHS_STATUS='02'and
+resource_history.IND_RSRC_NONDFCS = 'N' and
+(resource_history.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') and 
+((resource_history.DT_RSHS_END is null) or (resource_history.DT_RSHS_END >= to_date($dt_rpt, 'MM/YYYY'))) 
+)
+and [$where_clause101]
+and [$where_clause102]
+End-Select
+
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &active_lastom_hold_cnt
+from resource_history, stage 
+where 
+resource_history.cd_rshs_category = $HomeType and 
+stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE and
+resource_history.CD_RSHS_FA_HOME_STATUS in ('AFA','ASA') and 
+resource_history.CD_RSHS_STATUS='02'and 
+resource_history.IND_RSRC_NONDFCS = 'N' and
+(resource_history.DT_RSHS_EFFECTIVE < last_day(to_date($dt_rpt, 'MM/YYYY'))+1 and 
+((resource_history.DT_RSHS_END is null) or (resource_history.DT_RSHS_END >= to_date($dt_rpt, 'MM/YYYY'))) 
+)
+and [$where_clause101]
+and [$where_clause102]
+End-Select
+
+Move &active_first_hold_cnt to #fahcount
+Move &active_lastom_hold_cnt to #lomahcount
+End-Procedure
+
+Begin-Procedure Get_BedsLicensed($HomeType,$dt_rpt,$where_clause101,$where_clause102,:#fabedcount,:#lomabedcount)
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &active_first_bed_cnt
+from resource_history, stage 
+where 
+resource_history.cd_rshs_category = $HomeType and 
+stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE and
+resource_history.CD_RSHS_FA_HOME_STATUS in ('AFA','ASA') and 
+resource_history.IND_RSRC_NONDFCS = 'N' and
+(resource_history.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') and 
+((resource_history.DT_RSHS_END is null) or (resource_history.DT_RSHS_END >= to_date($dt_rpt, 'MM/YYYY'))) 
+)
+and [$where_clause101]
+and [$where_clause102]
+End-Select
+
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &active_lastom_bed_cnt
+from resource_history ,stage
+where 
+resource_history.cd_rshs_category = $HomeType and 
+stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE and
+resource_history.CD_RSHS_FA_HOME_STATUS in ('AFA','ASA') and 
+resource_history.IND_RSRC_NONDFCS = 'N' and
+(resource_history.DT_RSHS_EFFECTIVE < last_day(to_date($dt_rpt, 'MM/YYYY'))+1 and 
+((resource_history.DT_RSHS_END is null) or (resource_history.DT_RSHS_END >= last_day(to_date($dt_rpt, 'MM/YYYY'))+1)) 
+)
+and [$where_clause101]
+and [$where_clause102]
+End-Select
+
+Move &active_first_bed_cnt to #fabedcount
+Move &active_lastom_bed_cnt to #lomabedcount
+
+End-Procedure
+
+Begin-Procedure Get_BedsOccupied($HomeType,$dt_rpt,$where_clause101,$where_clause102,:#faoccucount,:#lomaoccucount)
+Begin-Select 
+count (*) &active_first_placements
+  from placement placement_count, 
+  event event_count
+  where placement_count.ID_PLCMT_EVENT = event_count.ID_EVENT
+  and placement_count.CD_PLCMT_ACT_PLANNED = 'A' 
+  and event_count.CD_EVENT_STATUS = 'APRV' 
+  and (
+  placement_count.DT_PLCMT_START < TO_DATE($dt_rpt, 'MM/YYYY') 
+  and ((placement_count.DT_PLCMT_END is null) or (placement_count.DT_PLCMT_END >= (TO_DATE($dt_rpt, 'MM/YYYY'))))
+  ) 
+    and exists(
+    SELECT DISTINCT 
+    resource_history.ID_RESOURCE
+    FROM resource_history,stage
+    WHERE (
+   ((resource_history.DT_RSHS_END >= to_date($dt_rpt, 'MM/YYYY')) 
+   or resource_history.DT_RSHS_END is null)
+   AND resource_history.DT_RSHS_EFFECTIVE < (to_date($dt_rpt, 'MM/YYYY')) 
+   )
+   AND resource_history.CD_RSHS_FA_HOME_STATUS IN ('AFA','ASA')
+   and resource_history.IND_RSRC_NONDFCS = 'N'
+   AND resource_history.CD_RSHS_CATEGORY = $HomeType and 
+   stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE 
+   and resource_history.ID_RESOURCE = placement_count.ID_RSRC_FACIL
+   and [$where_clause101]
+   and [$where_clause102]
+  ) 
+End-Select
+
+Begin-Select
+count (*) &active_lastom_placements
+  from placement placement_count, 
+  event event_count
+  where placement_count.ID_PLCMT_EVENT = event_count.ID_EVENT
+  and placement_count.CD_PLCMT_ACT_PLANNED = 'A' 
+  and event_count.CD_EVENT_STATUS = 'APRV' 
+  and (placement_count.DT_PLCMT_START < (LAST_DAY(TO_DATE($dt_rpt, 'MM/YYYY'))+1) 
+  and (placement_count.DT_PLCMT_END is null or placement_count.DT_PLCMT_END >= (LAST_DAY(TO_DATE($dt_rpt, 'MM/YYYY'))+1))
+  )  
+  and exists(
+     SELECT DISTINCT 
+      resource_history.ID_RESOURCE
+   FROM resource_history,stage
+   WHERE ((resource_history.DT_RSHS_END >= (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+   or resource_history.DT_RSHS_END is null)
+   AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) )
+   AND resource_history.CD_RSHS_FA_HOME_STATUS IN ('AFA','ASA')
+   and resource_history.IND_RSRC_NONDFCS = 'N'
+   AND resource_history.CD_RSHS_CATEGORY = $HomeType
+   and stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE 
+   and resource_history.ID_RESOURCE = placement_count.ID_RSRC_FACIL
+   and [$where_clause101]
+   and [$where_clause102]
+  )
+End-Select
+
+
+Move &active_first_placements to #faoccucount
+Move &active_lastom_placements to #lomaoccucount
+End-Procedure
+
+Begin-Procedure Get_Aprved_Month($HomeType,$dt_rpt,$where_clause101,$where_clause102,:#aprvamonth)
+Begin-Select 
+count(*) &aprved_month
+FROM resource_history,stage 
+WHERE resource_history.DT_RSHS_END >= (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.CD_RSHS_FA_HOME_STATUS IN ('AFA','ASA')
+and resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = $HomeType
+and stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE 
+AND resource_history.DT_RSHS_EFFECTIVE >= to_date($dt_rpt, 'MM/YYYY') 
+and [$where_clause101]
+and [$where_clause102]
+and not exists ( select * 
+        FROM resource_history resource_history2, stage stage2
+        WHERE resource_history2.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') 
+        AND resource_history2.CD_RSHS_FA_HOME_STATUS IN ('AFA','ASA')
+    and resource_history2.IND_RSRC_NONDFCS = 'N' 
+    AND resource_history2.CD_RSHS_CATEGORY = $HomeType 
+    and stage2.ID_STAGE = resource_history2.ID_RSHS_FA_HOME_STAGE
+   and [$where_clause101]
+  and [$where_clause102]
+        and resource_history2.ID_RESOURCE = resource_history.ID_RESOURCE 
+      ) 
+End-Select 
+
+Move &aprved_month to #aprvamonth
+End-Procedure
+
+!Calculates the Full Aprroval 30 Day Grace 
+Begin-Procedure Get_Aprved_Grace_Month($HomeType,$dt_rpt,$where_clause101,$where_clause102,:#aprvAgracemonth)
+Begin-Select 
+count(*) &aprved_grace_month
+FROM resource_history,stage 
+WHERE resource_history.DT_RSHS_END >= (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.CD_RSHS_FA_HOME_STATUS IN ('FLG')
+and resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = $HomeType
+and stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE 
+AND resource_history.DT_RSHS_EFFECTIVE >= to_date($dt_rpt, 'MM/YYYY') 
+and [$where_clause101]
+and [$where_clause102]
+and not exists ( select * 
+        FROM resource_history resource_history2, stage stage2
+        WHERE resource_history2.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') 
+        AND resource_history2.CD_RSHS_FA_HOME_STATUS IN ('FLG')
+    and resource_history2.IND_RSRC_NONDFCS = 'N' 
+    AND resource_history2.CD_RSHS_CATEGORY = $HomeType 
+    and stage2.ID_STAGE = resource_history2.ID_RSHS_FA_HOME_STAGE
+   and [$where_clause101]
+  and [$where_clause102]
+        and resource_history2.ID_RESOURCE = resource_history.ID_RESOURCE 
+      ) 
+End-Select 
+
+Move &aprved_grace_month to #aprvAgracemonth
+End-Procedure
+
+!Calculates the Special Aprroval 30 Day Grace 
+Begin-Procedure Get_Aprved_Special_Grace_Month($HomeType,$dt_rpt,$where_clause101,$where_clause102,:#aprvAspecgracemonth)
+Begin-Select 
+count(*) &aprved_spec_grace_month
+FROM resource_history,stage 
+WHERE resource_history.DT_RSHS_END >= (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.CD_RSHS_FA_HOME_STATUS IN ('FSG')
+and resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = $HomeType
+and stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE 
+AND resource_history.DT_RSHS_EFFECTIVE >= to_date($dt_rpt, 'MM/YYYY') 
+and [$where_clause101]
+and [$where_clause102]
+and not exists ( select * 
+        FROM resource_history resource_history2, stage stage2
+        WHERE resource_history2.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') 
+        AND resource_history2.CD_RSHS_FA_HOME_STATUS IN ('FSG')
+    and resource_history2.IND_RSRC_NONDFCS = 'N' 
+    AND resource_history2.CD_RSHS_CATEGORY = $HomeType 
+    and stage2.ID_STAGE = resource_history2.ID_RSHS_FA_HOME_STAGE
+   and [$where_clause101]
+  and [$where_clause102]
+        and resource_history2.ID_RESOURCE = resource_history.ID_RESOURCE 
+      ) 
+End-Select 
+
+Move &aprved_spec_grace_month to #aprvAspecgracemonth
+End-Procedure
+
+
+
+!Calculates Unapproved 
+Begin-Procedure Get_Unapproved_Month($HomeType,$dt_rpt,$where_clause101,$where_clause102,:#unapprovedAmonth)
+Begin-Select 
+count(*) &unapproved_month
+FROM resource_history,stage 
+WHERE resource_history.DT_RSHS_END >= (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.CD_RSHS_FA_HOME_STATUS IN ('AUN')
+and resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = $HomeType
+and stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE 
+AND resource_history.DT_RSHS_EFFECTIVE >= to_date($dt_rpt, 'MM/YYYY') 
+and [$where_clause101]
+and [$where_clause102]
+and not exists ( select * 
+        FROM resource_history resource_history2, stage stage2
+        WHERE resource_history2.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') 
+        AND resource_history2.CD_RSHS_FA_HOME_STATUS IN ('AUN')
+    and resource_history2.IND_RSRC_NONDFCS = 'N' 
+    AND resource_history2.CD_RSHS_CATEGORY = $HomeType 
+    and stage2.ID_STAGE = resource_history2.ID_RSHS_FA_HOME_STAGE
+   and [$where_clause101]
+  and [$where_clause102]
+        and resource_history2.ID_RESOURCE = resource_history.ID_RESOURCE 
+      ) 
+End-Select 
+
+Move &unapproved_month to #unapprovedAmonth
+End-Procedure
+
+
+
+
+Begin-Procedure Get_ReAprved_Month($HomeType,$dt_rpt,$where_clause101,$where_clause102,:#reaprvamonth)
+Begin-Select 
+count(*) &reaprved_month
+FROM resource_history,stage 
+WHERE resource_history.DT_RSHS_END >= (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.CD_RSHS_FA_HOME_STATUS IN ('AFA','ASA')
+and resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY = $HomeType
+and stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE 
+AND resource_history.DT_RSHS_EFFECTIVE >= to_date($dt_rpt, 'MM/YYYY') 
+and [$where_clause101]
+and [$where_clause102]
+and exists ( select * 
+        FROM resource_history resource_history2, stage stage2
+        WHERE resource_history2.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') 
+        AND resource_history2.CD_RSHS_FA_HOME_STATUS IN ('AFA','ASA')
+        and resource_history2.IND_RSRC_NONDFCS = 'N' 
+        AND resource_history2.CD_RSHS_CATEGORY = $HomeType 
+        and stage2.ID_STAGE = resource_history2.ID_RSHS_FA_HOME_STAGE 
+        and [$where_clause101]
+        and [$where_clause102]
+        and resource_history2.ID_RESOURCE = resource_history.ID_RESOURCE 
+      ) 
+End-Select 
+
+Move &reaprved_month to #reaprvamonth
+End-Procedure
+
+
+!TEMP Category
+
+Begin-Procedure Get_FourCounts_Temp($dt_rpt,$where_clause101,$where_clause102,:#ftempcount,:#ctempcount,:#lomtempcount)
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &active_first_temp_cnt
+from resource_history ,stage
+where 
+resource_history.cd_rshs_category in ('A','F','L') and 
+resource_history.CD_RSHS_FA_HOME_STATUS in ('ATA') and 
+stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE and
+resource_history.IND_RSRC_NONDFCS = 'N' and
+(resource_history.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') and 
+((resource_history.DT_RSHS_END is null) or (resource_history.DT_RSHS_END >= to_date($dt_rpt, 'MM/YYYY'))) 
+)
+and [$where_clause101]
+and [$where_clause102]
+End-Select
+
+Begin-Select DISTINCT 
+count(distinct resource_history.ID_RESOURCE) &closed_ATA_during_month_cnt
+FROM resource_history,stage
+WHERE 
+resource_history.DT_RSHS_END >= (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.CD_RSHS_FA_HOME_STATUS IN ('CSD')
+and resource_history.CD_RSHS_CATEGORY in ('A','F','L')
+and stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE 
+and resource_history.IND_RSRC_NONDFCS = 'N' 
+AND resource_history.DT_RSHS_CLOSE >= to_date($dt_rpt, 'MM/YYYY') 
+AND resource_history.DT_RSHS_CLOSE < (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+and [$where_clause101]
+and [$where_clause102]
+and exists
+(
+ select res_his.id_resource
+ from resource_history res_his
+ where res_his.CD_RSHS_FA_HOME_STATUS in ('ATA')
+  and res_his.ID_RESOURCE_HISTORY=
+   (
+    select max(rshs.ID_RESOURCE_HISTORY)
+ from resource_history rshs
+ where 
+ rshs.ID_RESOURCE_HISTORY <> resource_history.ID_RESOURCE_HISTORY
+ and rshs.ID_RESOURCE = res_his.id_resource
+ and rshs.CD_RSHS_FA_HOME_STATUS in ('AFA','ASA','ATA')
+   )
+   and res_his.id_resource = resource_history.ID_RESOURCE
+)
+End-Select
+
+
+
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &lastom_during_temp_cnt
+from resource_history, stage  
+where 
+resource_history.cd_rshs_category in ('A','F','L') and 
+resource_history.CD_RSHS_FA_HOME_STATUS in ('ATA') and 
+stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE and
+resource_history.IND_RSRC_NONDFCS = 'N' and
+(
+((resource_history. DT_RSHS_END >=(LAST_DAY(TO_DATE($dt_rpt, 'MM/YYYY'))+1)) or (resource_history. DT_RSHS_END is null)) 
+and resource_history.DT_RSHS_EFFECTIVE < (LAST_DAY(TO_DATE($dt_rpt, 'MM/YYYY'))+1)
+)
+and [$where_clause101]
+and [$where_clause102]
+End-Select
+
+Move &active_first_temp_cnt to #ftempcount
+Move &closed_ATA_during_month_cnt to #ctempcount
+Move &lastom_during_temp_cnt to #lomtempcount
+ 
+End-Procedure
+Begin-Procedure Get_HoldCounts_Temp($dt_rpt,$where_clause101,$where_clause102,:#ftemphcount,:#lomtemphcount)
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &active_first_hold_temp_cnt
+from resource_history ,stage
+where 
+resource_history.cd_rshs_category in ('A','F','L') and 
+resource_history.CD_RSHS_FA_HOME_STATUS in ('ATA') and 
+resource_history.CD_RSHS_STATUS='02' and 
+stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE and
+resource_history.IND_RSRC_NONDFCS = 'N' and
+(resource_history.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') and 
+((resource_history.DT_RSHS_END is null) or (resource_history.DT_RSHS_END >= to_date($dt_rpt, 'MM/YYYY'))) 
+)
+and [$where_clause101]
+and [$where_clause102]
+End-Select
+
+Begin-Select distinct
+count(distinct resource_history.ID_RESOURCE) &active_lastom_hold_temp_cnt
+from resource_history ,stage
+where 
+resource_history.cd_rshs_category in ('A','F','L') and 
+resource_history.CD_RSHS_FA_HOME_STATUS in ('ATA') and 
+resource_history.CD_RSHS_STATUS='02' and 
+resource_history.IND_RSRC_NONDFCS = 'N' and
+stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE and
+(resource_history.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') and 
+((resource_history.DT_RSHS_END is null) or (resource_history.DT_RSHS_END >= to_date($dt_rpt, 'MM/YYYY'))) 
+)
+and [$where_clause101]
+and [$where_clause102]
+End-Select
+
+Move &active_first_hold_temp_cnt to #ftemphcount
+Move &active_lastom_hold_temp_cnt to #lomtemphcount
+End-Procedure 
+
+Begin-Procedure Get_BedsLicensed_Temp($dt_rpt,$where_clause101,$where_clause102,:#ftempbedcount,:#lomtempbedcount)
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &active_first_bed_temp_cnt
+from resource_history,stage 
+where 
+resource_history.cd_rshs_category in ('A','F','L') and 
+resource_history.CD_RSHS_FA_HOME_STATUS in ('ATA') and 
+stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE and
+resource_history.IND_RSRC_NONDFCS = 'N' and
+(resource_history.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') and 
+((resource_history.DT_RSHS_END is null) or (resource_history.DT_RSHS_END >= to_date($dt_rpt, 'MM/YYYY'))) 
+)
+and [$where_clause101]
+and [$where_clause102]
+End-Select
+
+Begin-Select distinct
+sum(resource_history.NBR_RSHS_FACIL_CAPACITY) &active_lastom_bed_temp_cnt
+from resource_history,stage 
+where 
+resource_history.cd_rshs_category in ('A','F','L') and 
+resource_history.CD_RSHS_FA_HOME_STATUS in ('ATA') and 
+stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE and
+resource_history.IND_RSRC_NONDFCS = 'N' and
+(resource_history.DT_RSHS_EFFECTIVE < last_day(to_date($dt_rpt, 'MM/YYYY'))+1 and 
+((resource_history.DT_RSHS_END is null) or (resource_history.DT_RSHS_END >= last_day(to_date($dt_rpt, 'MM/YYYY'))+1)) 
+)
+and [$where_clause101]
+and [$where_clause102]
+End-Select
+
+Move &active_first_bed_temp_cnt to #ftempbedcount
+Move &active_lastom_bed_temp_cnt to #lomtempbedcount
+
+End-Procedure
+
+Begin-Procedure Get_BedsOccupied_Temp($dt_rpt,$where_clause101,$where_clause102,:#ftempoccucount,:#lomtempoccucount)
+Begin-Select 
+count (*) &active_first_placements_temp
+  from placement placement_count, 
+  event event_count
+  where placement_count.ID_PLCMT_EVENT = event_count.ID_EVENT
+  and placement_count.CD_PLCMT_ACT_PLANNED = 'A' 
+  and event_count.CD_EVENT_STATUS = 'APRV' 
+  and (
+  placement_count.DT_PLCMT_START < TO_DATE($dt_rpt, 'MM/YYYY') 
+  and ((placement_count.DT_PLCMT_END is null) or (placement_count.DT_PLCMT_END >= (TO_DATE($dt_rpt, 'MM/YYYY'))))
+  ) 
+    and exists(
+    SELECT DISTINCT 
+    resource_history.ID_RESOURCE
+    FROM resource_history,stage
+    WHERE (
+   ((resource_history.DT_RSHS_END >= to_date($dt_rpt, 'MM/YYYY')) 
+   or resource_history.DT_RSHS_END is null)
+   AND resource_history.DT_RSHS_EFFECTIVE < (to_date($dt_rpt, 'MM/YYYY')) 
+   )
+   AND resource_history.CD_RSHS_FA_HOME_STATUS IN ('ATA')
+   and resource_history.IND_RSRC_NONDFCS = 'N'
+   and stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE 
+   AND resource_history.CD_RSHS_CATEGORY in ('A','F','L')
+   and resource_history.ID_RESOURCE = placement_count.ID_RSRC_FACIL
+   and [$where_clause101]
+   and [$where_clause102]
+  ) 
+End-Select
+
+Begin-Select
+count (*) &active_lastom_placements_temp
+  from placement placement_count, 
+  event event_count
+  where placement_count.ID_PLCMT_EVENT = event_count.ID_EVENT
+  and placement_count.CD_PLCMT_ACT_PLANNED = 'A' 
+  and event_count.CD_EVENT_STATUS = 'APRV' 
+  and (placement_count.DT_PLCMT_START < (LAST_DAY(TO_DATE($dt_rpt, 'MM/YYYY'))+1) 
+  and (placement_count.DT_PLCMT_END is null or placement_count.DT_PLCMT_END >= (LAST_DAY(TO_DATE($dt_rpt, 'MM/YYYY'))+1))
+  )  
+  and exists(
+     SELECT DISTINCT 
+      resource_history.ID_RESOURCE
+   FROM resource_history,stage
+   WHERE ((resource_history.DT_RSHS_END >= (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+   or resource_history.DT_RSHS_END is null)
+   AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) )
+   AND resource_history.CD_RSHS_FA_HOME_STATUS IN ('ATA')
+   and stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE 
+   and resource_history.IND_RSRC_NONDFCS = 'N'
+   AND resource_history.CD_RSHS_CATEGORY in ('A','F','L')
+   and resource_history.ID_RESOURCE = placement_count.ID_RSRC_FACIL
+   and [$where_clause101]
+   and [$where_clause102]
+  )
+End-Select
+
+
+Move &active_first_placements_temp to #ftempoccucount
+Move &active_lastom_placements_temp to #lomtempoccucount
+
+End-Procedure 
+
+
+Begin-Procedure Get_Aprved_Month_Temp($dt_rpt,$where_clause101,$where_clause102,:#aprvtempmonth)
+Begin-Select 
+count(*) &aprved_month_temp
+FROM resource_history,stage
+WHERE resource_history.DT_RSHS_END >= (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.CD_RSHS_FA_HOME_STATUS IN ('ATA')
+ and stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE
+and resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.CD_RSHS_CATEGORY in ('A','F','L')
+AND resource_history.DT_RSHS_EFFECTIVE >= to_date($dt_rpt, 'MM/YYYY') 
+and [$where_clause101]
+and [$where_clause102]
+and not exists ( select * 
+        FROM resource_history resource_history2, stage stage2
+        WHERE resource_history2.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') 
+        AND resource_history2.CD_RSHS_FA_HOME_STATUS IN ('ATA')
+        and stage2.ID_STAGE = resource_history2.ID_RSHS_FA_HOME_STAGE 
+    and resource_history2.IND_RSRC_NONDFCS = 'N' 
+    AND resource_history2.CD_RSHS_CATEGORY in ('A','F','L') 
+  and [$where_clause101]
+  and [$where_clause102]
+        and resource_history2.ID_RESOURCE = resource_history.ID_RESOURCE 
+      ) 
+End-Select 
+
+Move &aprved_month_temp to #aprvtempmonth
+End-Procedure
+
+Begin-Procedure Get_ReAprved_Month_Temp($dt_rpt,$where_clause101,$where_clause102,:#reaprvtempmonth)
+Begin-Select 
+count(*) &reaprved_month_temp
+FROM resource_history,stage
+WHERE resource_history.DT_RSHS_END >= (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.DT_RSHS_EFFECTIVE < (last_day(to_date($dt_rpt, 'MM/YYYY'))+1) 
+AND resource_history.CD_RSHS_FA_HOME_STATUS IN ('ATA')
+and stage.ID_STAGE = resource_history.ID_RSHS_FA_HOME_STAGE 
+and resource_history.IND_RSRC_NONDFCS = 'N'
+AND resource_history.DT_RSHS_EFFECTIVE >= to_date($dt_rpt, 'MM/YYYY') 
+and [$where_clause101]
+and [$where_clause102]
+and exists ( select * 
+        FROM resource_history resource_history2,stage stage2
+        WHERE resource_history2.DT_RSHS_EFFECTIVE < to_date($dt_rpt, 'MM/YYYY') 
+        AND resource_history2.CD_RSHS_FA_HOME_STATUS IN ('ATA')
+        and stage2.ID_STAGE = resource_history2.ID_RSHS_FA_HOME_STAGE 
+        and resource_history2.IND_RSRC_NONDFCS = 'N' 
+        and [$where_clause101]
+        and [$where_clause102]
+        and resource_history2.ID_RESOURCE = resource_history.ID_RESOURCE 
+      ) 
+End-Select 
+
+Move &reaprved_month_temp to #reaprvtempmonth
+End-Procedure
+
+
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select Distinct
+(1) &dummyexp
+ Graphic (7,6,699) Horz-Line 11 
+ Graphic (7,324,250) Vert-Line 11 
+ Graphic (7,144,250) Vert-Line 11 
+ Graphic (7,6,250) Vert-Line 11 
+ Graphic (7,484,250) Vert-Line 11 
+ Graphic (8,707,250) Vert-Line 11 
+ Graphic (8,567,250) Vert-Line 11 
+ Graphic (8,280,250) Vert-Line 11 
+ Graphic (8,638,250) Vert-Line 11 
+ Graphic (8,94,250) Vert-Line 11 
+ Graphic (8,434,250) Vert-Line 11 
+ Graphic (8,239,250) Vert-Line 11 
+ Let #FACount=#facount
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #FACount (27,104) Edit 9999 Bold 
+ Let #LOMACount=#lomacount
+ Print #LOMACount (27,517) Edit 9999 Bold 
+ Print 'Adoptive Homes' (27,9,0) Bold 
+ Let #FAHCount=#fahcount
+ Print #FAHCount (27,588) Edit 9999 Bold 
+ Let #LOMAHCount=#lomahcount
+ Print #LOMAHCount (27,654) Edit 9999 Bold 
+ Let #AprvAMon=#aprvamonth
+ Print #AprvAMon (27,150) Edit 9999 Bold 
+ Let #ReApprvACnt=#reaprvamonth
+ Print #ReApprvACnt (27,201) Edit 9999 Bold 
+ Let #FACount=#facount
+ Let #AprvAMon=#aprvamonth
+ Let #ReApprvACnt=#reaprvamonth
+ Let #CACount=#cacount
+ Let #LOMACount=#lomacount
+ Let #AOtherStat=#FACount +  #AprvAMon + #ReApprvACnt - #CACount - #LOMACount
+ Print #AOtherStat (27,291) Edit 9999 Bold 
+ Let #CACount=#cacount
+ Print #CACount (27,247) Edit 9999 Bold 
+ Let #AprvAgracemonth=#aprvAgracemonth
+ Print #AprvAgracemonth (27,331) Edit 9999 Bold 
+ Let #AprvAspecgracemonth=#aprvAspecgracemonth
+ Print #AprvAspecgracemonth (27,393) Edit 9999 Bold 
+ Let #UnapprovedAmonth=#unapprovedAmonth
+ Print #UnapprovedAmonth (27,448) Edit 9999 Bold 
+ Print 'Beds Licensed' (44,20,0)
+ Let #FABedCount=#fabedcount
+ Print #FABedCount (44,104) Edit 9999
+ Let #LOMABedCount=#lomabedcount
+ Print #LOMABedCount (44,517) Edit 9999
+ Print 'Beds Occupied' (60,20,0)
+ Let #FAOccuCnt=#faoccucount
+ Print #FAOccuCnt (60,104) Edit 9999
+ Let #LOMAOccuCnt=#lomaoccucount
+ Print #LOMAOccuCnt (60,517) Edit 9999
+ Print 'Beds Open' (77,20,0)
+ Let #FABedCount=#fabedcount
+ Let #FAOccuCnt=#faoccucount
+ Let #FAOpen=#FABedCount - #FAOccuCnt
+ Print #FAOpen (77,104) Edit 9999
+ Let #LOMABedCount=#lomabedcount
+ Let #LOMAOccuCnt=#lomaoccucount
+ Let #LAOpen=#LOMABedCount -  #LOMAOccuCnt
+ Print #LAOpen (77,517) Edit 9999
+ Graphic (85,6,699) Horz-Line 11 
+ Let #FFCount=#ffcount
+ Print #FFCount (109,104) Edit 9999 Bold 
+ Let #LOMFCount=#lomfcount
+ Print #LOMFCount (109,517) Edit 9999 Bold 
+ Print 'Foster Homes' (109,9,0) Bold 
+ Let #FFHCount=#ffhcount
+ Print #FFHCount (109,588) Edit 9999 Bold 
+ Let #LOMFHCount=#lomfhcount
+ Print #LOMFHCount (109,655) Edit 9999 Bold 
+ Let #AprvFMon=#aprvfmonth
+ Print #AprvFMon (109,150) Edit 9999 Bold 
+ Let #ReApprvFCnt=#reaprvfmonth
+ Print #ReApprvFCnt (109,201) Edit 9999 Bold 
+ Let #FFCount=#ffcount
+ Let #AprvFMon=#aprvfmonth
+ Let #ReApprvFCnt=#reaprvfmonth
+ Let #CFCount=#cfcount
+ Let #LOMFCount=#lomfcount
+ Let #FOtherStat=#FFCount + #AprvFMon + #ReApprvFCnt - #CFCount - #LOMFCount
+ Print #FOtherStat (109,291) Edit 9999 Bold 
+ Let #CFCount=#cfcount
+ Print #CFCount (109,247) Edit 9999 Bold 
+ Let #AprvFgracemonth=#aprvFgracemonth
+ Print #AprvFgracemonth (109,334) Edit 9999 Bold 
+ Let #AprvFspecgracemonth=#aprvFspecgracemonth
+ Print #AprvFspecgracemonth (109,393) Edit 9999 Bold 
+ Let #UnapprovedFmonth=#unapprovedFmonth
+ Print #UnapprovedFmonth (109,448) Edit 9999 Bold 
+ Print 'Beds Licensed' (126,20,0)
+ Let #FFBedCount=#ffbedcount
+ Print #FFBedCount (126,104) Edit 9999
+ Let #LOMFBedCount=#lomfbedcount
+ Print #LOMFBedCount (126,517) Edit 9999
+ Print 'Beds Occupied' (143,20,0)
+ Let #FFOccuCount=#ffoccucount
+ Print #FFOccuCount (143,104) Edit 9999
+ Let #LOMFOccuCount=#lomfoccucount
+ Print #LOMFOccuCount (143,517) Edit 9999
+ Print 'Beds Open' (159,20,0)
+ Let #FFBedCount=#ffbedcount
+ Let #FFOccuCount=#ffoccucount
+ Let #FFOpen=#FFBedCount -  #FFOccuCount
+ Print #FFOpen (159,104) Edit 9999
+ Let #LOMFBedCount=#lomfbedcount
+ Let #LOMFOccuCount=#lomfoccucount
+ Let #LFOpen=#LOMFBedCount -  #LOMFOccuCount
+ Print #LFOpen (159,517) Edit 9999
+ Graphic (169,6,701) Horz-Line 11 
+ Print 'Foster to Adopt' (183,9,17) Bold 
+ Let #FLCount=#flcount
+ Print #FLCount (198,104) Edit 9999 Bold 
+ Let #CLCount=#clcount
+ Print #CLCount (198,247) Edit 9999 Bold 
+ Let #FLHCount=#flhcount
+ Print #FLHCount (198,588) Edit 9999 Bold 
+ Let #LOMLHCount=#lomlhcount
+ Print #LOMLHCount (198,654) Edit 9999 Bold 
+ Let #AprvLMon=#aprvlmonth
+ Print #AprvLMon (198,150) Edit 9999 Bold 
+ Let #LOMLCount=#lomlcount
+ Print #LOMLCount (198,517) Edit 9999 Bold 
+ Let #ReApprvLCnt=#reaprvlmonth
+ Print #ReApprvLCnt (198,201) Edit 9999 Bold 
+ Let #FLCount=#flcount
+ Let #AprvLMon=#aprvlmonth
+ Let #ReApprvLCnt=#reaprvlmonth
+ Let #CLCount=#clcount
+ Let #LOMLCount=#lomlcount
+ Let #LOtherStat=#FLCount + #AprvLMon +  #ReApprvLCnt -  #CLCount - #LOMLCount
+ Print #LOtherStat (198,291) Edit 9999 Bold 
+ Print '(Legal Risk)' (198,15,27) Bold 
+ Let #AprvLgracemonth=#aprvLgracemonth
+ Print #AprvLgracemonth (198,333) Edit 9999 Bold 
+ Let #AprvLspecgracemonth=#aprvLspecgracemonth
+ Print #AprvLspecgracemonth (198,393) Edit 9999 Bold 
+ Let #UnapprovedLmonth=#unapprovedLmonth
+ Print #UnapprovedLmonth (198,448) Edit 9999 Bold 
+ Print 'Beds Licensed' (216,19,0)
+ Let #FLBedCount=#flbedcount
+ Print #FLBedCount (216,104) Edit 9999
+ Let #LOMLBedCount=#lomlbedcount
+ Print #LOMLBedCount (216,517) Edit 9999
+ Print 'Beds Occupied' (232,19,0)
+ Let #FLOccuCount=#floccucount
+ Print #FLOccuCount (232,104) Edit 9999
+ Let #LOMLOccuCount=#lomloccucount
+ Print #LOMLOccuCount (232,517) Edit 9999
+ Print 'Beds Open' (248,19,0)
+ Let #LOMLBedCount=#lomlbedcount
+ Let #LOMLOccuCount=#lomloccucount
+ Let #LLOpen=#LOMLBedCount -  #LOMLOccuCount
+ Print #LLOpen (248,517) Edit 9999
+ Let #FLBedCount=#flbedcount
+ Let #FLOccuCount=#floccucount
+ Let #FLOpen=#FLBedCount -  #FLOccuCount
+ Print #FLOpen (248,104) Edit 9999
+ Graphic (257,6,699) Horz-Line 11 
+ New-Page
+From  CAPS.RESOURCE_HISTORY, CAPS.STAGE
+      Where CAPS.RESOURCE_HISTORY.ID_RSHS_FA_HOME_STAGE = CAPS.STAGE.ID_STAGE
+ And CD_RSHS_FA_HOME_STATUS IN ('AFA','ASA','FSG','FLG')
+ And IND_RSRC_NONDFCS = 'N'
+ And [$_where_clause101]
+ And [$_where_clause102]
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (15,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'DFCS Foster Home Monthly Status' (37,241,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (13,585,0)
+ Print $current-date (13,651) edit 'MM/DD/YYYY'
+ Let $Header=$_headerdisp
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $Header (62,319,13)
+ Print 'Reporting Month:' (110,4,0) Bold 
+ Let $RptMonth=$_dt_report
+ Print $RptMonth (110,108,15)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Home Type' (132,9,0) Underline  Bold 
+ Print 'Active ' (132,94,13) Underline  Bold  Wrap 13 4 line-height=12 Keep-Top
+ Print 'Closed' (132,245,6) Underline  Bold  Wrap 6 4 line-height=12 Keep-Top on= 
+ Print 'Active Last Day of Month' (132,487,14) Underline  Bold  Wrap 14 2 line-height=12 Keep-Top
+ Print 'On Hold First Day of Month' (132,568,12) Underline  Bold  Wrap 12 5 line-height=12 Keep-Top
+ Print 'On Hold Last Day of Month' (132,643,12) Underline  Bold  Wrap 12 5 line-height=12 Keep-Top
+ Print 'New    ' (146,144,3) Underline  Bold 
+ Print 'Re-Aprvd' (146,190,0) Underline  Bold 
+ Print 'Pending' (132,285,7) Underline  Bold 
+ Print 'First Day' (148,93,12) Underline  Bold  Wrap 12 5 line-height=12 Keep-Top
+ Print 'of Month' (163,92,12) Underline  Bold  Wrap 12 5 line-height=12 Keep-Top
+ Print 'Aprvd During Month' (132,143,18) Underline  Bold 
+ Print 'During' (145,245,6) Underline  Bold  Wrap 6 4 line-height=12 Keep-Top on= 
+ Print 'Month' (159,245,6) Underline  Bold  Wrap 6 4 line-height=12 Keep-Top on= 
+ Print 'Aprvl 30 Day Grace' (132,337,21) Underline  Bold 
+ Print 'Moved to' (132,437,9) Underline  Bold 
+ Print 'Full' (144,337,7) Underline  Bold 
+ Print 'Special' (144,391,7) Underline  Bold 
+ Print 'Unaprvd' (147,436,8) Underline  Bold 
+ Print 'ffff' (189,34,29) Underline  Bold  Foreground=(255,255,255)
+ Else   ! put a non combined page header
+ Print 'ffff' (18,34,29) Underline  Bold  Foreground=(255,255,255)
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (17,663) '' ' of '
+ Last-Page (17,692) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

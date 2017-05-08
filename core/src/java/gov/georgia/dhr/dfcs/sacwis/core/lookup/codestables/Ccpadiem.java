@@ -1,0 +1,67 @@
+package gov.georgia.dhr.dfcs.sacwis.core.lookup.codestables;
+
+public interface Ccpadiem {
+
+  public static final String CCPADIEM = "CCPADIEM";
+  public static final String CCPADIEM_60901A = "60901a";
+  public static final String CCPADIEM_60901B = "60901b";
+  public static final String CCPADIEM_60901C = "60901c";
+  public static final String CCPADIEM_60901D = "60901d";
+  public static final String CCPADIEM_60901E = "60901e";
+  public static final String CCPADIEM_60901F = "60901f";
+  public static final String CCPADIEM_60901G = "60901g";
+  public static final String CCPADIEM_60901H = "60901h";
+  public static final String CCPADIEM_60901I = "60901i";
+  public static final String CCPADIEM_60901J = "60901j";
+  public static final String CCPADIEM_61001A = "61001a";
+  public static final String CCPADIEM_61001B = "61001b";
+  public static final String CCPADIEM_61001C = "61001c";
+  public static final String CCPADIEM_61001D = "61001d";
+  public static final String CCPADIEM_61001E = "61001e";
+  public static final String CCPADIEM_61001F = "61001f";
+  public static final String CCPADIEM_61001G = "61001g";
+  public static final String CCPADIEM_61001H = "61001h";
+  public static final String CCPADIEM_61001I = "61001i";
+  public static final String CCPADIEM_61001J = "61001j";
+  public static final String CCPADIEM_61101A = "61101a";
+  public static final String CCPADIEM_61101B = "61101b";
+  public static final String CCPADIEM_61101C = "61101c";
+  public static final String CCPADIEM_61101D = "61101d";
+  public static final String CCPADIEM_61101E = "61101e";
+  public static final String CCPADIEM_61101F = "61101f";
+  public static final String CCPADIEM_61101G = "61101g";
+  public static final String CCPADIEM_61101H = "61101h";
+  public static final String CCPADIEM_61101I = "61101i";
+  public static final String CCPADIEM_61101J = "61101j";
+  public static final String CCPADIEM_61301A = "61301a";
+  public static final String CCPADIEM_61301B = "61301b";
+  public static final String CCPADIEM_61301C = "61301c";
+  public static final String CCPADIEM_61301D = "61301d";
+  public static final String CCPADIEM_61301E = "61301e";
+  public static final String CCPADIEM_61301F = "61301f";
+  public static final String CCPADIEM_61301G = "61301g";
+  public static final String CCPADIEM_61301H = "61301h";
+  public static final String CCPADIEM_61301I = "61301i";
+  public static final String CCPADIEM_61301J = "61301j";
+  public static final String CCPADIEM_61401A = "61401a";
+  public static final String CCPADIEM_61401B = "61401b";
+  public static final String CCPADIEM_61401C = "61401c";
+  public static final String CCPADIEM_61401D = "61401d";
+  public static final String CCPADIEM_61401E = "61401e";
+  public static final String CCPADIEM_61401F = "61401f";
+  public static final String CCPADIEM_61401G = "61401g";
+  public static final String CCPADIEM_61401H = "61401h";
+  public static final String CCPADIEM_61401I = "61401i";
+  public static final String CCPADIEM_61401J = "61401j";
+  public static final String CCPADIEM_61601A = "61601a";
+  public static final String CCPADIEM_61601B = "61601b";
+  public static final String CCPADIEM_61601C = "61601c";
+  public static final String CCPADIEM_61601D = "61601d";
+  public static final String CCPADIEM_61601E = "61601e";
+  public static final String CCPADIEM_61601F = "61601f";
+  public static final String CCPADIEM_61601G = "61601g";
+  public static final String CCPADIEM_61601H = "61601h";
+  public static final String CCPADIEM_61601I = "61601i";
+  public static final String CCPADIEM_61601J = "61601j";
+
+}

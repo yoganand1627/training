@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.AgencyCustodialParents" table="AGENCY_CUSTODIAL_PARENTS" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idAgencyCustodialParents" type="integer" unsaved-value="0">
+      <column name="ID_AGENCY_CUSTODIAL_PARENTS" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_AGENCY_CUSTODIAL_PARENTS</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="cdCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_COUNTY" length="3" not-null="true"/>
+    </property>
+    <property name="nmPersonLast" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_PERSON_LAST" length="22"/>
+    </property>
+    <property name="nmPersonFirst" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_PERSON_FIRST" length="12"/>
+    </property>
+    <property name="nmPersonMiddle" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_PERSON_MIDDLE" length="12"/>
+    </property>
+    <property name="cdPersonSex" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PERSON_SEX" length="1" not-null="true"/>
+    </property>
+    <property name="cdEthnicity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ETHNICITY" length="2" not-null="true"/>
+    </property>
+    <property name="cdRace" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RACE" length="2" not-null="true"/>
+    </property>
+    <property name="nbrCrsId" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CRS_ID" precision="9" scale="0"/>
+    </property>
+    <property name="nbrNcpCrsId" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_NCP_CRS_ID" precision="9" scale="0"/>
+    </property>
+    <bag name="childsupRefOutbounds" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_AGENCY_CUSTODIAL_PARENTS" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ChildsupRefOutbound" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

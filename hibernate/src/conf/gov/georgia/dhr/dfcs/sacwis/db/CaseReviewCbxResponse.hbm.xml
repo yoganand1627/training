@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CaseReviewCbxResponse" table="CASE_REVIEW_CBX_RESPONSE" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idCaseReviewCbxResponse" type="integer" unsaved-value="0">
+      <column name="ID_CASE_REVIEW_CBX_RESPONSE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_CASE_REVIEW_CBX_RESPONSE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdCbxQuestion" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CBX_QUESTION" length="10"/>
+    </property>
+    <property name="cdQuestion" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_QUESTION" length="10"/>
+    </property>
+    <property name="cdVersion" type="integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_VERSION"/>
+    </property>
+  </class>
+</hibernate-mapping>

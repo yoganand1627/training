@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE grnds-web-app SYSTEM "grnds-web-app.dtd">
+
+<grnds-web-app>
+  <servlet mapping="login">
+    <conversations>
+      <conversation>
+        <conversation-name>Login</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.common.LoginConversation</conversation-class>
+        <commands>
+          <command>
+            <default-command/>
+            <activity type="method">display_xa</activity>
+            <presentation type="class" screen="LOGIN_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>train</command-name>
+            <presentation type="class" screen="TRAIN_LOGIN_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>logout</command-name>
+            <activity type="method">logout_xa</activity>
+            <presentation type="class" screen="LOGIN_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>test</command-name>
+            <activity type="method">processLogin_xa</activity>
+            <presentation branch="login" type="class" screen="LOGIN_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <!--
+                    <command>
+                      <command-name>securityManager</command-name>
+                      <activity type="method">securityManager_xa</activity>
+                      <presentation type="class" screen="TEST_LOGIN">
+                        gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+                      </presentation>
+                      <presentation branch="error" type="class" screen="LOGIN_PAGE">
+                        gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+                      </presentation>
+                    </command>
+                    <command>
+                      <command-name>lobby</command-name>
+                      <presentation type="class" screen="TEST_LOGIN">
+                        gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+                      </presentation>
+                      <presentation branch="error" type="class" screen="LOGIN_PAGE">
+                        gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+                      </presentation>
+                    </command>
+          -->
+          <command>
+            <command-name>navigation</command-name>
+            <presentation type="class" screen="TEST_NAVIGATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="LOGIN_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+    </conversations>
+  </servlet>
+
+  <error-handling>
+    <domain>sacwis</domain>
+    <logger>grnds.syslog</logger>
+  </error-handling>
+
+</grnds-web-app>

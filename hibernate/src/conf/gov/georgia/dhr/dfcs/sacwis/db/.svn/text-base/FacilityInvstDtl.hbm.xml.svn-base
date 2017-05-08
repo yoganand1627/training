@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FacilityInvstDtl" table="FACILITY_INVST_DTL" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="capsResourceByIdFacilResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_FACIL_RESOURCE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsResourceByIdAffilResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_AFFIL_RESOURCE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_FACIL_INVST_STAGE" precision="16" scale="0" unique="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdFacilInvstOvrallDis" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FACIL_INVST_OVRALL_DIS" length="3"/>
+    </property>
+    <property name="nmFacilInvstFacility" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_FACIL_INVST_FACILITY" length="60"/>
+    </property>
+    <property name="nmFacilInvstAff" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_FACIL_INVST_AFF" length="60"/>
+    </property>
+    <property name="nbrFacilInvstAffilPhn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_FACIL_INVST_AFFIL_PHN" length="10"/>
+    </property>
+    <property name="nbrFacilInvstPhone" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_FACIL_INVST_PHONE" length="10"/>
+    </property>
+    <property name="nbrFacilInvstAffilExt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_FACIL_INVST_AFFIL_EXT" length="8"/>
+    </property>
+    <property name="nbrFacilInvstExtension" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_FACIL_INVST_EXTENSION" length="8"/>
+    </property>
+    <property name="txtFacilInvstAffilCmnt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_FACIL_INVST_AFFIL_CMNT" length="300"/>
+    </property>
+    <property name="txtFacilInvstComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_FACIL_INVST_COMMENTS" length="300"/>
+    </property>
+    <property name="addrFacilInvstAffAttn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_AFF_ATTN" length="45"/>
+    </property>
+    <property name="addrFacilInvstAffCity" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_AFF_CITY" length="20"/>
+    </property>
+    <property name="addrFacilInvstAffCnty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_AFF_CNTY" length="20"/>
+    </property>
+    <property name="addrFacilInvstAffSt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_AFF_ST" length="3"/>
+    </property>
+    <property name="addrFacilInvstAffStr1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_AFF_STR1" length="30"/>
+    </property>
+    <property name="addrFacilInvstAffStr2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_AFF_STR2" length="30"/>
+    </property>
+    <property name="addrFacilInvstAffZip" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_AFF_ZIP" length="10"/>
+    </property>
+    <property name="addrFacilInvstAttn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_ATTN" length="45"/>
+    </property>
+    <property name="addrFacilInvstCity" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_CITY" length="20"/>
+    </property>
+    <property name="addrFacilInvstCnty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_CNTY" length="20"/>
+    </property>
+    <property name="addrFacilInvstState" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_STATE" length="3"/>
+    </property>
+    <property name="addrFacilInvstStr1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_STR1" length="30"/>
+    </property>
+    <property name="addrFacilInvstStr2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_STR2" length="30"/>
+    </property>
+    <property name="addrFacilInvstZip" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_FACIL_INVST_ZIP" length="10"/>
+    </property>
+    <property name="dtFacilInvstIntake" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_FACIL_INVST_INTAKE" length="7"/>
+    </property>
+    <property name="dtFacilInvstIncident" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_FACIL_INVST_INCIDENT" length="7"/>
+    </property>
+    <property name="dtFacilInvstBegun" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_FACIL_INVST_BEGUN" length="7"/>
+    </property>
+    <property name="dtFacilInvstComplt" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_FACIL_INVST_COMPLT" length="7"/>
+    </property>
+    <property name="indFacilSuperintNotif" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_FACIL_SUPERINT_NOTIF" length="1" not-null="true"/>
+    </property>
+    <property name="cdFacilInvstMhmrCode" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FACIL_INVST_MHMR_CODE" length="4"/>
+    </property>
+    <property name="cdFacilInvstOrigDisp" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FACIL_INVST_ORIG_DISP" length="3"/>
+    </property>
+    <property name="cdFacilInvstOrigClsRsn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FACIL_INVST_ORIG_CLS_RSN" length="3"/>
+    </property>
+    <property name="dtFacilInvstOrigCompl" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_FACIL_INVST_ORIG_COMPL" length="7"/>
+    </property>
+  </class>
+</hibernate-mapping>

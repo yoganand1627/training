@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ContractService" table="CONTRACT_SERVICE" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idCnsvc" type="integer" unsaved-value="0">
+      <column name="ID_CNSVC" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_CONTRACT_SERVICE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="contract" class="gov.georgia.dhr.dfcs.sacwis.db.Contract" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CONTRACT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CNTRCT_WKR" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="nbrCnsvcPeriod" type="integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_CNSVC_PERIOD" precision="2" scale="0" not-null="true"/>
+    </property>
+    <property name="nbrCnsvcVersion" type="integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CNSVC_VERSION" precision="2" scale="0" not-null="true"/>
+    </property>
+    <property name="nbrCnsvcLineItem" type="integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CNSVC_LINE_ITEM" precision="4" scale="0" not-null="true"/>
+    </property>
+    <property name="cdCnsvcService" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CNSVC_SERVICE" length="6" not-null="true"/>
+    </property>
+    <property name="cdCnsvcPaymentType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CNSVC_PAYMENT_TYPE" length="3" not-null="true"/>
+    </property>
+    <property name="indCnsvcNewRow" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CNSVC_NEW_ROW" length="1" not-null="true"/>
+    </property>
+    <property name="cdCnsvcUnitType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CNSVC_UNIT_TYPE" length="3"/>
+    </property>
+    <property name="nbrCnsvcFedMatch" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CNSVC_FED_MATCH" precision="3" scale="0"/>
+    </property>
+    <property name="nbrCnsvcLocalMatch" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CNSVC_LOCAL_MATCH" precision="3" scale="0"/>
+    </property>
+    <property name="nbrCnsvcUnitRate" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CNSVC_UNIT_RATE" precision="6"/>
+    </property>
+    <property name="amtCnsvcAdminAllUsed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_ADMIN_ALL_USED" precision="10"/>
+    </property>
+    <property name="amtCnsvcEquip" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_EQUIP" precision="10"/>
+    </property>
+    <property name="amtCnsvcEquipUsed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_EQUIP_USED" precision="10"/>
+    </property>
+    <property name="amtCnsvcFrgBenft" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_FRG_BENFT" precision="10"/>
+    </property>
+    <property name="amtCnsvcFrgBenftUsed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_FRG_BENFT_USED" precision="10"/>
+    </property>
+    <property name="amtCnsvcOffItemUsed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_OFF_ITEM_USED" precision="10"/>
+    </property>
+    <property name="amtCnsvcOther" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_OTHER" precision="10"/>
+    </property>
+    <property name="amtCnsvcOtherUsed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_OTHER_USED" precision="10"/>
+    </property>
+    <property name="amtCnsvcSalary" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_SALARY" precision="10"/>
+    </property>
+    <property name="amtCnsvcSalaryUsed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_SALARY_USED" precision="10"/>
+    </property>
+    <property name="amtCnsvcSupply" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_SUPPLY" precision="10"/>
+    </property>
+    <property name="amtCnsvcSupplyUsed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_SUPPLY_USED" precision="10"/>
+    </property>
+    <property name="amtCnsvcTravel" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_TRAVEL" precision="10"/>
+    </property>
+    <property name="amtCnsvcTravelUsed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_TRAVEL_USED" precision="10"/>
+    </property>
+    <property name="amtCnsvcUnitRate" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_UNIT_RATE" precision="11"/>
+    </property>
+    <property name="amtCnsvcUnitRateUsed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNSVC_UNIT_RATE_USED" precision="11"/>
+    </property>
+  </class>
+</hibernate-mapping>

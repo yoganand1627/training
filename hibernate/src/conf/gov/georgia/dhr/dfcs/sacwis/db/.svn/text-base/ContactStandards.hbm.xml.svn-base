@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.ContactStandards" table="CONTACT_STANDARDS" >
+        <id name="idContactStdsEvent" type="integer">
+            <column name="ID_CONTACT_STDS_EVENT" precision="16" scale="0" />
+            <generator class="foreign">
+               <param name="property">event</param>
+	        </generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="null" source="vm"/>
+       <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" update="false" insert="false" fetch="select">
+            <column name="ID_CONTACT_STDS_EVENT" precision="16" scale="0" not-null="true" unique="true" />
+        </many-to-one>
+       <property name="dtEffectiveStart" type="date">
+            <column name="DT_EFFECTIVE_START" length="7" />
+        </property>
+        <property name="dtEffectiveEnd" type="date">
+            <column name="DT_EFFECTIVE_END" length="7" />
+        </property>
+        <property name="indSuperApproval" type="string">
+            <column name="IND_SUPER_APPROVAL" length="1" />
+        </property>
+        <property name="indCmAcknowledge" type="string">
+            <column name="IND_CM_ACKNOWLEDGE" length="1" />
+        </property>
+        <property name="txtReasonForChange" type="string">
+            <column name="TXT_REASON_FOR_CHANGE" length="1000" />
+        </property>
+      </class>
+</hibernate-mapping>

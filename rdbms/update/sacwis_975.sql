@@ -1,0 +1,29 @@
+--STGAP00016091 - Release(4.2) MR-074-2 AFCARS: AAApplication, EventList, LS
+
+-- MR-074-2 AFCARS (SMS#81140)
+
+alter table caps.SPECIAL_NEEDS_DETERMINATION add IND_INCIDENT_CHILD varchar2(1 byte);
+comment on table caps.SPECIAL_NEEDS_DETERMINATION is 'Whether the child is incident (Y) or non-incident (N) child. This can be blank when the child is not at the stage that requires such status to be determined.';
+
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME,
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH)
+VALUES
+(0,SYSDATE,60817,'MSG_LEG_STAT_AFCARS_DELETE_WARN',
+'THIS  CHILD  HAS  BEEN  PREVIOUSLY  REPORTED  TO  AFCARS.  ARE  YOU  SURE  YOU  WOULD  LIKE  TO  DELETE  THE  LEGAL  STATUS?',
+700,500,'N');
+
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME,
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH)
+VALUES
+(0,SYSDATE,60818,'MSG_LEG_STAT_AFCARS_MODIFY_WARN',
+'THIS  CHILD  HAS  BEEN  PREVIOUSLY  REPORTED  TO  AFCARS.  ARE  YOU  SURE  YOU  WOULD  LIKE  TO  MODIFY  THE  LEGAL  STATUS?',
+700,500,'N');
+
+insert into caps.schema_version(id_schema_version,application_version,comments)
+            values (976, 'SacwisRev4', 'Release 4.2 - DBCR 16091');
+
+commit;
+
+

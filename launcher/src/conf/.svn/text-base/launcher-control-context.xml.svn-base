@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+       default-dependency-check="none">
+  <bean id="reportLauncherControl" class="org.springframework.remoting.rmi.RmiProxyFactoryBean">
+    <property name="serviceUrl" value="rmi://${launcher.host}:${launcher.port}/ReportLauncherControlService"/>
+    <property name="serviceInterface" value="gov.georgia.dhr.dfcs.sacwis.launcher.ReportLauncherControl"/>
+    <!-- This property allows the RMI server to be restarted w/o issue. -->
+    <property name="refreshStubOnConnectFailure" value="true"/>
+    <!-- This property prevents and error on startup when the server is not running. -->
+    <property name="lookupStubOnStartup" value="false"/>
+  </bean>
+
+  <!-- This provides values for ${} variables above. -->
+  <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="location" value="launcher.properties"/>
+  </bean>
+</beans>

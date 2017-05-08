@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.RemovalReason" table="REMOVAL_REASON" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.RemovalReasonId" mapped="false"
+                  unsaved-value="undefined">
+      <meta attribute="implement-equals">true</meta>
+      <key-property name="idRemovalEvent" type="integer">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="ID_REMOVAL_EVENT" precision="16" scale="0"/>
+      </key-property>
+      <key-property name="cdRemovalReason" type="string">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="CD_REMOVAL_REASON" length="3"/>
+      </key-property>
+    </composite-id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="idCase" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </property>
+  </class>
+</hibernate-mapping>

@@ -1,0 +1,22 @@
+package gov.georgia.dhr.dfcs.sacwis.web.metaphor;
+
+import javax.servlet.http.HttpServletRequest;
+
+import gov.georgia.dhr.dfcs.sacwis.web.core.metaphor.ShowTab;
+import gov.georgia.dhr.dfcs.sacwis.web.core.state.GlobalData;
+import gov.georgia.dhr.dfcs.sacwis.web.fce.FceTabState;
+import gov.georgia.dhr.dfcs.sacwis.web.fce.FceUtility;
+
+/** Filter class for NON_TITLE_IV_E_LEGACY tab */
+public class IsNonTitleShowTab implements ShowTab {
+  public boolean showTab(String tabId,
+                         HttpServletRequest request) {
+    String taskCode = GlobalData.getSzCdTask(request);
+    FceTabState fceTabState = FceUtility.getFceTabState(request);
+
+    return (("".equals(taskCode)) &&
+            (fceTabState.showReviewTabSet()) &&
+            (fceTabState.getShowChecklist()));
+  }
+}
+

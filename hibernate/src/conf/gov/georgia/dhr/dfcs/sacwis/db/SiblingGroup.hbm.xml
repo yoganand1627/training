@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.SiblingGroup" table="SIBLING_GROUP" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idSiblingGroup" type="integer" unsaved-value="0">
+            <column name="ID_SIBLING_GROUP" precision="16" scale="0"/>
+            <generator class="sequence">
+              <param name="sequence">SEQ_SIBLING_GROUP</param>
+            </generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_CASE" precision="16" scale="0"/>
+        </many-to-one>
+        <property name="nbrInGroup" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_IN_GROUP" precision="2" scale="0"/>
+        </property>
+        <property name="nbrAvail" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NBR_AVAIL" precision="2" scale="0"/>
+        </property>
+        <bag name="siblings" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+          <key on-delete="noaction" update="false">
+            <column name="ID_SIBLING_GROUP" precision="16" scale="0" not-null="true"/>
+          </key>
+          <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Sibling" not-found="exception" embed-xml="true"/>
+        </bag>
+        <bag name="siblingExternalLinks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+	        <key on-delete="noaction" update="false">
+	          <column name="ID_SIBLING_GROUP" precision="16" scale="0" not-null="true"/>
+	        </key>
+	        <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.SiblingExternalLink" not-found="exception" embed-xml="true"/>
+        </bag>
+    </class>
+</hibernate-mapping>

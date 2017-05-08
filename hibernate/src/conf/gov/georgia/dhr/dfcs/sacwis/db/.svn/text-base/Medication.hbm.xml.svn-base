@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Medication" table="MEDICATION" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idMedication" type="integer" unsaved-value="0">
+      <column name="ID_MEDICATION" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_MEDICATION</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="nmMedctn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_MEDCTN" length="80"/>
+    </property>
+    <property name="cdMedctnDose" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_MEDCTN_DOSE" length="3"/>
+    </property>
+    <property name="txtMedctnReason" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_MEDCTN_REASON" length="80"/>
+    </property>
+    <property name="txtMedctnAdminPerson" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_MEDCTN_ADMIN_PERSON" length="80"/>
+    </property>
+    <property name="dtMedctnPresc" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_MEDCTN_PRESC" length="7"/>
+    </property>
+    <property name="dtMedctnEndDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_MEDCTN_END_DATE" length="7"/>
+    </property>
+    <property name="indMedctnAllergies" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MEDCTN_ALLERGIES" length="1"/>
+    </property>
+    <property name="txtMedctnDescrip" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_MEDCTN_DESCRIP" length="300"/>
+    </property>
+    <property name="txtMedctnCmnts" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_MEDCTN_CMNTS" length="300"/>
+    </property>
+    <property name="txtMedctnPrescPerson" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_MEDCTN_PRESC_PERSON" length="80"/>
+    </property>
+    <property name="nmPharmacy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_PHARMACY" length="30"/>
+    </property>
+    <property name="addrPharmStLn1" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PHARM_ST_LN_1" length="30"/>
+    </property>
+    <property name="addrPharmStLn2" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PHARM_ST_LN_2" length="30"/>
+    </property>
+    <property name="addrPharmCity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PHARM_CITY" length="20"/>
+    </property>
+    <property name="cdAddrPharmState" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ADDR_PHARM_STATE" length="2"/>
+    </property>
+    <property name="addrPharmZip" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_PHARM_ZIP" length="10"/>
+    </property>
+    <property name="nbrPharmPhone" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_PHARM_PHONE" length="10"/>
+    </property>
+  </class>
+</hibernate-mapping>

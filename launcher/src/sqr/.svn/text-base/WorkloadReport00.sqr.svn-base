@@ -1,0 +1,228 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Fri Apr 01 09:43:40 2011 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2011\MR75\Assigned Workload\WorkloadReport00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+Begin-Select Loops=1
+ID_PERSON &PersonInfo_PersonInfo_ID_PERSON
+NM_PERSON_FULL &PersonInfo_PersonInfo_NM_PERSON_FULL
+From  CAPS.PERSON
+Where [$where_clause102]
+End-Select
+ Alter-Report Heading-Size=180    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Key' (25,2,4) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Status' (42,1,0) Underline  Bold 
+ Print 'AFA - Approved (Full) - Active' (59,1,43)
+ Print 'APP - Applicant (Pre-Service Training)' (73,1,45)
+ Print 'ASA - Approved (Special) - Active' (87,1,44)
+ Print 'CSD - Closed' (116,1,39)
+ Print 'FLG - Full Approval 30 Day Grace' (131,1,45)
+ Print 'PCL - Pending Closure' (59,220,41)
+ Print 'AUN - Unapproved' (102,1,41)
+ Print 'FSG - Special Approval 30 Day Grace' (145,1,43)
+ Print 'PFG - Pending Full Approval 30 Day Grace' (89,220,53)
+ Print 'PSA - Pending Special Approval' (102,221,53)
+ Print 'PSG - Pending Special Approval 30 Day Grace' (117,220,65)
+ Print 'PUN - Pending Unapproved' (132,220,65)
+ Print 'WTL - Waitlist' (146,220,45)
+ Print 'INQ - Inquiry' (159,1,39)
+ Print 'PFA - Pending Full Approval' (73,220,42)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (233,668) '' '  of'
+ Last-Page (233,694) 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input
+ Do GET-OPT-STAGE
+ Position (1,1)
+ Do Workload_Query
+End-Program
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I101_ID_WKLD_PERSON 'Enter a value for ID_WKLD_PERSON' MaxLen=16  Type=Number
+If IsNull($_I101_ID_WKLD_PERSON) or IsBlank($_I101_ID_WKLD_PERSON)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Let $where_clause102 = 'ID_PERSON = ' || $_I101_ID_WKLD_PERSON
+Let $brb_tmp = 'ID_WKLD_PERSON'
+Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_ID_WKLD_PERSON
+End-Procedure
+BEGIN-PROCEDURE GET-OPT-STAGE
+Input $_I102_CD_STAGE 'Enter a value for CD_STAGE' MaxLen=3  Type=Char
+If IsNull($_I102_CD_STAGE) or IsBlank($_I102_CD_STAGE) or ($_I102_CD_STAGE ='0')
+ Let $where_clause_stage = 'STAGE.CD_STAGE IS NOT NULL'
+Else 
+  Let $where_clause_stage = 'STAGE.CD_STAGE = ' || '''' || $_I102_CD_STAGE || ''''
+End-If
+END-PROCEDURE
+
+Begin-Procedure Workload_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select
+DT_STAGE_START &Assigned
+(REPLACE(NVL(WORKLOAD.IND_WKLD_STAGE_PERS_NEW, '0'), 'Y', '1')) &Sort1
+(NVL(WORKLOAD.NM_WKLD_STAGE,' ')) &Sort2
+IND_WKLD_SUPERINT_NOTIF &Sort4
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_WKLD_STAGE_PERS_ROLE &P_S (12,1,2)
+NM_WKLD_STAGE &Stage_Name (12,38,23)
+CAPS.CODES_TABLES.DECODE &Stage (12,171,7)
+CD_CNCLSN_RISK_LVL &Level (12,324,3)
+CD_STAGE_CURR_PRIORITY &RT (12,373,3)
+CAPS.CCOUNT.DECODE &County (12,538,7)
+ID_WKLD_CASE &Case_ID (12,478) Edit 888888888na
+NBR_WKLD_UNIT &Unit (12,589,2)
+CD_WKLD_STAGE_REGION &Region (12,620,2)
+ID_WKLD_STAGE &Stage_ID (12,669) Edit 888888888na
+DT_WKLD_STAGE_PERS_LINK &Workload_Query_DT_WKLD_STAGE_PERS_LINK (12,411) Edit MM/DD/YYYY
+CD_RSRC_FA_HOME_STATUS &Workload_Query_CD_RSRC_FA_HOME_STATUS (12,278,3)
+IND_HOME_IVE_REIMBURSABLE &Workload_Query_IND_HOME_IVE_REIMBURSABLE (12,231,2)
+ Add 1 To #1ROW_COUNT
+ Next-Listing  Need=12
+From  CAPS.WORKLOAD, CAPS.CPS_INVST_DETAIL
+,      CAPS.STAGE, CAPS.CODES_TABLES, CAPS.CCOUNT
+,      CAPS.CAPS_RESOURCE
+      Where CAPS.WORKLOAD.ID_WKLD_STAGE = CAPS.STAGE.ID_STAGE
+            And CAPS.WORKLOAD.CD_WKLD_STAGE = CAPS.CODES_TABLES.CODE
+ And CODE_TYPE = 'CTXTOGA'
+ And [$where_clause101]
+ And CAPS.STAGE.ID_STAGE = CAPS.CPS_INVST_DETAIL.ID_CPS_INVST_STAGE (+)
+ And CAPS.WORKLOAD.CD_WKLD_STAGE_CNTY = CAPS.CCOUNT.CODE (+)
+ And WORKLOAD.ID_WKLD_CASE = CAPS_RESOURCE.ID_CASE(+)
+ And [$where_clause_stage]
+Order By (REPLACE(NVL(WORKLOAD.IND_WKLD_STAGE_PERS_NEW, '0'), 'Y', '1'))
+,      (NVL(WORKLOAD.NM_WKLD_STAGE,' '))
+,      CAPS.CODES_TABLES.DECODE
+,      IND_WKLD_SUPERINT_NOTIF
+End-Select
+ Next-Listing
+ Next-Listing  Need=17
+ If #1ROW_COUNT > 0
+ let #RecordCount = #1ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #RecordCount (17,70) Bold  Edit 88888888na
+  Print 'Total Stages:'  (17,1) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (5,2)
+	Type=bmp-file
+	Source='img\SHINES.bmp'
+	Image-size=(90,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (19,272,0)
+ Print $current-date (18,656) edit 'MM/DD/YYYY'
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Assigned Workload ' (47,291,24) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (18,591,0)
+Print &PersonInfo_PersonInfo_ID_PERSON (124,70) Edit 8888888888888888na
+Print &PersonInfo_PersonInfo_NM_PERSON_FULL (107,85,25)
+ Print 'Employee Name:' (107,1,0) Bold 
+ Print 'Employee ID:' (124,2,0) Bold 
+ Print 'PR/SE' (162,1,13) Underline  Bold 
+ Print 'Stage Name' (162,38,0) Underline  Bold 
+ Print 'Stage' (162,171,0) Underline  Bold 
+ Print 'Level' (162,324,0) Underline  Bold 
+ Print 'RT' (162,373,0) Underline  Bold 
+ Print 'County' (162,538,0) Underline  Bold 
+ Print 'Case ID' (162,478,8) Underline  Bold 
+ Print 'Unit' (162,589,0) Underline  Bold 
+ Print 'Region' (162,620,0) Underline  Bold 
+ Print 'Stage ID' (162,669,10) Underline  Bold 
+ Print 'Assigned' (162,411,0) Underline  Bold 
+ Print 'FAD IV-E' (162,218,8) Underline  Bold 
+ Print 'Status' (162,273,8) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'PR/SE' (15,1,13) Underline  Bold 
+ Print 'Stage Name' (15,38,0) Underline  Bold 
+ Print 'Stage' (15,171,0) Underline  Bold 
+ Print 'Level' (15,324,0) Underline  Bold 
+ Print 'RT' (15,373,0) Underline  Bold 
+ Print 'County' (15,538,0) Underline  Bold 
+ Print 'Case ID' (15,478,8) Underline  Bold 
+ Print 'Unit' (15,589,0) Underline  Bold 
+ Print 'Region' (15,620,0) Underline  Bold 
+ Print 'Stage ID' (15,669,10) Underline  Bold 
+ Print 'Assigned' (15,411,0) Underline  Bold 
+ Print 'FAD IV-E' (15,218,8) Underline  Bold 
+ Print 'Status' (15,273,8) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 36 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (28,674) '' '  of'
+ Last-Page (28,699) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

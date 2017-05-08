@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Characteristics" table="CHARACTERISTICS" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idCharacteristics" type="integer" unsaved-value="0">
+      <column name="ID_CHARACTERISTICS" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_CHARACTERISTICS</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdCharacteristic" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CHARACTERISTIC" length="3" not-null="true"/>
+    </property>
+    <property name="dtCharStart" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CHAR_START" length="7"/>
+    </property>
+    <property name="dtCharEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CHAR_END" length="7"/>
+    </property>
+    <property name="cdCharCategory" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CHAR_CATEGORY" length="3"/>
+    </property>
+  </class>
+</hibernate-mapping>

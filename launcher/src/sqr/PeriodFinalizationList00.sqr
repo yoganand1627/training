@@ -1,0 +1,282 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Fri Jun 05 09:54:57 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\ADAM\Period Finalization List\Updated with Column Header - ready to check in\PeriodFinalizationList00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=120    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'This report lists the Children who were previously in DFCS custody and adoption finalized with the finalization date entered into the system between the From and To Dates.' (29,12,99) Wrap 99 2 line-height=12 Keep-Top
+ Page-Number (583,486) '' ' of '
+ Last-Page (583,516) 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+ Do Get_Date_Range
+ Do Get_Region_County_Input
+ Do Master_Query
+ Do Display_No_Result_Msg
+
+End-Program
+
+! Required Date Range
+Begin-Procedure Get_Date_Range
+Input $dt_start 'Start Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+If IsNull($dt_start) or IsBlank($dt_start)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Input $dt_end 'End Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+If IsNull($dt_end) or IsBlank($dt_end)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+End-Procedure
+
+Begin-Procedure Get_Region_County_Input
+Input $CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=3  Type=Char
+If IsNull($CD_STAGE_REGION) or IsBlank($CD_STAGE_REGION) or ($CD_STAGE_REGION = '0')
+ Let $where_clause_region = ' CD_STAGE_REGION is not null '
+ Let $region_selected = 'N'
+Else
+ Let $where_clause_region = ' CD_STAGE_REGION = ' || '''' || $CD_STAGE_REGION || ''''
+ Let $region_selected = 'Y'
+End-If
+
+Input $CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($CD_STAGE_CNTY) or IsBlank($CD_STAGE_CNTY) or ($CD_STAGE_CNTY = '0')
+ Let $where_clause_county = ' CD_STAGE_CNTY is not null '
+ Let $county_selected = 'N'
+Else
+ Let $where_clause_county = ' CD_STAGE_CNTY = ' || '''' || $CD_STAGE_CNTY || ''''
+ Let $county_selected  = 'Y'
+ Let $county_code_string = '''' || $CD_STAGE_CNTY || ''''
+End-If
+Let $where_clause_region_county = $where_clause_region || ' AND ' || $where_clause_county
+If $county_selected = 'Y'
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+Else 
+ If $region_selected = 'Y'
+  Let $region_county_header = 'Region ' || $CD_STAGE_REGION
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+Begin-Procedure Display_No_Result_Msg
+If #report_total = 0
+ Let $no_result='There is no records for the requested area'
+End-if
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select Distinct
+(SELECT  (max( EXCHANGE_CHILD00.NBR_AFILE ))  FROM  EXCHANGE_CHILD EXCHANGE_CHILD00,  EVENT EVENT_EXC WHERE EXCHANGE_CHILD00.ID_EVENT = EVENT_EXC.ID_EVENT
+ AND  EXCHANGE_CHILD00.ID_PERSON = STAGE_PERSON_LINK00.ID_PERSON AND  EVENT_EXC.ID_CASE = STAGE_PERSON_LINK00.ID_CASE) &Master_Query_AFile_Num
+PERSON.ID_PERSON &Master_Query_PERSON.ID_PERSON
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+(1) &dummy () On-Break Set=1 Level=1 Print=Never Before=Master_Querydummy_BeforeProc101 After=Master_Querydummy_AfterProc101
+DECODE &Master_Query_DECODE () On-Break Set=1 Level=2 Print=Never Before=Master_QueryDECODE_BeforeProc102 After=Master_QueryDECODE_AfterProc102
+NM_PERSON_FULL &Master_Query_NM_PERSON_FULL (10,25,25)
+DT_PERSON_BIRTH &Master_Query_DT_PERSON_BIRTH (10,161) Edit MM/DD/YYYY
+STAGE.ID_CASE &Master_Query_STAGE.ID_CASE (10,455) Edit 999999999999999na
+ Print &Master_Query_AFile_Num (10,237,15)
+DT_EVENT_OCCURRED &Master_Query_DT_EVENT_OCCURRED (10,379) Edit MM/DD/YYYY
+DT_LEGAL_STAT_STATUS_DT &Master_Query_DT_LEGAL_STAT_STATUS_DT (10,310) Edit MM/DD/YYYY
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+From  CCOUNT, EVENT
+,      STAGE_PERSON_LINK STAGE_PERSON_LINK00, STAGE, LEGAL_STATUS
+,      PERSON
+      Where STAGE_PERSON_LINK00.ID_STAGE = STAGE.ID_STAGE
+            And LEGAL_STATUS.ID_PERSON = STAGE_PERSON_LINK00.ID_PERSON
+            And LEGAL_STATUS.ID_LEGAL_STAT_EVENT = EVENT.ID_EVENT
+            And EVENT.ID_CASE = STAGE.ID_CASE
+            And STAGE.CD_STAGE_CNTY = CCOUNT.CODE
+            And PERSON.ID_PERSON = STAGE_PERSON_LINK00.ID_PERSON
+ And CD_STAGE IN ('ADO')
+ And CD_LEGAL_STAT_STATUS = 'NAF'
+ And exists (select (1) from legal_status_view lsv where lsv.in_dfcs_custody = 'Y' and lsv.id_person =  LEGAL_STATUS.ID_PERSON  and lsv.DT_LEGAL_STAT_END
+     <   LEGAL_STATUS.DT_LEGAL_STAT_STATUS_DT )
+ And [$where_clause_region_county]
+ And DT_EVENT_OCCURRED >= to_date($dt_start,'mm/dd/yyyy')
+ And DT_EVENT_OCCURRED < to_date($dt_end,'mm/dd/yyyy')+1
+ And STAGE_PERSON_LINK00.CD_STAGE_PERS_ROLE = 'PC'
+Order By DECODE
+,      NM_PERSON_FULL
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_Querydummy_BeforeProc101
+ Next-Listing  Need=20
+ Graphic (22,1,539) Horz-Line 20 
+ Position (24,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Report Total: '  (18,1) Bold 
+ let #report_total = #101ROW_COUNT
+ Print #brb_delay_0277BCC0 (18,106,8) Delay Bold  Edit 99999999na
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querydummy_AfterProc101
+ Next-Listing 
+ let #report_total = #101ROW_COUNT
+ Set-Delay-Print #brb_delay_0277BCC0 With #report_total
+ Move 0 To #101ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_BeforeProc102
+ Next-Listing  SkipLines=2 Need=12
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_DECODE (10,1,18) Bold 
+ let #nm_person_cnt = #102ROW_COUNT
+ Print #brb_delay_0277BE08 (10,106,8) Delay Bold  Edit 99999999na
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc102
+ Next-Listing  Need=2
+ Graphic (3,1,540) Horz-Line 10 
+ Position (4,1)
+   Position (+0,)
+ let #nm_person_cnt = #102ROW_COUNT
+ Set-Delay-Print #brb_delay_0277BE08 With #nm_person_cnt
+ Move 0 To #102ROW_COUNT
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Data\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (22,184,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Period Finalization List' (47,191,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (22,409,0)
+ Print $current-date (22,474) edit 'MM/DD/YYYY'
+ Let $region_county_header=$region_county_header
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $region_county_header (64,223,13) Bold 
+ Let $date_range=$dt_start || ' - ' || $dt_end
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $date_range (84,204,23) Bold 
+ Print 'Date of Birth' (119,161,13) Underline  Bold 
+ Print 'Case ID' (119,497,7) Underline  Bold 
+ Print 'A Number' (119,237,9) Underline  Bold 
+ Print 'Date Final' (119,310,10) Underline  Bold 
+ Print 'Date Final Entered' (119,379,18) Underline  Bold 
+ Print 'Child Name' (119,25,10) Underline  Bold 
+ Let $no_result=$no_result
+ Print $no_result (109,152,43)
+ Else   ! put a non combined page header
+ Print 'Date of Birth' (20,161,13) Underline  Bold 
+ Print 'Case ID' (20,497,7) Underline  Bold 
+ Print 'A Number' (20,237,9) Underline  Bold 
+ Print 'Date Final' (20,310,10) Underline  Bold 
+ Print 'Date Final Entered' (20,379,18) Underline  Bold 
+ Print 'Child Name' (20,25,10) Underline  Bold 
+ Print $no_result (10,152,43)
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (13,488) '' ' of '
+ Last-Page (13,517) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

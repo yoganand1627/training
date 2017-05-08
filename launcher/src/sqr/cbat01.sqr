@@ -1,0 +1,337 @@
+!*****************************************************************************
+!  BATCH REPORT CONTROL REPORT                                               *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cbat01.sqr                                           *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/levyhd/work/sqr                          *
+!                                                                            *
+!                                                                            *
+! DATE:                 10/17/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      H. Levy                                              *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This report will read a flat file and format it      *
+!                       into a pre-defined layout for all CAPS control       *
+!                       reports. The report inputs are limited to the name   *
+!                       of the file to be read.                              *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 10/17/95   H. Levy      Initial Programming                                *
+! 04/23/96   B. McCleary  SIR 20533 - Changed the length of the number record*
+!                         to 13; added code to check for a decimal in the    *
+!                         number code and print it with or without the       *
+!                         decimal right justified.                           *
+! 12/07/03   S. Miller    Change agency name to Department of Family         *
+!                         and Protective Services.                           *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+	do HOUSEKEEPING
+
+        if $continue_flag = 'Y'
+
+		do PROCESS-REPORT        
+	
+	end-if
+
+	do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+	#INCLUDE 'setup01b.sqc'            ! control codes for Portrait   
+					   ! batch reports                    
+
+        ASK INPUT_FILE             ! name of the file to be inputed
+				   ! if the SQR report does not reside
+				   ! in the same directory as the file
+				   ! to be read then the full path must be 
+				   ! given
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. 8  lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines.                         *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 8 
+
+PRINT 'REPORT ID:' 					(1,1)
+PRINT $report_id					()
+PRINT 'DEPARTMENT OF FAMILY AND PROTECTIVE SERVICES' (1,) center
+PRINT 'PAGE:'						(1,118)
+      page-number					(1,124)
+      let $report_print = rtrim($report_name,' ')
+PRINT $report_print          				(2,) center
+PRINT 'DATE: '						(2,118)
+PRINT $run_date						(2,124)
+PRINT 'TIME: '						(3,118)
+PRINT $run_time						(3,124)
+
+
+	PRINT 'CONTROL MESSAGE'          (+3,24)
+	PRINT 'NUMBER OF'                (+0,72)
+	PRINT 'RECORDS'                  (+1,73)
+	PRINT '-'		         (+1,1,60)  fill
+	PRINT '-'			 (+0,70,14) fill
+
+					       
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS      : OPEN-FILE                                              *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+   move '{INPUT_FILE}' to $input_file
+
+   DO OPEN-FILE
+
+if $continue_flag = 'Y'
+
+   read 1 into $line_type:2
+		$body:170
+
+   if #end-file
+        PRINT 'ERROR READING FILE'		(+4) center
+	let $printout = 'FILE '||$input_file||' HAS NO HEADER RECORD '     
+	PRINT $printout				(+1) center
+	move 'N' to $continue_flag 
+	let #return-status = 33    
+   else   
+      
+        if $line_type = 'L1'
+
+		 let $report_id = substr($body,1,8)
+		 let $report_name = substr($body,9,60)
+		 let $run_date = substr($body,69,8)
+		 let $run_time = substr($body,77,8)
+        else
+              	 PRINT 'ERROR WITH FILE'		(+4) center
+		 let $printout = 'FILE '||$input_file||' HAS NO HEADER RECORD'
+	 	 PRINT $printout			(+1) center
+ 		 move 'N' to $continue_flag
+	         let #return-status = 33    
+        end-if
+    end-if
+
+end-if
+
+   move '****END OF REPORT****' to $end_of_report 	! Initialize Working
+							! Storage constants
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   OPEN-FILE                                                               *
+!                                                                           *
+!       This procedure will open the file to be read and if there is a      *
+!       problem it will print it in the report and finish the processing.   *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE OPEN-FILE
+
+OPEN $input_file AS 1 FOR-READING
+	RECORD=172 status=#file_status       
+
+if #file_status = 0
+	move 'Y' to $continue_flag
+else
+        PRINT 'ERROR OPENING FILE'		(+4) center
+	let $printout = 'FILE '||$input_file||' DOES NOT EXIST' 
+	PRINT $printout				(+1) center
+	let #return-status = 30    
+	move 'N' to $continue_flag
+	move 'N' to $close_file
+end-if
+
+END-PROCEDURE OPEN-FILE
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!      This procedure wraps up the report.  It will close the file if open  *
+!      and print a final end of report message                              *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP          
+
+if $close_file = 'N'    
+else
+	CLOSE 1
+end-if
+
+print $end_of_report 			(+4,) center
+
+END-PROCEDURE WRAP-UP                          
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!       This procedure will call the meat of the report, calling for page   *
+!       and other necessary processes to be executed                        *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : PRINT-LINE                                             *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT
+
+     move 'L2' to $line_type
+     move 0 to #count
+	WHILE $line_type = 'L2'        
+
+
+       	
+	read 1 into $line_type:2
+		    $body:170
+
+        let #count = #count +1 
+
+                if #end-file
+		   break
+                end-if
+                
+		if #count = 1
+		   if $line_type = 'L8'
+		      PRINT 'NO DETAIL LINES FOUND IN FILE'   (+3) center
+                   else
+		      if $line_type = 'L2'
+		         let $error_message = substr($body,1,60)
+		         let $number_record = substr($body,61,13)
+	
+			 DO PRINT-LINE
+                      end-if
+                   end-if
+                else
+		      if $line_type = 'L2'
+		         let $error_message = substr($body,1,60)
+		         let $number_record = substr($body,61,13)
+	
+			 DO PRINT-LINE
+                      end-if
+                end-if
+end-while
+
+    if #end-file
+              	 PRINT 'ERROR WITH FILE'		(+4) center
+	 let $printout = 'FILE '||$input_file||' HAS UNEXPECTED END-OF-FILE'
+	 	 PRINT $printout			(+1) center
+		 let #return-status = 31    
+    else
+	if $line_type != 'L8'
+              	 PRINT 'ERROR WITH FILE'		(+4) center
+	 let $printout = 'FILE '||$input_file||' HAS UNEXPECTED RECORD'       
+	 	 PRINT $printout			(+1) center
+		 let #return-status = 32    
+	end-if
+   end-if
+
+END-PROCEDURE PROCESS-REPORT
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-LINE                                                              *
+!                                                                           *
+!       This procedure will print one detail line.                          *
+!                                                                           * 
+!       CALLED BY  : PROCESS-NO-PAGE-BREAK                                  *
+!       CALLED BY  : PROCESS-ONE-PAGE-BREAK                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-LINE
+
+let $number_print = rtrim($number_record, ' ')
+
+PRINT $error_message				(+1,1) 
+
+
+!SIR 20533 - Allows for number strings both with and without decimals to be
+!            right justified and printed accordingly.
+
+move 1 						to #sub_num
+
+while #sub_num <> 14
+
+  if substr($number_print, #sub_num, 1) = '.'
+      move 'Y'					to $decimal_flag
+  else
+      move 'N'					to $decimal_flag
+  end-if
+
+  if $decimal_flag = 'Y'
+      break
+  end-if
+
+  let #sub_num = #sub_num + 1
+
+end-while
+
+if $decimal_flag = 'Y'
+  PRINT $number_print  				(+0,70) edit 99999999999.99
+else
+if $decimal_flag = 'N'
+  PRINT $number_print  				(+0,70) edit 99999999999999
+end-if
+end-if
+
+END-PROCEDURE PRINT-LINE
+

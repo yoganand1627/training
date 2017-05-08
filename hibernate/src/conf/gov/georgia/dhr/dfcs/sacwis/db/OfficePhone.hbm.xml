@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.OfficePhone" table="OFFICE_PHONE" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idOfficePhone" type="integer" unsaved-value="0">
+      <column name="ID_OFFICE_PHONE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_OFFICE_PHONE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="office" class="gov.georgia.dhr.dfcs.sacwis.db.Office" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_OFFICE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="nbrOfficePhone" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_OFFICE_PHONE" length="10" not-null="true"/>
+    </property>
+    <property name="txtOfficePhoneComment" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_OFFICE_PHONE_COMMENT" length="300"/>
+    </property>
+    <property name="nbrOfficePhoneExt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_OFFICE_PHONE_EXT" length="8"/>
+    </property>
+    <property name="indOfficePhoneInvalid" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_OFFICE_PHONE_INVALID" length="1"/>
+    </property>
+    <property name="dtOfficePhoneStart" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_OFFICE_PHONE_START" length="7"/>
+    </property>
+    <property name="dtOfficePhoneEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_OFFICE_PHONE_END" length="7"/>
+    </property>
+    <property name="indOfficePhonePrimary" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_OFFICE_PHONE_PRIMARY" length="1"/>
+    </property>
+    <property name="cdOfficePhoneType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_OFFICE_PHONE_TYPE" length="2"/>
+    </property>
+  </class>
+</hibernate-mapping>

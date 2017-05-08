@@ -1,0 +1,361 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Thu May 13 12:46:24 2010 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\sacwis\launcher\src\sqr\ProviderList00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 1.000 
+  Bottom-Margin = 1.000 
+  Left-Margin   = 0.600 
+  Right-Margin  = 0.600 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=168    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,11) Underline  Bold 
+ Print 'This report displays a list of all active provider resources for a specific resource type with optional region and county parameters. The types of resources are ' (39,1,197)
+ Print 'Provider, Law Enforcement, Hotline/Helpline, or School.' (55,1,127)
+ Print 'Vendor ID:' (78,1,9) Bold 
+ Print 'The Vendor ID number for the resource used for payment. Vendor ID should match the Vendor ID assigned in SMILE for each resource. ' (78,59,170)
+ Page-Number (149,642) '' ' of'
+ Last-Page (149,677) 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input
+ Do Get-Region-County
+
+
+ Position (1,1)
+ Do Master_Query
+ Do DisplayResult
+End-Program
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I601_CD_RSRC_TYPE 'Enter a value for CD_RSRC_TYPE' MaxLen=2  Type=Char
+If IsNull($_I601_CD_RSRC_TYPE) or IsBlank($_I601_CD_RSRC_TYPE)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Let $Resource_Type = $_I601_CD_RSRC_TYPE
+Do Get-ResourceTypeDecode
+If SubStr($_I601_CD_RSRC_TYPE, 1, 1) != ''''
+  Let $_I601_CD_RSRC_TYPE = '''' || $_I601_CD_RSRC_TYPE || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I601_CD_RSRC_TYPE,'''',0) = 0 and instr($_I601_CD_RSRC_TYPE,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_RSRC_TYPE'
+   Let $where_clause601 = $brb_tmp  || ' = ' ||  '''' || $_I601_CD_RSRC_TYPE || '''' 
+ Else
+   If (instr($_I601_CD_RSRC_TYPE,'''',0) = 0 and instr($_I601_CD_RSRC_TYPE,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_RSRC_TYPE'
+     Let $where_clause601 = $brb_tmp  || ' = ' || $_I601_CD_RSRC_TYPE
+   End-If
+ End-If
+End-Procedure
+!Allows for the Resource Type to appear on the header page regardless if info is or is not pulled
+Begin-Procedure Get-ResourceTypeDecode
+Begin-Select
+Decode &ResourceType1
+from CRSCTYPE
+where code = $_I601_CD_RSRC_TYPE
+end-select
+ move &ResourceType1 to $_Resource_Type
+end-procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #6ROW_COUNT
+Begin-Select
+(CAPS_RESOURCE.ADDR_RSRC_ST_LN_1 || ' '||  CAPS_RESOURCE.ADDR_RSRC_CITY || ',  ' ||  CAPS_RESOURCE.CD_RSRC_STATE || ' , ' ||  CAPS_RESOURCE.ADDR_RSRC_ZIP) &ResourceAddress
+CRSCTYPE.DECODE &ResourceType
+CCOUNT.DECODE &CountyDecode
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CCNTYREG.DECODE &Region () On-Break Set=6 Level=1 Print=Never Before=Master_QueryDECODE_BeforeProc601 After=Master_QueryDECODE_AfterProc601
+CD_RSRC_CNTY &Master_Query_CD_RSRC_CNTY () On-Break Set=6 Level=2 Print=Never Before=Master_QueryCD_RSRC_CNTY_BeforeProc602 After=Master_QueryCD_RSRC_CNTY_AfterProc602
+NBR_RSRC_VID &Master_Query_NBR_RSRC_VID (19,240,8)
+ Print &ResourceAddress (19,294,62) Wrap 62 2 line-height=12 Keep-Top
+NBR_RSRC_PHN &Master_Query_NBR_RSRC_PHN (19,639) Edit (xxx)bxxx-xxxx
+NM_RESOURCE &Master_Query_NM_RESOURCE (19,1,30)
+ID_RESOURCE &Master_Query_ID_RESOURCE (19,167) Edit 8888888888888na
+ Next-Listing   ! Close up the wrapped columns
+ If #page-count > #pageNum
+  Let #pageNum = #page-count
+  Let $ResourceTypeFirst = &ResourceType
+ End-If
+ Add 1 To #6ROW_COUNT
+ Add 1 To #601ROW_COUNT
+ Add 1 To #602ROW_COUNT
+ Next-Listing  Need=22
+From  CAPS_RESOURCE, CRSCTYPE
+,      CCNTYREG, CCOUNT
+      Where CAPS_RESOURCE.CD_RSRC_TYPE = CRSCTYPE.CODE
+            And CAPS_RESOURCE.CD_RSRC_CNTY = CCNTYREG.CODE
+            And CCNTYREG.CODE = CCOUNT.CODE
+ And [$where_clause601]
+ And CD_RSRC_STATUS = '01'
+ And CAPS_RESOURCE.CD_RSRC_REGION (+) =  CCNTYREG.DECODE
+ And [$where_clause_region_county]
+Order By CCNTYREG.DECODE
+,      CD_RSRC_CNTY
+,      NM_RESOURCE
+End-Select
+ Next-Listing
+ Next-Listing  Need=19
+ If #6ROW_COUNT > 0
+ Graphic (2,1,704) Horz-Line 20 
+ Position (4,1)
+ let #ReportTotal = #6ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #ReportTotal (19,72) Bold  Edit 99999999na
+   Let $ReportTotalHeader='Report Total: '
+ Print $ReportTotalHeader (19,1,15) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+begin-procedure DisplayResult
+If #6ROW_COUNT= 0
+ Let $textdisp='No results matching the report parameters are available'
+end-if
+Move $textdisp to $outText
+end-procedure
+
+
+Begin-Procedure Get-Region-County
+! Get region optional input
+Input $_cd_RSRC_region 'Enter a value for CD_RSRC_REGION' MaxLen=2  Type=Char
+If IsNull($_cd_RSRC_region) or IsBlank($_cd_RSRC_region) or ($_cd_RSRC_region='0')
+  Let $where_clause_region = 'CCNTYREG.DECODE IS NOT NULL'
+  Let $regionSelected = 'N'
+Else 
+  Let $where_clause_region = 'CCNTYREG.DECODE = ' || '''' || $_cd_RSRC_region || ''''
+  Let $regionSelected = 'Y'
+End-If
+
+! Get county optional input
+Input $_cd_RSRC_county 'Enter a value for CD_RSRC_CNTY' MaxLen=3  Type=Char
+If IsNull($_cd_RSRC_county) or IsBlank($_cd_RSRC_county) or ($_cd_RSRC_county='0')
+  Let $where_clause_county = 'CCNTYREG.CODE IS NOT NULL'
+  Let $countySelected = 'N'
+Else 
+  Let $where_clause_county = 'CCNTYREG.CODE = ' || '''' || $_cd_RSRC_county || ''''
+  Let $countySelected = 'Y'
+End-If
+
+! Create where clause for region, county and unit input
+Let $where_clause_region_county = $where_clause_region || ' and ' || $where_clause_county
+!
+Do Make_Header
+End-Procedure
+
+!
+Begin-Procedure Make_Header
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_cd_RSRC_county || ''''
+Begin-Select
+decode &county_decode_header
+
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_cd_RSRC_county = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_cd_RSRC_region
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_cd_RSRC_region
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+ End-Procedure
+
+
+
+
+Begin-Procedure Master_QueryDECODE_BeforeProc601
+if $regionSelected = 'N' and $countySelected = 'N'
+
+ Next-Listing  Need=18
+ Graphic (2,1,704) Horz-Line 30 
+ Position (5,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Region (18,43,3) Bold 
+ Print 'Region:'  (18,1) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc601
+if $regionSelected = 'N' and $countySelected = 'N'
+ Next-Listing  Need=21
+ Graphic (4,1,704) Horz-Line 10 
+ Position (5,1)
+ let #RegionTotal2 = #601ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #RegionTotal2 (21,72) Bold  Edit 99999999na
+ Print 'Region Total:'  (21,1) Bold 
+   Position (+12,)
+ Move 0 To #601ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure Master_QueryCD_RSRC_CNTY_BeforeProc602
+if $countySelected = 'N'
+
+ Next-Listing  Need=30
+ Graphic (2,1,704) Horz-Line 20 
+ Position (4,1)
+ Graphic (31,1,704) Horz-Line 10 
+ Position (32,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &CountyDecode (22,43,55) Bold 
+ Print 'County:'  (22,1) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_RSRC_CNTY_AfterProc602
+if $countySelected = 'N'
+
+ Next-Listing  Need=18
+ Graphic (2,1,704) Horz-Line 10 
+ Position (3,1)
+ let #CountyTotal2 = #602ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #CountyTotal2 (18,72) Bold  Edit 99999999na
+ Print 'County Total: '  (18,1) Bold 
+   Position (+12,)
+ Move 0 To #602ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='C:\sacwis\launcher\src\images\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (32,216,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Provider List' (50,266,15) Bold 
+ Let $Region_county_header=$Region_County_Header
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $Region_county_header (63,265,15) Bold 
+ Let $Region_header=$Region_header
+ Print $Region_header (78,267,15) Bold 
+ Print 'Produced On:' (37,566,0)
+ Print $current-date (37,636) edit 'MM/DD/YYYY'
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'Resource Type:' (123,1,14) Bold 
+ Let $ResourceType=$_Resource_Type
+ Print $ResourceType (123,99,50) Bold 
+ Let $outText=$outText
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $outText (95,184,55)
+ Print 'Resource ID' (160,167,13) Underline  Bold 
+ Print 'Vendor ID' (160,240,13) Underline  Bold 
+ Print 'Address' (160,294,11) Underline  Bold 
+ Print 'Phone ' (160,639,10) Underline  Bold 
+ Print 'Resource Name' (160,1,21) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Resource ID' (25,167,13) Underline  Bold 
+ Print 'Vendor ID' (25,240,13) Underline  Bold 
+ Print 'Address' (25,294,11) Underline  Bold 
+ Print 'Phone ' (25,639,10) Underline  Bold 
+ Print 'Resource Name' (25,1,21) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (16,644) '' ' of'
+ Last-Page (16,679) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

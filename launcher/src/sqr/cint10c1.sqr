@@ -1,0 +1,522 @@
+!*****************************************************************************
+!  TEA Interface Changes Report                                              *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         tea.sqr                                              *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/levyhd/shells/                           *
+!                                                                            *
+!                                                                            *
+! DATE:                 10/31/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      H. Levy                                              *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This report will read a flat file and format it      *
+!                       into a pre-defined layout for the TEA Interface      *
+!                       batch process. It is a list of potential changes     *
+!                       to CAPS resource data based on the annual TEA        *
+!                       interface of campus resources.                       *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 10/31/95   H. Levy      Initial Programming                                *
+! 04/15/96   B. McCleary  SIR 20393 - Copied phone print section; changed the*
+!                         formatting of both phone prints to allow for the   *
+!                         area code.                                         *
+! 12/07/03   S. Miller    SIR 18561 - Change agency name to "Department of   *
+!                         Family and Protective Services".                   *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+        if $continue_flag = 'Y'
+
+        do PROCESS-REPORT        
+    
+    end-if
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #INCLUDE 'setup01b.sqc'             ! control codes for Portrait   
+                                        ! batch reports                    
+
+        ASK INPUT_FILE                  ! name of the file to be inputed
+                                        ! if the SQR report does not reside
+                                        ! in the same directory as the file
+                                        ! to be read then the full path must be 
+                                        ! given
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. 8  lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines.                         *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 7  
+
+PRINT 'REPORT ID:'                       (1,1)
+PRINT 'CINT10C1'                         ()
+PRINT 'DEPARTMENT OF FAMILY AND PROTECTIVE SERVICES'  (1,) center
+PRINT 'PAGE:'                            (1,115)
+      page-number                        (1,121)
+PRINT 'TEXAS EDUCATION AGENCY INTERFACE CHANGES REPORT' (2,) center
+PRINT 'DATE: '                           (2,115)
+PRINT $previous_run_date                 (2,121)
+PRINT 'TIME: '                           (3,115)
+PRINT $previous_run_time                 (3,121)
+
+
+PRINT 'COUNTY'                           (4,1)
+PRINT '-'                                (5,1,20) fill
+PRINT $county_decode                     (6,1)
+
+PRINT 'DISTRICT'                                       (+2,19)
+PRINT 'CAMPUS'                                         (+0,34)
+PRINT 'RESOURCE ID'                                    (+1,3) 
+PRINT 'NUMBER'                                         (+0,20)
+PRINT 'NUMBER'                                         (+0,34)
+PRINT 'CHANGE VERIFICATION TASK'                       (+0,50)
+PRINT 'TEA CAMPUS DATA'                                (+0,86)
+PRINT '-'                                  (+1,1,15) fill
+PRINT '-'                                  (+0,20,6) fill
+PRINT '-'                                  (+0,33,8) fill
+PRINT '-'                                  (+0,50,24) fill
+PRINT '-'                                  (+0,86,37) fill
+
+                           
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include all the footer lines to be printed.                          *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 8 
+
+PRINT 'VERIFY NEW ADDRESS - TEA HAS SENT ADDRESS CHANGE FOR A CAMPUS RESOURCE.   VERIFY THAT THE NEW ADDRESS IS' (+1,1)
+PRINT '                     THE CAPS ADDRESS OF RECORD.'  (+1,1)
+PRINT ''                                                  (+1)
+PRINT 'VERIFY INVALID RESOURCE - THE LISTED RESOURCE WAS BOT PRESENT ON THE TEA INTERFACE INDICATING THAT IT MAY '  (+1,1)
+PRINT '                          NO LONGER BE ACTIVE.   IF THE RESOURCE IS NO LONGER ACTIVE, IT MUST BE MANUALLY' (+1,1)
+PRINT '                          DEACTIVATED ON THE RESOURCE DETAIL WINDOW' (+1,1)
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS      : OPEN-FILE                                              *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+   move '{INPUT_FILE}' to $input_file
+
+   DO OPEN-FILE
+
+if $continue_flag = 'Y'
+
+   read 1 into $run_date:10
+           $run_time:11
+           $campus_name:34
+           $street:30
+           $city:23
+           $district_number:6
+           $district_name:34
+           $county_code:3
+           $area_code:3
+           $phone:7
+           $campus_number:9
+           $state:5
+           $zip:19
+           $resource_id:16
+           $new_street_1:30
+           $new_street_2:30
+           $new_city:20
+           $new_state:2
+           $new_zip:10
+           $new_phone:10
+           $change_message:60
+           $change_flag:1
+        
+    move $run_time to $previous_run_time
+    move $run_date to $previous_run_date
+    move $county_code to $previous_county_code
+
+!***SIR 20393***
+
+    if $area_code <> ''
+      let $phone_print = '(' || $area_code || ') ' || substr($phone,1,3) || '-' || substr($phone,4,4)
+    else
+      let $phone_print = substr($phone,1,3) || '-' || substr($phone,4,4)
+    end-if
+
+    let $new_phone_print = '('||substr($new_phone,1,3)||') '||substr($new_phone,4,3)||'-'||substr($new_phone,7,4)
+
+            do GET-COUNTY
+
+   if #end-file
+    PRINT 'NO DETAIL LINES FOUND'       (+5) center
+    move 'N' to $continue_flag
+   else   
+     
+      if $change_flag <> '1' and $change_flag <> '2'
+         PRINT 'ERROR WITH FILE'        (+4) center
+         let $printout = 'FILE '||$input_file||' HAS UNEXPECTED RECORD'
+         PRINT $printout            (+1) center
+         move 'N' to $continue_flag
+             let #return-status = 32    
+      end-if
+   end-if
+
+end-if
+
+   move '****END OF REPORT****' to $end_of_report    ! Initialize Working
+                                                     ! Storage constants
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   OPEN-FILE                                                               *
+!                                                                           *
+!       This procedure will open the file to be read and if there is a      *
+!       problem it will print it in the report and finish the processing.   *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE OPEN-FILE
+
+OPEN $input_file AS 1 FOR-READING
+    RECORD=373 status=#file_status       
+
+if #file_status = 0
+    move 'Y' to $continue_flag
+else
+    PRINT 'ERROR OPENING FILE'      (+4) center
+    let $printout = 'FILE '||$input_file||' DOES NOT EXIST' 
+    PRINT $printout                 (+1) center
+    let #return-status = 30    
+    move 'N' to $continue_flag
+    move 'N' to $close_file
+end-if
+
+END-PROCEDURE OPEN-FILE
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!      This procedure wraps up the report.  It will close the file if open  *
+!      and print a final end of report message                              *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP          
+
+if $close_file = 'N'    
+else
+    CLOSE 1
+end-if
+
+print $end_of_report            (+4,) center
+
+NEW-PAGE
+
+END-PROCEDURE WRAP-UP                          
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!       This procedure will call the meat of the report, calling for page   *
+!       and other necessary processes to be executed                        *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : PRINT-LINE                                             *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT
+
+      if $change_flag = '1'
+     do PRINT-CHANGE
+      else 
+     do PRINT-INACTIVE
+      end-if
+
+
+
+    WHILE $change_flag = '1'        
+       or $change_flag = '2'
+
+
+
+         read 1 into $run_date:10
+                     $run_time:11
+                     $campus_name:34
+                     $street:30
+                     $city:23
+                     $district_number:6
+                     $district_name:34
+                     $county_code:3
+                     $area_code:3
+                     $phone:7
+                     $campus_number:9
+                     $state:5
+                     $zip:19
+                     $resource_id:16
+                     $new_street_1:30
+                     $new_street_2:30
+                     $new_city:20
+                     $new_state:2
+                     $new_zip:10
+                     $new_phone:10
+                     $change_message:60
+                     $change_flag:1
+
+!***SIR 20393***
+
+    if $area_code <> ''
+      let $phone_print = '(' || $area_code || ') ' || substr($phone,1,3) || '-' || substr($phone,4,4)
+    else
+      let $phone_print = substr($phone,1,3) || '-' || substr($phone,4,4)
+    end-if
+
+    let $new_phone_print = '('||substr($new_phone,1,3)||') '||substr($new_phone,4,3)||'-'||substr($new_phone,7,4)
+
+    if $county_code != $previous_county_code
+        move 'Y' to $new_page_flag
+    else
+        move 'N' to $new_page_flag
+    end-if
+
+    move $run_time to $previous_run_time
+    move $run_date to $previous_run_date
+    move $county_code to $previous_county_code
+
+            do GET-COUNTY
+
+                if #end-file
+           break
+                end-if
+                
+                          if $change_flag = '1'
+                             do PRINT-CHANGE
+                          else 
+                          if $change_flag = '2'
+                             do PRINT-INACTIVE
+                          end-if
+                          end-if
+end-while
+
+    if #end-file
+!    PRINT 'ERROR WITH FILE'        (+4) center
+!    let $printout = 'FILE '||$input_file||' HAS UNEXPECTED END-OF-FILE'
+!        PRINT $printout            (+1) center
+!        let #return-status = 31    
+    else
+    if $change_flag != '1' and $change_flag != '2'
+                 PRINT 'ERROR WITH FILE'        (+4) center
+     let $printout = 'FILE '||$input_file||' HAS UNEXPECTED RECORD'       
+         PRINT $printout            (+1) center
+         let #return-status = 32    
+    end-if
+    end-if
+
+END-PROCEDURE PROCESS-REPORT
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CHANGE                                                            *
+!                                                                           *
+!       This procedure will print one detail line for address change        *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHANGE
+
+next-listing need = 12
+
+print ''                                (+2,1)
+print $resource_id                      (+1,1)
+print $district_number                  (+0,20)
+print $campus_number                    (+0,33)
+print $change_message                   (+0,50) 
+
+print 'OLD ADDRESS: '                   (+0,86)
+print $campus_name                      (+1,86)
+print $street                           (+1,86)
+print $city                             (+1,86)
+print ', '                              ()
+print $state                            ()
+print ' '                               ()
+print $zip                              ()
+
+!***SIR 20393***
+
+let $phone_print = ltrim($phone_print, ' ')
+
+if $phone <> ''
+  print $phone_print                    (+1,86)
+end-if
+
+print 'NEW ADDRESS: '                   (+2,86)
+print $new_street_1                     (+1,86)
+print $new_street_2                     (+1,86)
+print $new_city                         (+1,86)
+print ', '                              ()
+print $new_state                        ()
+print ' '                               ()
+print $new_zip                          ()
+
+if $new_phone <> ''
+  print $new_phone_print                (+1,86)
+end-if
+
+END-PROCEDURE PRINT-CHANGE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-INACTIVE                                                          *
+!                                                                           *
+!       This procedure will print one detail line for Inactive addresses    *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-INACTIVE
+
+next-listing need = 5 
+
+print ''                                (+2,1)
+print $resource_id                      (+1,1)
+print $district_number                  (+0,20)
+print $campus_number                    (+0,33)
+print $change_message                   (+0,50) 
+
+print $campus_name                      (+0,86)
+print $street                           (+1,86)
+print $city                             (+1,86)
+print ', '                              ()
+print $state                            ()
+print ' '                               ()
+print $zip                              ()
+
+!***SIR 20393***
+
+print $phone_print                      (+1,86)
+
+END-PROCEDURE PRINT-INACTIVE
+
+!****************************************************************************
+!                                                                           *
+!   GET-COUNTY                                                              *
+!                                                                           *
+!       This procedure will print one detail line for Inactive addresses    *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-COUNTY 
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+    
+  if $new_page_flag = 'Y'
+    NEW-PAGE
+  end-if
+
+DECODE
+    move &DECODE                        to $county_decode
+        
+FROM    CCOUNT
+
+WHERE   CCOUNT.CODE(+) = $previous_county_code
+
+END-SELECT    
+
+END-PROCEDURE GET-COUNTY 
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *   
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle

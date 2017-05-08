@@ -1,0 +1,569 @@
+!*****************************************************************************
+!  Income & Resources History                                                *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccf05o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/heardtd                                  *
+!                                                                            *
+! DATE:                 11/13/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Tony Heard                                           *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The Income and Resources History report will list    *
+!                       all the Incomes and Resources allocated to a person  *
+!                       in the CAPS database.  For each income and resources * 
+!                       the report will list the Type, The effective From    *  
+!                       and To dates, the Amount/Value, the Verification     *
+!                       Method, the Accessible Indicator, the source, and a  * 
+!                       with a short description.                            *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 11/13/95   Tony Heard   Intial Program                                     *
+! 02/15/96   B. McCleary  SIR 3186 - Added code to allow the sysdate to be   *
+!                         selected when the input case is not null;  made    *
+!                         field appear "Not Accessible";  MAXDATES are not   *
+!                         printed; added comments and spacing.               *
+! 03/04/96   B. McCleary  SIR 3557 - Made the resource amount allow for 10   *
+!                         digit number.                                      * 
+! 03/05/96   B. McCleary  SIR 3611 - Added condition so only income is       *
+!                         included in total monthly amount                   *
+! 03/07/96   B. McCleary  SIR 3643 - Changed back to Accessible and the      *
+!                         indicators reversed.  Add wrap.                    *
+! 03/12/96   B. McCleary  SIR 3827 - Changed the header to match the design. *
+! 04/02/96   B. McCleary  SIR 20100 - Format all dates in the where clause   *
+!                         with to_date to properly compare dates.            *
+!                                                                            *
+! 12/16/96   D. Ly        ENH - Change occurences of Name to Name person     *
+!                               full format.                                 *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #include 'setup02b.sqc'            ! control codes for Portrait 
+
+    ask INPUT_ID_PERSON            
+    ask INPUT_ID_CASE                    
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 9
+
+  if #input_id_case <> 0  
+
+      move #input_id_case                         to #Case_Number
+      print 'Case Name: '   (1,42)
+      print $Case_name    (+0,53)
+      print 'Case ID: '    (2,42)
+      print #Case_Number   (+0,53) edit 8888888888888888
+  
+  end-if
+
+print 'INCOME AND RESOURCES REPORT'   (+2,26) 
+print 'PERSON NAME:'                  (+3,1)  
+  if $person_suffix <> '' !***ENH***
+     let $person_name_suff = ', ' || $person_suffix
+  end-if
+  if $person_middle = ''
+     let $person_name = $person_first || ' ' || $person_last || $person_name_suff
+
+  else
+     let $person_name = $person_first || ' ' || $person_middle || ' ' || $person_last || $person_name_suff
+  end-if
+print $person_name                    (+0,14)
+move '' to $person_name_suff          !***ENH***
+print 'PERSON ID:'                    (+1,1)
+print #input_id_person                (+0,14) edit 8888888888888888
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #include 'footer04.sqc'       ! Include file with footer information
+                                ! specific to portrait on demand report
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS    : GET-CASE-NAME-NUM, GET-SYSDATE                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #include 'setenv.sqc'       !Set printer environment
+
+   move {INPUT_ID_PERSON}                to #input_id_person
+   move {INPUT_ID_CASE}                  to #input_id_case
+
+   move 'INC'                            to $INC
+
+   if #input_id_case <> 0
+     do GET-CASE-NAME-NUM
+   else
+     do GET-SYSDATE
+   end-if
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-PERSON-NAME, GET-SUM, GET-INCOME                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do GET-PERSON-NAME
+    do GET-SUM
+    do GET-INCOME
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-CASE-NAME-NUM                                                       *
+!                                                                           *
+!       This selects the name for the input case.  If the date case closed  *
+!       is NULL, then another procedure gives it a value of sysdate.  This  *
+!       call also retrieves the sysdate for later use in GET-SUM.           * 
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : GET-SYSDATE, GET-SYSDATE-SYSDATE                       *
+!****************************************************************************
+
+BEGIN-PROCEDURE  GET-CASE-NAME-NUM
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(C.DT_CASE_CLOSED, 'MM/DD/YYYY') &dt_closed
+    move &dt_closed                     to $dt_case_closed
+
+C.NM_CASE
+    move &C.NM_CASE                     to $Case_Name
+
+   if rtrim($dt_case_closed,'') = '' 
+     do GET-SYSDATE                
+   else
+     do GET-SYSDATE-SYSDATE  !SIR 3186 - When the case and date case closed 
+                             !           exist, this selects sysdate only.      
+   end-if
+
+FROM    CAPS_CASE C
+
+WHERE   C.ID_CASE = #input_id_case
+
+END-SELECT
+
+END-PROCEDURE GET-CASE-NAME-NUM   
+
+!****************************************************************************
+!                                                                           *
+!   GET-SYSDATE                                                             *
+!                                                                           *
+!       This procedure gives the date closed host variable a value when it  *
+!       or the case is null.  It also passes the same value to sysdate so   *
+!       the first date variable may be assigned a value in GET-SUM.         * 
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING, GET-CASE-NAME-NUM                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE  GET-SYSDATE        
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(SYSDATE, 'MM/DD/YYYY') &dt_case_closed
+    move &dt_case_closed                       to $dt_case_closed
+    move &dt_case_closed                       to $sysdate
+
+FROM    DUAL        
+
+END-SELECT
+
+END-PROCEDURE GET-SYSDATE         
+
+!****************************************************************************
+!                                                                           *
+!   GET-SYSDATE-SYSDATE                                                     *
+!                                                                           *
+!       This procedure only gives sysdate a value and disregards the date   *
+!       closed variable since it is not null if this is called.             *
+!                                                                           * 
+!       CALLED BY  : GET-CASE-NAME-NUM                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE  GET-SYSDATE-SYSDATE        
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(SYSDATE, 'MM/DD/YYYY') &sysdate_sysdate
+    move &sysdate_sysdate                       to $sysdate
+    move &sysdate_sysdate                       to $dt_case_closed
+
+FROM    DUAL        
+
+END-SELECT
+
+END-PROCEDURE GET-SYSDATE-SYSDATE         
+
+!****************************************************************************
+!                                                                           *
+!   GET-PERSON-NAME                                                         *
+!                                                                           *
+!       This procedure retrieves the name of the input person using         *
+!       effective dating logic.                                             * 
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PERSON-NAME     
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                                                   
+N.NM_NAME_FIRST   !***ENH***
+    move &N.NM_NAME_FIRST                     to $person_first
+    
+N.NM_NAME_MIDDLE
+    move &N.NM_NAME_MIDDLE                    to $person_middle     
+    
+N.NM_NAME_LAST
+    move &N.NM_NAME_LAST                      to $person_last
+
+CSUFFIX2A.decode
+    move &CSUFFIX2A.decode                     to $person_suffix
+
+FROM    NAME            N,
+        CSUFFIX2        CSUFFIX2A  !***ENH***
+
+WHERE N.ID_PERSON           =  #input_id_person   
+AND   N.IND_NAME_PRIMARY    =  'Y'
+AND   to_date(N.DT_NAME_END_DATE, 'MM/DD/YYYY')    >  to_date($dt_case_closed, 'MM/DD/YYYY')
+AND   to_date(N.DT_NAME_START_DATE, 'MM/DD/YYYY')  <= to_date($dt_case_closed, 'MM/DD/YYYY')
+AND   N.CD_NAME_SUFFIX      = CSUFFIX2A.CODE(+)  !***ENH***
+
+!SIR 20100 - Format all dates in the where clause with to_date
+
+END-SELECT
+
+END-PROCEDURE GET-PERSON-NAME
+
+!****************************************************************************
+!                                                                           *
+!   GET-SUM                                                                 *
+!                                                                           *
+!       This procedure sums the amounts in the income and resources table.  *
+!       It calls another procedure to select the last day of the current    *
+!       month and assigns a value to the first day of the month using       * 
+!       sysdate.                                                            * 
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-LAST, PRINT-GET-MONTHLY                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-SUM            
+
+     do GET-LAST
+
+  let $first_day = substr($sysdate,1,3)||'01'||substr($sysdate,6,5)
+  let $input_dt_first_day = $first_day 
+  let $input_dt_last_day  = $last_day 
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM(AMT_INC_RSRC) &sum
+    move &sum                                   to #sum
+
+    do PRINT-GET-MONTHLY
+
+FROM  INCOME_AND_RESOURCES 
+
+WHERE ID_PERSON = #input_id_person
+AND   CD_INC_RSRC_INCOME = $INC   !SIR 3611 - only adds income amounts 
+AND   ((DT_INC_RSRC_FROM >= to_date($input_dt_first_day, 'MM/DD/YYYY')
+AND    DT_INC_RSRC_FROM  <= to_date($input_dt_last_day,  'MM/DD/YYYY'))
+OR   (DT_INC_RSRC_TO   <= to_date($input_dt_last_day,  'MM/DD/YYYY') 
+AND    DT_INC_RSRC_TO  >= to_date($input_dt_first_day,  'MM/DD/YYYY'))
+OR   (DT_INC_RSRC_FROM <= to_date($input_dt_first_day,  'MM/DD/YYYY') 
+AND  DT_INC_RSRC_TO  >= to_date($input_dt_last_day,  'MM/DD/YYYY'))) 
+
+END-SELECT
+
+END-PROCEDURE GET-SUM            
+
+!****************************************************************************
+!                                                                           *
+!   GET-LAST                                                                *
+!                                                                           *
+!       This procedure selects the last day of the current month.           *
+!                                                                           * 
+!       CALLED BY  : GET-SUM                                                *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-LAST         
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+LAST_DAY(SYSDATE)
+  move &LAST_DAY(SYSDATE)                       to $last_day
+
+FROM   DUAL
+
+END-SELECT
+
+END-PROCEDURE GET-LAST            
+
+!****************************************************************************
+!                                                                           *
+!   GET-INCOME                                                              *
+!                                                                           *
+!       This procedure selects all of the information from the income and   *
+!       resources table using the input person.                             *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : PRINT-GET-INCOME                                       *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-INCOME         
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+AMT_INC_RSRC
+    move &AMT_INC_RSRC                          to $amt_rsrc
+
+CINCRSRC.DECODE
+    move &CINCRSRC.DECODE                       to $type_dec
+
+DT_INC_RSRC_FROM
+    move  &DT_INC_RSRC_FROM                     to $dt_from
+
+DT_INC_RSRC_TO
+    move &DT_INC_RSRC_TO                        to $dt_to
+
+ID_INC_RSRC
+    move &ID_INC_RSRC                           to $cd_rsrc
+
+ID_INC_RSRC_WORKER
+    move &ID_INC_RSRC_WORKER                    to  $id_worker
+
+CD_INC_RSRC_INCOME
+    move &CD_INC_RSRC_INCOME                     to $cd_income
+
+IND_INC_RSRC_NOT_ACCESS
+    move &IND_INC_RSRC_NOT_ACCESS               to $ind_access
+
+SDS_INC_RSRC_SOURCE
+   move &SDS_INC_RSRC_SOURCE                    to $sds_source
+
+SDS_INC_RSRC_VERF_METHOD
+    move &SDS_INC_RSRC_VERF_METHOD              to $sds_method
+
+TXT_INC_RSRC_DESC
+    move &TXT_INC_RSRC_DESC                     to $txt_desc
+
+   do PRINT-GET-INCOME
+
+   next-listing  need=6 
+
+FROM    INCOME_AND_RESOURCES, 
+        CINCRSRC     CINCRSRC     
+
+WHERE   ID_PERSON = #input_id_person
+AND     CINCRSRC.CODE(+) = CD_INC_RSRC_TYPE  
+
+ORDER BY CD_INC_RSRC_INCOME, DT_INC_RSRC_FROM DESC, DT_INC_RSRC_TO DESC   
+
+END-SELECT
+
+END-PROCEDURE GET-INCOME         
+
+!****************************************************************************
+!                                                                            *
+!   PRINT-GET-MONTHLY                                                        *
+!                                                                            *
+!       This prints the result of the sum procedure.                         *
+!                                                                            * 
+!       CALLED BY  : GET-SUM                                                 * 
+!       CALLS      : NONE                                                    *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-GET-MONTHLY      
+
+print 'Total Monthly Income:'         (+0,29)
+print '$'                             (+0,51)  
+print  #sum                           (+0,52) edit 888,888,888,888.88
+
+END-PROCEDURE PRINT-GET-MONTHLY       
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-GET-INCOME                                                        *
+!                                                                           *
+!       This procedure prints the lines from income and resources.          *
+!                                                                           * 
+!       CALLED BY  : GET-INCOME                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-GET-INCOME      
+
+print 'INCOME/RESOURCE:'         (+2,1)
+print $cd_income                 (+0,20)
+print 'TYPE:'                    (+1,1)
+print $type_dec                  (+0,20)
+print 'EFFECTIVE FROM:'          (+1,1)
+print $dt_from                   (+0,20)
+
+print 'EFFECTIVE TO:'            (+0,36) !SIR 3186 - MAXDATES will not appear
+if  $dt_to <> '12/31/4712'                 
+  print $dt_to                   (+0,58)
+end-if
+
+print 'AMOUNT/VALUE:'            (+1,1)
+print '$'                        (+0,20) 
+print $amt_rsrc                  (+0,21)edit 88,888,888.88!SIR 3557 - allows for
+print 'VERIFICATION METHOD:'     (+0,36)                  !10 digit number
+print $sds_method                (+0,58)
+print 'ACCESSIBLE:'              (+1,1)  !SIR 3186 - changed to NOT ACCESSIBLE 
+                                         !           to match the window 
+
+      !SIR 3643 - changed back to ACCESSIBLE
+if $ind_access = 'Y'                     !           and reversed the indicators
+  move 'N'                to $ind_print
+else
+if $ind_access = 'N'
+  move 'Y'                to $ind_print
+end-if
+end-if
+
+print $ind_print                 (+0,20) 
+print 'SOURCE:'                  (+0,36)
+print $sds_source                (+0,58)
+print 'DESCRIPTION:'             (+1,1)
+print $txt_desc                  (+0,20) wrap 57 2
+
+END-PROCEDURE PRINT-GET-INCOME       
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+#INCLUDE 'cfpstamp.sqc'

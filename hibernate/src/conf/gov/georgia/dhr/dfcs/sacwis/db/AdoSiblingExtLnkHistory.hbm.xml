@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.AdoSiblingExtLnkHistory" table="ADO_SIBLING_EXT_LNK_HISTORY" >
+        <id name="idAdoSibExtLnkHist" type="integer">
+            <column name="ID_ADO_SIB_EXT_LNK_HIST" precision="16" scale="0" />
+			      <generator class="sequence">
+			        <param name="sequence">SEQ_ADO_SIB_EXT_LNK_HIST</param>
+			      </generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="null" source="vm"/>
+        <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select">
+            <column name="ID_SIBLING_EXTERNAL_STAGE" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <many-to-one name="adoInfo" class="gov.georgia.dhr.dfcs.sacwis.db.AdoInfo" fetch="select">
+            <column name="ID_ADO_INFO_EVENT" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select">
+            <column name="ID_PERSON" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="dtAdoInfoComplete" type="date">
+            <column name="DT_ADO_INFO_COMPLETE" length="7" not-null="true" />
+        </property>
+        <property name="idSiblingGroup" type="integer">
+            <column name="ID_SIBLING_GROUP" precision="16" scale="0" not-null="true" />
+        </property>
+    </class>
+</hibernate-mapping>

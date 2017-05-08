@@ -1,0 +1,156 @@
+--STGAP00017130 - Release(5.0) ECEM 5.0: new messages
+
+-- ECEM 5.0 
+-- Services By Area message
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60913,'MSG_REQ_SRVC',
+'At least one Service needs to be selected.', 
+700,500,'N');
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60914,'MSG_REQ_CNTY_MIN',
+'At least one Service needs to be selected.', 
+700,500,'N');
+
+-- UAS maintenance page message:
+
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60915,'MSG_REQ_ENT_CD_INFO',
+'Entitlement Code, Description, or Effective Date values are required for one or more records and have not been entered.', 
+700,500,'N');
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60916,'MSG_REQ_UNIT_PAY_INFO',
+'When the service is CCI or CPA the Unit Rate, Payment Type, or Unit Type is required and has not been entered for one or more records.', 
+700,500,'N');
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60917,'MSG_REQ_SRV_AUTH_PSSF',
+'Service Authorization and PSSF fields are required for Delivered Services service types.', 
+700,500,'N');
+
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60918,'MSG_REQ_INV_ADD',
+'Invoice Add-On field is required when the service type is Delivered Service or Adoptions.', 
+700,500,'N');
+
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60919,'MSG_REQ_INV_ADD_YES',
+'Invoice Add-On field is required to be a value of Yes when the service type is Foster Care or Relative Care.', 
+700,500,'N');
+
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60920,'MSG_RCS_SVC_AUTH_NO',
+'Service Authorization field is required to be a value of No when the service type is Relative Care.', 
+700,500,'N');
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60921,'MSG_ERR_ENT_CODE',
+'Entitlement code cannot be ''01'' or ''02''.', 
+700,500,'N');
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60922,'MSG_ERR_ENT_CD_99',
+'Entitlement Code cannot be ?99? when the service type is Foster Care, Relative Care or Adoption.', 
+700,500,'N');
+
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60923,'MSG_BDGT_LIM_EXCDD',
+'The Line Item Limit value at the alpha level for any one entitlement code exceeds the main entitlement code Case Budget Limit.', 
+700,500,'N');
+
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60924,'MSG_CONF_VALUES',
+'Are you sure you have confirmed all values entered before saving? Press OK to continue, or Cancel to stay on the current page.', 
+700,500,'N');
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60925,'MSG_EXSTNG_PRG_CD',
+'You are trying to add a new program code that already exists. If you are trying to add additional entitlement codes to an existing program code, please click the Program Code hyperlink from the Program Code List section.', 
+700,500,'N');
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60926,'MSG_EXSTNG_ENT_CD',
+'You are trying to add a new entitlement code that already exists.', 
+700,500,'N');
+
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60927,'MSG_INV_DOLL_VALUE',
+'You have entered an invalid dollar amount.', 
+700,500,'N');
+
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60928,'MSG_INV_DATE_VALUE',
+'You have entered an invalid date.', 
+700,500,'N');
+
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60929,'MSG_PSSF_AND_SVC_AUTH',
+'You have indicated the code as PSSF but did not indicate the code as available as a Service Authorization.', 
+700,500,'N');
+
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60930,'MSG_NO_CCI_CPA',
+'Relative Care, Delivered Service and Adoption types must not be categorized as CCI or CPA.', 
+700,500,'N');
+
+INSERT INTO CAPS.MESSAGE
+(ID_MESSAGE,DT_LAST_UPDATE,NBR_MESSAGE,TXT_MESSAGE_NAME, 
+TXT_MESSAGE,CD_SOURCE,CD_PRESENTATION,IND_BATCH) 
+VALUES
+(0,SYSDATE,60931,'MSG_DEL_SVC_MUST_PSSF',
+'The code can only be indicated as PSSF if the type is also Delivered Service.', 
+700,500,'N');
+
+
+insert into caps.schema_version(id_schema_version,application_version,comments)
+            values (1115, 'SacwisRev5', 'Release 5.0 - DBCR 17130');
+
+commit;

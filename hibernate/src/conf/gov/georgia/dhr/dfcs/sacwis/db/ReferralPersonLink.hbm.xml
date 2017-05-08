@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ReferralPersonLink" table="REFERRAL_PERSON_LINK" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.ReferralPersonLinkId" mapped="false"
+                  unsaved-value="undefined">
+      <meta attribute="implement-equals">true</meta>
+      <key-property name="idEvent" type="int">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="ID_EVENT" precision="16" scale="0"/>
+      </key-property>
+      <key-property name="idPerson" type="int">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="ID_PERSON" precision="16" scale="0"/>
+      </key-property>
+    </composite-id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="referral" class="gov.georgia.dhr.dfcs.sacwis.db.Referral" update="false" insert="false"
+                 fetch="select" unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" update="false" insert="false"
+                 fetch="select" unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="indReferPersReferred" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_REFER_PERS_REFERRED" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

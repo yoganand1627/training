@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.WtlpPlan" table="WTLP_PLAN" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdYdpCoord" class="gov.georgia.dhr.dfcs.sacwis.db.Person" update="true" insert="true"
+                 fetch="select" unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_YDP_COORD" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdPlanType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLAN_TYPE" length="1"/>
+    </property>
+    <property name="dtWtlp" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_WTLP" length="7"/>
+    </property>
+    <property name="dtFrom" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_FROM" length="7"/>
+    </property>
+    <property name="dtTo" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_TO" length="7"/>
+    </property>
+    <property name="cdPlcmtAuth" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PLCMT_AUTH" length="3"/>
+    </property>
+    <property name="txtVoluntary" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_VOLUNTARY" length="300"/>
+    </property>
+    <property name="cdEdu" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EDU" length="3"/>
+    </property>
+    <property name="cdVoc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_VOC" length="3"/>
+    </property>
+    <property name="cdBasic" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_BASIC" length="3"/>
+    </property>
+    <property name="cdHealth" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_HEALTH" length="3"/>
+    </property>
+    <property name="cdPers" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PERS" length="3"/>
+    </property>
+    <property name="txtStrengths" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_STRENGTHS" length="300"/>
+    </property>
+    <property name="txtNeeds" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_NEEDS" length="300"/>
+    </property>
+    <property name="txtYdpCoord" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="YDP_COORD_INFO" length="300"/>
+    </property>
+  </class>
+</hibernate-mapping>

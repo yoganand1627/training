@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="rdbms" basedir="." default="update">
+  <!-- Project-specific overrides. -->
+  <property file="build.properties"/>
+
+  <!-- Determine the directory in which this file resides. -->
+  <dirname property="ant.dir.rdbms" file="${ant.file.rdbms}"/>
+
+  <!-- A path for ant tasks. -->
+  <path id="db-update.path">
+    <fileset dir="${ant.dir.rdbms}/lib"/>
+  </path>
+
+  <!-- Update tasks. -->
+  <taskdef name="check-database-connection"
+           classname="gov.georgia.dhr.dfcs.sacwis.core.ant.CheckDatabaseConnectionTask" classpathref="db-update.path"/>
+  <taskdef name="execute-dbcr-updates" classname="gov.georgia.dhr.dfcs.sacwis.core.ant.ExecuteDBCRUpdatesTask"
+           classpathref="db-update.path"/>
+
+  <property name="jdbc.driverClassName" value="oracle.jdbc.OracleDriver"/>
+
+  <target name="prepare">
+    <!-- Prompt for username and password if they are not set at this point. -->
+    <input addproperty="url" message="Please input the database connection URL: "/>
+    <input addproperty="username" message="Please input the database's administrative username: "/>
+    <input addproperty="password" message="Please input the database's administrative password: "/>
+    <check-database-connection property="rdbms.available" driver="${jdbc.driverClassName}" url="${url}"
+                               userid="${username}" password="${password}"
+                               classpathref="db-update.path"/>
+    <fail if="rdbms.required" unless="rdbms.available"
+          message="The database is unreachable or the creditials are incorrect.${line.separator}URL: ${url}${line.separator}Username: ${username}${line.separator}Password: ${password}"/>
+  </target>
+
+  <target name="update" depends="prepare" if="rdbms.available" unless="rdbms.update.disable"
+          description="Updates database schema if it is out of date.">
+    <!-- By default, do not log verbose information; override in build.properties, if required. -->
+    <property name="update-database.verbose" value="false"/>
+    <execute-dbcr-updates property="rdbms.updated" scriptprefix="sacwis_" updatedir="${ant.dir.rdbms}/update"
+                          url="${url}" driver="${jdbc.driverClassName}" userid="${username}" password="${password}"
+                          classpathref="custom.tasks.path" verbose="${update-database.verbose}"/>
+  </target>
+
+</project>

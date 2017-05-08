@@ -1,0 +1,67 @@
+package gov.georgia.dhr.dfcs.sacwis.core.lookup.codestables;
+
+public interface Ccpsoutp {
+
+  public static final String CCPSOUTP = "CCPSOUTP";
+  public static final String CCPSOUTP_C010 = "C010";
+  public static final String CCPSOUTP_C020 = "C020";
+  public static final String CCPSOUTP_C030 = "C030";
+  public static final String CCPSOUTP_C040 = "C040";
+  public static final String CCPSOUTP_C050 = "C050";
+  public static final String CCPSOUTP_C060 = "C060";
+  public static final String CCPSOUTP_C070 = "C070";
+  public static final String CCPSOUTP_C080 = "C080";
+  public static final String CCPSOUTP_C090 = "C090";
+  public static final String CCPSOUTP_C095 = "C095";
+  public static final String CCPSOUTP_C100 = "C100";
+  public static final String CCPSOUTP_C110 = "C110";
+  public static final String CCPSOUTP_C120 = "C120";
+  public static final String CCPSOUTP_C130 = "C130";
+  public static final String CCPSOUTP_C140 = "C140";
+  public static final String CCPSOUTP_C150 = "C150";
+  public static final String CCPSOUTP_C160 = "C160";
+  public static final String CCPSOUTP_C170 = "C170";
+  public static final String CCPSOUTP_C180 = "C180";
+  public static final String CCPSOUTP_C190 = "C190";
+  public static final String CCPSOUTP_C200 = "C200";
+  public static final String CCPSOUTP_C210 = "C210";
+  public static final String CCPSOUTP_C220 = "C220";
+  public static final String CCPSOUTP_C230 = "C230";
+  public static final String CCPSOUTP_C240 = "C240";
+  public static final String CCPSOUTP_C250 = "C250";
+  public static final String CCPSOUTP_C260 = "C260";
+  public static final String CCPSOUTP_C270 = "C270";
+  public static final String CCPSOUTP_C280 = "C280";
+  public static final String CCPSOUTP_C290 = "C290";
+  public static final String CCPSOUTP_C300 = "C300";
+  public static final String CCPSOUTP_C310 = "C310";
+  public static final String CCPSOUTP_C320 = "C320";
+  public static final String CCPSOUTP_C330 = "C330";
+  public static final String CCPSOUTP_C340 = "C340";
+  public static final String CCPSOUTP_C350 = "C350";
+  public static final String CCPSOUTP_C360 = "C360";
+  public static final String CCPSOUTP_C370 = "C370";
+  public static final String CCPSOUTP_C380 = "C380";
+  public static final String CCPSOUTP_C390 = "C390";
+  public static final String CCPSOUTP_C400 = "C400";
+  public static final String CCPSOUTP_C410 = "C410";
+  public static final String CCPSOUTP_C420 = "C420";
+  public static final String CCPSOUTP_C430 = "C430";
+  public static final String CCPSOUTP_C440 = "C440";
+  public static final String CCPSOUTP_C450 = "C450";
+  public static final String CCPSOUTP_C460 = "C460";
+  public static final String CCPSOUTP_C470 = "C470";
+  public static final String CCPSOUTP_C480 = "C480";
+  public static final String CCPSOUTP_C490 = "C490";
+  public static final String CCPSOUTP_C500 = "C500";
+  public static final String CCPSOUTP_C510 = "C510";
+  public static final String CCPSOUTP_C520 = "C520";
+  public static final String CCPSOUTP_C530 = "C530";
+  public static final String CCPSOUTP_C540 = "C540";
+  public static final String CCPSOUTP_C550 = "C550";
+  public static final String CCPSOUTP_C560 = "C560";
+  public static final String CCPSOUTP_C570 = "C570";
+  public static final String CCPSOUTP_C580 = "C580";
+  public static final String CCPSOUTP_C600 = "C600";
+
+}

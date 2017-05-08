@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CaseFileManagement" table="CASE_FILE_MANAGEMENT" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idCaseFileCase" type="integer" unsaved-value="undefined">
+      <column name="ID_CASE_FILE_CASE" precision="16" scale="0"/>
+      <generator class="assigned"/>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="office" class="gov.georgia.dhr.dfcs.sacwis.db.Office" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE_FILE_OFFICE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="unit" class="gov.georgia.dhr.dfcs.sacwis.db.Unit" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_UNIT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" update="false" insert="false"
+                 fetch="select" unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE_FILE_CASE" precision="16" scale="0" not-null="true" unique="true"/>
+    </many-to-one>
+    <property name="addrCaseFileCity" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_CASE_FILE_CITY" length="20"/>
+    </property>
+    <property name="addrCaseFileStLn1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_CASE_FILE_ST_LN_1" length="30"/>
+    </property>
+    <property name="addrCaseFileStLn2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_CASE_FILE_ST_LN_2" length="30"/>
+    </property>
+    <property name="cdCaseFileOfficeType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CASE_FILE_OFFICE_TYPE" length="1"/>
+    </property>
+    <property name="dtCaseFileArchCompl" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CASE_FILE_ARCH_COMPL" length="7"/>
+    </property>
+    <property name="dtCaseFileArchElig" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CASE_FILE_ARCH_ELIG" length="7"/>
+    </property>
+    <property name="nmCaseFileOffice" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_CASE_FILE_OFFICE" length="20"/>
+    </property>
+    <property name="txtCaseFileLocateInfo" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_CASE_FILE_LOCATE_INFO" length="1000"/>
+    </property>
+    <property name="txtPriorCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PRIOR_CMNTS" length="300"/>
+    </property>
+  </class>
+</hibernate-mapping>

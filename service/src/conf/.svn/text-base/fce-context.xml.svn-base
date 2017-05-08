@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+       default-dependency-check="all"
+       default-lazy-init="false">
+  <bean id="appAndBgCommonFunction" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.AppAndBgCommonFunctionImpl"
+        parent="baseService">
+    <property name="fceApplicationDAO" ref="fceApplicationDAO"/>
+    <property name="fcePersonDAO" ref="fcePersonDAO"/>
+    <property name="fceEligibilityDAO" ref="fceEligibilityDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="cnsrvtrshpRemovalDAO" ref="cnsrvtrshpRemovalDAO"/>
+  </bean>
+  <bean id="ageAndCitizenshipCommonFunction"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.AgeAndCitizenshipCommonFunctionImpl" parent="baseService">
+    <property name="fceApplicationDAO" ref="fceApplicationDAO"/>
+    <property name="fcePersonDAO" ref="fcePersonDAO"/>
+    <property name="fceEligibilityDAO" ref="fceEligibilityDAO"/>
+    <property name="fceReviewDAO" ref="fceReviewDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+  </bean>
+  <bean id="alertMesWorkerIfSE" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.AlertMesWorkerIfSEImpl"
+        parent="baseService">
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="checkIfUserHasRight" ref="checkIfUserHasRight"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+  </bean>
+  <bean id="checkFceJudicialRequirements"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.CheckFceJudicialRequirementsImpl" parent="baseService">
+    <property name="legalActionDAO" ref="legalActionDAO"/>
+  </bean>
+  <bean id="checkIfCompletedFceaExist"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.CheckIfCompletedFceaExistImpl" parent="baseService">
+    <property name="fceApplicationDAO" ref="fceApplicationDAO"/>
+  </bean>
+  <bean id="eligibilitySummaryCommonFunction"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.EligibilitySummaryCommonFunctionImpl" parent="baseService">
+    <property name="fceEligibilityDAO" ref="fceEligibilityDAO"/>
+  </bean>
+  <bean id="incomeExpendituresCommonFunction"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.IncomeExpendituresCommonFunctionImpl" parent="baseService">
+    <property name="fceExpendituresDAO" ref="fceExpendituresDAO"/>
+    <property name="fcePersonDAO" ref="fcePersonDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+  </bean>
+  <bean id="fceRedeterminationCommonFunction"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.FceRedeterminationCommonFunctionImpl" parent="baseService">
+    <property name="fceEligibilityDAO" ref="fceEligibilityDAO"/>
+    <property name="legalActionDAO" ref="legalActionDAO"/>
+    <property name="legalStatusDAO" ref="legalStatusDAO"/>
+    <property name="cnsrvtrshpRemovalDAO" ref="cnsrvtrshpRemovalDAO"/>
+    <property name="fceReviewDAO" ref="fceReviewDAO"/>
+  </bean>
+  <bean id="performFceDataPrefill" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.PerformFceDataPrefillImpl"
+        parent="baseService">
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="fceApplicationDAO" ref="fceApplicationDAO"/>
+    <property name="fcePersonDAO" ref="fcePersonDAO"/>
+    <property name="fceEligibilityDAO" ref="fceEligibilityDAO"/>
+    <property name="fceIncomeDAO" ref="fceIncomeDAO"/>
+    <property name="complexFceDAO" ref="complexFceDAO"/>
+    <property name="fceExpendituresDAO" ref="fceExpendituresDAO"/>
+    <property name="fceThirdPartyInsuranceDAO" ref="fceThirdPartyInsuranceDAO"/>
+    <property name="fceReviewDAO" ref="fceReviewDAO"/>
+  </bean>
+  <bean id="retrievePersistentFcePrinciples" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrievePersistentFcePrinciplesImpl"
+        parent="baseService">
+    <property name="fcePersonDAO" ref="fcePersonDAO"/>
+  </bean>
+  <bean id="retrieveFceIncome" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveFceIncomeImpl"
+        parent="baseService">
+    <property name="fceIncomeDAO" ref="fceIncomeDAO"/>
+  </bean>
+  <bean id="retrieveInitialMedicaid" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveInitialMedicaidImpl"
+        parent="baseService">
+    <property name="cnsrvtrshpRemovalDAO" ref="cnsrvtrshpRemovalDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="incomeAndResourcesDAO" ref="incomeAndResourcesDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="initialMedicaidAppDAO" ref="initialMedicaidAppDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="stageLinkDAO" ref="stageLinkDAO"/>
+    <property name="legalStatusDAO" ref="legalStatusDAO"/>
+  </bean>
+  <bean id="retrieveFceThirdPartyHealthInsurance"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveFceThirdPartyHealthInsuranceImpl"
+        parent="baseService">
+    <property name="fceThirdPartyInsuranceDAO" ref="fceThirdPartyInsuranceDAO"/>
+  </bean>
+  <bean id="saveEligibility" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveEligibilityImpl"
+        parent="baseService">
+    <property name="workloadDAO" ref="workloadDAO"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="checkStageEventStatus" ref="checkStageEventStatus"/>
+    <property name="complexEligibilityDAO" ref="complexEligibilityDAO"/>
+    <property name="eligibilityDAO" ref="eligibilityDAO"/>
+    <property name="saveChildSupportReferralOutbound" ref="saveChildSupportReferralOutbound"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="invoiceDAO" ref="invoiceDAO"/>
+  </bean>
+  <bean id="saveInitialMedicaid" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveInitialMedicaidImpl"
+        parent="baseService">
+    <property name="initialMedicaidAppDAO" ref="initialMedicaidAppDAO"/>
+    <property name="checkStageEventStatus" ref="checkStageEventStatus"/>
+    <property name="saveMedicaidCoareqOutbound" ref="saveMedicaidCoareqOutbound"/>
+    <property name="postEvent" ref="postEvent"/>
+    <property name="personIdDAO" ref="personIdDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+  </bean>
+  <bean id="saveMedicaidCoareqOutbound"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveMedicaidCoareqOutboundImpl" parent="baseService">
+    <property name="medicaidCoareqOutboundDAO" ref="medicaidCoareqOutboundDAO"/>
+    <property name="personAddressDAO" ref="personAddressDAO"/>
+    <property name="personIdDAO" ref="personIdDAO"/>
+  </bean>
+  <bean id="eligibilityRouting" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.EligibilityRoutingImpl"
+        parent="baseService">
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="todoDAO" ref="todoDAO"/>
+    <property name="personDAO" ref="personDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="saveEligibilityAlert" ref="saveEligibilityAlert"/>
+  </bean>
+  <bean id="retrieveMesProgramAssistant"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveMesProgramAssistantImpl" parent="baseService">
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="unitDAO" ref="unitDAO"/>
+    <property name="unitEmpLinkDAO" ref="unitEmpLinkDAO"/>
+    <property name="empSecClassLinkDAO" ref="empSecClassLinkDAO"/>
+  </bean>
+  <bean id="saveAgeCitizenshipVerification"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveAgeCitizenshipVerificationImpl" parent="baseService">
+    <property name="retrieveFceEligibility" ref="retrieveFceEligibility"/>
+    <property name="saveFceEligibility" ref="saveFceEligibility"/>
+    <property name="saveFceApplication" ref="saveFceApplication"/>
+    <property name="saveFcePerson" ref="saveFcePerson"/>
+    <property name="appAndBgCommonFunction" ref="appAndBgCommonFunction"/>
+    <property name="ageAndCitizenshipCommonFunction" ref="ageAndCitizenshipCommonFunction"/>
+    <property name="eventDAO" ref="eventDAO"/>
+  </bean>
+  <bean id="retrieveFceEligibility" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveFceEligibilityImpl"
+        parent="baseService">
+    <property name="fceEligibilityDAO" ref="fceEligibilityDAO"/>
+  </bean>
+  <bean id="saveInitialFceEligibility"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveInitialFceEligibilityImpl" parent="baseService">
+    <property name="fceEligibilityDAO" ref="fceEligibilityDAO"/>
+  </bean>
+  <bean id="saveInitialFceApplication"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveInitialFceApplicationImpl" parent="baseService">
+    <property name="fceApplicationDAO" ref="fceApplicationDAO"/>
+  </bean>
+  <bean id="saveFceApplication" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveFceApplicationImpl"
+        parent="baseService">
+    <property name="fceApplicationDAO" ref="fceApplicationDAO"/>
+  </bean>
+  <bean id="saveFceEligibility" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveFceEligibilityImpl"
+        parent="baseService">
+    <property name="fceEligibilityDAO" ref="fceEligibilityDAO"/>
+    <property name="fceReviewDAO" ref="fceReviewDAO"/>
+    <property name="fceApplicationDAO" ref="fceApplicationDAO"/>
+  </bean>
+  <bean id="saveInitialFceIncome" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveInitialFceIncomeImpl"
+        parent="baseService">
+    <property name="fceIncomeDAO" ref="fceIncomeDAO"/>
+  </bean>
+  <bean id="saveFceIncome" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveFceIncomeImpl" parent="baseService">
+    <property name="fceIncomeDAO" ref="fceIncomeDAO"/>
+    <property name="fceEligibilityDAO" ref="fceEligibilityDAO"/>
+  </bean>
+  <bean id="saveFcePerson" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveFcePersonImpl" parent="baseService">
+    <property name="fcePersonDAO" ref="fcePersonDAO"/>
+  </bean>
+  <bean id="saveFceThirdPartyHealthInsurance"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveFceThirdPartyHealthInsuranceImpl" parent="baseService">
+    <property name="fceThirdPartyInsuranceDAO" ref="fceThirdPartyInsuranceDAO"/>
+  </bean>
+  <bean id="saveFceExpenditures" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveFceExpendituresImpl"
+        parent="baseService">
+    <property name="fceExpendituresDAO" ref="fceExpendituresDAO"/>
+  </bean>
+  <bean id="saveInitialFceExpenditures"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveInitialFceExpendituresImpl" parent="baseService">
+    <property name="fceExpendituresDAO" ref="fceExpendituresDAO"/>
+  </bean>
+  <bean id="saveFceReasonNotEligible" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveFceReasonNotEligibleImpl"
+        parent="baseService">
+    <property name="fceReasonNotEligibleDAO" ref="fceReasonNotEligibleDAO"/>
+  </bean>
+  <bean id="retrieveAFDCIncomeLimit" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveAFDCIncomeLimitImpl"
+        parent="baseService">
+    <property name="fceIncomeDAO" ref="fceIncomeDAO"/>
+  </bean>
+  <bean id="retrieveIVEIncomeLimit" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveIVEIncomeLimitImpl"
+        parent="baseService">
+    <property name="fceIncomeDAO" ref="fceIncomeDAO"/>
+  </bean>
+  <bean id="saveEligibilityAlert" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveEligibilityAlertImpl"
+        parent="baseService">
+    <property name="todoDAO" ref="todoDAO"/>
+  </bean>
+  <bean id="retrieveAssignmentGroup" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveAssignmentGroupImpl"
+        parent="baseService">
+    <property name="stageDAO" ref="stageDAO"/>
+  </bean>
+  <bean id="retrieveFceReview" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveFceReviewImpl"
+        parent="baseService">
+    <property name="fceReviewDAO" ref="fceReviewDAO"/>
+  </bean>
+  <bean id="saveInitialFceReview" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveInitialFceReviewImpl"
+        parent="baseService">
+    <property name="fceReviewDAO" ref="fceReviewDAO"/>
+  </bean>
+  <bean id="saveFceReview" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveFceReviewImpl" parent="baseService">
+    <property name="fceReviewDAO" ref="fceReviewDAO"/>
+    <property name="fceEligibilityDAO" ref="fceEligibilityDAO"/>
+    <property name="fceApplicationDAO" ref="fceApplicationDAO"/>
+    <property name="eventDAO" ref="eventDAO"/>
+  </bean>
+  <bean id="retrieveSuccessMedAssistance"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveSuccessMedAssistanceImpl" parent="baseService">
+    <property name="initialMedicaidAppDAO" ref="initialMedicaidAppDAO"/>
+  </bean>
+  <bean id="retrieveFceApplication" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveFceApplicationImpl"
+        parent="baseService">
+    <property name="fceApplicationDAO" ref="fceApplicationDAO"/>
+  </bean>
+  <bean id="retrieveFcePerson" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveFcePersonImpl"
+        parent="baseService">
+    <property name="fcePersonDAO" ref="fcePersonDAO"/>
+  </bean>
+  <bean id="saveInitialFcePerson" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveInitialFcePersonImpl"
+        parent="baseService">
+    <property name="complexFceDAO" ref="complexFceDAO"/>
+  </bean>
+
+  <bean id="retrieveFceExpenditures" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveFceExpendituresImpl"
+        parent="baseService">
+    <property name="fceExpendituresDAO" ref="fceExpendituresDAO"/>
+  </bean>
+  <bean id="updateFcePersonBirthday" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.UpdateFcePersonBirthdayImpl"
+        parent="baseService">
+    <property name="fcePersonDAO" ref="fcePersonDAO"/>
+  </bean>
+  <bean id="updateInitialFceEligibility"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.UpdateInitialFceEligibilityImpl" parent="baseService">
+    <property name="fceEligibilityDAO" ref="fceEligibilityDAO"/>
+  </bean>
+  <bean id="saveChildSupportReferralOutbound"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveChildSupportReferralOutboundImpl" parent="baseService">
+    <property name="childSupportReferralOutboundDAO" ref="childSupportReferralOutboundDAO"/>
+    <property name="agencyCustodialParentsDAO" ref="agencyCustodialParentsDAO"/>
+  </bean>
+  <bean id="saveAgencyCustodialParents"
+        class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.SaveAgencyCustodialParentsImpl" parent="baseService">
+    <property name="agencyCustodialParentsDAO" ref="agencyCustodialParentsDAO"/>
+  </bean>
+  <bean id="retrieveCsupOutboundNcps" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.RetrieveCsupOutboundNcpsImpl"
+        parent="baseService">
+    <property name="personDAO" ref="personDAO"/>
+    <property name="incomeAndResourcesDAO" ref="incomeAndResourcesDAO"/>
+    <property name="fceApplicationDAO" ref="fceApplicationDAO"/>
+    <property name="officeDAO" ref="officeDAO"/>
+    <property name="personAddressDAO" ref="personAddressDAO"/>
+    <property name="personDtlDAO" ref="personDtlDAO"/>
+    <property name="employeeDAO" ref="employeeDAO"/>
+    <property name="personPhoneDAO" ref="personPhoneDAO"/>
+    <property name="stagePersonLinkDAO" ref="stagePersonLinkDAO"/>
+    <property name="stageDAO" ref="stageDAO"/>
+    <property name="crsRegistration" ref="crsRegistration"/>
+    <property name="retrievePersonIdentifiers" ref="retrievePersonIdentifiers"/>
+    <property name="saveAgencyCustodialParents" ref="saveAgencyCustodialParents"/>
+    <property name="calculatePerDiem" ref="calculatePerDiem"/>
+  </bean>
+  <bean id="changeEventStatus" class="gov.georgia.dhr.dfcs.sacwis.service.fce.impl.ChangeEventStatusImpl" parent="baseService">
+    <property name="eventDAO" ref="eventDAO"/>
+    <property name="postEvent" ref="postEvent"/>
+  </bean>
+</beans>

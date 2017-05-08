@@ -1,0 +1,1148 @@
+!*****************************************************************************
+!  F/A HOME INFORMATION REPORT                                               *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cfa09o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 11/13/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brad McCleary                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The F/A Home Information Report will display all the *
+!                       current data about a particular home.  The report    * 
+!                       will only include current and not historical data.   *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 11/13/95   B. McCleary  Initial Programming                                *
+! 03/01/96   B. McCleary  SIR 3520 - Changed characteristic codes table to   *
+!                                    CPL.                                    *
+! 03/26/96   B. McCleary  SIR 4226 - Changed marital stat codes table to     *
+!                                    CFAMSTRC; select distinct chars.        *
+! 03/28/96   B. McCleary  SIR 4344 - Nothing prints when either of the       *
+!                                    willing indicators is 'N'.              *
+! 04/09/96   B. McCleary  SIR 20153 - Enhancement prints school dist decode. *
+! 12/02/96   K. Cys       SIR 22019 - FA Home VID should be the Business VID *
+!                                     instead of the Primary Address VID.    *
+! 12/02/96   K. Cys       ENH       - Added suffix to occurences of name.    * 
+! 03/31/97   K. Cys       SIR 12950 - Added correct logic to display closure *
+!                                     recommendation.                        *
+! 11/03/04   E. Dickman   SIR 17689 - Add SQL to the GET-MEMBER method.  The *
+!                                     SQL will check the CD_PERSON_ID_TYPE   * 
+!                                     column for a vlaue of SSN of is NULL   *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                       ! compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'             ! control codes for Portrait
+                                        ! On Demand Reports              
+
+    ask ID_STAGE                                
+    
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 5 
+
+print 'F/A HOME NAME: '                            (1,30)
+print $res_name                                    (+0,45)
+print 'FACILITY #: '                               (+1,33)
+print #res_id                                      (+0,45) edit 8888888888888888
+print 'CASE #: '                                   (+1,37)
+print #id_case                                     (+0,45) edit 8888888888888888
+
+print 'F/A HOME INFORMATION REPORT'                (+2) center
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+                                ! specific to portrait on demand report
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS:     NONE                                                     * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+    move  {ID_STAGE}                      to #input_id_stage    
+     
+    move 'HP'                             to $HP 
+    move 'PR'                             to $PR
+    move 'PRN'                            to $PRN         
+    move 'RCM'				                    to $RCM
+    move 'DNR'                            to $DNR
+   
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-HEAD-INFO, GET-INFO                                *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do GET-HEAD-INFO
+    do GET-INFO
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-HEAD-INFO                                                           *
+!                                                                           *
+!       This procedure will select the foster/adoptive home name, facility  *
+!       number, and case number to be printed in the header.                *
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-HEAD-INFO 
+
+    move 0      to #count1             ! initialize the counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                   
+A.NM_RESOURCE
+    move &A.NM_RESOURCE                             to $res_name
+    
+A.ID_RESOURCE
+    move &A.ID_RESOURCE                             to #res_id
+    
+B.ID_CASE
+    move &B.ID_CASE                                 to #id_case
+
+B.ID_STAGE
+    move &B.ID_STAGE                                to #id_stage
+
+FROM    CAPS_RESOURCE   A,
+        STAGE           B
+        
+WHERE   B.ID_STAGE = #input_id_stage
+AND     B.ID_STAGE = A.ID_RSRC_FA_HOME_STAGE
+
+END-SELECT    
+
+END-PROCEDURE GET-HEAD-INFO 
+
+!****************************************************************************
+!                                                                           *
+!   GET-INFO                                                                *
+!                                                                           *
+!       This procedure will get the home history information including the  *
+!       current home.                                                       *
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : PRINT-INFO                                             *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-INFO
+
+    move 0      to #count2             ! initialize the counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.ADDR_RSRC_CITY
+    move &A.ADDR_RSRC_CITY                      to $rsrc_city
+
+A.ADDR_RSRC_ST_LN_1
+    move &A.ADDR_RSRC_ST_LN_1                   to $rsrc_st1 
+
+A.ADDR_RSRC_ST_LN_2
+    move &A.ADDR_RSRC_ST_LN_2                   to $rsrc_st2
+
+A.ADDR_RSRC_ZIP
+    move &A.ADDR_RSRC_ZIP                       to $rsrc_zip
+
+CFACATEG.decode &rsrc_category
+    move &rsrc_category                         to $rsrc_category
+
+CFACLOSE.decode &rsrc_close_rsn
+    move &rsrc_close_rsn                        to $rsrc_close_rsn
+
+CCOUNT.decode &rsrc_county
+    move &rsrc_county                           to $rsrc_county
+
+CETHNIC.decode &rsrc_ethnic
+    move &rsrc_ethnic                           to $rsrc_ethnic
+
+CFAHMSTA.decode &rsrc_status
+    move &rsrc_status                           to $rsrc_stat
+
+CFAHMTYP1.decode           
+    move &CFAHMTYP1.decode                      to $rsrc_type1
+
+CFAHMTYP2.decode           
+    move &CFAHMTYP2.decode                      to $rsrc_type2
+
+CFAHMTYP3.decode           
+    move &CFAHMTYP3.decode                      to $rsrc_type3
+
+CFAHMTYP4.decode           
+    move &CFAHMTYP4.decode                      to $rsrc_type4
+
+CFAHMTYP5.decode           
+    move &CFAHMTYP5.decode                      to $rsrc_type5
+
+CFAHMTYP6.decode           
+    move &CFAHMTYP6.decode                      to $rsrc_type6
+
+CFAHMTYP7.decode           
+    move &CFAHMTYP7.decode                      to $rsrc_type7
+
+CFACLSTP.decode &rsrc_invol
+    move &rsrc_invol                            to $rsrc_invol
+
+CLANG.decode &rsrc_lang       
+    move &rsrc_lang                             to $rsrc_lang
+
+!SIR 4226 - Changed codes table from CMARSTAT to CFAMSTRC
+
+CFAMSTRC.decode &rsrc_marital
+    move &rsrc_marital                          to $rsrc_marital
+
+CFARCMND.decode &rsrc_reopen
+    move &rsrc_reopen                           to $rsrc_reopen
+
+CRELIGNS.decode &rsrc_religion
+    move &rsrc_religion                         to $rsrc_religion
+
+CFARSPIT.decode &rsrc_respite
+    move &rsrc_respite                          to $rsrc_respite
+
+!***SIR 20153***
+
+SC.TXT_SCH_DIST_NAME
+    move &SC.TXT_SCH_DIST_NAME                  to $rsrc_school_dist
+
+A.CD_RSRC_SCH_DIST
+    move &A.CD_RSRC_SCH_DIST                    to $rsrc_school_code
+
+CFASRCIN.decode &rsrc_src_inq
+    move &rsrc_src_inq                          to $rsrc_src_inq
+
+CSTATE.decode &rsrc_state
+    move &rsrc_state                            to $rsrc_state
+
+A.DT_RSRC_MARRIAGE
+    move &A.DT_RSRC_MARRIAGE                    to $dt_rsrc_marriage
+
+A.IND_RSRC_EMERG_PLACE
+    move &A.IND_RSRC_EMERG_PLACE                to $rsrc_emerg_place
+
+A.IND_RSRC_INDIV_STUDY
+    move &A.IND_RSRC_INDIV_STUDY                to $rsrc_indiv_study
+
+A.IND_RSRC_NONPRS
+    move &A.IND_RSRC_NONPRS                     to $rsrc_nonprs
+
+A.IND_RSRC_TRANSPORT
+    move &A.IND_RSRC_TRANSPORT                  to $rsrc_trans
+
+A.NBR_RSRC_FACIL_CAPACITY    
+    move &A.NBR_RSRC_FACIL_CAPACITY             to #rsrc_capacity
+
+A.NBR_RSRC_FM_AGE_MAX
+    move &A.NBR_RSRC_FM_AGE_MAX                 to #rsrc_fm_age_max
+
+A.NBR_RSRC_FM_AGE_MIN
+    move &A.NBR_RSRC_FM_AGE_MIN                 to #rsrc_fm_age_min
+
+A.NBR_RSRC_INT_CHILDREN
+    move &A.NBR_RSRC_INT_CHILDREN               to #rsrc_int_child
+
+A.NBR_RSRC_INT_FE_AGE_MAX
+    move &A.NBR_RSRC_INT_FE_AGE_MAX             to #rsrc_int_fe_max
+
+A.NBR_RSRC_INT_FE_AGE_MIN
+    move &A.NBR_RSRC_INT_FE_AGE_MIN             to #rsrc_int_fe_min
+
+A.NBR_RSRC_INT_MA_AGE_MAX
+    move &A.NBR_RSRC_INT_MA_AGE_MAX             to #rsrc_int_ma_max
+
+A.NBR_RSRC_INT_MA_AGE_MIN
+    move &A.NBR_RSRC_INT_MA_AGE_MIN             to #rsrc_int_ma_min
+
+A.NBR_RSRC_MA_AGE_MAX
+    move &A.NBR_RSRC_MA_AGE_MAX                 to #rsrc_ma_age_max
+
+A.NBR_RSRC_MA_AGE_MIN
+    move &A.NBR_RSRC_MA_AGE_MIN                 to #rsrc_ma_age_min
+
+A.NBR_RSRC_PHN
+    move &A.NBR_RSRC_PHN                        to $rsrc_phone
+
+A.NBR_RSRC_PHONE_EXT
+    move &A.NBR_RSRC_PHONE_EXT                  to $rsrc_ext
+
+RA.NBR_RSRC_ADDR_VID                            !***SIR 22019***
+    move &RA.NBR_RSRC_ADDR_VID                  to $rsrc_vid
+
+    show $rsrc_reopen
+  
+    do PRINT-INFO
+
+FROM    CAPS_RESOURCE     A,
+	RESOURCE_ADDRESS  RA, !***SIR 22019***
+	SCH_DIST	  SC,
+        CFACATEG          CFACATEG,
+        CFACLOSE          CFACLOSE,
+        CCOUNT            CCOUNT,
+        CETHNIC           CETHNIC,
+        CFAHMSTA          CFAHMSTA,
+        CFACLSTP          CFACLSTP,
+        CLANG             CLANG,
+        CFAMSTRC          CFAMSTRC,
+        CFARCMND          CFARCMND,
+        CRELIGNS          CRELIGNS,  
+        CFARSPIT          CFARSPIT,
+        CFASRCIN          CFASRCIN,
+        CSTATE            CSTATE,
+	CFAHMTYP          CFAHMTYP1,
+	CFAHMTYP          CFAHMTYP2,
+	CFAHMTYP          CFAHMTYP3,
+	CFAHMTYP          CFAHMTYP4,
+	CFAHMTYP          CFAHMTYP5,
+	CFAHMTYP          CFAHMTYP6,
+	CFAHMTYP          CFAHMTYP7
+
+WHERE   A.ID_RSRC_FA_HOME_STAGE = #input_id_stage
+AND     A.CD_RSRC_SCH_DIST = SC.CD_SCH_DIST(+)   !***SIR 20153***
+AND     A.ID_RESOURCE = RA.ID_RESOURCE !***SIR 22019***
+AND     RA.CD_RSRC_ADDR_TYPE = '02'
+AND     CFACATEG.CODE(+) = A.CD_RSRC_CATEGORY
+AND     CFACLOSE.CODE(+) = A.CD_RSRC_CLOSURE_RSN
+AND     CCOUNT.CODE(+) = A.CD_RSRC_CNTY
+AND     CETHNIC.CODE(+) = A.CD_RSRC_ETHNICITY
+AND     CFAHMSTA.CODE(+) = A.CD_RSRC_FA_HOME_STATUS
+AND     CFACLSTP.CODE(+) = A.CD_RSRC_INVOL_CLOSURE
+AND     CLANG.CODE(+) = A.CD_RSRC_LANGUAGE
+AND     CFAMSTRC.CODE(+) = A.CD_RSRC_MARITAL_STATUS
+AND     CFARCMND.CODE(+) = A.CD_RSRC_RECMND_REOPEN
+AND     CRELIGNS.CODE(+) = A.CD_RSRC_RELIGION
+AND     CFARSPIT.CODE(+) = A.CD_RSRC_RESPITE
+AND     CFASRCIN.CODE(+) = A.CD_RSRC_SOURCE_INQUIRY
+AND     CSTATE.CODE(+) = A.CD_RSRC_STATE
+AND     CFAHMTYP1.CODE(+) = A.CD_RSRC_FA_HOME_TYPE_1
+AND     CFAHMTYP2.CODE(+) = A.CD_RSRC_FA_HOME_TYPE_2
+AND     CFAHMTYP3.CODE(+) = A.CD_RSRC_FA_HOME_TYPE_3
+AND     CFAHMTYP4.CODE(+) = A.CD_RSRC_FA_HOME_TYPE_4
+AND     CFAHMTYP5.CODE(+) = A.CD_RSRC_FA_HOME_TYPE_5
+AND     CFAHMTYP6.CODE(+) = A.CD_RSRC_FA_HOME_TYPE_6
+AND     CFAHMTYP7.CODE(+) = A.CD_RSRC_FA_HOME_TYPE_7
+
+END-SELECT    
+
+END-PROCEDURE GET-INFO
+
+!****************************************************************************
+!                                                                           *
+!   GET-WORKER                                                              *
+!                                                                           *
+!       This procedure will get the worker name and phone.                  *
+!                                                                           * 
+!       CALLED BY  : PRINT-INFO                                             *
+!       CALLS      : PRINT-WORKER                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WORKER 
+    
+    move 0      to #count3                    ! initialize the counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.NM_NAME_FIRST &worker_first 
+    move &worker_first                      to $worker_first
+
+A.NM_NAME_MIDDLE &worker_middle
+    move &worker_middle                     to $worker_middle
+
+A.NM_NAME_LAST &worker_last
+    move &worker_last                       to $worker_last
+
+CSUFFIX2.decode &worker_suffix              !***ENH***
+    move &worker_suffix                     to $worker_suffix
+    
+B.NBR_PERSON_PHONE
+    move &B.NBR_PERSON_PHONE                to $worker_phone
+    
+
+B.NBR_PERSON_PHONE_EXTENSION
+    move &B.NBR_PERSON_PHONE_EXTENSION      to $worker_ext
+    
+    do PRINT-WORKER
+
+FROM    NAME                A,
+        PERSON_PHONE        B,
+	      CSUFFIX2            CSUFFIX2, !***ENH***
+        STAGE_PERSON_LINK   C
+
+WHERE   C.ID_STAGE = #input_id_stage
+AND     A.ID_PERSON = B.ID_PERSON
+AND     A.DT_NAME_START_DATE <= sysdate
+AND     A.DT_NAME_END_DATE   >  sysdate
+AND     A.IND_NAME_PRIMARY = 'Y'
+AND     CSUFFIX2.CODE(+) = A.CD_NAME_SUFFIX !***ENH***
+AND     B.DT_PERSON_PHONE_START <= sysdate
+AND     B.DT_PERSON_PHONE_END   >  sysdate
+AND     B.ID_PERSON = C.ID_PERSON
+AND     B.IND_PERSON_PHONE_PRIMARY = 'Y'
+AND     C.CD_STAGE_PERS_ROLE IN ($HP, $PR)
+
+END-SELECT    
+
+END-PROCEDURE GET-WORKER 
+
+!****************************************************************************
+!                                                                           *
+!   GET-CHAR                                                                *
+!                                                                           *
+!       This procedure will get all of the child characteristics for an F/A *
+!       home.                                                               *
+!                                                                           * 
+!       CALLED BY  : PRINT-INFO                                             *
+!       CALLS      : PRINT-CHAR-TITLE, PRINT-CHAR                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CHAR   
+    
+    move 0      to #count4                    ! initialize the counter
+                  
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+!***********************************
+!SIR 3520 - Changed codes table to 
+!           CPL                    
+!***********************************
+
+CPL.decode      
+    move &CPL.decode                             to $char
+    
+to_char(A.DT_RSRC_CHAR_DT_ADDED, 'MM/DD/YYYY') &dt_char
+    move &dt_char                                to $dt_char
+
+    let #count4 = #count4 + 1
+    
+    if #count4 = 1
+        do PRINT-CHAR-TITLE
+    else
+        do PRINT-CHAR
+    end-if
+
+FROM    RESOURCE_CHRCTR    A,
+        CPL               CPL
+
+WHERE   A.ID_RESOURCE = #res_id            
+AND     CPL.CODE(+) = A.CD_RSRC_CHAR_CHRCTR
+
+END-SELECT    
+
+END-PROCEDURE GET-CHAR     
+
+!****************************************************************************
+!                                                                           *
+!   GET-ETHNICITY                                                           *
+!                                                                           *
+!       This procedure will get all of the ethnicities of the child for an  *
+!       F/A home.                                                           *
+!                                                                           * 
+!       CALLED BY  : PRINT-INFO                                             *
+!       CALLS      : PRINT-ETHNICITY-TITLE, PRINT-ETHNICITY                 *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ETHNICITY  
+
+    move 0      to #count5             ! initialize the counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                   
+A.ID_RESOURCE &id_resource_eth
+    move &id_resource_eth                  to #id_resource_eth
+    
+CETHNIC.decode              
+    move &CETHNIC.decode                    to $ethnicity 
+    
+A.DT_LAST_UPDATE    
+    move &A.DT_LAST_UPDATE                  to $dt_ethnicity
+
+    let #count5 = #count5 + 1
+    
+    if #count5 = 1
+        do PRINT-ETHNICITY-TITLE
+    else
+        do PRINT-ETHNICITY
+    end-if
+
+FROM    FA_HOME_INT_ETHNIC  A,
+        CETHNIC             CETHNIC
+
+WHERE   A.ID_RESOURCE = #res_id                   
+AND     CETHNIC.CODE(+) = A.CD_FA_HOME_INT_ETHNICITY
+
+END-SELECT    
+
+END-PROCEDURE GET-ETHNICITY  
+
+!****************************************************************************
+!                                                                           *
+!   GET-MEMBER                                                              *
+!                                                                           *
+!       This procedure will get all of the members currently residing in the*
+!       home.                                                               *
+!                                                                           * 
+!       CALLED BY  : PRINT-INFO                                             *
+!       CALLS      : PRINT-MEMBER-TITLE, PRINT-MEMBER                       *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-MEMBER
+    
+    move 0      to #count6                    ! initialize the counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A1.NM_NAME_FIRST &member_first
+    move &member_first                      to $member_first
+
+A1.NM_NAME_MIDDLE &member_middle
+    move &member_middle                     to $member_middle
+
+A1.NM_NAME_LAST &member_last
+    move &member_last                       to $member_last
+
+CSUFFIX2A.decode &member_suffix             
+    move &member_suffix                     to $member_suffix
+    
+to_char(B.DT_PERSON_BIRTH, 'MM/DD/YYYY') &DOB
+    move &DOB                               to $DOB
+    
+C.NBR_PERSON_ID_NUMBER
+    move &C.NBR_PERSON_ID_NUMBER            to $person_id
+    
+CFAHROLS.decode             
+    move &CFAHROLS.decode                   to $home_role
+
+    let #count6 = #count6 + 1
+    
+    if #count6 = 1
+        do PRINT-MEMBER-TITLE
+    else
+        do PRINT-MEMBER
+    end-if
+    
+FROM    NAME                A1,
+        PERSON              B,
+        PERSON_ID           C,
+        PERSON_DTL          D,
+	      CFAHROLS            CFAHROLS,
+	      CSUFFIX2            CSUFFIX2A, !***ENH***
+        STAGE_PERSON_LINK   E
+
+WHERE   E.ID_STAGE = #input_id_stage
+AND     A1.ID_PERSON = E.ID_PERSON
+AND     A1.DT_NAME_START_DATE <= sysdate
+AND     A1.DT_NAME_END_DATE   >  sysdate
+AND     A1.IND_NAME_PRIMARY = 'Y'
+AND     A1.CD_NAME_SUFFIX = CSUFFIX2A.CODE(+) !***ENH***
+AND     B.ID_PERSON = E.ID_PERSON
+AND     C.ID_PERSON(+) = E.ID_PERSON
+AND     D.ID_PERSON(+) = E.ID_PERSON
+AND     E.CD_STAGE_PERS_TYPE = $PRN
+AND     CFAHROLS.CODE(+) = D.CD_PERSON_FA_HOME_ROLE
+AND     (C.CD_PERSON_ID_TYPE = 'SSN'
+OR       C.CD_PERSON_ID_TYPE IS NULL)!SIR 17689
+
+END-SELECT    
+
+END-PROCEDURE GET-MEMBER
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-INFO                                                              *
+!                                                                           *
+!       This procedure prints the home record information including the     *
+!       current home.  It also calls the procedures that get and print the  *
+!       worker, members, characteristics, and ethnicities.                  *
+!                                                                           * 
+!       CALLED BY  : GET-INFO                                               *
+!       CALLS      : GET-WORKER, GET-MEMBER, GET-CHAR, GET-ETHNICITY        *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-INFO
+
+print 'F/A HOME ADDRESS: '                  (+1,1)
+print $rsrc_st1                             (+0,19)
+print $rsrc_st2                             (+1,19)
+print $rsrc_city                            (+1,19)
+print ', '				    ()
+print $rsrc_state                           ()
+print $rsrc_county                          (+1,19)
+print ' '				    ()
+print $rsrc_zip                             ()
+print 'F/A HOME PHONE: '                    (+1,1)
+
+    if substr($rsrc_phone,8,1) = ''   
+        let $rsrc_phone_print = substr($rsrc_phone,1,3)||'-'||substr($rsrc_phone,4,4)
+    else
+        let $rsrc_phone_print = '('||substr($rsrc_phone,1,3)||') '||substr($rsrc_phone,4,3)||'-'||substr($rsrc_phone,7,4)
+    end-if
+
+print $rsrc_phone_print                     (+0,19)
+print '  '                                  ()
+print 'EXT: '                               ()
+print $rsrc_ext                             ()
+print 'F/A HOME VID: '                      (+1,1)
+print $rsrc_vid                             (+0,19)
+
+    do GET-WORKER
+    do GET-MEMBER
+
+print 'LICENSING DATA'                      (+2,1)
+print 'CATEGORY: '                          (+1,1)
+print $rsrc_category                        (+0,12)
+print 'STATUS: '                            (+0,37)
+print $rsrc_stat                            (+0,45)
+print 'NONPRS: '                            (+1,1)
+print $rsrc_nonprs                          (+0,12)
+print 'HOME TYPE: '                         (+1,1)
+
+if rtrim($rsrc_type1,'') <> ''
+    print $rsrc_type1                       (+0,12)
+end-if
+if rtrim($rsrc_type2,'') <> ''
+    print $rsrc_type2                       (+1,12)           
+end-if
+if rtrim($rsrc_type3,'') <> ''
+    print $rsrc_type3                       (+1,12)           
+end-if
+if rtrim($rsrc_type4,'') <> ''
+    print $rsrc_type4                       (+1,12)           
+end-if
+if rtrim($rsrc_type5,'') <> ''
+    print $rsrrsrcpe5                       (+1,12)           
+end-if
+if rtrim($rsrc_type6,'') <> ''
+    print $rsrc_type6                       (+1,12)           
+end-if
+if rtrim($rsrc_type7,'') <> ''
+    print $rsrc_type7                       (+1,12)           
+end-if    
+
+print 'CAPACITY: '                          (+2,1)
+print #rsrc_capacity                        (+0,12) edit 9999
+print 'AGES APPROVED: '                     (+1,1)
+print 'MALE    MIN  '                       (+1,1)
+
+let #ma_min_yr = trunc((#rsrc_ma_age_min/ 12),0)
+let #ma_min_mo = mod (#rsrc_ma_age_min, 12)
+
+print #ma_min_yr                            (+0,14) edit 99
+if #ma_min_yr = 1
+print 'YEAR'                                (+0,17)
+else
+print 'YEARS'                               (+0,17)
+end-if
+print #ma_min_mo                            (+0,23) edit 99
+if #ma_min_mo = 1
+print 'MONTH'                               (+0,26)
+else
+print 'MONTHS'                              (+0,26)
+end-if
+
+print 'MAX'                                 (+0,38)
+
+let #ma_max_yr = trunc((#rsrc_ma_age_max/12),0)
+let #ma_max_mo = mod (#rsrc_ma_age_max, 12)
+
+print #ma_max_yr                            (+0,44) edit 999
+if #ma_max_yr = 1
+print 'YEAR'                                (+0,48)
+else
+print 'YEARS'                               (+0,48)
+end-if
+print #ma_max_mo                            (+0,54) edit 99
+if #ma_max_mo = 1
+print 'MONTH'                               (+0,57)
+else
+print 'MONTHS'                              (+0,57)
+end-if
+
+print 'FEMALE  MIN  '                       (+1,1)
+
+let #fm_min_yr = trunc((#rsrc_fm_age_min/ 12),0)
+let #fm_min_mo = mod (#rsrc_fm_age_min, 12)
+
+print #fm_min_yr                            (+0,14) edit 99
+if #fm_min_yr = 1
+print 'YEAR'                                (+0,17)
+else
+print 'YEARS'                               (+0,17)
+end-if
+print #fm_min_mo                            (+0,23) edit 99
+if #fm_min_mo = 1
+print 'MONTH'                               (+0,26)
+else
+print 'MONTHS'                              (+0,26)
+end-if
+
+print 'MAX'                                 (+0,38)
+
+let #fm_max_yr = trunc((#rsrc_fm_age_max/ 12),0)
+let #fm_max_mo = mod (#rsrc_fm_age_max, 12)
+
+print #fm_max_yr                            (+0,44) edit 999
+if #fm_max_yr = 1
+print 'YEAR'                                (+0,48)
+else
+print 'YEARS'                               (+0,48)
+end-if
+print #fm_max_mo                            (+0,54) edit 99
+if #fm_max_mo = 1
+print 'MONTH'                               (+0,57)
+else
+print 'MONTHS'                              (+0,57)
+end-if
+
+print 'DEMOGRAPHIC DATA'                    (+2,1)
+print 'ETHNICITY: '                         (+1,1)
+print $rsrc_ethnic                          (+0,14)
+print 'LANGUAGE: '                          (+0,42)
+print $rsrc_lang                            (+0,56)
+print 'MARITAL: '                           (+1,1)
+print $rsrc_marital                         (+0,14)
+print 'DATE MARRIED: '                      (+0,42)
+print $dt_rsrc_marriage                     (+0,56)
+print 'RESPITE: '                           (+1,1)
+print $rsrc_respite                         (+0,14)
+print 'RELIGION: '                          (+0,42)
+print $rsrc_religion                        (+0,56)
+print 'SCHOOL DIST: '                       (+1,1)
+print $rsrc_school_dist                     (+0,14)
+print 'SRCE INQRY: '                        (+1,1)
+print $rsrc_src_inq                         (+0,14)
+print 'INDIV STUDY: '                       (+0,42)
+
+if $rsrc_indiv_study = 'T'
+    print 'INDIVIDUAL STUDY'                (+0,56)
+else
+    print 'GROUPS'                          (+0,56)
+end-if
+
+print 'INTERESTS'                           (+2,1)
+print 'NBR OF CHILD: '                      (+1,1)
+print #rsrc_int_child                       (+0,14) edit 999
+print 'AGE RANGE: '                         (+1,1)
+print 'MALE    MIN  '                       (+1,1)
+
+let #ma_int_min_yr = trunc((#rsrc_int_ma_min/ 12),0)
+let #ma_int_min_mo = mod (#rsrc_int_ma_min, 12)
+
+print #ma_int_min_yr                        (+0,14) edit 99
+if #ma_int_min_yr = 1
+print 'YEAR'                                (+0,17)
+else
+print 'YEARS'                               (+0,17)
+end-if
+print #ma_int_min_mo                        (+0,23) edit 99
+if #ma_int_min_mo = 1
+print 'MONTH'                               (+0,26)
+else
+print 'MONTHS'                              (+0,26)
+end-if
+print 'MAX'                                 (+0,38)
+
+let #ma_int_max_yr = trunc((#rsrc_int_ma_max/ 12),0)
+let #ma_int_max_mo = mod (#rsrc_int_ma_max, 12)
+
+print #ma_int_max_yr                        (+0,44) edit 999
+if #ma_int_max_yr = 1
+print 'YEAR'                                (+0,48)
+else
+print 'YEARS'                               (+0,48)
+end-if
+print #ma_int_max_mo                        (+0,54) edit 99
+if #ma_int_max_mo = 1
+print 'MONTH'                               (+0,57)
+else
+print 'MONTHS'                              (+0,57)
+end-if
+
+print 'FEMALE  MIN  '                       (+1,1)
+
+let #fe_int_min_yr = trunc((#rsrc_int_fe_min/ 12),0)
+let #fe_int_min_mo = mod (#rsrc_int_fe_min, 12)
+
+print #fe_int_min_yr                        (+0,14) edit 99
+if #fe_int_min_yr = 1
+print 'YEAR'                                (+0,17)
+else
+print 'YEARS'                               (+0,17)
+end-if
+print #fe_int_min_mo                        (+0,23) edit 99
+if #fe_int_min_mo = 1
+print 'MONTH'                               (+0,26)
+else
+print 'MONTHS'                              (+0,26)
+end-if
+
+print 'MAX'                                 (+0,38)
+
+let #fe_int_max_yr = trunc((#rsrc_int_fe_max/ 12),0)
+let #fe_int_max_mo = mod (#rsrc_int_fe_max, 12)
+
+print #fe_int_max_yr                        (+0,44) edit 999
+if #fe_int_max_yr = 1
+print 'YEAR'                                (+0,48)
+else
+print 'YEARS'                               (+0,48)
+end-if
+print #fe_int_max_mo                        (+0,54) edit 99
+if #fe_int_max_mo = 1
+print 'MONTH'                               (+0,57)
+else
+print 'MONTHS'                              (+0,57)
+end-if
+
+print ''                                    (+1,1)
+
+!SIR 4344 - Nothing prints when either indicator is 'N'
+
+if $rsrc_trans = 'Y'
+    print 'WILLING TO TRANSPORT'                (+0,1)
+end-if
+
+if $rsrc_emerg_place = 'Y'
+    print 'ACCEPTS EMERGENCY PLACEMENTS'        (+0,38)
+end-if
+
+    do GET-CHAR
+    do GET-ETHNICITY
+
+print 'CLOSURE DATA'                        (+2,1)
+print 'CLOSURE RSN: '                       (+1,1)
+print $rsrc_close_rsn                       (+0,16)
+print 'CLOSURE TYPE: '                      (+1,1)
+print $rsrc_invol                           (+0,16) 
+print ''                                    (+1,1)
+
+if $rsrc_reopen = 'Recommend' !***SIR 12950***
+    print 'RECOMMENDS RE-OPENING'               (+0,1)
+end-if
+if $rsrc_reopen = 'Do Not Recommend'
+    print 'DOES NOT RECOMMEND RE-OPENING'       (+0,1)  
+end-if
+
+END-PROCEDURE PRINT-INFO 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-WORKER                                                            *
+!                                                                           *
+!       This procedure prints the worker name and phone.                    *
+!                                                                           * 
+!       CALLED BY  : GET-WORKER                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-WORKER
+
+print 'F/A HOME WORKER: '                   (+2,1)
+if $worker_suffix <> '' !***ENH***
+   let $wkr_suffix = ', ' || $worker_suffix
+end-if
+if $worker_middle = ''
+   let $worker = $worker_first || ' ' || $worker_last || $wkr_suffix
+else
+   let $worker = $worker_first || ' ' || $worker_middle || ' ' || $worker_last || $wkr_suffix
+end-if
+print $worker                               (+0,25)
+move '' to $wkr_suffix !***ENH***
+print 'F/A HOME WORKER PHONE: '             (+1,1)
+
+    if substr($worker_phone,8,1) = ''   
+        let $worker_phone_print = substr($worker_phone,1,3)||'-'||substr($worker_phone,4,4)
+    else
+        let $worker_phone_print = '('||substr($worker_phone,1,3)||') '||substr($worker_phone,4,3)||'-'||substr($worker_phone,7,4)
+    end-if
+
+print $worker_phone_print                   (+0,25)
+print '  '                                   ()
+print 'EXT: '                               ()
+print $worker_ext                           ()
+
+END-PROCEDURE PRINT-WORKER
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-MEMBER-TITLE                                                      *
+!                                                                           *
+!       This procedure prints the member title and the first member.        *
+!                                                                           * 
+!       CALLED BY  : GET-MEMBER                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-MEMBER-TITLE
+
+print 'F/A HOME MEMBERS'                    (+2,1)
+print 'NAME: '                              (+1,1)
+if $member_suffix <> '' !***ENH***
+   let $mem_suffix = ', ' || $member_suffix
+end-if
+if $member_middle = ''
+   let $member = $member_first || ' ' || $member_last || $mem_suffix
+else
+   let $member = $member_first || ' ' || $member_middle || ' ' || $member_last || $mem_suffix
+end-if
+print $member                               (+0,15)
+move '' to $mem_suffix !***ENH***
+print 'DOB: '                               (+1,1)
+print $DOB                                  (+0,15)
+print 'ROLE IN HOME: '                      (+1,1)
+print $home_role                            (+0,15)
+print 'SSN: '                               (+1,1)
+print $person_id                            (+0,15) edit 88888888888888888
+
+END-PROCEDURE PRINT-MEMBER-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-MEMBER                                                            *
+!                                                                           *
+!       This procedure prints the rest of the members.                      *
+!                                                                           * 
+!       CALLED BY  : GET-MEMBER                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-MEMBER
+
+next-listing need = 5
+
+print 'NAME: '                              (+1,1)
+if $member_suffix <> '' !***ENH***
+   let $mem_suffix = ', ' || $member_suffix
+end-if
+if $member_middle = ''
+   let $member = $member_first || ' ' || $member_last || $mem_suffix
+else
+   let $member = $member_first || ' ' || $member_middle || ' ' || $member_last || $mem_suffix
+end-if
+print $member                               (+0,15)
+move '' to $mem_suffix  !***ENH***
+print 'DOB: '                               (+1,1)
+print $DOB                                  (+0,15)
+print 'ROLE IN HOME: '                      (+1,1)
+print $home_role                            (+0,15)
+print 'SSN: '                               (+1,1)
+print $person_id                            (+0,15) edit 88888888888888888
+
+END-PROCEDURE PRINT-MEMBER
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CHAR-TITLE                                                        *
+!                                                                           *
+!       This procedure prints the characteristics title and the first       *
+!       characteristic of the child.                                        *
+!                                                                           * 
+!       CALLED BY  : GET-CHAR                                               *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHAR-TITLE
+
+print 'CHARACTERISTICS: '                           (+2,1)
+print $char                                         (+1,1) wrap 36 3
+print $dt_char                                      (+0,38)
+
+END-PROCEDURE PRINT-CHAR-TITLE 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CHAR                                                              *
+!                                                                           *
+!       This procedure prints the rest of the characteristics.              *
+!                                                                           * 
+!       CALLED BY  : GET-CHAR                                               *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHAR
+
+print $char                                         (+1,1) wrap 36 3
+print $dt_char                                      (+0,38)
+
+END-PROCEDURE PRINT-CHAR
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ETHNICITY-TITLE                                                   *
+!                                                                           *
+!       This procedure prints the ethnicity title and the first ethnicity.  *
+!                                                                           * 
+!       CALLED BY  : GET-ETHNICITY                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ETHNICITY-TITLE
+
+print 'ETHNICITIES: '                               (+2,1)
+print $ethnicity                                    (+1,1)
+print $dt_ethnicity                                 (+0,37)
+
+END-PROCEDURE PRINT-ETHNICITY-TITLE 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ETHNICITY                                                         *
+!                                                                           *
+!       This procedure prints the other ethnicities.                        *
+!                                                                           * 
+!       CALLED BY  : GET-ETHNICITY                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ETHNICITY
+
+print $ethnicity                                    (+1,1)
+print $dt_ethnicity                                 (+0,37)
+
+END-PROCEDURE PRINT-ETHNICITY
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *   
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc'

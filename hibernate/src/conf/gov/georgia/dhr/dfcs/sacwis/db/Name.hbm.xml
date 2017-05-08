@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Name" table="NAME" mutable="true" polymorphism="implicit"
+         dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+    <id name="idName" type="integer" unsaved-value="0">
+      <column name="ID_NAME" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_NAME</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="indNameInvalid" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_NAME_INVALID" length="1" not-null="true"/>
+    </property>
+    <property name="nmNameFirst" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_NAME_FIRST" length="12"/>
+    </property>
+    <property name="nmNameMiddle" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_NAME_MIDDLE" length="12"/>
+    </property>
+    <property name="nmNameLast" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_NAME_LAST" length="22"/>
+    </property>
+    <property name="indNameEmp" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_NAME_EMP" length="1"/>
+    </property>
+    <property name="indNamePrimary" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_NAME_PRIMARY" length="1"/>
+    </property>
+    <property name="cdNameSuffix" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_NAME_SUFFIX" length="2"/>
+    </property>
+    <property name="dtNameStartDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_NAME_START_DATE" length="7"/>
+    </property>
+    <property name="dtNameEndDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_NAME_END_DATE" length="7"/>
+    </property>
+  </class>
+</hibernate-mapping>

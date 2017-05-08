@@ -1,0 +1,487 @@
+!*****************************************************************************
+!  RECORDS CHECK REPORT                                                      *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccf07o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 11/16/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brad McCleary                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This report lists all the record checks ever         *
+!                       performed for an individual, including the records   *
+!                       check type, the requestor, the request date, the     *
+!                       completed date, and comments on the requestor.       *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 11/16/95   B.McCleary   Initial Programming                                *
+!                                                                            *
+! 12/16/96   D. Ly        ENH - Change occurences of Name to Name person     *
+!                               full format.                                 *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'            ! control codes for Portrait 
+
+    ask ID_PERSON                      ! input parameter 
+    ask ID_CASE                        ! input parameter 
+    
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 7
+  
+  if #input_id_case <> 0
+    print 'Case Name: '                     (+0,33)
+    print $case_name                        (+0,44)
+    print 'Case ID: '                       (+1,33)
+    print #input_id_case                    (+0,44) edit 8888888888888888
+    print 'RECORDS CHECK REPORT'            (+2) center
+    print 'Person Name:'                    (+2,1)
+     if $person_suffix <> '' !***ENH***
+        let $person_name_suff = ', ' || $person_suffix
+     end-if
+     if $person_middle = ''
+        let $person_name = $person_first || ' ' || $person_last || $person_name_suff
+     else
+        let $person_name = $person_first || ' ' || $person_middle || ' ' || $person_last || $person_name_suff
+     end-if
+    print $person_name                      (+0,14)
+
+    move '' to $person_name_suff            !***ENH***
+    print 'Person ID:'                      (+1,1)  
+    print #input_id_person                  (+0,14) edit 8888888888888888
+  else
+    print 'RECORDS CHECK REPORT'            (+4) center
+    print 'Person Name:'                    (+2,1)
+     if $person_suffix <> '' !***ENH***
+        let $person_name_suff = ', ' || $person_suffix
+     end-if
+     if $person_middle = ''
+        let $person_name = $person_first || ' ' || $person_last || $person_name_suff
+     else
+        let $person_name = $person_first || ' ' || $person_middle || ' ' || $person_last || $person_name_suff
+     end-if
+    print $person_name                      (+0,14)
+    move '' to $person_name_suff            !***ENH***
+
+    print 'Person ID:'                      (+1,1)  
+    print #input_id_person                  (+0,14) edit 8888888888888888
+  end-if
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS    : GET-SYSDATE, GET-PRIMARY, GET-CASE                       * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                            !Set printer environment
+    
+    move {ID_PERSON}            to #input_id_person
+    move {ID_CASE}              to #input_id_case
+    
+    if #input_id_case = 0    
+        do GET-SYSDATE
+ do GET-PRIMARY
+    else  
+        do GET-CASE
+    end-if
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-REC-CHECK                                          *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+                 
+    do GET-REC-CHECK
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-CASE                                                                *
+!                                                                           *
+!       This procedure will select the date closed and the case name.       *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-SYSDATE, GET-PRIMARY, GET-NAME                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CASE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+NM_CASE 
+    move &NM_CASE      to $case_name
+
+to_char(DT_CASE_CLOSED, 'MM/DD/YYYY') &date1    
+    move &date1                         to $dt_closed
+
+    if rtrim($dt_closed, '') = ''
+        do GET-SYSDATE
+ do GET-PRIMARY
+    else
+ do GET-NAME
+    end-if
+    
+FROM    CAPS_CASE     
+
+WHERE   ID_CASE = #input_id_case
+
+END-SELECT
+
+END-PROCEDURE GET-CASE
+       
+!****************************************************************************
+!                                                                           *
+!   GET-SYSDATE                                                             *
+!                                                                           *
+!       This procedure will select the system date in order to replace the  * 
+!       closed date when it is equal to NULL                                *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-SYSDATE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SYSDATE
+     move &SYSDATE          to $dt_closed
+       
+FROM DUAL
+     
+END-SELECT              
+
+END-PROCEDURE GET-SYSDATE
+           
+!****************************************************************************
+!                                                                           *
+!   GET-NAME                                                                *
+!                                                                           *
+!       This procedure will select the name of the person using the person  *
+!       id and effective dating logic.                                      *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-NAME
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+N.NM_NAME_FIRST   !***ENH***
+    move &N.NM_NAME_FIRST                     to $person_first
+    
+N.NM_NAME_MIDDLE
+    move &N.NM_NAME_MIDDLE                    to $person_middle     
+    
+N.NM_NAME_LAST
+    move &N.NM_NAME_LAST                      to $person_last
+
+CSUFFIX2A.decode
+    move &CSUFFIX2A.decode                    to $person_suffix
+
+FROM    NAME     N,
+        CSUFFIX2 CSUFFIX2A  !***ENH***
+
+WHERE   ID_PERSON = #input_id_person
+AND     IND_NAME_PRIMARY = 'Y'
+AND     DT_NAME_END_DATE > to_date($dt_closed, 'MM/DD/YYYY')
+AND     DT_NAME_START_DATE <= to_date($dt_closed, 'MM/DD/YYYY')
+AND     N.CD_NAME_SUFFIX    = CSUFFIX2A.CODE(+)  !***ENH***
+    
+END-SELECT
+    
+END-PROCEDURE GET-NAME
+
+!****************************************************************************
+!                                                                           *
+!   GET-PRIMARY                                                             *
+!                                                                           *
+!       This procedure will select the name when it is out of the context of*
+!       the case.                                                           *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PRIMARY
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                                           
+N2.NM_NAME_FIRST   !***ENH***
+    move &N2.NM_NAME_FIRST                     to $person_first
+    
+N2.NM_NAME_MIDDLE
+    move &N2.NM_NAME_MIDDLE                    to $person_middle     
+    
+N2.NM_NAME_LAST
+    move &N2.NM_NAME_LAST                      to $person_last
+
+CSUFFIX2B.decode
+    move &CSUFFIX2B.decode                     to $person_suffix
+
+FROM    NAME       N2,
+        CSUFFIX2   CSUFFIX2B    !***ENH***
+
+WHERE   ID_PERSON = #input_id_person
+AND     IND_NAME_PRIMARY = 'Y'
+AND     DT_NAME_END_DATE = to_date('12/31/4712','MM/DD/YYYY') 
+AND     N2.CD_NAME_SUFFIX = CSUFFIX2B.CODE(+)  
+
+END-SELECT
+
+END-PROCEDURE GET-PRIMARY
+
+!****************************************************************************
+!                                                                           *
+!   GET-REC-CHECK                                                           *
+!                                                                           *
+!       This procedure will select the record check information based on the*
+!       id case and id person from input.                                   *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-REC-CHECK                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REC-CHECK
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CCHKTYPE.decode
+    move &CCHKTYPE.decode                       to $rec_check_dec
+    
+A.ID_REC_CHECK_REQUESTOR
+    move &A.ID_REC_CHECK_REQUESTOR              to #id_rec
+    
+A.DT_REC_CHECK_REQUEST
+    move &A.DT_REC_CHECK_REQUEST                to $dt_requested
+    
+A.DT_REC_CHECK_COMPLETED
+    move &A.DT_REC_CHECK_COMPLETED              to $dt_completed
+    
+A.TXT_REC_CHECK_COMMENTS
+    move &A.TXT_REC_CHECK_COMMENTS              to $comments
+    
+N3.NM_NAME_FIRST   !***ENH***
+    move &N3.NM_NAME_FIRST                     to $requestor_first
+    
+N3.NM_NAME_MIDDLE
+    move &N3.NM_NAME_MIDDLE                    to $requestor_middle     
+    
+N3.NM_NAME_LAST
+    move &N3.NM_NAME_LAST                      to $requestor_last
+
+CSUFFIX2C.decode
+    move &CSUFFIX2C.decode                     to $requestor_suffix
+
+   
+    do PRINT-REC-CHECK
+   
+FROM    RECORDS_CHECK   A,
+        NAME            N3,
+        CCHKTYPE        CCHKTYPE,
+        CSUFFIX2        CSUFFIX2C   !***ENH***
+      
+WHERE   A.ID_REC_CHECK_PERSON  =  #input_id_person
+AND     A.ID_REC_CHECK_REQUESTOR = N3.ID_PERSON
+AND     N3.IND_NAME_PRIMARY = 'Y'
+AND     N3.DT_NAME_START_DATE < A.DT_REC_CHECK_REQUEST
+AND     N3.DT_NAME_END_DATE > A.DT_REC_CHECK_REQUEST
+AND     CCHKTYPE.CODE(+)   = A.CD_REC_CHECK_CHECK_TYPE 
+AND     N3.CD_NAME_SUFFIX  = CSUFFIX2C.CODE(+)
+
+ORDER BY A.CD_REC_CHECK_CHECK_TYPE, A.DT_REC_CHECK_REQUEST DESC
+
+END-SELECT
+
+END-PROCEDURE GET-REC-CHECK
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-REC-CHECK                                                         *
+!                                                                           *
+!       This procedure prints the principals and makes sure they are not    *
+!           split between pages.                                            *
+!                                                                           * 
+!       CALLED BY  : GET-REC-CHECK                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-REC-CHECK   
+
+print 'RECORDS CHECK TYPE: '                    (+2,1)
+print $rec_check_dec                            (+0,21)
+print 'REQUESTOR: '                             (+1,1)
+  if $requestor_suffix <> '' !***ENH***
+    let $requestor_name_suff = ', ' || $requestor_suffix
+  end-if
+  if $requestor_middle = ''
+    let $requestor_name = $requestor_first || ' ' || $requestor_last || $requestor_name_suff
+  else
+     let $requestor_name = $requestor_first || ' ' || $requestor_middle || ' ' || $requestor_last || $requestor_name_suff
+  end-if
+print $requestor_name                           (+0,21)
+move '' to $requestor_name_suff                 !***ENH***
+
+print 'REQUESTOR ID: '                          (+1,1)
+print #id_rec                                   (+0,21) edit 8888888888888888
+print 'DATE OF REQUEST: '                       (+1,1)
+print $dt_requested                             (+0,21)
+print 'DATE COMPLETED: '                        (+1,1)
+print $dt_completed                             (+0,21)
+print 'COMMENTS: '                              (+1,1)
+print $comments                                 (+1,1) wrap 77 4
+
+END-PROCEDURE PRINT-REC-CHECK   
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc'

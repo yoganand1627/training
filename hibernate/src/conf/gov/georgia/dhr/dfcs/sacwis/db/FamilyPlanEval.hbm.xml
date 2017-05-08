@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FamilyPlanEval" table="FAMILY_PLAN_EVAL" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idFamilyPlanEvaluation" type="integer" unsaved-value="0">
+      <column name="ID_FAMILY_PLAN_EVALUATION" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_FAMILY_PLAN_EVAL</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="eventByIdEvent" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="eventByIdFamilyPlanEvent" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_FAMILY_PLAN_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="dtCompleted" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_COMPLETED" length="7"/>
+    </property>
+    <property name="dtNextDue" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_NEXT_DUE" length="7"/>
+    </property>
+  </class>
+</hibernate-mapping>

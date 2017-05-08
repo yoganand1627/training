@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.EmpOnCallLink" table="EMP_ON_CALL_LINK" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEmpOnCallLink" type="integer" unsaved-value="0">
+      <column name="ID_EMP_ON_CALL_LINK" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_EMP_ON_CALL_LINK</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="employee" class="gov.georgia.dhr.dfcs.sacwis.db.Employee" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="onCall" class="gov.georgia.dhr.dfcs.sacwis.db.OnCall" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_ON_CALL" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdEmpOnCallDesig" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_EMP_ON_CALL_DESIG" length="2"/>
+    </property>
+    <property name="nbrEmpOnCallPhone1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_EMP_ON_CALL_PHONE1" length="10"/>
+    </property>
+    <property name="nbrEmpOnCallPhone2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_EMP_ON_CALL_PHONE2" length="10"/>
+    </property>
+    <property name="nbrEmpOnCallExt1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_EMP_ON_CALL_EXT1" length="8"/>
+    </property>
+    <property name="nbrEmpOnCallExt2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_EMP_ON_CALL_EXT2" length="8"/>
+    </property>
+    <property name="nbrEmpOnCallCntctOrd" type="integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_EMP_ON_CALL_CNTCT_ORD" precision="1" scale="0"/>
+    </property>
+    <property name="cdPrgmCvrg" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PRGM_CVRG" length="3"/>
+    </property>
+    <property name="cdTitle" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_TITLE" length="8"/>
+    </property>
+  </class>
+</hibernate-mapping>

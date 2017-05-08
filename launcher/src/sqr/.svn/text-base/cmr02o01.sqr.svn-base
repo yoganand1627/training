@@ -1,0 +1,1483 @@
+!*****************************************************************************
+! UNIT REPORT                                                                *
+!*****************************************************************************  
+!
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cmr02o01.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/blackam/work/sqr                         *
+!                                                                            *
+!                                                                            *
+! DATE:                 06/17/96                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Angela Black                                         *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This program will offer managers the opportunity to  *
+!                       view trends in a unit's caseload.  The report        *
+!                       generated will give a summary of the monthly         *
+!                       activities of each unit, in addition to              *
+!                       displaying the same information for other months     *
+!                       to provide the opportunity for comparison.  A fiscal *
+!                       year to date total and average are also displayed.   *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 06/17/96   A. Black     Initial Programming                                *
+! 07/31/96   A. Black     Revised Programming-The program was originally     *
+!                                             designed to display stage      *
+!                                             type and class for particular  *
+!                                             stages.  This code has been    *
+!                                             commented out based on the     *
+!                                             decisions made by Leslie DeHay *
+!                                             and Kathy Slay on July 31,1996.*
+!                                             The program can also run for   *
+!                                             a date other than the system   *
+!                                             date, if the sequel 'GET-DATE' *
+!                                             is uncommented out and a date  *
+!                                             stored in the Batch Parameters *
+!                                             table.                         *
+! 01/10/97   odonnerj     Fixed the GetSysDate function so that it handles   *
+!                         the month of January correctly.  Also fixed the    *
+!                         where clause of the get-state-info so that it      *
+!                         looks for month and year exact combinations.       *
+!                         Finally removed the <= sysdate in the cytd and     *
+!                         fiscal year to date calculations.                  *
+!                                                                            *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup01a.sqc'                 ! control codes for Landscape 
+
+    ask CD_UNIT_REGION        
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 7
+
+  move 'UNIT WORKLOAD REPORT - REGION'        to $ReportTitle
+  
+  #INCLUDE 'header01.sqc'               !Include file with Header Information
+                    !Specific to MIS batch landscape reports
+
+print $input_region               (-1,103)
+print 'UNIT'                      (+3,18)
+print 'REG'                       (+0,25)
+print 'PROG'                      (+0,34)
+print 'STG'                       (+0,42)
+!print 'TYPE/CLASS'                (+0,48)
+print 'STATS'                     (+0,64)
+print 'C   U   R   R   E   N   T        Y   E   A   R'  (+0,80) 
+print 'L  A  S  T       Y  E  A  R'     (+0,136)
+print #input_month                (+1,80) edit 00
+print '/'                         (+0,82)
+print #input_year                 (+0,83) edit 8888 
+print #input_month_1              (+0,90) edit 00
+print '/'                         (+0,92)
+print #input_year_3               (+0,93) edit 8888
+print #input_month_2              (+0,100) edit 00
+print '/'                         (+0,102)
+print #input_year_4               (+0,103) edit 8888
+print 'FYTD'                      (+0,110) 
+print 'FYTD'                      (+0,116)
+print 'CYTD'                       (+0,122)
+!print 'YTD'                       (+0,128)
+print #input_month                (+0,136) edit 00
+print '/'                         (+0,138)
+print #input_year_1               (+0,139) edit 8888
+print #input_month_1              (+0,146) edit 00
+print '/'                         (+0,148)
+print #input_year_5               (+0,149) edit 8888
+print #input_month_2              (+0,156) edit 00
+print '/'                         (+0,158)
+print #input_year_6               (+0,159) edit 8888
+print 'TOT'                       (+1,110)
+print 'AVG'                       (+0,116)
+print 'TOT'                       (+0,122)
+!print 'AVG'                       (+0,128)
+!print '[C   U   R   R   E   N   T      Y   E   A   R]'  (+1,80) 
+!print '[L  A  S  T     Y  E  A  R]'     (+0,136)
+print '_'                         (+1,05,160) fill                      
+
+!  show 'got header'
+
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+   move '{CD_UNIT_REGION}'     to $input_region
+
+!   do GET-DATE
+!    if $sysdate <> ''
+!      else
+      do GET-SYSDATE
+!    end-if         
+    do GET-REGION-CHECK
+                                                          
+  !************************************************
+  ! Variables and Constants                       *
+  !************************************************
+
+    move 'IN'           to $IN
+
+    evaluate #input_month
+        when = 1
+            let #input_month_1  = 12
+            let #input_month_2  = 11
+            let #input_month_3  = 10 
+            let #input_year_1   = #input_year - 1 
+            let #input_year_2   = #input_year - 1
+            let #input_year_3   = #input_year - 1
+            let #input_year_4   = #input_year - 1
+            let #input_year_5   = #input_year - 2
+            let #input_year_6   = #input_year - 2
+            let #input_year_7   = #input_year - 2 
+            let #input_year_9   = #input_year
+            let #fy_months = 5
+        break
+        when = 2
+            let #input_month_1  = 1
+            let #input_month_2  = 12
+            let #input_month_3  = 11             
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year - 1
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year - 1
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 2
+            let #input_year_7   = #input_year - 2
+            let #input_year_9   = #input_year
+            let #fy_months = 6
+        break
+        when = 3
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2 
+            let #input_month_3  = 12
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year - 1
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year    
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 2
+            let #input_year_9   = #input_year
+            let #fy_months = 7
+        break
+        when = 4
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year    
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_9   = #input_year
+            let #fy_months = 8
+        break
+        when = 5
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1 
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year 
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_9   = #input_year
+            let #fy_months = 9
+        break
+        when = 6
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1      
+            let #input_year_2   = #input_year
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year 
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_9   = #input_year
+            let #fy_months = 10
+        break
+        when = 7
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year    
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_9   = #input_year
+            let #fy_months = 11
+        break
+        when = 8
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year    
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_9   = #input_year
+            let #fy_months = 12
+        break
+        when = 9
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year    
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_9   = #input_year + 1
+            let #fy_months = 1
+        break
+        when = 10
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year    
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_9   = #input_year + 1
+            let #fy_months = 2
+        break
+        when = 11
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year    
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_9   = #input_year + 1
+            let #fy_months = 3
+        break
+        when = 12
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_1   = #input_year - 1
+            let #input_year_2   = #input_year 
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year    
+            let #input_year_5   = #input_year - 1
+            let #input_year_6   = #input_year - 1
+            let #input_year_7   = #input_year - 1
+            let #input_year_9   = #input_year + 1
+            let #fy_months = 4
+        break
+    end-evaluate
+
+    move 'N' to $print_stage_flag
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-UNIT-INFO                                          *
+!                                                                           *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do GET-UNIT-INFO
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-DATE                                                             *
+!                                                                           *
+!       This procedure will select the system date in order to replace the  * 
+!       input year and month.                                               *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+!BEGIN-PROCEDURE GET-DATE
+       
+!BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+!to_date(DT_PARAM_EFFECTIVE, 'MM/DD/YYYY') &date1
+!     move &date1             to $sysdate
+  
+ ! show $sysdate
+
+!  let $input_month = substr($sysdate,1,2)
+!  let $input_year  = substr($sysdate,7,10)
+
+!  move $input_month     to #input_month
+!  move $input_year      to #input_year
+
+!FROM BATCH_PARAMETERS
+!WHERE DT_LAST_UPDATE  = (SELECT MAX(DT_LAST_UPDATE) FROM BATCH_PARAMETERS)
+     
+!END-SELECT              
+                       
+!END-PROCEDURE GET-DATE
+         
+!****************************************************************************
+!                                                                           *
+!   GET-SYSDATE                                                             *
+!                                                                           *
+!       This procedure will select the system date in order to replace the  * 
+!       input year and month.                                               *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-SYSDATE
+       
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_date(SYSDATE, 'MM/DD/YYYY') &sysdate
+     move &sysdate            to $sysdate
+
+  let $input_month = substr($sysdate,1,2)
+  let $input_year  = substr($sysdate,7,10)
+
+  move $input_month to #input_month_a
+  if #input_month_a = 1
+    let #input_month = 12
+
+    move $input_year to #input_year_a
+    let  #input_year_b = #input_year_a - 1
+    move #input_year_b to #input_year
+  else
+    let  #input_month_b = #input_month_a - 1
+
+    move #input_month_b     to #input_month
+    move $input_year      to #input_year
+
+  end-if
+
+FROM DUAL
+     
+END-SELECT              
+     
+END-PROCEDURE GET-SYSDATE
+
+!****************************************************************************
+!                                                                           *
+!   GET-REGION-CHECK                                                        *
+!                                                                           *
+!       This procedure will select the system date in order to replace the  * 
+!       input year and month.                                               *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REGION-CHECK
+       
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+UC.CD_UNIT_REGION
+  move &UC.CD_UNIT_REGION           to $region_check   
+
+FROM  UNIT UC
+  
+WHERE UC.CD_UNIT_REGION   =  $input_region
+
+!  if UC.CD_UNIT_REGION <> $input_region
+!     do PROCEDURE
+!  else
+!  end-if      
+     
+END-SELECT              
+     
+END-PROCEDURE GET-REGION-CHECK
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNIT-INFO                                                           *
+!                                                                           *
+!       This procedure will select unit information.                        *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-UNIT-INFO                                        *
+!                    GET-UNIT-THIS-MONTH                                    *
+!                    GET-UNIT-LAST-MONTH                                    *
+!                    GET-UNIT-2AGO-MONTH                                    *
+!                    GET-UNIT-3AGO-MONTH                                    *
+!                    GET-UNIT-FYTD-TOTAL                                    * 
+!                    GET-UNIT-YTD-TOTAL                                     *
+!                    GET-UNIT-LAST-YEAR-THIS-MONTH                          *
+!                    GET-UNIT-LAST-YEAR-LAST-MONTH                          *
+!                    GET-UNIT-LAST-YEAR-2AGO-MONTH                          *
+!                    GET-UNIT-LAST-YEAR-3AGO-MONTH                          *
+!                    PRINT-UNIT-MONTHLY-STATS                               *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNIT-INFO
+
+  move 0                           to #unit_count  
+!  show 'got date and getting unit info'
+ 
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+SUW.CD_UNIT_REGION
+  move &SUW.CD_UNIT_REGION          to $unit_info_unit_region
+!  show 'got region'
+
+SUW.CD_UNIT_PROGRAM
+  move &SUW.CD_UNIT_PROGRAM         to $unit_info_unit_program
+!  show 'got program'
+      
+SUW.CD_UNIT_STAGE
+  move &SUW.CD_UNIT_STAGE           to $unit_info_unit_stage
+!  show 'got stage'
+  
+!SUW.CD_UNIT_STAGE_TYPE  
+!  move &SUW.CD_UNIT_STAGE_TYPE      to $unit_info_unit_stage_type
+!  show 'got stage type'
+                  
+SUW.ID_UNIT_UNIT
+  move &SUW.ID_UNIT_UNIT            to #id_unit_unit
+                    
+U.NBR_UNIT
+  move &U.NBR_UNIT                  to $nbr_unit
+!  show 'got unit'
+            
+  let #unit_count = #unit_count + 1
+
+    if #unit_count = 1
+    else
+      if ($last_unit_info_unit_program<>$unit_info_unit_program)
+         NEW-PAGE
+         move 'N' to $print_stage_flag
+      else
+         move 'Y' to $print_stage_flag
+      end-if
+     end-if
+
+    do PRINT-UNIT-INFO
+    do GET-UNIT-THIS-MONTH
+    do GET-UNIT-LAST-MONTH
+    do GET-UNIT-2AGO-MONTH
+    do GET-UNIT-3AGO-MONTH
+    do GET-UNIT-FYTD-TOTAL
+    do GET-UNIT-YTD-TOTAL
+    do GET-UNIT-LAST-YEAR-THIS-MONTH
+    do GET-UNIT-LAST-YEAR-LAST-MONTH
+    do GET-UNIT-LAST-YEAR-2AGO-MONTH
+    do GET-UNIT-LAST-YEAR-3AGO-MONTH
+    do CALCULATE-EXCEPTION-FIELD
+    do PRINT-UNIT-MONTHLY-STATS
+    
+FROM    STATS_UNIT_WKM      SUW,
+        UNIT                U
+    
+WHERE   SUW.CD_UNIT_REGION   = $input_region
+AND  ((SUW.MO_UNIT_STAT_MO = #input_month 
+AND      (SUW.YR_UNIT_STAT_YR = #input_year OR SUW.YR_UNIT_STAT_YR = #input_year_1))
+OR      (SUW.MO_UNIT_STAT_MO = #input_month_1 
+AND      (SUW.YR_UNIT_STAT_YR = #input_year_2 OR SUW.YR_UNIT_STAT_YR = #input_year_5))
+OR      (SUW.MO_UNIT_STAT_MO = #input_month_2 
+AND      (SUW.YR_UNIT_STAT_YR = #input_year_3 OR SUW.YR_UNIT_STAT_YR = #input_year_6))
+OR      (SUW.MO_UNIT_STAT_MO = #input_month_3 
+AND      (SUW.YR_UNIT_STAT_YR = #input_year_4 OR SUW.YR_UNIT_STAT_YR = #input_year_7)))
+AND    SUW.ID_UNIT_UNIT      = U.ID_UNIT
+
+ORDER BY SUW.CD_UNIT_PROGRAM, U.NBR_UNIT
+  
+END-SELECT
+
+END-PROCEDURE GET-UNIT-INFO
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNIT-THIS-MONTH                                                     *
+!                                                                           *
+!       This procedure will select unit statistics for the current month.   *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-UNIT-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNIT-THIS-MONTH
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+SUM (SUW.NBR_UNIT_CLOS_FCT_CON)  &suw_nbr_unit_clos_fct_con
+  move &suw_nbr_unit_clos_fct_con      to #this_mo_nbr_unit_clos_fct_con
+
+SUM (SUW.NBR_UNIT_CLOS_NO_SIG)   &suw_nbr_unit_clos_no_sig
+  move &suw_nbr_unit_clos_no_sig       to #this_mo_nbr_unit_clos_no_sig
+
+SUM (SUW.NBR_UNIT_CLOS_RSK_ASS)  &suw_nbr_unit_clos_rsk_ass
+  move &suw_nbr_unit_clos_rsk_ass      to #this_mo_nbr_unit_clos_rsk_ass
+
+SUM (SUW.NBR_UNIT_CLOS_RSK_IND)  &suw_nbr_unit_clos_rsk_ind
+  move &suw_nbr_unit_clos_rsk_ind      to #this_mo_nbr_unit_clos_rsk_ind
+
+SUM (SUW.NBR_UNIT_CLOSED)        &suw_nbr_unit_closed
+  move &suw_nbr_unit_closed            to #this_mo_nbr_unit_closed
+
+SUM (SUW.NBR_UNIT_END_BAL)       &suw_nbr_unit_end_bal
+  move &suw_nbr_unit_end_bal           to #this_mo_nbr_unit_end_bal
+
+SUM (SUW.NBR_UNIT_NEW)           &suw_nbr_unit_new
+  move &suw_nbr_unit_new               to #this_mo_nbr_unit_new
+
+SUM (SUW.NBR_UNIT_SECOND_ASGMT)  &suw_nbr_unit_second_asgmt
+  move &suw_nbr_unit_second_asgmt      to #this_mo_nbr_unit_second_asgmt
+
+SUM (SUW.NBR_UNIT_TRANSFR_IN)    &suw_nbr_unit_transfr_in
+  move &suw_nbr_unit_transfr_in        to #this_mo_nbr_unit_transfr_in
+
+SUM (SUW.NBR_UNIT_TRANSFR_OUT)   &suw_nbr_unit_transfr_out
+  move &suw_nbr_unit_transfr_out       to #this_mo_nbr_unit_transfr_out
+
+! show 'GETTING UNIT THIS MONTH'
+
+  let #sum_this_mo_nbr_unit_closed_total = #this_mo_nbr_unit_clos_fct_con 
+                                         + #this_mo_nbr_unit_clos_no_sig
+                                         + #this_mo_nbr_unit_clos_rsk_ass
+                                         + #this_mo_nbr_unit_clos_rsk_ind
+                                         + #this_mo_nbr_unit_closed
+
+FROM  STATS_UNIT_WKM SUW
+WHERE SUW.MO_UNIT_STAT_MO            =  #input_month
+AND   SUW.YR_UNIT_STAT_YR            =  #input_year
+AND   SUW.CD_UNIT_REGION             =  $input_region 
+AND   SUW.CD_UNIT_STAGE              =  $unit_info_unit_stage
+AND   SUW.CD_UNIT_PROGRAM            =  $unit_info_unit_program
+AND   SUW.ID_UNIT_UNIT               =  #id_unit_unit
+!AND   SUW.CD_UNIT_STAGE_TYPE         =  $unit_info_unit_stage_type 
+
+END-SELECT
+
+!  show 'got unit this month'
+    
+END-PROCEDURE GET-UNIT-THIS-MONTH    
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNIT-LAST-MONTH                                                     *
+!                                                                           *
+!       This procedure will select unit statistics for the previous month.  *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-UNIT-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNIT-LAST-MONTH
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+SUM (SUW3.NBR_UNIT_CLOS_FCT_CON)  &suw3_nbr_unit_clos_fct_con
+  move &suw3_nbr_unit_clos_fct_con      to #last_mo_nbr_unit_clos_fct_con
+
+SUM (SUW3.NBR_UNIT_CLOS_NO_SIG)   &suw3_nbr_unit_clos_no_sig
+  move &suw3_nbr_unit_clos_no_sig       to #last_mo_nbr_unit_clos_no_sig
+
+SUM (SUW3.NBR_UNIT_CLOS_RSK_ASS)  &suw3_nbr_unit_clos_rsk_ass
+  move &suw3_nbr_unit_clos_rsk_ass      to #last_mo_nbr_unit_clos_rsk_ass
+
+SUM (SUW3.NBR_UNIT_CLOS_RSK_IND)  &suw3_nbr_unit_clos_rsk_ind
+  move &suw3_nbr_unit_clos_rsk_ind      to #last_mo_nbr_unit_clos_rsk_ind
+
+SUM (SUW3.NBR_UNIT_CLOSED)        &suw3_nbr_unit_closed
+  move &suw3_nbr_unit_closed            to #last_mo_nbr_unit_closed
+
+SUM (SUW3.NBR_UNIT_END_BAL)       &suw3_nbr_unit_end_bal
+  move &suw3_nbr_unit_end_bal           to #last_mo_nbr_unit_end_bal
+
+SUM (SUW3.NBR_UNIT_NEW)           &suw3_nbr_unit_new
+  move &suw3_nbr_unit_new               to #last_mo_nbr_unit_new
+
+SUM (SUW3.NBR_UNIT_SECOND_ASGMT)  &suw3_nbr_unit_second_asgmt
+  move &suw3_nbr_unit_second_asgmt      to #last_mo_nbr_unit_second_asgmt
+
+SUM (SUW3.NBR_UNIT_TRANSFR_IN)    &suw3_nbr_unit_transfr_in
+  move &suw3_nbr_unit_transfr_in        to #last_mo_nbr_unit_transfr_in
+
+SUM (SUW3.NBR_UNIT_TRANSFR_OUT)   &suw3_nbr_unit_transfr_out
+  move &suw3_nbr_unit_transfr_out       to #last_mo_nbr_unit_transfr_out
+
+! show 'GETTING UNIT LAST MONTH'
+
+  let #sum_last_mo_nbr_unit_closed_total = #last_mo_nbr_unit_clos_fct_con 
+                                      + #last_mo_nbr_unit_clos_no_sig
+                                      + #last_mo_nbr_unit_clos_rsk_ass
+                                      + #last_mo_nbr_unit_clos_rsk_ind
+                                      + #last_mo_nbr_unit_closed
+  
+FROM  STATS_UNIT_WKM SUW3
+WHERE SUW3.MO_UNIT_STAT_MO            = #input_month_1
+AND   SUW3.YR_UNIT_STAT_YR            = #input_year_3
+AND   SUW3.CD_UNIT_REGION             = $input_region
+AND   SUW3.CD_UNIT_PROGRAM            = $unit_info_unit_program
+AND   SUW3.CD_UNIT_STAGE              = $unit_info_unit_stage 
+AND   SUW3.ID_UNIT_UNIT               = #id_unit_unit
+!AND   SUW3.CD_UNIT_STAGE_TYPE         = $unit_info_unit_stage_type    
+
+END-SELECT
+!  show 'got unit last month'
+      
+END-PROCEDURE GET-UNIT-LAST-MONTH
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNIT-2AGO-MONTH                                                     *
+!                                                                           *
+!       This procedure will select unit statistics for two months ago.      *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-UNIT-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNIT-2AGO-MONTH
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+SUM (SUW2.NBR_UNIT_CLOS_FCT_CON)  &suw2_nbr_unit_clos_fct_con
+  move &suw2_nbr_unit_clos_fct_con      to #2ago_mo_nbr_unit_clos_fct_con
+
+SUM (SUW2.NBR_UNIT_CLOS_NO_SIG)   &suw2_nbr_unit_clos_no_sig
+  move &suw2_nbr_unit_clos_no_sig       to #2ago_mo_nbr_unit_clos_no_sig
+
+SUM (SUW2.NBR_UNIT_CLOS_RSK_ASS)  &suw2_nbr_unit_clos_rsk_ass
+  move &suw2_nbr_unit_clos_rsk_ass      to #2ago_mo_nbr_unit_clos_rsk_ass
+
+SUM (SUW2.NBR_UNIT_CLOS_RSK_IND)  &suw2_nbr_unit_clos_rsk_ind
+  move &suw2_nbr_unit_clos_rsk_ind      to #2ago_mo_nbr_unit_clos_rsk_ind
+
+SUM (SUW2.NBR_UNIT_CLOSED)        &suw2_nbr_unit_closed
+  move &suw2_nbr_unit_closed            to #2ago_mo_nbr_unit_closed
+
+SUM (SUW2.NBR_UNIT_END_BAL)       &suw2_nbr_unit_end_bal
+  move &suw2_nbr_unit_end_bal           to #2ago_mo_nbr_unit_end_bal
+
+SUM (SUW2.NBR_UNIT_NEW)           &suw2_nbr_unit_new
+  move &suw2_nbr_unit_new               to #2ago_mo_nbr_unit_new
+
+SUM (SUW2.NBR_UNIT_SECOND_ASGMT)  &suw2_nbr_unit_second_asgmt
+  move &suw2_nbr_unit_second_asgmt      to #2ago_mo_nbr_unit_second_asgmt
+
+SUM (SUW2.NBR_UNIT_TRANSFR_IN)    &suw2_nbr_unit_transfr_in
+  move &suw2_nbr_unit_transfr_in        to #2ago_mo_nbr_unit_transfr_in
+
+SUM (SUW2.NBR_UNIT_TRANSFR_OUT)   &suw2_nbr_unit_transfr_out
+  move &suw2_nbr_unit_transfr_out       to #2ago_mo_nbr_unit_transfr_out
+
+!  show 'GETTING UNIT TWO MONTHS AGO'
+
+  let #sum_2ago_mo_nbr_unit_closed_total = #2ago_mo_nbr_unit_clos_fct_con 
+                                      + #2ago_mo_nbr_unit_clos_no_sig
+                                      + #2ago_mo_nbr_unit_clos_rsk_ass
+                                      + #2ago_mo_nbr_unit_clos_rsk_ind
+                                      + #2ago_mo_nbr_unit_closed
+  
+FROM  STATS_UNIT_WKM SUW2
+WHERE SUW2.MO_UNIT_STAT_MO            = #input_month_2
+AND   SUW2.YR_UNIT_STAT_YR            = #input_year_4
+AND   SUW2.CD_UNIT_PROGRAM            = $unit_info_unit_program
+AND   SUW2.CD_UNIT_REGION             = $input_region
+AND   SUW2.CD_UNIT_STAGE              = $unit_info_unit_stage   
+AND   SUW2.ID_UNIT_UNIT               =  #id_unit_unit
+!AND   SUW2.CD_UNIT_STAGE_TYPE         = $unit_info_unit_stage_type   
+
+END-SELECT
+
+!  show 'got unit two months ago'
+      
+END-PROCEDURE GET-UNIT-2AGOMONTH 
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNIT-3AGO-MONTH                                                     *
+!                                                                           *
+!       This procedure will select unit statistics for three months ago.    *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-UNIT-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNIT-3AGO-MONTH
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+SUM (SUW1.NBR_UNIT_END_BAL)       &suw1_nbr_unit_end_bal
+  move &suw1_nbr_unit_end_bal           to #3ago_mo_nbr_unit_end_bal
+
+!  show 'GETTING UNIT THREE MONTHS AGO'
+
+FROM  STATS_UNIT_WKM SUW1
+WHERE SUW1.MO_UNIT_STAT_MO            = #input_month_3
+AND   SUW1.YR_UNIT_STAT_YR            = #input_year_2
+AND   SUW1.CD_UNIT_PROGRAM            = $unit_info_unit_program
+AND   SUW1.CD_UNIT_REGION             = $input_region
+AND   SUW1.CD_UNIT_STAGE              = $unit_info_unit_stage
+AND   SUW1.ID_UNIT_UNIT              =  #id_unit_unit
+!AND   SUW1.CD_UNIT_STAGE_TYPE         = $unit_info_unit_stage_type 
+
+END-SELECT
+  
+!  show 'got unit three months ago'
+    
+END-PROCEDURE GET-UNIT-3AGOMONTH 
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNIT-FYTD-TOTAL                                                      *
+!                                                                           *
+!       This procedure will select unit statistics for the fiscal year.     *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-UNIT-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNIT-FYTD-TOTAL
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+SUM (SUW5.NBR_UNIT_CLOS_FCT_CON)  &suw5_nbr_unit_clos_fct_con
+  move &suw5_nbr_unit_clos_fct_con      to #fytd_nbr_unit_clos_fct_con
+
+SUM (SUW5.NBR_UNIT_CLOS_NO_SIG)   &suw5_nbr_unit_clos_no_sig
+  move &suw5_nbr_unit_clos_no_sig       to #fytd_nbr_unit_clos_no_sig
+
+SUM (SUW5.NBR_UNIT_CLOS_RSK_ASS)  &suw5_nbr_unit_clos_rsk_ass
+  move &suw5_nbr_unit_clos_rsk_ass      to #fytd_nbr_unit_clos_rsk_ass
+
+SUM (SUW5.NBR_UNIT_CLOS_RSK_IND)  &suw5_nbr_unit_clos_rsk_ind
+  move &suw5_nbr_unit_clos_rsk_ind      to #fytd_nbr_unit_clos_rsk_ind
+
+SUM (SUW5.NBR_UNIT_CLOSED)        &suw5_nbr_unit_closed
+  move &suw5_nbr_unit_closed            to #fytd_nbr_unit_closed
+
+SUM (SUW5.NBR_UNIT_END_BAL)       &suw5_nbr_unit_end_bal
+  move &suw5_nbr_unit_end_bal           to #fytd_nbr_unit_end_bal
+
+SUM (SUW5.NBR_UNIT_NEW)           &suw5_nbr_unit_new
+  move &suw5_nbr_unit_new               to #fytd_nbr_unit_new
+
+SUM (SUW5.NBR_UNIT_SECOND_ASGMT)  &suw5_nbr_unit_second_asgmt
+  move &suw5_nbr_unit_second_asgmt      to #fytd_nbr_unit_second_asgmt
+
+SUM (SUW5.NBR_UNIT_TRANSFR_IN)    &suw5_nbr_unit_transfr_in
+  move &suw5_nbr_unit_transfr_in        to #fytd_nbr_unit_transfr_in
+
+SUM (SUW5.NBR_UNIT_TRANSFR_OUT)   &suw5_nbr_unit_transfr_out
+  move &suw5_nbr_unit_transfr_out       to #fytd_nbr_unit_transfr_out
+
+!  show 'GETTING UNIT FYTD'
+
+  let #sum_fytd_nbr_unit_closed_total = #fytd_nbr_unit_clos_fct_con 
+                                      + #fytd_nbr_unit_clos_no_sig
+                                      + #fytd_nbr_unit_clos_rsk_ass
+                                      + #fytd_nbr_unit_clos_rsk_ind
+                                      + #fytd_nbr_unit_closed
+  
+FROM  STATS_UNIT_WKM SUW5
+WHERE  SUW5.FY_UNIT_STAT_FY          = #input_year_9
+AND   SUW5.CD_UNIT_PROGRAM            = $unit_info_unit_program
+AND   SUW5.CD_UNIT_REGION             = $input_region
+AND   SUW5.CD_UNIT_STAGE              = $unit_info_unit_stage
+AND   SUW5.ID_UNIT_UNIT               = #id_unit_unit
+!AND   SUW5.CD_UNIT_STAGE_TYPE         = $unit_info_unit_stage_type    
+
+END-SELECT
+
+!  show 'got fytd info'
+    
+END-PROCEDURE GET-UNIT-FYTD-TOTAL         
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNIT-YTD-TOTAL                                                      *
+!                                                                           *
+!       This procedure will select unit statistics for the current year.    *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-UNIT-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNIT-YTD-TOTAL
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+SUM (SUW5a.NBR_UNIT_CLOS_FCT_CON)  &suw5a_nbr_unit_clos_fct_con
+  move &suw5a_nbr_unit_clos_fct_con      to #ytd_nbr_unit_clos_fct_con
+
+SUM (SUW5a.NBR_UNIT_CLOS_NO_SIG)   &suw5a_nbr_unit_clos_no_sig
+  move &suw5a_nbr_unit_clos_no_sig       to #ytd_nbr_unit_clos_no_sig
+
+SUM (SUW5a.NBR_UNIT_CLOS_RSK_ASS)  &suw5a_nbr_unit_clos_rsk_ass
+  move &suw5a_nbr_unit_clos_rsk_ass      to #ytd_nbr_unit_clos_rsk_ass
+
+SUM (SUW5a.NBR_UNIT_CLOS_RSK_IND)  &suw5a_nbr_unit_clos_rsk_ind
+  move &suw5a_nbr_unit_clos_rsk_ind      to #ytd_nbr_unit_clos_rsk_ind
+
+SUM (SUW5a.NBR_UNIT_CLOSED)        &suw5a_nbr_unit_closed
+  move &suw5a_nbr_unit_closed            to #ytd_nbr_unit_closed
+
+SUM (SUW5a.NBR_UNIT_END_BAL)       &suw5a_nbr_unit_end_bal
+  move &suw5a_nbr_unit_end_bal           to #ytd_nbr_unit_end_bal
+
+SUM (SUW5a.NBR_UNIT_NEW)           &suw5a_nbr_unit_new
+  move &suw5a_nbr_unit_new               to #ytd_nbr_unit_new
+
+SUM (SUW5a.NBR_UNIT_SECOND_ASGMT)  &suw5a_nbr_unit_second_asgmt
+  move &suw5a_nbr_unit_second_asgmt      to #ytd_nbr_unit_second_asgmt
+
+SUM (SUW5a.NBR_UNIT_TRANSFR_IN)    &suw5a_nbr_unit_transfr_in
+  move &suw5a_nbr_unit_transfr_in        to #ytd_nbr_unit_transfr_in
+
+SUM (SUW5a.NBR_UNIT_TRANSFR_OUT)   &suw5a_nbr_unit_transfr_out
+  move &suw5a_nbr_unit_transfr_out       to #ytd_nbr_unit_transfr_out
+
+!  show 'GETTING UNIT YTD'
+
+  let #sum_ytd_nbr_unit_closed_total = #ytd_nbr_unit_clos_fct_con 
+                                      + #ytd_nbr_unit_clos_no_sig
+                                      + #ytd_nbr_unit_clos_rsk_ass
+                                      + #ytd_nbr_unit_clos_rsk_ind
+                                      + #ytd_nbr_unit_closed
+  
+FROM  STATS_UNIT_WKM SUW5a
+WHERE  SUW5a.YR_UNIT_STAT_YR          = #input_year
+AND   SUW5a.CD_UNIT_PROGRAM            = $unit_info_unit_program
+AND   SUW5a.CD_UNIT_REGION             = $input_region
+AND   SUW5a.CD_UNIT_STAGE              = $unit_info_unit_stage
+AND   SUW5a.ID_UNIT_UNIT              =  #id_unit_unit
+!AND   SUW5a.CD_UNIT_STAGE_TYPE         = $unit_info_unit_stage_type   
+
+END-SELECT
+
+!  show 'got ytd info'
+    
+END-PROCEDURE GET-UNIT-YTD-TOTAL
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNIT-LAST-YEAR-THIS-MONTH                                           *
+!                                                                           *
+!       This procedure will select last year's unit statistics for the      *
+!       current month.                                                      *
+!                                                                           * 
+!       CALLED BY  : GET-UNIT-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNIT-LAST-YEAR-THIS-MONTH
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+SUM (SUW9.NBR_UNIT_CLOS_FCT_CON)  &suw9_nbr_unit_clos_fct_con
+  move &suw9_nbr_unit_clos_fct_con      to #last_year_this_mo_nbr_unit_clos_fct_con
+
+SUM (SUW9.NBR_UNIT_CLOS_NO_SIG)   &suw9_nbr_unit_clos_no_sig
+  move &suw9_nbr_unit_clos_no_sig       to #last_year_this_mo_nbr_unit_clos_no_sig
+
+SUM (SUW9.NBR_UNIT_CLOS_RSK_ASS)  &suw9_nbr_unit_clos_rsk_ass
+  move &suw9_nbr_unit_clos_rsk_ass      to #last_year_this_mo_nbr_unit_clos_rsk_ass
+
+SUM (SUW9.NBR_UNIT_CLOS_RSK_IND)  &suw9_nbr_unit_clos_rsk_ind
+  move &suw9_nbr_unit_clos_rsk_ind      to #last_year_this_mo_nbr_unit_clos_rsk_ind
+
+SUM (SUW9.NBR_UNIT_CLOSED)        &suw9_nbr_unit_closed
+  move &suw9_nbr_unit_closed            to #last_year_this_mo_nbr_unit_closed
+
+SUM (SUW9.NBR_UNIT_END_BAL)       &suw9_nbr_unit_end_bal
+  move &suw9_nbr_unit_end_bal           to #last_year_this_mo_nbr_unit_end_bal
+
+SUM (SUW9.NBR_UNIT_NEW)           &suw9_nbr_unit_new
+  move &suw9_nbr_unit_new               to #last_year_this_mo_nbr_unit_new
+
+SUM (SUW9.NBR_UNIT_SECOND_ASGMT)  &suw9_nbr_unit_second_asgmt
+  move &suw9_nbr_unit_second_asgmt      to #last_year_this_mo_nbr_unit_second_asgmt
+
+SUM (SUW9.NBR_UNIT_TRANSFR_IN)    &suw9_nbr_unit_transfr_in
+  move &suw9_nbr_unit_transfr_in        to #last_year_this_mo_nbr_unit_transfr_in
+
+SUM (SUW9.NBR_UNIT_TRANSFR_OUT)   &suw9_nbr_unit_transfr_out
+  move &suw9_nbr_unit_transfr_out       to #last_year_this_mo_nbr_unit_transfr_out
+
+!  show 'GETTING UNIT LAST YEAR THIS MONTH'
+
+  let #sum_last_year_this_mo_nbr_unit_closed_total = #last_year_this_mo_nbr_unit_clos_fct_con 
+                                      + #last_year_this_mo_nbr_unit_clos_no_sig
+                                      + #last_year_this_mo_nbr_unit_clos_rsk_ass
+                                      + #last_year_this_mo_nbr_unit_clos_rsk_ind
+                                      + #last_year_this_mo_nbr_unit_closed
+  
+FROM  STATS_UNIT_WKM SUW9
+WHERE SUW9.MO_UNIT_STAT_MO            = #input_month
+AND   SUW9.YR_UNIT_STAT_YR            = #input_year_1
+AND   SUW9.CD_UNIT_PROGRAM            = $unit_info_unit_program
+AND   SUW9.CD_UNIT_REGION             = $input_region
+AND   SUW9.CD_UNIT_STAGE              = $unit_info_unit_stage
+AND   SUW9.ID_UNIT_UNIT               =  #id_unit_unit
+!AND   SUW9.CD_UNIT_STAGE_TYPE         = $unit_info_unit_stage_type   
+
+END-SELECT
+
+!  show 'got last year info'
+    
+END-PROCEDURE GET-UNIT-LAST-YEAR-THIS-MONTH  
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNIT-LAST-YEAR-LAST-MONTH                                           *
+!                                                                           *
+!       This procedure will select last year's unit statistics for the      *
+!       previous month.                                                     *
+!                                                                           * 
+!       CALLED BY  : GET-UNIT-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNIT-LAST-YEAR-LAST-MONTH
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+SUM (SUW8.NBR_UNIT_CLOS_FCT_CON)  &suw8_nbr_unit_clos_fct_con
+  move &suw8_nbr_unit_clos_fct_con      to #last_year_last_mo_nbr_unit_clos_fct_con
+
+SUM (SUW8.NBR_UNIT_CLOS_NO_SIG)   &suw8_nbr_unit_clos_no_sig
+  move &suw8_nbr_unit_clos_no_sig       to #last_year_last_mo_nbr_unit_clos_no_sig
+
+SUM (SUW8.NBR_UNIT_CLOS_RSK_ASS)  &suw8_nbr_unit_clos_rsk_ass
+  move &suw8_nbr_unit_clos_rsk_ass      to #last_year_last_mo_nbr_unit_clos_rsk_ass
+
+SUM (SUW8.NBR_UNIT_CLOS_RSK_IND)  &suw8_nbr_unit_clos_rsk_ind
+  move &suw8_nbr_unit_clos_rsk_ind      to #last_year_last_mo_nbr_unit_clos_rsk_ind
+
+SUM (SUW8.NBR_UNIT_CLOSED)        &suw8_nbr_unit_closed
+  move &suw8_nbr_unit_closed            to #last_year_last_mo_nbr_unit_closed
+
+SUM (SUW8.NBR_UNIT_END_BAL)       &suw8_nbr_unit_end_bal
+  move &suw8_nbr_unit_end_bal           to #last_year_last_mo_nbr_unit_end_bal
+
+SUM (SUW8.NBR_UNIT_NEW)           &suw8_nbr_unit_new
+  move &suw8_nbr_unit_new               to #last_year_last_mo_nbr_unit_new
+
+SUM (SUW8.NBR_UNIT_SECOND_ASGMT)  &suw8_nbr_unit_second_asgmt
+  move &suw8_nbr_unit_second_asgmt      to #last_year_last_mo_nbr_unit_second_asgmt
+
+SUM (SUW8.NBR_UNIT_TRANSFR_IN)    &suw8_nbr_unit_transfr_in
+  move &suw8_nbr_unit_transfr_in        to #last_year_last_mo_nbr_unit_transfr_in
+
+SUM (SUW8.NBR_UNIT_TRANSFR_OUT)   &suw8_nbr_unit_transfr_out
+  move &suw8_nbr_unit_transfr_out       to #last_year_last_mo_nbr_unit_transfr_out
+
+!  show 'GETTING UNIT LAST YEAR LAST MONTH'
+
+  let #sum_last_year_last_mo_nbr_unit_closed_total = #last_year_last_mo_nbr_unit_clos_fct_con 
+                                      + #last_year_last_mo_nbr_unit_clos_no_sig
+                                      + #last_year_last_mo_nbr_unit_clos_rsk_ass
+                                      + #last_year_last_mo_nbr_unit_clos_rsk_ind
+                                      + #last_year_last_mo_nbr_unit_closed
+  
+FROM  STATS_UNIT_WKM SUW8
+WHERE SUW8.MO_UNIT_STAT_MO            = #input_month_1
+AND   SUW8.YR_UNIT_STAT_YR            = #input_year_5
+AND   SUW8.CD_UNIT_PROGRAM            = $unit_info_unit_program
+AND   SUW8.CD_UNIT_REGION             = $input_region
+AND   SUW8.CD_UNIT_STAGE              = $unit_info_unit_stage
+AND   SUW8.ID_UNIT_UNIT               = #id_unit_unit
+!AND   SUW8.CD_UNIT_STAGE_TYPE         = $unit_info_unit_stage_type 
+
+END-SELECT
+
+!  show 'got last year last month'
+    
+END-PROCEDURE GET-UNIT-LAST-YEAR-LAST-MONTH  
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNIT-LAST-YEAR-2AGO-MONTH                                           *
+!                                                                           *
+!       This procedure will select last year's unit statistics for the      *
+!       month 2 months prior.                                               *
+!                                                                           * 
+!       CALLED BY  : GET-UNIT-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNIT-LAST-YEAR-2AGO-MONTH
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+SUM (SUW7.NBR_UNIT_CLOS_FCT_CON)  &suw7_nbr_unit_clos_fct_con
+  move &suw7_nbr_unit_clos_fct_con      to #last_year_2ago_mo_nbr_unit_clos_fct_con
+
+SUM (SUW7.NBR_UNIT_CLOS_NO_SIG)   &suw7_nbr_unit_clos_no_sig
+  move &suw7_nbr_unit_clos_no_sig       to #last_year_2ago_mo_nbr_unit_clos_no_sig
+
+SUM (SUW7.NBR_UNIT_CLOS_RSK_ASS)  &suw7_nbr_unit_clos_rsk_ass
+  move &suw7_nbr_unit_clos_rsk_ass      to #last_year_2ago_mo_nbr_unit_clos_rsk_ass
+
+SUM (SUW7.NBR_UNIT_CLOS_RSK_IND)  &suw7_nbr_unit_clos_rsk_ind
+  move &suw7_nbr_unit_clos_rsk_ind      to #last_year_2ago_mo_nbr_unit_clos_rsk_ind
+
+SUM (SUW7.NBR_UNIT_CLOSED)        &suw7_nbr_unit_closed
+  move &suw7_nbr_unit_closed            to #last_year_2ago_mo_nbr_unit_closed
+
+SUM (SUW7.NBR_UNIT_END_BAL)       &suw7_nbr_unit_end_bal
+  move &suw7_nbr_unit_end_bal           to #last_year_2ago_mo_nbr_unit_end_bal
+
+SUM (SUW7.NBR_UNIT_NEW)           &suw7_nbr_unit_new
+  move &suw7_nbr_unit_new               to #last_year_2ago_mo_nbr_unit_new
+
+SUM (SUW7.NBR_UNIT_SECOND_ASGMT)  &suw7_nbr_unit_second_asgmt
+  move &suw7_nbr_unit_second_asgmt      to #last_year_2ago_mo_nbr_unit_second_asgmt
+
+SUM (SUW7.NBR_UNIT_TRANSFR_IN)    &suw7_nbr_unit_transfr_in
+  move &suw7_nbr_unit_transfr_in        to #last_year_2ago_mo_nbr_unit_transfr_in
+
+SUM (SUW7.NBR_UNIT_TRANSFR_OUT)   &suw7_nbr_unit_transfr_out
+  move &suw7_nbr_unit_transfr_out       to #last_year_2ago_mo_nbr_unit_transfr_out
+
+!  show 'GETTING UNIT LAST YEAR 2AGO MONTH'
+
+  let #sum_last_year_2ago_mo_nbr_unit_closed_total = #last_year_2ago_mo_nbr_unit_clos_fct_con 
+                                      + #last_year_2ago_mo_nbr_unit_clos_no_sig
+                                      + #last_year_2ago_mo_nbr_unit_clos_rsk_ass
+                                      + #last_year_2ago_mo_nbr_unit_clos_rsk_ind
+                                      + #last_year_2ago_mo_nbr_unit_closed
+  
+FROM  STATS_UNIT_WKM SUW7
+WHERE SUW7.MO_UNIT_STAT_MO            = #input_month_2
+AND   SUW7.YR_UNIT_STAT_YR            = #input_year_6
+AND   SUW7.CD_UNIT_PROGRAM            = $unit_info_unit_program
+AND   SUW7.CD_UNIT_REGION             = $input_region
+AND   SUW7.CD_UNIT_STAGE              = $unit_info_unit_stage
+AND   SUW7.ID_UNIT_UNIT              = #id_unit_unit
+!AND   SUW7.CD_UNIT_STAGE_TYPE         = $unit_info_unit_stage_type
+
+END-SELECT
+
+!  show 'got last year two months ago'
+    
+END-PROCEDURE GET-UNIT-LAST-YEAR-2AGO-MONTH  
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNIT-LAST-YEAR-3AGO-MONTH                                           *
+!                                                                           *
+!       This procedure will select last year's unit statistics for the      *
+!       previous month.                                                     *
+!                                                                           * 
+!       CALLED BY  : GET-UNIT-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNIT-LAST-YEAR-3AGO-MONTH
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+SUM (SUW6.NBR_UNIT_END_BAL)       &suw6_nbr_unit_end_bal
+  move &suw6_nbr_unit_end_bal           to #last_year_3ago_mo_nbr_unit_end_bal
+
+!  show 'GETTING UNIT LAST YEAR 3AGO MONTH'
+
+FROM  STATS_UNIT_WKM SUW6
+WHERE SUW6.MO_UNIT_STAT_MO            = #input_month_3
+AND   SUW6.YR_UNIT_STAT_YR            = #input_year_7
+AND   SUW6.CD_UNIT_PROGRAM            = $unit_info_unit_program
+AND   SUW6.CD_UNIT_REGION             = $input_region
+AND   SUW6.CD_UNIT_STAGE              = $unit_info_unit_stage
+AND   SUW6.ID_UNIT_UNIT               =  #id_unit_unit
+!AND   SUW6.CD_UNIT_STAGE_TYPE         = $unit_info_unit_stage_type
+
+END-SELECT
+    
+END-PROCEDURE GET-UNIT-LAST-YEAR-3AGO-MONTH                                          
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-UNIT-INFO                                                         *
+!                                                                           *
+!       This procedure prints the information selected for each unit.       *
+!                                                                           * 
+!       CALLED BY  : GET-UNIT-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-UNIT-INFO
+
+if $print_stage_flag = 'N'     
+  print $nbr_unit                       (+1,18) edit 88888888
+  print $input_region                   (+0,25) edit 8888
+  print $unit_info_unit_program         (+0,34)
+  print $unit_info_unit_stage           (+0,42)
+!  print $unit_info_unit_stage_type      (+0,48)
+else
+  print $nbr_unit                       (+2,18) edit 88888888
+  print $input_region                   (+0,25) edit 8888
+  print $unit_info_unit_program         (+0,34)
+  print $unit_info_unit_stage           (+0,42)
+!  print $unit_info_unit_stage_type      (+0,48)
+end-if
+
+  move $unit_info_unit_program   to   $last_unit_info_unit_program
+!  show 'printed info'
+
+END-PROCEDURE PRINT-UNIT-INFO
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-UNIT-MONTHLY-STATS                                                *
+!                                                                           *
+!       This procedure prints the majority of fields within the report.     *
+!       It details the statistics of each unit for each month               *
+!       selected for reporting.                                             *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-UNIT-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-UNIT-MONTHLY-STATS
+
+!  show 'PRINT UNIT MONTHLY STATS'
+
+print 'BEG BAL'                             (+0,64)
+print #last_mo_nbr_unit_end_bal             (+0,80) edit 8888
+print #2ago_mo_nbr_unit_end_bal             (+0,90) edit 8888
+print #3ago_mo_nbr_unit_end_bal             (+0,100) edit 8888
+print '****'                                  (+0,110)
+print '****'                                  (+0,116)
+print '****'                                  (+0,122)
+!print '***'                                  (+0,128)
+print #last_year_last_mo_nbr_unit_end_bal   (+0,136) edit 8888
+print #last_year_2ago_mo_nbr_unit_end_bal   (+0,146) edit 8888
+print #last_year_3ago_mo_nbr_unit_end_bal   (+0,156) edit 8888
+print 'NEW'                                 (+1,64) 
+print #this_mo_nbr_unit_new                 (+0,80) edit 8888
+print #last_mo_nbr_unit_new                 (+0,90) edit 8888
+print #2ago_mo_nbr_unit_new                 (+0,100) edit 8888
+print #fytd_nbr_unit_new                     (+0,110) edit 8888
+  
+        let #fytd_nbr_unit_new_avg = #fytd_nbr_unit_new/#fy_months
+
+print #fytd_nbr_unit_new_avg                 (+0,116) edit 888.8
+print #ytd_nbr_unit_new                     (+0,122) edit 8888
+
+        let #ytd_nbr_unit_new_avg = #ytd_nbr_unit_new/#input_month
+        
+!print #ytd_nbr_unit_new_avg                 (+0,128) edit 888.8
+print #last_year_this_mo_nbr_unit_new       (+0,136) edit 8888
+print #last_year_last_mo_nbr_unit_new       (+0,146) edit 8888
+print #last_year_2ago_mo_nbr_unit_new       (+0,156) edit 8888
+print 'TRNFRIN'                             (+1,64) 
+print #this_mo_nbr_unit_transfr_in               (+0,80) edit 8888
+print #last_mo_nbr_unit_transfr_in               (+0,90) edit 8888
+print #2ago_mo_nbr_unit_transfr_in               (+0,100) edit 8888
+print #fytd_nbr_unit_transfr_in                   (+0,110) edit 8888
+    
+        let #fytd_nbr_unit_transfr_in_avg = #fytd_nbr_unit_transfr_in/#fy_months
+
+print #fytd_nbr_unit_transfr_in_avg               (+0,116) edit 888.8
+print #ytd_nbr_unit_transfr_in                   (+0,122) edit 8888
+
+        let #ytd_nbr_unit_transfr_in_avg = #ytd_nbr_unit_transfr_in/#input_month
+
+!print #ytd_nbr_unit_transfr_in_avg               (+0,128) edit 888.8
+print #last_year_this_mo_nbr_unit_transfr_in     (+0,136) edit 8888
+print #last_year_last_mo_nbr_unit_transfr_in     (+0,146) edit 8888
+print #last_year_2ago_mo_nbr_unit_transfr_in     (+0,156) edit 8888
+print 'TRNFROUT'                            (+1,64) 
+print #this_mo_nbr_unit_transfr_out              (+0,80) edit 8888
+print #last_mo_nbr_unit_transfr_out              (+0,90) edit 8888
+print #2ago_mo_nbr_unit_transfr_out              (+0,100) edit 8888
+print #fytd_nbr_unit_transfr_out                  (+0,110) edit 8888
+
+        let #fytd_nbr_unit_transfr_out_avg = #fytd_nbr_unit_transfr_out/#fy_months
+
+print #fytd_nbr_unit_transfr_out_avg              (+0,116) edit 888.8
+print #ytd_nbr_unit_transfr_out                  (+0,122) edit 8888
+
+        let #ytd_nbr_unit_transfr_out_avg = #ytd_nbr_unit_transfr_out/#input_month
+
+!print #ytd_nbr_unit_transfr_out_avg              (+0,128) edit 888.8
+print #last_year_this_mo_nbr_unit_transfr_out    (+0,136) edit 8888
+print #last_year_last_mo_nbr_unit_transfr_out    (+0,146) edit 8888
+print #last_year_2ago_mo_nbr_unit_transfr_out    (+0,156) edit 8888
+print 'CLOSED'                              (+1,64) 
+print #sum_this_mo_nbr_unit_closed_total              (+0,80) edit 8888
+print #sum_last_mo_nbr_unit_closed_total              (+0,90) edit 8888
+print #sum_2ago_mo_nbr_unit_closed_total              (+0,100) edit 8888
+print #sum_fytd_nbr_unit_closed_total                  (+0,110) edit 8888
+
+        let #fytd_nbr_unit_closed_avg = #sum_fytd_nbr_unit_closed_total/#fy_months
+
+print #fytd_nbr_unit_closed_avg                 (+0,116) edit 888.8 
+print #sum_ytd_nbr_unit_closed_total                  (+0,122) edit 8888
+
+        let #ytd_nbr_unit_closed_avg = #sum_ytd_nbr_unit_closed_total/#input_month
+
+!print #ytd_nbr_unit_closed_avg                 (+0,128) edit 888.8 
+print #sum_last_year_this_mo_nbr_unit_closed_total    (+0,136) edit 8888
+print #sum_last_year_last_mo_nbr_unit_closed_total    (+0,146) edit 8888
+print #sum_last_year_2ago_mo_nbr_unit_closed_total    (+0,156) edit 8888                                          
+
+print 'EXCEPT'                            (+1,64) 
+print #sum_this_mo_nbr_unit_except_total    (+0,80)  edit 888888
+print #sum_last_mo_nbr_unit_except_total    (+0,90)  edit 888888
+print #sum_2ago_mo_nbr_unit_except_total    (+0,100)  edit 888888
+print '****'                              (+0,110)
+print '****'                             (+0,116)
+print '****'                              (+0,122)
+!print '*****'                            (+0,128)
+print #sum_last_year_this_mo_nbr_unit_except_total  (+0,136) edit 888888
+print #sum_last_year_last_mo_nbr_unit_except_total  (+0,146) edit 888888
+print #sum_last_year_2ago_mo_nbr_unit_except_total  (+0,156) edit 888888
+
+print 'END BAL'                             (+1,64) 
+print #this_mo_nbr_unit_end_bal             (+0,80) edit 8888
+print #last_mo_nbr_unit_end_bal             (+0,90) edit 8888
+print #2ago_mo_nbr_unit_end_bal             (+0,100) edit 8888
+print #fytd_nbr_unit_end_bal                 (+0,110) edit 8888
+
+        let #fytd_nbr_unit_end_bal_avg = #fytd_nbr_unit_end_bal/#fy_months
+
+print #fytd_nbr_unit_end_bal_avg             (+0,116)  edit 888.8
+print #ytd_nbr_unit_end_bal                 (+0,122) edit 8888
+
+        let #ytd_nbr_unit_end_bal_avg = #ytd_nbr_unit_end_bal/#input_month
+
+!print #ytd_nbr_unit_end_bal_avg             (+0,128)  edit 888.8
+print #last_year_this_mo_nbr_unit_end_bal   (+0,136) edit 8888
+print #last_year_last_mo_nbr_unit_end_bal   (+0,146) edit 8888
+print #last_year_2ago_mo_nbr_unit_end_bal   (+0,156) edit 8888
+print '2nd asgmt tot'                           (+1,64) 
+print #this_mo_nbr_unit_second_asgmt              (+0,80) edit 8888
+print #last_mo_nbr_unit_second_asgmt              (+0,90) edit 8888
+print #2ago_mo_nbr_unit_second_asgmt              (+0,100) edit 8888
+print #fytd_nbr_unit_second_asgmt                  (+0,110) edit 8888
+
+        let #fytd_nbr_unit_2nd_as_avg = #fytd_nbr_unit_second_asgmt/#fy_months
+ 
+print #fytd_nbr_unit_2nd_as_avg              (+0,116) edit 888.8
+print #ytd_nbr_unit_second_asgmt                  (+0,122) edit 8888
+
+        let #ytd_nbr_unit_2nd_as_avg = #ytd_nbr_unit_second_asgmt/#input_month
+ 
+!print #ytd_nbr_unit_2nd_as_avg              (+0,128) edit 888.8
+print #last_year_this_mo_nbr_unit_second_asgmt    (+0,136) edit 8888
+print #last_year_last_mo_nbr_unit_second_asgmt    (+0,146) edit 8888
+print #last_year_2ago_mo_nbr_unit_second_asgmt    (+0,156) edit 8888
+
+END-PROCEDURE PRINT-UNIT-MONTHLY-STATS
+
+!****************************************************************************
+!                                                                           *
+!   CALCULATE-EXCEPTION-FIELD                                               *
+!                                                                           *
+!      This procedure calculates the exception fields                       *
+!                                                                           *
+!       CALLED BY  : GET-STATE-INFO                                         *
+!       CALLS      : NONE                                                   *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE CALCULATE-EXCEPTION-FIELD 
+                                       
+let #sum_this_mo_nbr_unit_except_total = #this_mo_nbr_unit_end_bal 
+                                     - #last_mo_nbr_unit_end_bal
+                                     - #this_mo_nbr_unit_new
+                                     + #sum_this_mo_nbr_unit_closed_total
+                                     - #this_mo_nbr_unit_transfr_in
+                                     + #this_mo_nbr_unit_transfr_out  
+                                     
+let #sum_last_mo_nbr_unit_except_total = #last_mo_nbr_unit_end_bal 
+                                     - #2ago_mo_nbr_unit_end_bal
+                                     - #last_mo_nbr_unit_new
+                                     + #sum_last_mo_nbr_unit_closed_total
+                                     - #last_mo_nbr_unit_transfr_in
+                                     + #last_mo_nbr_unit_transfr_out
+                                     
+let #sum_2ago_mo_nbr_unit_except_total = #2ago_mo_nbr_unit_end_bal 
+                                     - #3ago_mo_nbr_unit_end_bal
+                                     - #2ago_mo_nbr_unit_new
+                                     + #sum_2ago_mo_nbr_unit_closed_total
+                                     - #2ago_mo_nbr_unit_transfr_in
+                                     + #2ago_mo_nbr_unit_transfr_out
+                                     
+let #sum_last_year_this_mo_nbr_unit_except_total = #last_year_this_mo_nbr_unit_end_bal 
+                                     - #last_year_last_mo_nbr_unit_end_bal
+                                     - #last_year_this_mo_nbr_unit_new
+                                     + #sum_last_year_this_mo_nbr_unit_closed_total
+                                     - #last_year_this_mo_nbr_unit_transfr_in
+                                     + #last_year_this_mo_nbr_unit_transfr_out
+                                     
+let #sum_last_year_last_mo_nbr_unit_except_total = #last_year_last_mo_nbr_unit_end_bal 
+                                     - #last_year_2ago_mo_nbr_unit_end_bal
+                                     - #last_year_last_mo_nbr_unit_new
+                                     + #sum_last_year_last_mo_nbr_unit_closed_total
+                                     - #last_year_last_mo_nbr_unit_transfr_in
+                                     + #last_year_last_mo_nbr_unit_transfr_out
+                                     
+let #sum_last_year_2ago_mo_nbr_unit_except_total = #last_year_2ago_mo_nbr_unit_end_bal 
+                                     - #last_year_3ago_mo_nbr_unit_end_bal
+                                     - #last_year_2ago_mo_nbr_unit_new
+                                     + #sum_last_year_2ago_mo_nbr_unit_closed_total
+                                     - #last_year_2ago_mo_nbr_unit_transfr_in
+                                     + #last_year_2ago_mo_nbr_unit_transfr_out
+                                     
+
+END-PROCEDURE CALCULATE-EXCEPTION-FIELD                  
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+END-PROCEDURE SqlErrorHandle
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+
+

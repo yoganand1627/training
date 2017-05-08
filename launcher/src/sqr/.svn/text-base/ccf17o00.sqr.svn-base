@@ -1,0 +1,815 @@
+!*****************************************************************************
+!  Cases at Investigation Stage Eligible for Purge Report                    *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccf17o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/parchmjw/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 11/26/96                                             *
+!                                                                            *
+! PROGRAMMER NAME:      John Parchman                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The Cases at Investigation Stage Eligible for Purge  *
+!                       Report will give the worker a list of all the cases  *
+!                       that will be purged at the end of the next month.    *
+!                       Each record includes the case number, name, program  *
+!                       and the location of the case file.                   *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 11/26/96   J.Parchman   Initial Programming                                *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+                     
+do HOUSEKEEPING
+
+do PROCESS-REPORT        
+
+do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+#ifdef ORACLE                           !compiler directive
+    ask dbname 'Database Name'
+    use {dbname}
+#endif
+
+#INCLUDE 'setup01a.sqc'                 ! control codes for Landscape Batch
+
+ASK INPUT_DATE                          ! input parameter  
+    
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 4
+  
+let $mo_yr = $month_name || ', ' || $year 
+
+move 'ccf17o00'                                    	        to $ReportID
+move 'CASES CLOSED AT INVESTIGATION TO BE PURGED AT THE END OF' to $ReportTitle
+move $mo_yr                                 	           to $ReportSubHeading    
+
+#INCLUDE 'header01.sqc'     ! Include file with header information     
+
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS    : GET-PARSE                                                * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+#INCLUDE 'setenv.sqc'                    !Set printer environment
+    
+move '{INPUT_DATE}'                     to $input_date   
+                                                          
+do CONVERT-INPUT-DATE
+do GET-PARSE
+    
+move '****END OF REPORT****'            to $end_of_report 
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   CONVERT-INPUT-DATE                                                      *
+!                                                                           *
+!       This procedure will take the Input Date (system date) and convert   *
+!       it to the last day of the upcoming month.                           *
+!                                                                           *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE CONVERT-INPUT-DATE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+TO_CHAR(ADD_MONTHS(LAST_DAY(SYSDATE),1), 'MM/DD/YYYY') &purge_date
+    move &purge_date                        to $purge_date
+
+FROM    DUAL
+
+END-SELECT
+
+END-PROCEDURE CONVERT-INPUT-DATE     
+
+!****************************************************************************
+!                                                                           *
+!   GET-PARSE                                                               *
+!                                                                           *
+!       This procedure will parse the input month and convert it to the     *
+!       month name for the header.                                          *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PARSE
+
+let $month = substr($purge_date,1,2)
+let $year  = substr($purge_date,7,4)
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+TO_CHAR(TO_DATE($month, 'MM'), 'MONTH') &month_name
+     move &month_name                        to $month_name
+     let $month_name = rtrim($month_name, ' ') 
+
+FROM    DUAL
+
+END-SELECT              
+
+END-PROCEDURE GET-PARSE
+           
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-CASE-INFO                                          *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+  
+do GET-CASE-INFO
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-CASE-INFO                                                           *
+!                                                                           *
+!       This procedure uses the cases retrieved from the input file and gets*
+!       the respective name, program, and location.  If the office type code*
+!       is 'P', another SQL is called to get info from the office and unit  *
+!       tables.                                                             * 
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-CASE-INFO                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CASE-INFO
+
+    move 0                  to #count1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+RR.ID_REC_RTN_CASE
+    move &RR.ID_REC_RTN_CASE                to #id_case
+    
+RR.CD_REC_RTN_RETEN_TYPE
+    move &RR.CD_REC_RTN_RETEN_TYPE          to $reten_type
+    
+CC.NM_CASE
+    move &CC.NM_CASE                        to $case_name
+    
+CC.CD_CASE_PROGRAM
+    move &CC.CD_CASE_PROGRAM	            to $program
+
+CCNTYREG.DECODE                           
+    move &CCNTYREG.DECODE                   to $case_region
+    
+CCOUNT1.DECODE						
+    move &CCOUNT1.DECODE	            to $case_county
+    
+ST.ID_STAGE
+    move &ST.ID_STAGE			    to #id_stage
+
+ST.NM_STAGE
+    move &ST.NM_STAGE			    to $stage_name
+
+to_char(ST.DT_STAGE_START, 'MM/DD/YYYY') &date1
+    move &date1            		    to $stage_start
+
+CCOUNT2.DECODE
+    move &CCOUNT2.DECODE    		    to $stage_county
+
+CFM.CD_CASE_FILE_OFFICE_TYPE
+    move &CFM.CD_CASE_FILE_OFFICE_TYPE      to $office_type
+    
+CFM.NM_CASE_FILE_OFFICE
+    move &CFM.NM_CASE_FILE_OFFICE           to $office_name
+    
+CFM.ADDR_CASE_FILE_ST_LN_1
+    move &CFM.ADDR_CASE_FILE_ST_LN_1        to $addr_ln1
+    
+CFM.ADDR_CASE_FILE_ST_LN_2
+    move &CFM.ADDR_CASE_FILE_ST_LN_2        to $addr_ln2
+    
+CFM.ADDR_CASE_FILE_CITY
+    move &CFM.ADDR_CASE_FILE_CITY           to $addr_city
+    
+CFM.ID_CASE_FILE_OFFICE
+    move &CFM.ID_CASE_FILE_OFFICE           to #id_office
+    
+CFM.ID_UNIT
+    move &CFM.ID_UNIT                       to #id_unit
+
+CUNITPGM.DECODE
+    move &CUNITPGM.DECODE                   to $program_dec
+    
+CREGUNIT.DECODE
+    move &CREGUNIT.DECODE                   to $region_dec
+    
+O.CD_OFFICE_MAIL
+    move &O.CD_OFFICE_MAIL                  to $mail_code
+    
+U.NBR_UNIT
+    move &U.NBR_UNIT                        to $unit_nbr
+
+    let #count1 = #count1 + 1
+
+    if #count1 = 1
+       move $program               to $last_case_program 
+       move $case_region	   to $last_case_region		!jwp
+       move $case_county	   to $last_case_county		!jwp
+       move $office_type           to $last_type
+       move $program_dec           to $last_program
+       move $region_dec            to $last_region
+       move $unit_nbr              to $last_unit    
+    end-if
+
+    if $office_type <> $last_type  
+       NEW-PAGE
+       do PRINT-CASE-REGION-COUNTY  !***11230***
+       move 'Y'                to $new_page_flag
+    end-if
+
+    if $program = 'AFC'
+       do GET-AFC-DISP
+    end-if
+
+    if $program = 'APS'
+       do GET-APS-DISP
+    end-if
+
+    if $program = 'CPS'
+       do GET-CPS-DISP
+    else
+       do GET-CCL-DISP
+    end-if
+
+    if $office_type = 'N'
+       do PRINT-CASE-N
+    else
+       if $office_type = 'P'
+          do PRINT-CASE-P
+       else
+	  move 'No Office Type in Case File Management Record' to $office_name
+          do PRINT-CASE-NO-CFM
+       end-if
+    end-if
+
+FROM    RECORDS_RETENTION       RR,
+        CAPS_CASE               CC,
+        CASE_FILE_MANAGEMENT    CFM,
+        OFFICE                  O,
+        UNIT                    U,
+	STAGE			ST,
+	STAGE_LINK		STL,
+	CCNTYREG		CCNTYREG,
+	CCOUNT			CCOUNT1,
+	CCOUNT			CCOUNT2,
+        CUNITPGM                CUNITPGM,
+        CREGUNIT                CREGUNIT
+        
+        
+WHERE   RR.DT_REC_RTN_DSTRY_ACTUAL <= $purge_date
+AND     CC.ID_CASE = CFM.ID_CASE_FILE_CASE(+) 
+AND     CC.ID_CASE = RR.ID_REC_RTN_CASE
+AND     O.ID_OFFICE(+) = CFM.ID_CASE_FILE_OFFICE
+AND     U.ID_UNIT(+) = CFM.ID_UNIT  
+AND     CCNTYREG.CODE(+) = CC.CD_CASE_COUNTY
+AND	CCOUNT1.CODE(+) = CC.CD_CASE_COUNTY	
+AND	CCOUNT2.CODE(+) = ST.CD_STAGE_CNTY	
+AND     CUNITPGM.CODE(+) = O.CD_OFFICE_PROGRAM
+AND     '0'+CREGUNIT.CODE(+) = O.CD_OFFICE_REGION 
+AND	RR.CD_REC_RTN_RETEN_TYPE IN ('ACP', 'APF', 'APR', 'CAA', 'CIO', 'CIR', 'CIU')
+AND	CC.ID_CASE = STL.ID_CASE
+AND	STL.ID_STAGE = ST.ID_STAGE
+
+ORDER BY    CC.CD_CASE_PROGRAM  ASC,        
+            CCNTYREG.DECODE     ASC,        
+            CC.CD_CASE_COUNTY   ASC,        
+	    CFM.CD_CASE_FILE_OFFICE_TYPE ASC,
+            CUNITPGM.DECODE     ASC,
+            CREGUNIT.DECODE     ASC,
+            U.NBR_UNIT          ASC,
+            CC.NM_CASE          ASC
+
+END-SELECT
+
+END-PROCEDURE GET-CASE-INFO
+
+!****************************************************************************
+!                                                                           *
+!   GET-AFC-DISP                                                            *
+!                                                                           *
+!       This procedure retrieves the AFC investigation stages overall       *
+!       disposition.                                                        *
+!                                                                           *
+!       CALLED BY  : GET-CASE-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-AFC-DISP 
+
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+FID.CD_FACIL_INVST_OVRALL_DIS
+    move &FID.CD_FACIL_INVST_OVRALL_DIS    to $afc_disp
+    
+FROM    FACILITY_INVST_DTL	FID
+
+WHERE   FID.ID_CASE = #id_case
+
+END-SELECT
+
+END-PROCEDURE GET-AFC-DISP
+
+!****************************************************************************
+!                                                                           *
+!   GET-APS-DISP                                                            *
+!                                                                           *
+!       This procedure retrieves the APS investigation stages overall       *
+!       disposition.                                                        *
+!                                                                           *
+!       CALLED BY  : GET-CASE-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-APS-DISP 
+
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+AID.CD_APS_INVST_OVRALL_DISP
+    move &AID.CD_APS_INVST_OVRALL_DISP    to $aps_disp
+    
+FROM    APS_INVST_DETAIL      	AID
+
+WHERE   AID.ID_CASE = #id_case
+
+END-SELECT
+
+END-PROCEDURE GET-APS-DISP
+
+!****************************************************************************
+!                                                                           *
+!   GET-CPS-DISP                                                            *
+!                                                                           *
+!       This procedure retrieves the CPS investigation stages overall       *
+!       disposition.                                                        *
+!                                                                           *
+!       CALLED BY  : GET-CASE-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CPS-DISP 
+
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CID.CD_CPS_INVST_DTL_OVRLL_DISPTN
+    move &CID.CD_CPS_INVST_DTL_OVRLL_DISPTN    to $cps_disp
+    
+FROM    CPS_INVST_DETAIL      	CID
+     
+WHERE   CID.ID_CASE = #id_case
+
+END-SELECT
+
+END-PROCEDURE GET-CPS-DISP
+
+!****************************************************************************
+!                                                                           *
+!   GET-CCL-DISP                                                            *
+!                                                                           *
+!       This procedure retrieves Licensing investigation stages overall     *
+!       disposition.                                                        *
+!                                                                           *
+!       CALLED BY  : GET-CASE-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CCL-DISP 
+
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+LID.CD_LICNG_INVST_OVRALL_DISP
+    move &LID.CD_LICNG_INVST_OVRALL_DISP    to $ccl_disp
+    
+FROM    LICENSING_INVST_DTL    	LID
+     
+WHERE   LID.ID_CASE = #id_case
+
+END-SELECT
+
+END-PROCEDURE GET-CCL-DISP
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CASE-REGION-COUNTY                                                *
+!                                                                           *
+!       This procedure prints the region and county for the cases           *
+!                                                                           * 
+!       CALLED BY  : GET-CASE-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CASE-REGION-COUNTY    
+
+print 'CASE REGION:'			(+2,1)
+print $case_region		    	(+0,14)
+print 'CASE COUNTY:'			(+0,20)
+print $case_county	    		(+0,33)
+print 'CASE PROGRAM:'                   (+0,52)
+print $program                          (+0,66)
+print 'CASE ID'                         (+2,1)
+print 'CASE NAME'                       (+0,22)
+print 'LOCATION'                        (+0,52)
+print 'STAGE COUNTY'			(+0,100)
+print 'STAGE NAME'			(+0,117)
+print 'STAGE START'			(+0,143)
+print 'DISP'				(+0,155)
+print 'RETN TYPE'			(+0,161)
+print '-'				(+1,1,175)fill
+
+END-PROCEDURE PRINT-CASE-REGION-COUNTY
+       
+!****************************************************************************
+!                                                                           *
+!   PRINT-CASE-INFO                                                         *
+!                                                                           *
+!       This procedure prints the report rows for each case.                *
+!                                                                           * 
+!       CALLED BY  : GET-CASE-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CASE-INFO
+
+print #id_case                      (+2,1) edit 8888888888888888
+print $case_name                    (+0,22)
+
+move $office_type                           to $last_type    
+
+END-PROCEDURE PRINT-CASE-INFO
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CASE-N                                                            *
+!                                                                           *
+!       This procedure prints the location information for office type 'N'. *
+!                                                                           * 
+!       CALLED BY  : GET-CASE-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CASE-N
+
+if $new_page_flag = 'Y'             
+   move 'N'        to $new_page_flag   
+else
+   if $program <> $last_case_program   
+       NEW-PAGE                        
+       do PRINT-CASE-REGION-COUNTY         
+   else                                
+      if $case_region <> $last_case_region		!jwp
+         NEW-PAGE                        		!jwp
+         do PRINT-CASE-REGION-COUNTY			!jwp
+      else  						!jwp		
+         if $case_county <> $last_case_county		!jwp
+            NEW-PAGE                        		!jwp
+            do PRINT-CASE-REGION-COUNTY        		!jwp 
+	 else 
+            if #count1 = 1                      
+               do PRINT-CASE-REGION-COUNTY         
+            end-if
+         end-if
+      end-if                        
+   end-if
+end-if
+
+do PRINT-CASE-INFO
+
+print $office_name                  (+0,52)
+
+if $addr_ln1 <> ''
+   print ', '                          ()
+   print $addr_ln1                     ()
+end-if
+
+if $addr_ln2 <> ''
+   print ', '                          ()
+   print $addr_ln2                     ()
+end-if
+
+if $addr_city <> ''
+   print ', '                          ()
+   print $addr_city                    ()
+end-if
+
+print $stage_county			(+0,100)
+print $stage_name			(+0,117)
+print $stage_start			(+0,143)
+
+if $program = 'AFC'
+   print $afc_disp			(+0,155)
+end-if
+
+if $program = 'APS'
+   print $aps_disp			(+0,155)
+end-if
+
+if $program = 'CPS'
+   print $cps_disp			(+0,155)
+else
+   print $ccl_disp			(+0,155)
+end-if
+
+print $reten_type			(+0,161)
+
+move $program		   to $last_case_program  
+move $case_region	   to $last_case_region			!jwp	
+move $case_county	   to $last_case_county			!jwp
+
+END-PROCEDURE PRINT-CASE-N
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CASE-P                                                            *
+!                                                                           *
+!       This procedure prints the office and unit information for office    *
+!       type 'P'.                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-OFFICE                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CASE-P
+
+if $new_page_flag = 'Y'
+   move 'N'                            to $new_page_flag
+else
+   if $program <> $last_case_program   
+      NEW-PAGE                        
+      do PRINT-CASE-REGION-COUNTY         
+   else                                
+      if $case_region <> $last_case_region
+         NEW-PAGE                        
+         do PRINT-CASE-REGION-COUNTY
+      else  
+         if $case_county <> $last_case_county
+            NEW-PAGE                        
+            do PRINT-CASE-REGION-COUNTY         
+	 else 
+            if $program_dec <> $last_program			!jwp
+               NEW-PAGE						!jwp
+               do PRINT-CASE-REGION-COUNTY         		!jwp
+            else						!jwp
+               if $region_dec  <> $last_region			!jwp
+                  NEW-PAGE					!jwp
+                  do PRINT-CASE-REGION-COUNTY         		!jwp
+               else
+                  if $unit_nbr    <> $last_unit
+                     NEW-PAGE
+                     do PRINT-CASE-REGION-COUNTY         
+                  else
+                     if #count1 = 1                      
+                        do PRINT-CASE-REGION-COUNTY         
+                     end-if
+                  end-if
+               end-if                        
+            end-if
+         end-if
+      end-if
+   end-if
+end-if
+
+do PRINT-CASE-INFO
+
+print $program_dec                  (+0,52)
+
+if $region_dec <> ''
+   print ', '                          ()
+   print $region_dec                   ()
+end-if
+
+if $unit_nbr <> ''
+   print ', '                          ()
+   print 'Unit '                       ()
+   print $unit_nbr                     ()
+end-if
+
+if $mail_code <> ''
+   print ', '                          ()
+   print $mail_code                    ()
+end-if
+
+print $stage_county			(+0,100)
+print $stage_name			(+0,117)
+print $stage_start			(+0,143)
+
+if $program = 'AFC'
+   print $afc_disp			(+0,155)
+end-if
+
+if $program = 'APS'
+   print $aps_disp			(+0,155)
+end-if
+
+if $program = 'CPS'
+   print $cps_disp			(+0,155)
+else
+   print $ccl_disp			(+0,155)
+end-if
+
+print $reten_type			(+0,161)
+
+move $program   	to $last_case_program  
+move $case_region	to $last_case_region
+move $case_county	to $last_case_county
+move $program_dec       to $last_program
+move $region_dec        to $last_region
+move $unit_nbr          to $last_unit
+
+END-PROCEDURE PRINT-CASE-P
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CASE-NO-CFM                                                       *
+!                                                                           *
+!       This procedure prints the office and unit information for office    *
+!       type 'P'.                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-OFFICE                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CASE-NO-CFM
+
+if $new_page_flag = 'Y'             
+   move 'N'        to $new_page_flag   
+else
+   if $program <> $last_case_program   
+      NEW-PAGE                        
+      do PRINT-CASE-REGION-COUNTY         
+   else                                
+      if $case_region <> $last_case_region
+         NEW-PAGE                        
+         do PRINT-CASE-REGION-COUNTY
+      else  
+         if $case_county <> $last_case_county
+            NEW-PAGE                        
+            do PRINT-CASE-REGION-COUNTY         
+	 else 
+            if #count1 = 1                      
+               do PRINT-CASE-REGION-COUNTY         
+            end-if
+         end-if
+      end-if                        
+   end-if
+end-if
+
+  do PRINT-CASE-INFO
+
+print $office_name                  	(+0,52)
+print $stage_county			(+0,100)
+print $stage_name			(+0,117)
+print $stage_start			(+0,143)
+
+if $program = 'AFC'
+   print $afc_disp			(+0,155)
+end-if
+
+if $program = 'APS'
+   print $aps_disp			(+0,155)
+end-if
+
+if $program = 'CPS'
+   print $cps_disp			(+0,155)
+else
+   print $ccl_disp			(+0,155)
+end-if
+
+print $reten_type			(+0,161)
+
+move $program   	to $last_case_program
+move $case_region	to $last_case_region  			!jwp
+move $case_county	to $last_case_county  			!jwp
+
+END-PROCEDURE PRINT-CASE-NO-CFM
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+print $end_of_report                (+4) center 
+
+NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+print 'SQL error - Processing Terminated'               (+1,2)
+print $error                                            (+1,2)
+print 'ERROR: SQL error halted loader processing'       (+0)
+print $error                                            (+1,2)
+print 'SQL Error: '                                     (+0)
+print $sql-error                                        (+0)
+print $error                                            (+1,2)
+print 'SQL Status: '                                    (+0)
+print #sql-status                                       (+0)
+STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************

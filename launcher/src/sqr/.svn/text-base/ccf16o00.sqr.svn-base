@@ -1,0 +1,678 @@
+!*****************************************************************************
+!  Cases Eligible for Purge Report                                           *
+!*****************************************************************************
+
+!*****************************************************************************
+! PROGRAM NAME:         ccf16o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 12/22/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brad McCleary                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The Cases Eligible for Purge Report will give the    *
+!                       worker a list of all the cases that will be purged   *
+!                       at the end of the next month.  Each record includes  *
+!                       the case number, name, program and the location of   *
+!                       the case file.                                       *
+!*****************************************************************************
+!*****************************************************************************
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 12/22/95   B.McCleary   Initial Programming                                *
+! 07/15/96   K.Cys        SIR 21804 - Modified PARSE date to cut unnecessary *
+!                         space between month and year in header.  Added     *
+!                         CONVERT-INPUT-DATE procedure to convert ORACLE     *
+!                         system date to purge date for upcoming month.  The *
+!                         input date that Kornshell passes is only being     *
+!                         used to kick of the report.                        *
+! 07/18/96   K.Cys        SIR 21823 - Added 0 to region decode so it would   *
+!                         match region format which has region # predceeded  *
+!                         by a 0.                                            *
+! 08/01/96   K.Cys        SIR 21911 - Added outer join to unit in GET-CASE   *
+!                         -INFO so that case name and case id will be        *
+!                         retrieved regardless if any location info exists.  *
+! 09/09/96   J.Parchman   SIR 22286 - Added case region and county in GET-   *
+!                         CASE-INFO to enable ordering by region and county. *
+!                         Moved printing of headings "CASE ID, CASE NAME,    *
+!                         CASE PROGRAM and LOCATION from HEADER procedure to *
+!                         new PRINT-CASE-REGION-COUNTY procedure. Added code *
+!                         to PRINT-CASE-N and PRINT-CASE-P procedures to     *
+!                         print Region, County and Program information at    *
+!                         the top of each new page.                          *
+! 09/23/96   K.Cys        SIR 11230 - Added outer join to Caps Case so header*
+!                         info. will be retrieved regardless if any Case File*
+!                         Mgmt. detail exists.  Added code so Case Header    *
+!                         info. will still print if office type is not 'P' or*
+!                         'N.'  Added code to print End of Report when report*
+!                         is done printing.                                  *
+! 12/12/96   J.Parchman   SIR 12955 - Derive case region from case county    *
+!                         using CCNTYREG decode in GET-CASE-INFO.  Changed   *
+!                         Order by to ASC so records with no case file mgmt  *
+!                         will print last. Added new code to handle if office*
+!                         type is not 'P' or 'N' so that it will print case  *
+!                         information. Added code in PRINT-CASE-N to process *
+!                         PRINT-CASE-REGION-COUNTY if it is the first record.*
+! 07/13/98   J.Parchman   SIR 14795 - Added DT_CASE_OPENED and DT_CASE_CLOSED*
+!                         to information being retrieve and printed. Also    *
+!                         added code in GET-CASE-INFO to retrieve the last   *
+!                         stage closed when case county is blank.            *
+! 12/04/98   J.Parchman   SIR 15043 - Remove code that set $purge_date =     * 
+!                         '12/01/2001', this line was used for testing an    *
+!                         should have been removed before check-in           * 
+!*****************************************************************************
+
+!*****************************************************************************
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+    do PROCESS-REPORT
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                          !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup01a.sqc'                ! control codes for Landscape Batch
+
+    ASK INPUT_DATE                         ! input parameter !***SIR 21804***
+
+END-SETUP
+
+!*****************************************************************************
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. ### lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called header##.sqc for landscape or portrait       *
+!       reports.                                                             *
+!*****************************************************************************
+BEGIN-HEADING 4
+
+    let $mo_yr = $month_name || ', ' || $year                 !***SIR 21804***
+
+    move 'ccf16o00'                          to $ReportID
+    move 'CASES TO BE PURGED AT THE END OF'  to $ReportTitle
+    move $mo_yr                              to $ReportSubHeading
+
+    #INCLUDE 'header01.sqc'             ! Include file with header information
+
+END-HEADING
+
+!****************************************************************************
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS    : GET-PARSE                                                *
+!****************************************************************************
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                              !Set printer environment
+
+    move '{INPUT_DATE}'           to $input_date              !***SIR 21804***
+
+    do DETERMINE-PURGE-TYPE
+if $purge_type='M'
+    let #ind_delete_status = 6
+    do CONVERT-INPUT-DATE-M
+else
+    let #ind_delete_status = 0
+    do CONVERT-INPUT-DATE-H
+end-if
+    do GET-PARSE
+
+    move '****END OF REPORT****'  to $end_of_report           !***SIR 11230***
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!   DETERMINE-PURGE-TYPE                                      ***SIR 21804***
+!                                                                           *
+!   Get the purge type to derive the purge_date                             *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE DETERMINE-PURGE-TYPE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+TXT_PARAMETER_VALUE &purge_type
+    move &purge_type to $purge_type
+
+FROM BATCH_PARAMETERS
+WHERE NM_BATCH_PROGRAM='CCFC06B'
+AND   NM_BATCH_PARAMETER='PURGE-TYPE'
+
+END-SELECT
+
+END-PROCEDURE DETERMINE-PURGE-TYPE
+
+!****************************************************************************
+!   CONVERT-INPUT-DATE-M                                      ***SIR 21804***
+!                                                                           *
+!                                                                           *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE CONVERT-INPUT-DATE-M
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+TO_CHAR(LAST_DAY(SYSDATE), 'MM/DD/YYYY') &purge_date_m
+    move &purge_date_m to $purge_date
+
+FROM    DUAL
+
+END-SELECT
+
+END-PROCEDURE CONVERT-INPUT-DATE-M
+
+!****************************************************************************
+!   CONVERT-INPUT-DATE-H                                      ***SIR 21804***
+!                                                                           *
+!                                                                           *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE CONVERT-INPUT-DATE-H
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+TO_CHAR(ADD_MONTHS(LAST_DAY(SYSDATE),6), 'MM/DD/YYYY') &purge_date_h
+    move &purge_date_h to $purge_date
+
+FROM    DUAL
+
+END-SELECT
+
+END-PROCEDURE CONVERT-INPUT-DATE-H
+
+!****************************************************************************
+!                                                                           *
+!   GET-PARSE                                                               *
+!                                                                           *
+!       This procedure will parse the input month and convert it to the     *
+!       month name for the header.                                          *
+!                                                                           *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE GET-PARSE
+
+    let $month = substr($purge_date,1,2)
+    let $year  = substr($purge_date,7,4)
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+TO_CHAR(TO_DATE($month, 'MM'), 'MONTH') &month_name
+    move &month_name to $month_name
+
+    let $month_name = rtrim($month_name, ' ')                 !***SIR 21804***
+
+FROM    DUAL
+
+END-SELECT
+
+END-PROCEDURE GET-PARSE
+
+!****************************************************************************
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-CASE-INFO                                          *
+!****************************************************************************
+BEGIN-PROCEDURE PROCESS-REPORT
+
+    do GET-CASE-INFO
+
+END-PROCEDURE PROCESS-REPORT
+
+!****************************************************************************
+!   GET-CASE-INFO                                                           *
+!                                                                           *
+!       This procedure uses the cases retrieved from the input file and gets*
+!       the respective name, program, and location.  If the office type code*
+!       is 'P', another SQL is called to get info from the office and unit  *
+!       tables.                                                             *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-CASE-INFO                                        *
+!****************************************************************************
+BEGIN-PROCEDURE GET-CASE-INFO
+
+    move 0 to #count1
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+DC.ID_DELETE_CASE 
+    move &DC.ID_DELETE_CASE            to #id_case
+
+CC.NM_CASE
+    move &CC.NM_CASE                   to $case_name
+
+RR.CD_REC_RTN_RETEN_TYPE
+    move &RR.CD_REC_RTN_RETEN_TYPE     to $rtntn_type
+
+CC.CD_CASE_PROGRAM
+    move &CC.CD_CASE_PROGRAM           to $program
+
+CC.DT_CASE_OPENED                                             !***SIR 14795
+    move &CC.DT_CASE_OPENED            to $dt_case_opened
+
+CC.DT_CASE_CLOSED                                             !***SIR 14795
+    move &CC.DT_CASE_CLOSED            to $dt_case_closed
+
+NVL(CCNTYREG.DECODE,CCNTYREG2.DECODE)                         
+    move &NVL(CCNTYREG.DECODE,CCNTYREG2.DECODE) to $case_region
+
+NVL(CCOUNT.DECODE,CCOUNT2.DECODE)                            
+    move &NVL(CCOUNT.DECODE,CCOUNT2.DECODE)     to $case_county
+
+CFM.CD_CASE_FILE_OFFICE_TYPE
+    move &CFM.CD_CASE_FILE_OFFICE_TYPE to $office_type
+
+CFM.NM_CASE_FILE_OFFICE
+    move &CFM.NM_CASE_FILE_OFFICE      to $office_name
+
+CFM.ADDR_CASE_FILE_ST_LN_1
+    move &CFM.ADDR_CASE_FILE_ST_LN_1   to $addr_ln1
+
+CFM.ADDR_CASE_FILE_ST_LN_2
+    move &CFM.ADDR_CASE_FILE_ST_LN_2   to $addr_ln2
+
+CFM.ADDR_CASE_FILE_CITY
+    move &CFM.ADDR_CASE_FILE_CITY      to $addr_city
+
+CFM.ID_CASE_FILE_OFFICE
+    move &CFM.ID_CASE_FILE_OFFICE      to #id_office
+
+CFM.ID_UNIT
+    move &CFM.ID_UNIT                  to #id_unit
+
+CUNITPGM.DECODE
+    move &CUNITPGM.DECODE              to $program_dec
+
+CREGUNIT.DECODE
+    move &CREGUNIT.DECODE              to $region_dec
+
+O.CD_OFFICE_MAIL
+    move &O.CD_OFFICE_MAIL             to $mail_code
+
+U.NBR_UNIT
+    move &U.NBR_UNIT                   to $unit_nbr
+
+    let #count1 = #count1 + 1
+
+    if #count1 = 1
+        move $program     to $last_case_program               !***SIR 22286***
+        move $case_region to $last_case_region                !***SIR 22286***
+        move $case_county to $last_case_county                !***SIR 22286***
+        move $office_type to $last_type
+        move $program_dec to $last_program
+        move $region_dec  to $last_region
+        move $unit_nbr    to $last_unit
+    end-if
+
+    if $office_type <> $last_type
+        NEW-PAGE
+        do PRINT-CASE-REGION-COUNTY               !***11230***!***SIR 12955***
+    move 'Y' to $new_page_flag
+    end-if
+
+    if $office_type = 'N'
+        do PRINT-CASE-N
+    else
+    if $office_type = 'P'
+        do PRINT-CASE-P
+    else                                                      !***SIR 12955***
+       move 'No Office Type in Case File Management Record' to $office_name
+       do PRINT-CASE-NO-CFM
+    end-if
+    end-if
+
+FROM    RECORDS_RETENTION     RR,
+        CAPS_CASE             CC,
+        CASE_FILE_MANAGEMENT  CFM,
+        OFFICE                O,
+        UNIT                  U,
+        CCNTYREG              CCNTYREG,                       !***SIR 12955***
+        CCOUNT                CCOUNT,                         !***SIR 22286***
+        CUNITPGM              CUNITPGM,
+        CREGUNIT              CREGUNIT,
+        STAGE                 S,                              !***SIR 14795***
+        CCNTYREG              CCNTYREG2,                      !***SIR 14795***
+        CCOUNT                CCOUNT2,                        !***SIR 14795***
+        DELETE_CASE           DC                              !***sp-purge***
+
+WHERE   DC.ID_DELETE_CASE = CFM.ID_CASE_FILE_CASE(+)          !***SIR 11230***
+AND     DC.ID_DELETE_CASE = RR.ID_REC_RTN_CASE
+AND     DC.ID_DELETE_CASE = S.ID_CASE
+AND     DC.ID_DELETE_CASE = CC.ID_CASE 
+AND     DC.IND_DELETE_STATUS = #ind_delete_status
+AND     O.ID_OFFICE(+) = CFM.ID_CASE_FILE_OFFICE
+AND     U.ID_UNIT(+) = CFM.ID_UNIT                            !***SIR 21911***
+AND     CCNTYREG.CODE(+) = CC.CD_CASE_COUNTY                  !SIR 12955***
+AND     CCOUNT.CODE(+) = CC.CD_CASE_COUNTY                    !***SIR 22286***
+AND     CUNITPGM.CODE(+) = O.CD_OFFICE_PROGRAM
+AND     '0'+CREGUNIT.CODE(+) = O.CD_OFFICE_REGION             !***SIR 21823***
+AND     CCNTYREG2.CODE(+) = S.CD_STAGE_CNTY                   !***SIR 14795***
+AND     CCOUNT2.CODE(+)   = S.CD_STAGE_CNTY
+
+ORDER BY    CC.CD_CASE_PROGRAM                    ASC,        !***SIR 22286***
+            NVL(CCNTYREG.DECODE,CCNTYREG2.DECODE) ASC,        
+            NVL(CCOUNT.DECODE,CCOUNT2.DECODE)     ASC,       
+            CUNITPGM.DECODE                       ASC,
+            CREGUNIT.DECODE                       ASC
+
+END-SELECT
+
+END-PROCEDURE GET-CASE-INFO
+
+!****************************************************************************
+!   PRINT-CASE-REGION-COUNTY                                 !***SIR 22286***
+!                                                                           *
+!       This procedure prints the region and county for the cases           *
+!                                                                           *
+!       CALLED BY  : GET-CASE-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-CASE-REGION-COUNTY
+
+print 'CASE REGION:'    (+2,1)
+print $case_region      (+0,14)
+print 'CASE COUNTY:'    (+0,20)
+print $case_county      (+0,33)
+print 'CASE PROGRAM:'   (+0,52)
+print $program          (+0,66)
+print 'CASE ID'         (+2,1)
+print 'CASE NAME'       (+0,22)
+print 'RTN'             (+0,48)
+print 'DT CASE OPENED'  (+0,52)                               !***SIR 14795***
+print 'DT CASE CLOSED'  (+0,69)                               !***SIR 14795***
+print 'LOCATION'        (+0,86)
+print '-'               (+1,1,113)fill
+
+END-PROCEDURE PRINT-CASE-REGION-COUNTY
+
+!****************************************************************************
+!   PRINT-CASE-INFO                                                         *
+!                                                                           *
+!       This procedure prints the report rows for each case.                *
+!                                                                           *
+!       CALLED BY  : GET-CASE-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-CASE-INFO
+
+print #id_case        (+2,1) edit 8888888888888888
+print $case_name      (+0,22)
+print $rtntn_type     (+0,48)                                 !***sp-purge***
+print $dt_case_opened (+0,52)                                 !***SIR 14795***
+print $dt_case_closed (+0,69)                                 !***SIR 14795***
+
+    move $office_type to $last_type
+
+END-PROCEDURE PRINT-CASE-INFO
+
+!****************************************************************************
+!   PRINT-CASE-N                                                            *
+!                                                                           *
+!       This procedure prints the location information for office type 'N'. *
+!                                                                           *
+!       CALLED BY  : GET-CASE-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-CASE-N
+
+if $new_page_flag = 'Y'                                       !***begin SIR 22286***
+   move 'N' to $new_page_flag
+else
+   if $program <> $last_case_program
+      NEW-PAGE
+      do PRINT-CASE-REGION-COUNTY
+   else
+      if $case_region <> $last_case_region
+         NEW-PAGE
+         do PRINT-CASE-REGION-COUNTY
+      else
+         if $case_county <> $last_case_county
+            NEW-PAGE
+            do PRINT-CASE-REGION-COUNTY
+         else
+            if #count1 = 1
+               do PRINT-CASE-REGION-COUNTY
+            end-if
+         end-if
+      end-if
+   end-if
+end-if                                                        !***end SIR 22286***
+
+do PRINT-CASE-INFO
+
+print $office_name  (+0,86)
+
+if $addr_ln1 <> ''
+print ', '          ()
+print $addr_ln1     ()
+end-if
+
+if $addr_ln2 <> ''
+print ', '          ()
+print $addr_ln2     ()
+end-if
+
+if $addr_city <> ''
+print ', '          ()
+print $addr_city    ()
+end-if
+
+move $program     to $last_case_program                       !***SIR 22286***
+move $case_region to $last_case_region                        !***SIR 22286***
+move $case_county to $last_case_county                        !***SIR 22286***
+
+END-PROCEDURE PRINT-CASE-N
+
+!****************************************************************************
+!   PRINT-CASE-P                                                            *
+!                                                                           *
+!       This procedure prints the office and unit information for office    *
+!       type 'P'.                                                           *
+!                                                                           *
+!       CALLED BY  : GET-OFFICE                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-CASE-P
+
+if $new_page_flag = 'Y'
+   move 'N' to $new_page_flag
+else
+   if $program <> $last_case_program
+      NEW-PAGE
+      do PRINT-CASE-REGION-COUNTY
+   else
+      if $case_region <> $last_case_region                    !***begin SIR 22286***
+         NEW-PAGE
+         do PRINT-CASE-REGION-COUNTY
+      else
+         if $case_county <> $last_case_county
+            NEW-PAGE
+            do PRINT-CASE-REGION-COUNTY
+         else
+            if $program_dec <> $last_program
+               NEW-PAGE
+               do PRINT-CASE-REGION-COUNTY
+            else
+               if $region_dec <> $last_region
+                  NEW-PAGE
+                  do PRINT-CASE-REGION-COUNTY
+               else
+                  if $unit_nbr <> $last_unit
+                     NEW-PAGE
+                     do PRINT-CASE-REGION-COUNTY
+                  else
+                     if #count1 = 1
+                        do PRINT-CASE-REGION-COUNTY
+                     end-if
+                  end-if
+               end-if
+            end-if
+         end-if
+      end-if
+   end-if
+end-if                                                        !***end SIR 22286***
+
+do PRINT-CASE-INFO
+
+print $program_dec   (+0,86)
+
+if $region_dec <> ''
+print ', '           ()
+print $region_dec    ()
+end-if
+
+if $unit_nbr <> ''
+print ', '           ()
+print 'Unit '        ()
+print $unit_nbr      ()
+end-if
+
+if $mail_code <> ''
+print ', '           ()
+print $mail_code     ()
+end-if
+
+move $program     to $last_case_program
+move $case_region to $last_case_region                        !***SIR 22286***
+move $case_county to $last_case_county                        !***SIR 22286***
+move $program_dec to $last_program
+move $region_dec  to $last_region
+move $unit_nbr    to $last_unit
+
+END-PROCEDURE PRINT-CASE-P
+
+!****************************************************************************
+!   PRINT-CASE-NO-CFM                                        !***SIR 12955***
+!                                                                           *
+!       This procedure prints the office and unit information for office    *
+!       type 'P'.                                                           *
+!                                                                           *
+!       CALLED BY  : GET-OFFICE                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-CASE-NO-CFM
+
+if $new_page_flag = 'Y'
+   move 'N' to $new_page_flag
+else
+   if $program <> $last_case_program
+      NEW-PAGE
+      do PRINT-CASE-REGION-COUNTY
+   else
+      if $case_region <> $last_case_region
+         NEW-PAGE
+         do PRINT-CASE-REGION-COUNTY
+      else
+         if $case_county <> $last_case_county
+            NEW-PAGE
+            do PRINT-CASE-REGION-COUNTY
+         else
+            if #count1 = 1
+               do PRINT-CASE-REGION-COUNTY
+            end-if
+         end-if
+      end-if
+   end-if
+end-if
+
+do PRINT-CASE-INFO
+
+print $office_name (+0,86)
+
+move $program     to $last_case_program
+move $case_region to $last_case_region                        !***SIR 22286***
+move $case_county to $last_case_county                        !***SIR 22286***
+
+END-PROCEDURE PRINT-CASE-NO-CFM
+
+!****************************************************************************
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE WRAP-UP
+
+   print $end_of_report (+4) center                           !***SIR 11230***
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+BEGIN-PROCEDURE SqlErrorHandle
+
+  print 'SQL error - Processing Terminated'         (+1,2)
+  print $error                                      (+1,2)
+  print 'ERROR: SQL error halted loader processing' (+0)
+  print $error                                      (+1,2)
+  print 'SQL Error: '                               (+0)
+  print $sql-error                                  (+0)
+  print $error                                      (+1,2)
+  print 'SQL Status: '                              (+0)
+  print #sql-status                                 (+0)
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+!****************************************************************************
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+

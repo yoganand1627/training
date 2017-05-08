@@ -1,0 +1,36 @@
+--STGAP00017137 - Release(5.0) MR-092 STAGE_PROG inserts
+
+-- MR-092 STAGE_PROG inserts
+
+Insert into caps.STAGE_PROG (
+ID_STAGE_PROG, DT_LAST_UPDATE, CD_STAGE_PROG_STAGE,
+CD_STAGE_PROG_RSN_CLOSE, CD_STAGE_PROG_PROGRAM, IND_STAGE_PROG_CLOSE,
+CD_STAGE_PROG_OPEN, CD_STAGE_PROG_EVENT_TYPE, CD_STAGE_PROG_STAGE_TYPE,
+CD_STAGE_PROG_STATUS, CD_STAGE_PROG_TASK, CD_STAGE_PROG_TODO_INFO,
+TXT_STAGE_PROG_EVNT_DESC,TXT_STAGE_PROG_TODO_DESC,NBR_STAGE_PROG_DAYS_DUE)
+values (
+0,sysdate,'ADO',
+'SUB','CPS',null,
+null,'AFS','REG',
+'NEW','9118',null,
+'AA Funding Determination','AA Funding Summary created and requires validation.',10);
+
+Insert into caps.STAGE_PROG (
+ID_STAGE_PROG, DT_LAST_UPDATE, CD_STAGE_PROG_STAGE,
+CD_STAGE_PROG_RSN_CLOSE, CD_STAGE_PROG_PROGRAM, IND_STAGE_PROG_CLOSE,
+CD_STAGE_PROG_OPEN, CD_STAGE_PROG_EVENT_TYPE, CD_STAGE_PROG_STAGE_TYPE,
+CD_STAGE_PROG_STATUS, CD_STAGE_PROG_TASK, CD_STAGE_PROG_TODO_INFO,
+TXT_STAGE_PROG_EVNT_DESC,TXT_STAGE_PROG_TODO_DESC,NBR_STAGE_PROG_DAYS_DUE)
+values (
+0,sysdate,'PAD',
+'PA','CPS','1',
+null,'AFS','REG',
+'NEW','9103',null,
+'AA Funding Determination','AA Funding Summary created and requires Rev Max secondary assignment.',0);
+
+
+
+insert into caps.schema_version(id_schema_version,application_version,comments)
+            values (1120, 'SacwisRev5', 'Release 5.0 - DBCR 17137');
+
+commit;

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.PalPublicAssist" table="PAL_PUBLIC_ASSIST" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.PalPublicAssistId" mapped="false"
+                  unsaved-value="undefined">
+      <meta attribute="implement-equals">true</meta>
+      <key-property name="idPalPublicAssistStge" type="integer">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="ID_PAL_PUBLIC_ASSIST_STGE" precision="16" scale="0"/>
+      </key-property>
+      <key-property name="cdPalPublicAssist" type="string">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="CD_PAL_PUBLIC_ASSIST" length="3"/>
+      </key-property>
+      <key-property name="idPalFollowUp" type="int">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="ID_PAL_FOLLOW_UP" precision="16" scale="0"/>
+      </key-property>
+    </composite-id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="palFollowUp" class="gov.georgia.dhr.dfcs.sacwis.db.PalFollowUp" update="false" insert="false"
+                 fetch="select" unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PAL_FOLLOW_UP" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+  </class>
+</hibernate-mapping>

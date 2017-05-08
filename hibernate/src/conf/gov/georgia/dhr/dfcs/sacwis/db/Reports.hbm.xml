@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Reports" table="REPORTS" mutable="false"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.ReportsId" mapped="false" unsaved-value="undefined">
+      <meta attribute="implement-equals">true</meta>
+      <key-property name="nmRptSqrName" type="string">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="NM_RPT_SQR_NAME" length="50"/>
+      </key-property>
+      <key-property name="nmRptSqrVer" type="string">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="NM_RPT_SQR_VER" length="2"/>
+      </key-property>
+    </composite-id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="nbrRptRetainage" type="integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RPT_RETAINAGE" precision="5" scale="0" not-null="true"/>
+    </property>
+    <property name="nmRptType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_RPT_TYPE" length="1"/>
+    </property>
+    <property name="txtRptFullName" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_RPT_FULL_NAME" length="50"/>
+    </property>
+    <property name="nmRptTemplateName" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_RPT_TEMPLATE_NAME" length="8"/>
+    </property>
+    <property name="nmRptOrientation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_RPT_ORIENTATION" length="1"/>
+    </property>
+    <property name="txtRptEmailOptions" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_RPT_EMAIL_OPTIONS" length="1"/>
+    </property>
+    <property name="txtRptDesc" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_RPT_DESC" length="300"/>
+    </property>
+    <property name="txtRptAreaType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_RPT_AREA_TYPE" length="50"/>
+    </property>
+    <property name="indRptPage" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RPT_PAGE" length="1"/>
+    </property>
+    <property name="cdSecAttr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_SEC_ATTR" length="3"/>
+    </property>
+    <property name="indShinesBatch" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_SHINES_BATCH" length="1"/>
+    </property>
+    <bag name="reportParameters" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="NM_RPT_SQR_NAME" length="50" not-null="true"/>
+        <column name="NM_RPT_SQR_VER" length="2" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ReportParameter" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

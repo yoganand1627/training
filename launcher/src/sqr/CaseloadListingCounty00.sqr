@@ -1,0 +1,676 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Thu Feb 02 12:25:39 2012 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\StatewideModify\CaseloadListingCounty\Jan25\CaseloadListingCounty00.sqr
+! Format  : Tabular
+! Username: JPOTTAMMEL
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.100 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Date $rmvlDt 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=156    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,3,11) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'GDS - Guardianship' (279,8,18)
+ Print 'LAE - Another Planned Permanent Living Arrangement through Emancipation' (318,8,46) Wrap 46 3 line-height=10 Keep-Top on= 
+ Print 'LLR - Live with fit and willing Relatives' (342,8,49)
+ Print 'NOS - Non Selected' (359,8,22)
+ Print 'RUI - Reunification' (374,8,0)
+ Print 'Plcmt Type: Placement Type' (399,9,0) Underline  Bold 
+ Print 'ADH - Adoptive Home ' (411,9,0)
+ Print 'CCI - Child Care Institution ' (424,9,0)
+ Print 'CFH - CPA Family Foster Home ' (438,9,0)
+ Print 'DFH - DFCS Family Foster Home' (452,9,0)
+ Print 'EMS - Emergency Shelter ' (466,9,0)
+ Print 'GRH - Group Home ' (481,9,0)
+ Print 'HOS - Hospital' (495,9,18)
+ Print 'ICA - ICPC - Adoptive' (262,266,0)
+ Print 'ICF - ICPC - Foster' (276,266,0)
+ Print 'ICR - ICPC - Relative' (291,266,0)
+ Print 'IFH - CCI Family Foster Home ' (305,266,0)
+ Print 'LAF - ILP/AfterCare' (318,266,20)
+ Print 'NRP - Non-Relative Paid' (332,266,0)
+ Print 'OTP - Other Person' (347,266,0)
+ Print 'OTR - Other Resource' (361,266,0)
+ Print 'PRN - Parent' (376,266,16)
+ Print 'RFH - Relative Foster Home' (389,266,0)
+ Print 'REP - Relative - Paid' (403,266,0)
+ Print 'REU - Relative - Unpaid' (418,266,0)
+ Print 'RNA - Runaway' (432,266,13)
+ Print 'SFH - Specialized Foster Home' (444,266,0)
+ Print 'Legal Status' (248,449,0) Underline  Bold 
+ Print 'AFS - Aftercare/Supervision' (262,449,0)
+ Print 'CTD - Committed To DJJ' (275,449,0)
+ Print 'ILP - ILP Aftercare' (290,449,0)
+ Print 'JCD - Joint Commitment With DJJ' (304,449,0)
+ Print 'NAF - Not In DFCS Custody - Adoption Finalized' (318,449,0)
+ Print 'NCT - Not In DFCS Custody - Child Turned 18 (No ILP)' (333,449,0)
+ Print 'NCD - Not In DFCS Custody - Child Death' (348,449,0)
+ Print 'NCO - Not In DFCS Custody - Custody To Other' (362,449,0)
+ Print 'NTT - Not In DFCS Custody - Custody Transferred To Tribe' (376,449,0)
+ Print 'NCE - Not In DFCS Custody - Emancipated' (391,449,0)
+ Print 'NGP - Not In DFCS Custody - Guardianship' (405,449,0)
+ Print 'NPC - Not In DFCS Custody - Parental Custody' (419,449,0)
+ Print 'NPR - Not In DFCS Custody - Perm Custody To Relative For Adoption' (434,449,0)
+ Print 'PCT - Permanent Court' (447,449,0)
+ Print 'PVL - Permanent Voluntary' (462,449,0)
+ Print 'STE - Short Term Emergency Care' (476,449,0)
+ Print 'TCT - Temporary Court' (490,449,0)
+ Print 'TVL - Temporary Voluntary' (506,449,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Key' (236,5,3) Underline  Bold 
+ Print 'The most recent legal status documented for the child in the stage.' (91,88,0)
+ Print 'The plan type of the most recent approved permanency plan on the case involving the child. Permanency Plans are documented in the Foster Care Family (FCF) stage.' (104,88,123) Wrap 123 2 line-height=12 Keep-Top on=  
+ Print 'The placement type of the child''s current approved placement documented in the stage.This field does not display temporary placement information. The field will be blank if there is no approved placement recorded on the stage or the most recent approved placement is ended.' (129,88,148) Wrap 148 2 line-height=12 Keep-Top on= 
+ Print 'The court order expiration date from the child''s most recent legal status record documented in the stage.' (154,88,0)
+ Print 'The date of the child''s removal and entry into foster care.The removal date is calculated as the most recent custody removal date from the custody removal record(s) documented on the case for the child.  If a custody removal record is not present, the removal date is calculated as the earliest placement start date approved for the child on the case.  If neither a custody removal or placement record is available for the child on the case, a removal date does not display.' (168,88,148) Wrap 148 4 line-height=12 Keep-Top on=  
+ Print 'The months in care is the number of months between the Date the child is removed from home/the earliest placement start date and the system date.' (215,88,151)
+ Print 'Legal Status:' (91,6,13) Bold 
+ Print 'Perm Plan:' (104,6,10) Bold 
+ Print 'Ct Ordr Exp Dt:' (154,6,15) Bold 
+ Print 'Rmvl Dt:' (168,6,8) Bold 
+ Print 'Mnths in Care: ' (215,6,14) Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Perm Plan : Permanency Plan' (248,4,0) Underline  Bold 
+ Print 'ADA - Adoption' (262,8,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Last-Page (539,721) 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'FCO - Another Planned Permanent Living Arrangement Through Long Term Foster Care' (296,8,46) Wrap 46 3 line-height=10 Keep-Top on=  
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'This report lists caseload of the caseworker assigned as primary (PR) or secondary (SE). Report displays the case details, placement details of the children involved in the cases, the different stages the cases are in, and the assigned response time. Report lists cases which are still opened. Report includes all stages except Foster Care Family stage (FCF) and Administrative Review stage (ARI). In Child stages - FCC, ADO, PFC and PAD, the information is pulled of the Primary Child (PC) on the stage. For INT, INV, ONG, DIV and FAD stages information is pulled of the Primary Caretaker (PK) on the case.' (27,2,163) Wrap 163 5 line-height=12 Keep-Top on= 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'YDC - YDC/RYDC' (457,266,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Plcmt Type:' (129,6,11) Bold 
+ Page-Number (539,684) '' ' of '
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+Do Get-Input
+Do Get-Input-Unit
+Do Get-Input-Caseworker
+ Position (1,1)
+ Do Master_Query
+End-Program
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I401_CD_UNIT_REGION 'Enter a value for CD_UNIT_REGION' MaxLen=2  Type=Char
+If IsNull($_I401_CD_UNIT_REGION) or IsBlank($_I401_CD_UNIT_REGION) or ($_I401_CD_UNIT_REGION) = '0'
+  Let $where_clause401 = 'CD_UNIT_REGION is not null'
+  Let $region_selected = 'N'
+Else
+  Let $_region = $_I401_CD_UNIT_REGION
+  Let $_I401_CD_UNIT_REGION = '''' || '0' || $_I401_CD_UNIT_REGION || ''''
+  Let $brb_tmp = 'CD_UNIT_REGION'
+  Let $where_clause401 = $brb_tmp  || ' = ' || $_I401_CD_UNIT_REGION
+  Let $region_selected = 'Y'
+End-if
+! -----------------------------
+Input $_I402_CD_COUNTY 'Enter a value for CD_COUNTY' MaxLen=3  Type=Char
+If IsNull($_I402_CD_COUNTY) or IsBlank($_I402_CD_COUNTY) or ($_I402_CD_COUNTY) = '0'
+  Let $where_clause402 = 'CD_COUNTY is not null'
+  Let $county_selected = 'N'
+Else
+  Let $_I402_CD_COUNTY = '''' || $_I402_CD_COUNTY || ''''
+  Let $brb_tmp = 'CD_COUNTY'
+  Let $where_clause402 = $brb_tmp  || ' = ' || $_I402_CD_COUNTY
+  Let $county_selected = 'Y'
+End-If
+
+If $county_selected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From  CCOUNT
+Where CCOUNT.CODE = [$_I402_CD_COUNTY]
+End-Select
+  Move &_County_Decode to $_header_disp
+Else
+  If $region_selected = 'Y'
+    Let $_header_disp = 'Region ' || $_region
+  Else 
+    Let $_header_disp = 'Statewide'
+  End-If
+End-If
+End-Procedure
+Begin-Procedure Get-Input-Unit
+Input $_I101_NBR_UNIT 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If ($_I101_NBR_UNIT = '0')
+  Let $where_clause102 = 'NBR_UNIT is not null'
+  Let $unitSelected = 'N'
+else
+ Let $unitSelected = 'Y' 
+If SubStr($_I101_NBR_UNIT, 1, 1) != ''''
+  Let $_I101_NBR_UNIT = '''' || $_I101_NBR_UNIT || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_NBR_UNIT,'''',0) = 0 and instr($_I101_NBR_UNIT,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'NBR_UNIT'
+   Let $where_clause102 = $brb_tmp  || ' = ' ||  '''' || $_I101_NBR_UNIT || '''' 
+ Else
+   If (instr($_I101_NBR_UNIT,'''',0) = 0 and instr($_I101_NBR_UNIT,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'NBR_UNIT'
+     Let $where_clause102 = $brb_tmp  || ' = ' || $_I101_NBR_UNIT
+   End-If
+ End-if
+ End-If
+End-Procedure
+Begin-Procedure Get-Input-Caseworker
+! -----------------------------
+Input $_I101_ID_WKLD_PERSON 'Enter a value for ID_WKLD_PERSON' MaxLen=16  Type=Number
+If ($_I101_ID_WKLD_PERSON) = '0' 
+Let $where_clause105 = 'ID_WKLD_PERSON is not null'
+Let $CMSelected = 'N'
+
+else
+ Let $CMSelected = 'Y'
+Let $brb_tmp = 'ID_WKLD_PERSON'
+Let $where_clause105 = $brb_tmp  || ' = ' || $_I101_ID_WKLD_PERSON 
+End-If
+End-Procedure
+
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select Distinct
+(count(distinct  STAGE.NM_STAGE )) &cntnms
+NBR_UNIT &Master_Query_NBR_UNIT
+ID_WKLD_STAGE &Master_Query_ID_WKLD_STAGE
+CAPS.PERSON.NM_PERSON_FULL &Master_Query_CAPS.PERSON.NM_PERSON_FULL
+PERSON_UNIT_SUP.NM_PERSON_FULL &Master_Query_PERSON_UNIT_SUP.NM_PERSON_FULL
+CCOUNT_unit.DECODE &unitcntyname
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_UNIT_REGION &region () On-Break Set=1 Level=1 Print=Never Before=Master_QueryCD_UNIT_REGION_BeforeProc101 After=Master_QueryCD_UNIT_REGION_AfterProc101
+CD_COUNTY &county () On-Break Set=1 Level=2 Print=Never Before=Master_QueryCD_COUNTY_BeforeProc102 After=Master_QueryCD_COUNTY_AfterProc102
+CAPS.UNIT.ID_UNIT &Master_Query_CAPS.UNIT.ID_UNIT () On-Break Set=1 Level=3 Print=Never Before=Master_QueryID_UNIT_BeforeProc103 After=Master_QueryID_UNIT_AfterProc103
+ID_WKLD_PERSON &Master_Query_ID_WKLD_PERSON () On-Break Set=1 Level=4 Print=Never Before=Master_QueryID_WKLD_PERSON_BeforeProc104 After=Master_QueryID_WKLD_PERSON_AfterProc104
+NM_WKLD_STAGE &Master_Query_NM_WKLD_STAGE (16,3,16) Wrap 16 3 line-height=12 Keep-Top on= 
+ID_WKLD_CASE &Master_Query_ID_WKLD_CASE (16,123) Edit 8888888888na
+DT_CASE_OPENED &Master_Query_DT_CASE_OPENED (16,180) Edit MM/DD/YYYY
+DT_WKLD_STAGE_PERS_LINK &Master_Query_DT_WKLD_STAGE_PERS_LINK (16,241) Edit MM/DD/YYYY
+CD_WKLD_STAGE_PERS_ROLE &Master_Query_CD_WKLD_STAGE_PERS_ROLE (16,299,5)
+CD_STAGE_CURR_PRIORITY &Master_Query_CD_STAGE_CURR_PRIORITY (16,331,3)
+CAPS.CODES_TABLES.DECODE &Master_Query_CAPS.CODES_TABLES.DECODE (16,92,4)
+ID_STAGE &Master_Query_ID_STAGE
+CAPS.STAGE.ID_CASE &Master_Query_CAPS.STAGE.ID_CASE
+CD_STAGE &Master_Query_CD_STAGE
+ Do LatestPlcmt(&Master_Query_ID_STAGE, &Master_Query_CAPS.STAGE.ID_CASE, &Master_Query_CD_STAGE)
+ Print &LatestPlcmt_PLACEMENT_1.CD_PLCMT_TYPE (16,541,4)
+ Do Permanency_Query(&Master_Query_ID_STAGE, &Master_Query_CAPS.STAGE.ID_CASE, &Master_Query_CD_STAGE)
+ Print &Permanency_Query_FCCP_FAMILY_1.CD_PRIM_PERM_PLAN (16,506,4)
+ Do LegStCrtOd_Query(&Master_Query_ID_STAGE, &Master_Query_CAPS.STAGE.ID_CASE, &Master_Query_CD_STAGE)
+ Print &LegStCrtOd_Query_LEGAL_STATUS_1.CD_LEGAL_STAT_STATUS (16,462,3)
+ Print &LegStCrtOd_Query_LEGAL_STATUS_1.DT_LEGAL_STAT_CRT_ODR_EXP_DT (16,577) Edit MM/DD/YYYY
+ Do PerDtlQuery(&Master_Query_ID_STAGE, &Master_Query_CAPS.STAGE.ID_CASE, &Master_Query_CD_STAGE)
+ Print &PDtl_DOB (16,361) Edit MM/DD/YYYY
+ Print &PDtl_Sex (16,423,4)
+ Do DtRmvl_Query(&Master_Query_ID_STAGE)
+ Print &mnthsincare (16,707) Edit 999999na
+ Print &decDtRmvl (16,640) Edit MM/DD/YYYY
+ Next-Listing   ! Close up the wrapped columns
+ If #page-count > #pageNum
+  Let #pageNum = #page-count
+  Let $Master_Query_CAPS.PERSON.NM_PERSON_FULLFirst = &Master_Query_CAPS.PERSON.NM_PERSON_FULL
+ End-If
+  Let $cntnmsLast = &cntnms
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Add 1 To #103ROW_COUNT
+ Add 1 To #104ROW_COUNT
+ Next-Listing  Need=22
+From  CAPS.WORKLOAD, CAPS.STAGE
+,      CAPS.CAPS_CASE, CAPS.PERSON, CAPS.UNIT
+,      CAPS.PERSON PERSON_UNIT_SUP, CAPS.CODES_TABLES, CAPS.UNIT_EMP_LINK
+,      CAPS.EMPLOYEE, CAPS.CCOUNT CCOUNT_unit
+      Where CAPS.WORKLOAD.ID_WKLD_STAGE = CAPS.STAGE.ID_STAGE
+            And CAPS.STAGE.ID_CASE = CAPS.CAPS_CASE.ID_CASE
+            And PERSON_UNIT_SUP.ID_PERSON = CAPS.UNIT.ID_PERSON
+            And CAPS.WORKLOAD.ID_WKLD_PERSON = CAPS.PERSON.ID_PERSON
+            And CAPS.STAGE.CD_STAGE = CAPS.CODES_TABLES.CODE
+            And CAPS.UNIT_EMP_LINK.ID_UNIT = CAPS.UNIT.ID_UNIT
+            And CAPS.WORKLOAD.ID_WKLD_PERSON = CAPS.UNIT_EMP_LINK.ID_PERSON
+            And CAPS.UNIT_EMP_LINK.ID_PERSON = CAPS.EMPLOYEE.ID_PERSON
+            And CAPS.UNIT_EMP_LINK.ID_UNIT = CAPS.EMPLOYEE.ID_EMP_UNIT
+            And CAPS.UNIT.CD_COUNTY = CCOUNT_unit.CODE
+ And WORKLOAD.CD_WKLD_STAGE_PERS_ROLE  IN ('PR','SE')
+ And [$where_clause401]
+ And [$where_clause102]
+ And [$where_clause105]
+ And CODE_TYPE = 'CTXTOGA'
+ And STAGE.CD_STAGE not in ('FSU','ARI')
+ And [$where_clause402]
+Group By NBR_UNIT
+,      ID_WKLD_STAGE
+,      CAPS.PERSON.NM_PERSON_FULL
+,      PERSON_UNIT_SUP.NM_PERSON_FULL
+,      CCOUNT_unit.DECODE
+,      CD_UNIT_REGION
+,      CD_COUNTY
+,      CAPS.UNIT.ID_UNIT
+,      ID_WKLD_PERSON
+,      NM_WKLD_STAGE
+,      ID_WKLD_CASE
+,      DT_CASE_OPENED
+,      DT_WKLD_STAGE_PERS_LINK
+,      CD_WKLD_STAGE_PERS_ROLE
+,      CD_STAGE_CURR_PRIORITY
+,      CAPS.CODES_TABLES.DECODE
+,      ID_STAGE
+,      CAPS.STAGE.ID_CASE
+,      CD_STAGE
+Order By CD_UNIT_REGION
+,      CCOUNT_unit.DECODE
+,      NBR_UNIT
+,      CAPS.PERSON.NM_PERSON_FULL
+,      NM_WKLD_STAGE
+End-Select
+ Next-Listing
+ Next-Listing  Need=19
+ If #1ROW_COUNT > 0
+ Graphic (4,3,742) Horz-Line 20 
+ Position (6,1)
+ let #totalStgRpt = #1ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #totalStgRpt (19,69) Bold  Edit 8888888888na
+  Print 'Report Total:'  (19,2) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryCD_COUNTY_BeforeProc102
+  If $county_selected = 'Y' or $CMSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=18
+ Graphic (2,1,746) Horz-Line 20 
+ Position (4,1)
+  If $county_selected = 'Y' or $CMSelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &unitcntyname (18,7,30) Bold 
+ End-If
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_COUNTY_AfterProc102
+  If $county_selected = 'Y' or $CMSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=17
+ Graphic (2,1,746) Horz-Line 20 
+ Position (4,1)
+ let #countyTot = #102ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #countyTot (17,74) Bold  Edit 99999999na
+ Print 'County Total:'  (16,2) Bold 
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_UNIT_REGION_BeforeProc101
+If $region_selected ='Y' or $county_selected = 'Y' or $CMSelected = 'Y' or ($region_selected ='Y' and $county_selected = 'Y')
+    ! do nothing
+ Else
+ Next-Listing  Need=17
+ Graphic (2,1,745) Horz-Line 20 
+ Position (4,1)
+  If $region_selected ='Y' or $county_selected = 'Y' or $CMSelected = 'Y' or ($region_selected ='Y' and $county_selected = 'Y')
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &region (17,60,3) Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region:'  (17,2) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_UNIT_REGION_AfterProc101
+If $region_selected ='Y' or $county_selected = 'Y' or $CMSelected = 'Y' or ($region_selected ='Y' and $county_selected = 'Y')
+    ! do nothing
+ Else
+ Next-Listing  Need=21
+ Graphic (3,4,743) Horz-Line 23 
+ Position (5,1)
+ let #regTot = #101ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #regTot (21,74) Bold  Edit 99999999na
+ Print 'Region Total:'  (20,2) Bold 
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_BeforeProc103
+ Next-Listing  Need=21
+ Graphic (3,1,744) Horz-Line 15 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CAPS.UNIT.ID_UNIT (17,499) Edit 9999999999999999na Foreground=(255,255,255)
+ Print 'Unit:'  (21,7) Bold 
+  Print &Master_Query_NBR_UNIT (21,37,5) Bold 
+  Print &Master_Query_PERSON_UNIT_SUP.NM_PERSON_FULL (21,74,25) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_AfterProc103
+If $unitSelected = 'Y' or $CMSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=18
+ Graphic (4,3,744) Horz-Line 15 
+ Position (5,1)
+ let #totalStgUnit = #103ROW_COUNT
+ If $unitSelected = 'Y' or $CMSelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #totalStgUnit (18,74) Bold  Edit 99999999na
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit Total:'  (18,4) Bold 
+   Position (+12,)
+ Move 0 To #103ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-if
+End-Procedure
+
+Begin-Procedure Master_QueryID_WKLD_PERSON_BeforeProc104
+ Next-Listing  Need=20
+ Graphic (3,3,743) Horz-Line 11 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_ID_WKLD_PERSON (20,88) Edit 88888888888na Bold 
+ Print 'CaseManager:'  (20,8) Bold 
+  Print &Master_Query_CAPS.PERSON.NM_PERSON_FULL (20,159,25) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_WKLD_PERSON_AfterProc104
+If $CMSelected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=19
+ Graphic (4,3,741) Horz-Line 11 
+ Position (5,1)
+ let #totalStgCM = #104ROW_COUNT
+ If $CMSelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #totalStgCM (19,74) Bold  Edit 99999999na
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Total:'  (19,5) Bold 
+   Position (+12,)
+ Move 0 To #104ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure LatestPlcmt (#P1_ID_STAGE, #P2_ID_CASE, $P3_CD_STAGE)
+Begin-Select Loops=1
+PLACEMENT_1.CD_PLCMT_TYPE &_LatestPlcmt_PLACEMENT_1.CD_PLCMT_TYPE
+From  CAPS.EVENT EVENT_1, CAPS.PLACEMENT PLACEMENT_1
+,      CAPS.STAGE_PERSON_LINK SplPlcmt, CAPS.STAGE STAGEPlcmt
+      Where EVENT_1.ID_EVENT = PLACEMENT_1.ID_PLCMT_EVENT
+            And PLACEMENT_1.ID_PLCMT_CHILD = SplPlcmt.ID_PERSON
+            And PLACEMENT_1.ID_CASE = SplPlcmt.ID_CASE
+            And EVENT_1.ID_EVENT_STAGE = SplPlcmt.ID_STAGE
+            And SplPlcmt.ID_STAGE = STAGEPlcmt.ID_STAGE
+            And SplPlcmt.ID_CASE = STAGEPlcmt.ID_CASE
+ And STAGEPlcmt.ID_STAGE = #P1_ID_STAGE
+ And STAGEPlcmt.ID_CASE = #P2_ID_CASE
+ And STAGEPlcmt.CD_STAGE = $P3_CD_STAGE
+ And EVENT_1.CD_EVENT_STATUS = 'APRV'
+ And (PLACEMENT_1.DT_PLCMT_START = (SELECT  (max( PLACEMENT_2.DT_PLCMT_START ))  FROM  CAPS.EVENT EVENT_2,  CAPS.PLACEMENT PLACEMENT_2 WHERE
+     EVENT_2.ID_CASE = PLACEMENT_2.ID_CASE
+  AND  EVENT_2.ID_EVENT = PLACEMENT_2.ID_PLCMT_EVENT
+ AND  EVENT_2.CD_EVENT_STATUS = 'APRV' AND
+      (PLACEMENT_2.CD_TEMP_TYPE IS NULL   Or PLACEMENT_2.CD_TEMP_TYPE  NOT IN ('COR','RED','REN')) AND  PLACEMENT_2.DT_PLCMT_END = to_date
+    ('12/31/4712','mm/dd/yyyy') AND  PLACEMENT_2.ID_PLCMT_CHILD = PLACEMENT_1.ID_PLCMT_CHILD AND  PLACEMENT_2.ID_CASE = PLACEMENT_1.ID_CASE)
+
+ And PLACEMENT_1.DT_PLCMT_END = to_date('12/31/4712','mm/dd/yyyy'))
+ And (PLACEMENT_1.CD_TEMP_TYPE IS NULL  Or PLACEMENT_1.CD_TEMP_TYPE  NOT IN ('COR','RED','REN'))
+ And (( STAGEPlcmt.CD_STAGE in ('SUB','ADO','PFC','PAD') and  SplPlcmt.CD_STAGE_PERS_ROLE = 'PC') Or ( STAGEPlcmt.CD_STAGE in ('INT','FPR','INV','DIV','FAD') and   SplPlcmt.CD_STAGE_PERS_REL_INT  = 'PK'))
+End-Select
+End-Procedure
+
+Begin-Procedure Permanency_Query (#P1_ID_STAGE, #P2_ID_CASE, $P3_CD_STAGE)
+Begin-Select Loops=1
+FCCP_FAMILY_1.CD_PRIM_PERM_PLAN &_Permanency_Query_FCCP_FAMILY_1.CD_PRIM_PERM_PLAN
+From  CAPS.EVENT_PERSON_LINK EVENT_PERSON_LINK_1, CAPS.FCCP_FAMILY FCCP_FAMILY_1
+,      CAPS.STAGE_PERSON_LINK STAGE_PERSON_LINK_1, CAPS.STAGE STAGE_Perm
+      Where EVENT_PERSON_LINK_1.ID_PERSON = STAGE_PERSON_LINK_1.ID_PERSON
+            And EVENT_PERSON_LINK_1.ID_EVENT = FCCP_FAMILY_1.ID_EVENT
+            And FCCP_FAMILY_1.ID_CASE = STAGE_PERSON_LINK_1.ID_CASE
+            And STAGE_PERSON_LINK_1.ID_STAGE = STAGE_Perm.ID_STAGE
+            And STAGE_PERSON_LINK_1.ID_CASE = STAGE_Perm.ID_CASE
+ And STAGE_Perm.ID_STAGE = #P1_ID_STAGE
+ And STAGE_Perm.ID_CASE = #P2_ID_CASE
+ And STAGE_Perm.CD_STAGE = $P3_CD_STAGE
+ And FCCP_FAMILY_1.ID_EVENT = (SELECT  (max( FCCP_FAMILY_2.ID_EVENT ))  FROM  CAPS.EVENT EVENT_2,  CAPS.EVENT_PERSON_LINK EVENT_PERSON_LINK_2
+    ,  CAPS.FCCP_FAMILY FCCP_FAMILY_2 WHERE EVENT_2.ID_CASE = EVENT_PERSON_LINK_2.ID_CASE
+  AND  EVENT_2.ID_EVENT = FCCP_FAMILY_2.ID_EVENT
+
+      AND  EVENT_2.ID_CASE = FCCP_FAMILY_2.ID_CASE
+  AND  EVENT_PERSON_LINK_2.ID_CASE = FCCP_FAMILY_2.ID_CASE
+  AND  EVENT_2.ID_EVENT =
+     EVENT_PERSON_LINK_2.ID_EVENT
+  AND  EVENT_PERSON_LINK_2.ID_EVENT = FCCP_FAMILY_2.ID_EVENT
+ AND  EVENT_2.CD_EVENT_STATUS = 'APRV' AND
+      EVENT_PERSON_LINK_2.ID_CASE = EVENT_PERSON_LINK_1.ID_CASE AND  EVENT_PERSON_LINK_2.ID_PERSON = EVENT_PERSON_LINK_1.ID_PERSON)
+ And (( STAGE_Perm.CD_STAGE IN ('SUB','ADO','PFC','PAD') and  STAGE_PERSON_LINK_1.CD_STAGE_PERS_ROLE = 'PC') Or ( STAGE_Perm.CD_STAGE IN ('INT','FPR','INV','DIV','FAD') and  STAGE_PERSON_LINK_1.CD_STAGE_PERS_REL_INT = 'PK'))
+End-Select
+End-Procedure
+
+Begin-Procedure LegStCrtOd_Query (#P1_ID_STAGE, #P2_ID_CASE, $P3_CD_STAGE)
+Begin-Select Loops=1
+LEGAL_STATUS_1.CD_LEGAL_STAT_STATUS &_LegStCrtOd_Query_LEGAL_STATUS_1.CD_LEGAL_STAT_STATUS
+LEGAL_STATUS_1.DT_LEGAL_STAT_CRT_ODR_EXP_DT &_LegStCrtOd_Query_LEGAL_STATUS_1.DT_LEGAL_STAT_CRT_ODR_EXP_DT
+From  CAPS.EVENT EVENT_1, CAPS.LEGAL_STATUS LEGAL_STATUS_1
+,      CAPS.STAGE_PERSON_LINK SplLegSt, CAPS.STAGE StageLegSt
+      Where EVENT_1.ID_EVENT = LEGAL_STATUS_1.ID_LEGAL_STAT_EVENT
+            And LEGAL_STATUS_1.ID_PERSON = SplLegSt.ID_PERSON
+            And LEGAL_STATUS_1.ID_CASE = SplLegSt.ID_CASE
+            And SplLegSt.ID_CASE = StageLegSt.ID_CASE
+            And SplLegSt.ID_STAGE = StageLegSt.ID_STAGE
+ And StageLegSt.ID_STAGE = #P1_ID_STAGE
+ And StageLegSt.ID_CASE = #P2_ID_CASE
+ And StageLegSt.CD_STAGE = $P3_CD_STAGE
+ And LEGAL_STATUS_1.DT_LEGAL_STAT_STATUS_DT = (SELECT  (max( LEGAL_STATUS_2.DT_LEGAL_STAT_STATUS_DT ))  FROM  CAPS.STAGE_PERSON_LINK STAGE_PERSON_LINK_2
+    ,  CAPS.LEGAL_STATUS LEGAL_STATUS_2 WHERE STAGE_PERSON_LINK_2.ID_PERSON = LEGAL_STATUS_2.ID_PERSON
+  AND  STAGE_PERSON_LINK_2.ID_PERSON
+     = LEGAL_STATUS_2.ID_PERSON
+  AND  STAGE_PERSON_LINK_2.ID_CASE = LEGAL_STATUS_2.ID_CASE
+ AND  STAGE_PERSON_LINK_2.CD_STAGE_PERS_ROLE
+     = 'PC' AND  STAGE_PERSON_LINK_2.ID_PERSON = LEGAL_STATUS_1.ID_PERSON AND  STAGE_PERSON_LINK_2.ID_CASE = EVENT_1.ID_CASE)
+ And (( StageLegSt.CD_STAGE IN ('SUB','ADO','PFC','PAD') and  SplLegSt.CD_STAGE_PERS_ROLE = 'PC') Or ( StageLegSt.CD_STAGE in ('INT','FPR','INV','DIV','FAD') and  SplLegSt.CD_STAGE_PERS_REL_INT = 'PK'))
+End-Select
+End-Procedure
+
+Begin-Procedure PerDtlQuery (#P1_ID_STAGE, #P2_ID_CASE, $P3_CD_STAGE)
+Begin-Select Distinct Loops=1
+PERSON_Dtl.CD_PERSON_SEX &_PDtl_Sex
+PERSON_Dtl.DT_PERSON_BIRTH &_PDtl_DOB
+PERSON_Dtl.ID_PERSON &_PerDtlQuery_PERSON_Dtl.ID_PERSON
+(count(distinct  PERSON_Dtl.ID_PERSON )) &_personcount
+From  CAPS.PERSON PERSON_Dtl, CAPS.STAGE_PERSON_LINK Spl_Dtl
+,      CAPS.STAGE STAGE_Dtl
+      Where PERSON_Dtl.ID_PERSON = Spl_Dtl.ID_PERSON
+            And Spl_Dtl.ID_STAGE = STAGE_Dtl.ID_STAGE
+            And Spl_Dtl.ID_CASE = STAGE_Dtl.ID_CASE
+ And STAGE_Dtl.ID_STAGE = #P1_ID_STAGE
+ And STAGE_Dtl.ID_CASE = #P2_ID_CASE
+ And STAGE_Dtl.CD_STAGE = $P3_CD_STAGE
+ And (( STAGE_Dtl.CD_STAGE in ('SUB','ADO','PFC','PAD')  and  Spl_Dtl.CD_STAGE_PERS_ROLE = 'PC' and  PERSON_Dtl.ID_PERSON = (select max(spl2.id_person)
+     from stage_person_link spl2 where spl2.cd_stage_pers_role = 'PC' and spl2.id_stage=  Spl_Dtl.ID_STAGE )) Or ( STAGE_Dtl.CD_STAGE in ('INT','FPR','INV','DIV','FAD') and  Spl_Dtl.CD_STAGE_PERS_REL_INT = 'PK' and  PERSON_Dtl.ID_PERSON = (select
+     max(spl2.id_person) from stage_person_link spl2 where spl2.cd_stage_pers_rel_int = 'PK' and spl2.id_stage=  Spl_Dtl.ID_STAGE )))
+Group By PERSON_Dtl.CD_PERSON_SEX
+,      PERSON_Dtl.DT_PERSON_BIRTH
+,      PERSON_Dtl.ID_PERSON
+End-Select
+End-Procedure
+
+Begin-Procedure DtRmvl_Query (#P1_ID_STAGE)
+Begin-Select Loops=1
+(max( CNSRVTRSHP_REMOVAL_1.DT_REMOVAL )) &_cnsrRmvl
+(min( PLACEMENT_1.DT_PLCMT_START )) &_minPlStart
+(months_between(sysdate,nvl(max( CNSRVTRSHP_REMOVAL_1.DT_REMOVAL ),min( PLACEMENT_1.DT_PLCMT_START )))) &_mnthsincare
+(decode(max( CNSRVTRSHP_REMOVAL_1.DT_REMOVAL ), null,min( PLACEMENT_1.DT_PLCMT_START ), max( CNSRVTRSHP_REMOVAL_1.DT_REMOVAL ))) &_decDtRmvl
+
+From  CAPS.CNSRVTRSHP_REMOVAL CNSRVTRSHP_REMOVAL_1, CAPS.STAGE_PERSON_LINK STAGE_PERSON_LINK_1
+,      CAPS.PLACEMENT PLACEMENT_1
+      Where CNSRVTRSHP_REMOVAL_1.ID_VICTIM = STAGE_PERSON_LINK_1.ID_PERSON
+            And CNSRVTRSHP_REMOVAL_1.ID_CASE = STAGE_PERSON_LINK_1.ID_CASE
+            And STAGE_PERSON_LINK_1.ID_PERSON = PLACEMENT_1.ID_PLCMT_CHILD
+            And STAGE_PERSON_LINK_1.ID_CASE = PLACEMENT_1.ID_CASE
+ And STAGE_PERSON_LINK_1.ID_STAGE = #P1_ID_STAGE
+ And STAGE_PERSON_LINK_1.CD_STAGE_PERS_ROLE = 'PC'
+End-Select
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (15,672) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (15,607,0)
+ Print 'Division of Family and Children Services' (14,285,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Caseload Listing' (55,313,0) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Let $headerDisp=$_header_disp
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $headerDisp (73,346,10) Bold 
+ Print 'Case ID' (145,123,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on= 
+ Print 'Stage Name' (145,3,0) Underline  Bold 
+ Print 'DOB' (145,362,5) Underline  Bold 
+ Print 'Gender' (145,419,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top on=  
+ Print 'Assgn Date' (145,241,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top on=  
+ Print 'Assgn Type' (145,299,5) Underline  Bold  Wrap 5 3 line-height=12 Keep-Top on= 
+ Print 'Date Case Opened' (145,180,10) Underline  Bold  Wrap 10 3 line-height=12 Keep-Top on=  
+ Print 'Resp Time' (145,331,4) Underline  Bold  Wrap 4 2 line-height=12 Keep-Top on= 
+ Print 'Plcmt Type' (145,539,5) Underline  Bold  Wrap 5 2 line-height=12 Keep-Top on= 
+ Print 'Legal Status' (145,462,6) Underline  Bold  Wrap 6 3 line-height=12 Keep-Top on=  
+ Print 'Perm Plan' (145,506,4) Underline  Bold  Wrap 4 3 line-height=12 Keep-Top on= 
+ Print 'Ct Ordr Exp Dt' (145,577,9) Underline  Bold  Wrap 9 3 line-height=12 Keep-Top on=  
+ Print 'Rmvl Dt' (145,636,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on= 
+ Print 'Mnths in Care' (145,701,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on=  
+ Print 'Stage' (145,92,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Case ID' (22,123,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on= 
+ Print 'Stage Name' (22,3,0) Underline  Bold 
+ Print 'DOB' (22,362,5) Underline  Bold 
+ Print 'Gender' (22,419,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top on=  
+ Print 'Assgn Date' (22,241,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top on=  
+ Print 'Assgn Type' (22,299,5) Underline  Bold  Wrap 5 3 line-height=12 Keep-Top on= 
+ Print 'Date Case Opened' (22,180,10) Underline  Bold  Wrap 10 3 line-height=12 Keep-Top on=  
+ Print 'Resp Time' (22,331,4) Underline  Bold  Wrap 4 2 line-height=12 Keep-Top on= 
+ Print 'Plcmt Type' (22,539,5) Underline  Bold  Wrap 5 2 line-height=12 Keep-Top on= 
+ Print 'Legal Status' (22,462,6) Underline  Bold  Wrap 6 3 line-height=12 Keep-Top on=  
+ Print 'Perm Plan' (22,506,4) Underline  Bold  Wrap 4 3 line-height=12 Keep-Top on= 
+ Print 'Ct Ordr Exp Dt' (22,577,9) Underline  Bold  Wrap 9 3 line-height=12 Keep-Top on=  
+ Print 'Rmvl Dt' (22,636,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on= 
+ Print 'Mnths in Care' (22,701,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on=  
+ Print 'Stage' (22,92,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (14,684) '' ' of '
+ Last-Page (14,721) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.ContactRule" table="CONTACT_RULE" >
+        <id name="idContactRule" type="integer">
+            <column name="ID_CONTACT_RULE" precision="16" scale="0" />
+            <generator class="sequence">
+                <param name="sequence">SEQ_CONTACT_RULE</param>
+	    </generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="null" source="vm"/>
+        <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select">
+            <column name="ID_CONTACT_STDS_EVENT" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select">
+            <column name="ID_PERSON" precision="16" scale="0" />
+        </many-to-one>
+        <property name="nbrContactsPerMonth" type="java.lang.Integer">
+            <column name="NBR_CONTACTS_PER_MONTH" precision="2" scale="0" />
+        </property>
+        <property name="indByFaceToFace" type="string">
+            <column name="IND_BY_FACE_TO_FACE" length="1" />
+        </property>
+        <property name="indByTelephone" type="string">
+            <column name="IND_BY_TELEPHONE" length="1" />
+        </property>
+        <property name="indByEmailCorrspndnce" type="string">
+            <column name="IND_BY_EMAIL_CORRSPNDNCE" length="1" />
+        </property>
+        <property name="cdContactNotRequired" type="string">
+            <column name="CD_CONTACT_NOT_REQUIRED" length="1" />
+        </property>
+        <property name="txtJustification" type="string">
+            <column name="TXT_JUSTIFICATION" length="1000" />
+        </property>
+        <property name="indPrepopulated" type="string">
+            <column name="IND_PREPOPULATED" length="1" />
+        </property>
+        <property name="cdPersonRole" type="string">
+            <column name="CD_PERSON_ROLE" length="1" />
+        </property>
+        <property name="cdUnknownParent" type="string">
+            <column name="CD_UNKNOWN_PARENT" length="2" />
+        </property>
+    </class>
+</hibernate-mapping>

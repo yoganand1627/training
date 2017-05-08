@@ -1,0 +1,849 @@
+!*****************************************************************************
+!  CASE FILE COVER SHEET                                                     *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccf02o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/jonesvj/work/sqr                         *
+!                                                                            *
+!                                                                            *
+! DATE:                 11/13/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Vince Jones                                          *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This is the cover sheet for a case file.  It will    *
+!                       help to identify the principals in the case, by name,*
+!                       social security number and person id.                *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 10/13/95   V.Jones      Initial Programming                                *
+! 03/27/96   B.McCleary   SIR 4287 - Added to_char for date case closed;     *
+!                         added to_date for all dates in the where clause.   *
+! 04/03/96   B.McCleary   SIR 20140 - Added condition to retrieve only the   *
+!                         most recent row in person history.                 *
+! 05/07/96   B.McCleary   SIR 20958 - Altered a condition to get only the    *
+!                         current name for the id_person selected.           *
+! 12/16/96   K. Cys       ENH - Added code for suffix to Name Person Full.   *
+! 02/22/01   S.Millersr   SIR 14503 changed the person_history effective     *
+!                         date to be able to include merge persons.          *
+! 02/18/04   fraserkr     SIR 22659 Add CaseFileManagement, Records Retention*
+!                          and Stage information to the report.  Includes    *
+!                          revising header label to CASE FILE COVER SHEET.   *
+! 05/18/04   fraserkr     SIR 22903, Add Overall Disposition to this report  *
+!                          using same logic added to Case Summary page for   *
+!                          SIR22638. DAM ccmn15d.pc was changed to add the   *
+!                          needed variable                                   *
+!                          CPS_INVST_DETAIL.CD_CPS_INVST_DTL_OVRLL_DISPTN    *
+! 02/15/05   Eric Dickman SIR 12318 - Added a status field to the Principles *
+!                         in the Case.  This will allow the caseworker to    *
+!                         know if the status is merged, inactive, or active. *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                      !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+!    #INCLUDE 'setup02b.sqc'            ! control codes for Portrait
+! page-size within setup02b.sqc yielding unusually wide top and bottom margins
+
+    page-size 66 90      ! note that #max-print-row = 63
+    
+    ask ID_CASE                        ! input parameter
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 4
+
+  print 'Case Name: '                 (+0,25)
+
+  if rtrim($case_name , ' ') = ''
+    print 'UNKNOWN'                   (+0,38)
+  else
+    print $case_name                  (+0,38)
+  end-if
+
+  print 'Case #: '                    (+1,28)
+  print #input_id_case                (+0,38) edit 8888888888888888
+!     print 'CASE FILE HEADER'            (+2) center  ! SIR 22659
+  print 'CASE FILE COVER SHEET'       (+2) center
+  
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 3
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                  !Set printer environment
+
+    move '{ID_CASE}'                      to #input_id_case
+
+    move 'PRN'                            to $PRN
+    move 'SSN'                            to $SSN
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT
+
+    do GET-PERSON
+    do GET-CFM-DATA
+    do PRINT-CFM-SECTION
+    do GET-REC-RTN-DATA
+    do PRINT-REC-RTN-SECTION
+    let #max-print-row = 63
+    do PRINT-STAGE-SECTION
+    do GET-PRINCIPAL
+
+END-PROCEDURE PROCESS-REPORT
+
+!****************************************************************************
+!                                                                           *
+!   GET-PERSON                                                              *
+!                                                                           *
+!       This procedure will select DT CASE CLOSE and NM CASE from CAPS CASE.*
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-SYSDATE                                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PERSON
+! SHOW 'GET PERSON '
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+NM_CASE
+    move &NM_CASE               to $case_name
+
+to_char(DT_CASE_CLOSED, 'MM/DD/YYYY') &close
+        move &close                     to $close_date
+
+to_char(DT_CASE_CLOSED, 'MM/DD/YYYY') &date1
+        move &date1                     to $compare_date
+
+    if rtrim($compare_date, ' ')  = '12/31/4712' or
+       rtrim($compare_date, ' ')  = ''
+       move 'Open Case' to $display_close_date
+       do GET-SYSDATE    ! which updates $close_date to sysdate for table access
+    else
+       move $close_date to $display_close_date
+    end-if
+
+FROM    CAPS_CASE
+
+WHERE   ID_CASE = #input_id_case
+
+END-SELECT
+
+END-PROCEDURE GET-PERSON
+
+!****************************************************************************
+!                                                                           *
+!   GET-SYSDATE                                                             *
+!                                                                           *
+!       This procedure will select the system date in order to replace the  *
+!       closed date when it is equal to MAXDATE                             *
+!                                                                           *
+!       CALLED BY  : GET-PERSON                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-SYSDATE
+!       SHOW $close_date
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(SYSDATE, 'MM/DD/YYYY') &sysdate
+     move &sysdate              to $close_date
+
+FROM DUAL
+
+END-SELECT
+
+END-PROCEDURE GET-SYSDATE
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-CFM-DATA                                                            *
+!                                                                           *
+!       This procedure selects data for the CASE FILE MANAGEMENT section    *
+!       of the report.                                                      *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : none                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CFM-DATA
+! SHOW 'GET CASE FILE MANAGEMENT '
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CD_CASE_FILE_OFFICE_TYPE
+    move &CD_CASE_FILE_OFFICE_TYPE          to $cd_case_file_office_type
+ID_UNIT
+    move &ID_UNIT                           to $cfm_id_unit
+ID_CASE_FILE_OFFICE               
+    move $ID_CASE_FILE_OFFICE               to $id_case_file_office
+NM_CASE_FILE_OFFICE
+    move &NM_CASE_FILE_OFFICE               to $nm_case_file_office
+ADDR_CASE_FILE_ST_LN_1
+    move &ADDR_CASE_FILE_ST_LN_1            to $addr_case_file_st_ln_1
+ADDR_CASE_FILE_ST_LN_2
+    move &ADDR_CASE_FILE_ST_LN_2            to $addr_case_file_st_ln_2    
+ADDR_CASE_FILE_CITY
+    move &ADDR_CASE_FILE_CITY               to $addr_case_file_city    
+TXT_CASE_FILE_LOCATE_INFO
+    move &TXT_CASE_FILE_LOCATE_INFO         to $txt_case_file_locate_info
+DT_CASE_FILE_ARCH_ELIG
+    move &DT_CASE_FILE_ARCH_ELIG            to $dt_case_file_arch_elig
+DT_CASE_FILE_ARCH_COMPL
+    move &DT_CASE_FILE_ARCH_COMPL           to $dt_case_file_arch_compl
+    
+FROM    CASE_FILE_MANAGEMENT
+
+WHERE   ID_CASE_FILE_CASE = #input_id_case
+
+END-SELECT
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+COFFTYPE.decode
+    move &COFFTYPE.decode        to $cofftype_decode
+    
+FROM COFFTYPE
+WHERE COFFTYPE.CODE = &CD_CASE_FILE_OFFICE_TYPE
+
+END-SELECT
+! SHOW 'cofftype_decode=' $cofftype_decode
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CD_OFFICE_PROGRAM               
+    move &CD_OFFICE_PROGRAM       to $office_cd_office_program
+CD_OFFICE_REGION
+    move &CD_OFFICE_REGION        to $office_cd_office_region
+CD_OFFICE_MAIL
+    move &CD_OFFICE_MAIL          to $office_cd_office_mail
+FROM OFFICE
+WHERE ID_OFFICE = &ID_CASE_FILE_OFFICE
+
+END-SELECT
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CUNITPGM.decode
+    move &CUNITPGM.decode        to $cunitpgm_decode_program
+    
+FROM CUNITPGM
+WHERE CUNITPGM.CODE = &CD_OFFICE_PROGRAM
+
+END-SELECT
+! SHOW '&CD_OFFICE_PROGRAM=' &CD_OFFICE_PROGRAM
+! SHOW 'cunitpgm_decode_program=' $cunitpgm_decode_program
+! SHOW 'cunitpgm.decode=' &CUNITPGM.decode
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CREGDIV.decode
+    move &CREGDIV.decode          to $cregdiv_decode
+    
+FROM CREGDIV
+WHERE CREGDIV.CODE = &CD_OFFICE_REGION 
+
+END-SELECT
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+NBR_UNIT
+    move &NBR_UNIT          to $unit_nbr_unit
+    
+FROM UNIT
+WHERE UNIT.ID_UNIT = $cfm_id_unit
+
+END-SELECT
+! SHOW 'cfm_id_unit=' $cfm_id_unit
+! SHOW 'unit.nbr_unit=' $unit_nbr_unit
+
+END-PROCEDURE GET-CFM-DATA
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-REC-RTN-DATA                                                        *
+!                                                                           *
+!       This procedure selects data for the RECORDS RETENTION section of    *
+!       the report.                                                         *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : none                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REC-RTN-DATA
+! SHOW 'GET RECORDS RETENTION '
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CD_REC_RTN_RETEN_TYPE 
+    move &CD_REC_RTN_RETEN_TYPE            to $cd_rec_rtn_reten_type
+
+TXT_REC_RTN_DSTRY_DT_RSN
+    move &TXT_REC_RTN_DSTRY_DT_RSN         to $txt_rec_rtn_dstry_dt_rsn
+    
+!!to_char(DT_REC_RTN_DSTRY_ELIG, 'MM/DD/YYYY') &dstry_elig_mmddyyyy
+!!    move &dstry_elig_mmddyyyy          to $dt_rec_rtn_dstry_elig
+
+to_char(DT_REC_RTN_DSTRY_ACTUAL, 'MM/DD/YYYY') &dstry_actual_mmddyyyy
+    move &dstry_actual_mmddyyyy        to $dt_rec_rtn_dstry_actual
+
+FROM    RECORDS_RETENTION
+WHERE   ID_REC_RTN_CASE = #input_id_case
+
+END-SELECT
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CRECRETN.decode
+    move &CRECRETN.decode  to $decoded_rec_rtn_reten_type
+
+FROM    CRECRETN
+WHERE   CRECRETN.CODE = $cd_rec_rtn_reten_type
+
+END-SELECT
+
+END-PROCEDURE GET-REC-RTN-DATA
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-STAGE-SECTION                                                     *
+!                                                                           *
+!       This procedure selects STAGE data, prints the initial heading and   *
+!         prints each row of STAGE information                              *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      :                                                 *
+!****************************************************************************
+!
+!  This select taken from DAM ccmn15d.pc which retrieves all      
+!  the stages of a case along with the primary worker of an       
+!  open stage or the historical primary of a closed         
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-STAGE-SECTION
+! SHOW 'GET STAGE DATA'
+
+move 0                                  to #Stage-Hdg-Printed
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+STAGE.NM_STAGE
+     move &STAGE.NM_STAGE               to $nm_stage
+STAGE.CD_STAGE
+     move &STAGE.CD_STAGE               to $cd_stage
+STAGE.CD_STAGE_TYPE
+     move &STAGE.CD_STAGE_TYPE          to $cd_stage_type
+STAGE.DT_STAGE_START
+     move &STAGE.DT_STAGE_START         to $dt_stage_start
+STAGE.DT_STAGE_CLOSE
+     move &STAGE.DT_STAGE_CLOSE         to $dt_stage_close
+STAGE.CD_STAGE_REGION
+     move &STAGE.CD_STAGE_REGION        to $cd_stage_region
+STAGE.ID_STAGE
+     move &STAGE.ID_STAGE               to $id_stage 
+STAGE.CD_STAGE_REASON_CLOSED
+     move &STAGE.CD_STAGE_REASON_CLOSED to $cd_stage_reason_closed
+SPL.ID_PERSON
+     move &SPL.ID_PERSON                to $spl_id_person
+CID.CD_CPS_INVST_DTL_OVRLL_DISPTN
+     move &CID.CD_CPS_INVST_DTL_OVRLL_DISPTN to $cid_dtl_ovrll_disptn
+PERSON.NM_PERSON_FULL
+     move &PERSON.NM_PERSON_FULL        to $nm_person_full
+
+    if #Stage-Hdg-Printed = 0
+       print 'STAGE INFORMATION'     (+3,1)
+       print ' '                     (+1)
+       do PRINT-STAGE-SUBHEADINGS
+       move 1 to #Stage-Hdg-Printed
+    end-if
+    if #current-line >= #max-print-row     ! that is, new page about to begin
+       do PRINT-STAGE-SUBHEADINGS
+    end-if
+    do PRINT-STAGE-ROW
+
+FROM    STAGE,
+        STAGE_PERSON_LINK SPL,
+        CPS_INVST_DETAIL CID,
+        PERSON
+WHERE   STAGE.ID_CASE             = #input_id_case
+AND     SPL.ID_STAGE              =  STAGE.ID_STAGE
+AND     CID.ID_CPS_INVST_STAGE(+) =  STAGE.ID_STAGE
+AND     SPL.CD_STAGE_PERS_ROLE    in ('HP', 'PR')
+AND     PERSON.ID_PERSON          = SPL.ID_PERSON
+
+ORDER BY STAGE.ID_SITUATION DESC, STAGE.ID_STAGE DESC
+
+!****************************************************************************
+! ccmn37s.src calls ccmn15d; ccmn37s.src sets variables for select of 
+! cd_stage_pers_role such that codes are:
+!
+!    PRIMARY_ROLE_STAGE_OPEN         "PR"
+!    PRIMARY_ROLE_STAGE_CLOSED       "HP"
+! which are defined in /opt/impact/sys/prod/inc/impact.h
+!****************************************************************************
+
+END-SELECT
+
+END-PROCEDURE PRINT-STAGE-SECTION
+
+!****************************************************************************
+!                                                                           *
+!   GET-PRINCIPAL                                                           *
+!                                                                           *
+!       This procedure will select the PRINCIPAL  information when the      *
+!       input id_case is the same as the id_case in stage.                  *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-PRINCIPAL-TITLE, PRINT-PRINCIPAL                 *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PRINCIPAL
+
+move 0  to #count1
+
+!SHOW 'GET PRINCIPAL'
+!SHOW #count1
+!SHOW $close_date
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+A.NM_NAME_FIRST                                     !***ENH***
+    move &A.NM_NAME_FIRST                           to $person_first
+ !   SHOW $person_first
+
+A.NM_NAME_MIDDLE
+    move &A.NM_NAME_MIDDLE                          to $person_middle
+ !   SHOW $person_middle
+
+A.NM_NAME_LAST
+    move &A.NM_NAME_LAST                            to $person_last
+ !   SHOW $person_last
+
+CSUFFIX2.decode
+    move &CSUFFIX2.decode                           to $person_suffix
+
+C.ID_PERS_HIST_PERSON
+    move &C.ID_PERS_HIST_PERSON                     to #person_id
+
+CSEX.decode
+    move &CSEX.decode                               to $sex
+
+to_char(C.DT_PERS_HIST_BIRTH, 'MM/DD/YYYY') &date2
+    move &date2                                     to $dob
+
+D.NBR_PERSON_ID_NUMBER
+    move &D.NBR_PERSON_ID_NUMBER                    to $ssn
+
+!SIR 12318
+F.CD_PERSON_STATUS                 
+	  move &F.CD_PERSON_STATUS                         to $status	
+
+    do PRINT-PRINCIPAL
+
+FROM    NAME                A,
+        CSUFFIX2            CSUFFIX2,
+        CSEX                 CSEX,
+        STAGE_PERSON_LINK   B,
+        PERSON_HISTORY      C,
+        PERSON_ID           D,
+        STAGE               E,
+        PERSON              F
+
+WHERE   E.ID_CASE            =  #input_id_case
+AND E.ID_STAGE               =  B.ID_STAGE
+AND C.ID_PERS_HIST_PERSON    =  B.ID_PERSON
+AND B.CD_STAGE_PERS_TYPE     =  $PRN
+AND F.ID_PERSON              =  B.ID_PERSON !SIR 12318
+AND A.ID_PERSON(+)           =  B.ID_PERSON
+AND CSUFFIX2.CODE(+)         =  A.CD_NAME_SUFFIX  
+AND D.ID_PERSON(+)           =  B.ID_PERSON
+AND to_date(A.DT_NAME_START_DATE(+), 'MM/DD/YYYY') <= to_date($close_date, 'MM/DD/YYYY')
+AND to_date(A.DT_NAME_END_DATE(+),   'MM/DD/YYYY') >  to_date($close_date, 'MM/DD/YYYY')
+AND to_date(D.DT_PERSON_ID_START(+), 'MM/DD/YYYY') <= to_date($close_date, 'MM/DD/YYYY')
+AND to_date(D.DT_PERSON_ID_END(+),   'MM/DD/YYYY') >= to_date($close_date, 'MM/DD/YYYY')
+AND to_date(C.DT_PERS_HIST_EFFECT,   'MM/DD/YYYY') <= to_date($close_date, 'MM/DD/YYYY')
+AND to_date(C.DT_PERS_HIST_END,      'MM/DD/YYYY') = (select max(to_date(ph.dt_pers_hist_end, 'MM/DD/YYYY'))
+                                                      from   person_history ph
+                                                      where  to_date(ph.dt_pers_hist_effect, 'MM/DD/YYYY') <= to_date($close_date, 'MM/DD/YYYY')
+                                                      and    ph.id_pers_hist_person = B.ID_PERSON)
+AND A.IND_NAME_PRIMARY(+)    =  'Y'
+AND D.CD_PERSON_ID_TYPE(+)   =  $SSN
+AND CSEX.CODE(+)         =  C.CD_PERS_HIST_SEX
+ORDER BY A.NM_NAME_LAST, A.NM_NAME_FIRST, A.NM_NAME_MIDDLE
+
+!AND C.DT_PERS_HIST_END       =  '12/31/4712' SIR 14503 REMOVED AS IT WAS ALREADY PART OF CRITERIA.
+                                            !SIR 20140 - Chooses the most
+                                             !recent person history row
+!SIR 20958 - Gets only the most current name for the person
+
+END-SELECT
+
+END-PROCEDURE GET-PRINCIPAL
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CFM-SECTION                                                       *
+!                                                                           *
+!       This procedure prints the CASE FILE MANAGEMENT information          *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CFM-SECTION
+
+print 'CASE FILE MANAGEMENT'                (+1,1) 
+print 'Case Information'                    (+1,1)
+! SHOW 'print case file management title and case information subtitle'
+print 'Case Closure Date:'                  (+2,5)
+print $display_close_date                   (+0,30)
+print 'Storage Location'                    (+2,1)
+print $cofftype_decode                      (+0,20)
+print 'FPS Office Location'                 (+2,1)
+print 'Program:'                            (+2,5)
+print $cunitpgm_decode_program              (+0,20)
+print 'Reg/Div:'                            (+0,40)
+print $office_cd_office_region              (+0,55)
+print $cregdiv_decode                       (+0,59)
+print 'Unit:'                               (+2,5)
+print $unit_nbr_unit                        (+0,20)
+print 'Mail Code:'                          (+0,40)
+print $office_cd_office_mail                (+0,55)
+print 'Location'                            (+2,1)
+print 'Name:'                               (+2,5)
+print $nm_case_file_office                  (+0,15)
+print 'Street:'                             (+1,5)
+print $addr_case_file_st_ln_1               (+0,15)
+print $addr_case_file_st_ln_2               (+1,15)
+print 'City:'                               (+1,5)
+print $addr_case_file_city                  (+0,15)
+print 'Locating Information:'               (+2,1)
+print $txt_case_file_locate_info            (+1,3) wrap 70 20
+print 'Archive Dates'                       (+2,1)
+print 'Eligible:'                           (+1,5)
+print $dt_case_file_arch_elig               (+0,15)
+print 'Complete:'                           (+0,40)
+print $dt_case_file_arch_compl              (+0,50)
+
+END-PROCEDURE PRINT-CFM-SECTION
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-REC-RTN-SECTION                                                   *
+!                                                                           *
+!       This procedure prints the RECORDS RETENTION information.            *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : none                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-REC-RTN-SECTION
+
+print ' '                              (+1,1)
+print 'RECORDS RETENTION'              (+2,1) 
+! SHOW 'print RECORDS RETENTION title'
+print 'Class Type:'                    (+2,1)
+print $decoded_rec_rtn_reten_type      (+0,25)  
+!!  print 'Eligible Destruction Date:'      (+2,1)
+!!  print $dt_rec_rtn_dstry_elig            (+0,20)
+print 'Destruction Date:'              (+2,1)
+print $dt_rec_rtn_dstry_actual         (+0,25)
+print 'Case Closure Date:'             (+2,1)
+print $display_close_date              (+0,25)
+print 'Date Extension Reason:'         (+2,1)
+print $txt_rec_rtn_dstry_dt_rsn        (+1,3)  wrap 70 20
+
+END-PROCEDURE PRINT-REC-RTN-SECTION
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-STAGE-ROWS                                                        *
+!                                                                           *
+!       This procedure prints one row of STAGE data                         * 
+!                                                                           *
+!       CALLED BY  : PRINT-STAGE-SECTION                                    *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-STAGE-ROW
+
+! SHOW 'procedure PRINT-STAGE-ROW'
+
+if $cd_stage_reason_closed = '97'  ! from ccmn37s.src and SIR 2141 comments
+     move ' Y ' to $merge_indicator
+else
+     move '   ' to $merge_indicator
+end-if     
+
+print $merge_indicator        (+1,1,3)   edit XXX
+print $nm_stage               (+0,+1,15) edit XXXXXXXXXXXXXXX
+print $cd_stage               (+0,+1,3)  edit XXX
+print $cd_stage_type          (+0,+1,5)  edit XXXXX
+print $dt_stage_start         (+0,+1,10)
+print $dt_stage_close         (+0,+1,10)
+print $nm_person_full         (+0,+1,15) edit XXXXXXXXXXXXXXX
+! print $nm_person_full         (+0,+1,20) edit XXXXXXXXXXXXXXX
+print $cd_stage_region        (+0,+1,3)  edit XXX
+print $id_stage               (+0,+1,10) edit 9999999999 
+print $cid_dtl_ovrll_disptn   (+0,+1,3)  edit XXX
+
+END-PROCEDURE PRINT-STAGE-ROW
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-STAGE-SUBHEADINGS                                                 *
+!                                                                           *
+!       This procedure prints the STAGE SUB-HEADINGS                        * 
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-STAGE-SUBHEADINGS                                                      
+
+! SHOW 'procedure PRINT-STAGE-SUBHEADINGS'
+
+print 'Mrg'                   (+1,1,3)
+print 'Stage Name     '       (+0,+1,15)
+print 'Stg'                   (+0,+1,3)
+print 'Type '                 (+0,+1,5)
+print '  Opened'              (+0,+1,10)
+print '  Closed'              (+0,+1,10)
+print 'Primary'               (+0,+1,15)
+print 'Reg'                   (+0,+1,3)
+print '  Stage ID'            (+0,+1,10) 
+print 'Ov Dsp'                (+0,+1,6)
+
+! (row, col, length) where row&col can be absolute or relative (+)
+
+print '-'  (+1,1,3)   fill    ! Mrg
+print '-'  (+0,+1,15) fill    ! Stage Name (15 chars max)
+print '-'  (+0,+1,3)  fill    ! Stage
+print '-'  (+0,+1,5)  fill    ! Type-
+print '-'  (+0,+1,10) fill    ! --Opened--
+print '-'  (+0,+1,10) fill    ! --Closed--
+print '-'  (+0,+1,15) fill    ! Primary
+print '-'  (+0,+1,3)  fill    ! Reg
+print '-'  (+0,+1,10) fill    ! --Stage ID
+print '-'  (+0,+1,6)  fill    ! Ov Dsp
+
+
+END-PROCEDURE PRINT-STAGE-SUBHEADINGS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PRINCIPAL                                                         *
+!                                                                           *
+!       This procedure prints the principals and makes sure they are not    *
+!           split between pages.                                            *
+!                                                                           *
+!       CALLED BY  : GET-PRINCIPAL                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PRINCIPAL
+
+!!next-listing need = 4
+
+! show 'print principal'
+
+let #count1 = #count1 + 1
+if #count1 = 1
+     next-listing need = 6
+     print 'PRINCIPALS IN THE CASE'    (+2,1)
+     print ' '                         (+1)
+else
+     next-listing need = 4
+end-if
+
+print #count1                   (+1,1)  edit 888888
+
+print '.'                   ()
+print 'Name:'                       (+0,7)
+if $person_suffix <> ''  !***ENH***
+   let $person_name_suff = ', ' || $person_suffix
+end-if
+if $person_middle = ''
+   let $person_name = $person_first || ' ' || $person_last || $person_name_suff
+ else
+   let $person_name = $person_first || ' ' || $person_middle || ' ' || $person_last || $person_name_suff
+end-if
+! SHOW $person_name
+
+!SIR 12318
+if $status = 'A'
+ let $status = 'Active'
+end-if
+
+if $status = 'I'
+ let $status = 'Inactive'	
+end-if
+
+if $status = 'M'
+ let $status = 'Merged'
+end-if
+
+print $person_name                      (+0,13)
+
+move '' to $person_name_suff  !***ENH***
+
+print 'Person ID: '                     (+1,7)
+print #person_id                        (+0,18) edit 8888888888888888
+print 'Sex:'                            (+1,7)
+print $sex                              (+0,12)
+print 'DOB:'                            (+0,25)
+print $dob                              (+0,30)
+print 'SSN:'                            (+0,43)
+print $ssn                              (+0,48)
+print 'Status: '                        (+0,62)
+print $status                           (+0,70)
+
+END-PROCEDURE PRINT-PRINCIPAL
+
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+
+
+#INCLUDE 'cfpstamp.sqc'

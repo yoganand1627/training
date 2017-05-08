@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Message" table="MESSAGE" mutable="false"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idMessage" type="integer" unsaved-value="0">
+      <column name="ID_MESSAGE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_MESSAGE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="nbrMessage" type="integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_MESSAGE" precision="6" scale="0" not-null="true" unique="true"/>
+    </property>
+    <property name="txtMessageName" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_MESSAGE_NAME" length="50" unique="true"/>
+    </property>
+    <property name="txtMessage" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_MESSAGE" length="500"/>
+    </property>
+    <property name="cdSource" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_SOURCE" precision="16" scale="0"/>
+    </property>
+    <property name="cdPresentation" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PRESENTATION" precision="16" scale="0"/>
+    </property>
+    <property name="indBatch" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_BATCH" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

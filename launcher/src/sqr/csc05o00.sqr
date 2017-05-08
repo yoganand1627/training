@@ -1,0 +1,753 @@
+!*****************************************************************************
+!  CVS Removal                                                               *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         csc05o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 10/04/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brad McCleary                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  Lists the details regarding a child's removal from   *
+!                       the family home.                                     *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 10/04/95   B. McCleary  Initial Programming                                *
+!                                                                            *
+! 12/15/96   D. Ly        ENH - Change occurence of Name to Name person full *
+!                               format.
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'            ! control codes for Portrait 
+
+    ask ID_REMOVAL_EVENT               !input parameter         
+    
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 6
+
+  #INCLUDE 'header04.sqc'               !Include file with Header Information
+                    !Specific to portrait on demand reports
+
+  print 'Child''s Name: '                       (+1,32)
+  if $child_suffix <> '' !***ENH***
+      let $child_name_suff = ', ' || $child_suffix
+  end-if
+  if $child_middle = '' !***ENH***
+      let $child_name = $child_first || ' ' || $child_last || $child_name_suff
+  else
+      let $child_name = $child_first || ' ' || $child_middle || ' ' || $child_last || $child_name_suff
+  end-if
+  print $child_name                             (+0,45) wrap 32 2
+
+  move '' to $child_name_suff !***ENH***
+
+  print 'DOB: '                                 (+1,41)   
+  print $DOB_child                              (+0,45)
+
+  print 'CONSERVATORSHIP REMOVAL'               (+2) center 
+                              
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+                    ! specific to portrait on demand report
+
+ 
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+   move {ID_REMOVAL_EVENT}                  to #input_id_removal_event
+
+  !************************************************
+  ! Variables and Constants                       *
+  !************************************************
+   move 'N'                 to $print_flag     !Initialize print flag for NA
+   move 'PC'                to $PC             !Prevents hardcode
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-STAGE, GET-CASE-NAME-NUMBER, GET-NAME-DOB,         *
+!                    GET-REMOVAL-ROWS, GET-REMOVAL-REASONS,                 *
+!                    GET-REMOVAL-CHILD, GET-REMOVAL-CHAR-ADULT,             *
+!                    GET-REMOVAL-PERSON-HOME                                *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do GET-STAGE
+    do GET-CASE-NAME-NUMBER
+    do GET-REMOVAL-ROWS
+    do GET-NAME-DOB
+    do GET-REMOVAL-REASONS
+    do GET-REMOVAL-CHAR-CHILD
+    do GET-REMOVAL-CHAR-ADULT
+    do GET-REMOVAL-PERSON-HOME
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-STAGE                                                               *
+!                                                                           *
+!       This procedure will select id_stage given the input id_ event.       *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-STAGE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+ID_EVENT_STAGE
+    move &ID_EVENT_STAGE                          to #id_event_stage
+
+FROM  EVENT
+
+WHERE ID_EVENT = #input_id_removal_event
+
+END-SELECT
+
+END-PROCEDURE GET-STAGE
+
+!****************************************************************************
+!                                                                           *
+!   GET-CASE-NAME-NUMBER                                                    *
+!                                                                           *
+!       This procedure will select case name and number from caps_case.     *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CASE-NAME-NUMBER
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.NM_CASE
+    move &A.NM_CASE                         to $Case_Name
+    
+A.ID_CASE    
+    move &A.ID_CASE                         to #Case_Number
+    
+FROM  CAPS_CASE     A,
+      STAGE         B
+
+WHERE A.ID_CASE  = B.ID_CASE
+AND   B.ID_STAGE = #id_event_stage
+
+END-SELECT
+
+END-PROCEDURE GET-CASE-NAME-NUMBER
+
+!****************************************************************************
+!                                                                           *
+!   GET-NAME-DOB                                                            *
+!                                                                           *
+!       This procedure will select the full name and date of birth of the   *
+!       victim.                                                             *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-NAME-DOB
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(B.DT_PERSON_BIRTH, 'MM/DD/YYYY') &date1  
+    move &date1                                     to $DOB_child
+    
+A.NM_NAME_FIRST    !***ENH***
+    move &A.NM_NAME_FIRST                                to $child_first
+    
+A.NM_NAME_MIDDLE
+    move &A.NM_NAME_MIDDLE                               to $child_middle
+    
+A.NM_NAME_LAST
+    move &A.NM_NAME_LAST                                 to $child_last
+    
+CSUFFIX2A.decode !***ENH***
+    move &CSUFFIX2A.decode                               to $child_suffix
+   
+    
+FROM    NAME                A,
+        PERSON              B,
+        CSUFFIX2            CSUFFIX2A !**ENH***
+        
+WHERE   B.ID_PERSON           = #id_victim   
+AND     A.ID_PERSON           = B.ID_PERSON 
+AND     A.IND_NAME_INVALID    = 'N'
+AND     A.IND_NAME_PRIMARY    = 'Y'
+AND     A.DT_NAME_END_DATE    = '12/31/4712'
+AND     A.CD_NAME_SUFFIX      = CSUFFIX2A.CODE(+) !***ENH***
+
+END-SELECT
+    
+END-PROCEDURE GET-NAME-DOB
+
+!****************************************************************************
+!                                                                           *
+!   GET-REMOVAL-ROWS                                                        *
+!                                                                           *
+!       This procedure will select a row of data from conservatorship       *
+!           removal given the input id_event.                               *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-REMOVAL-ROWS                                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REMOVAL-ROWS
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(DT_REMOVAL, 'MM/DD/YYYY') &date2
+    move &date2                                 to $removal_date
+
+NBR_REMOVAL_AGE_YR
+    move &NBR_REMOVAL_AGE_YR                    to #removal_age_yr                    
+NBR_REMOVAL_AGE_MO
+    move &NBR_REMOVAL_AGE_MO                    to #removal_age_mo
+    
+IND_REMOVAL_NA_CHILD
+    move &IND_REMOVAL_NA_CHILD                  to $child_indicator
+
+IND_REMOVAL_NA_CARE
+    move &IND_REMOVAL_NA_CARE                   to $care_indicator
+
+    !added the following to get the Child in question.
+    ! SIR 2865 in TEST.
+ID_VICTIM
+    move &ID_VICTIM                             to #id_victim
+
+  
+    do PRINT-REMOVAL-ROWS
+  
+FROM    CNSRVTRSHP_REMOVAL
+
+WHERE   ID_REMOVAL_EVENT = #input_id_removal_event
+
+END-SELECT
+    
+END-PROCEDURE GET-REMOVAL-ROWS
+
+!****************************************************************************
+!                                                                           *
+!   GET-REMOVAL-REASONS                                                     *
+!                                                                           *
+!       This procedure will select a list from removal reasons given the    *
+!           input id_event.                                                 *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-REMOVAL-REASONS                                  *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REMOVAL-REASONS
+
+    move 0                                          to #count5                          
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+DECODE
+    move &DECODE                                    to $reasons_decode
+
+    let #count5 = #count5 + 1
+    
+    do PRINT-REMOVAL-REASONS
+
+FROM    CREMFRHR            CREMFRHR,
+        REMOVAL_REASON      B 
+        
+WHERE   B.ID_REMOVAL_EVENT      = #input_id_removal_event
+AND     CREMFRHR.CODE (+)       = B.CD_REMOVAL_REASON
+
+END-SELECT
+                                               
+END-PROCEDURE GET-REMOVAL-REASONS
+
+!****************************************************************************
+!                                                                           *
+!   GET-REMOVAL-CHAR-CHILD                                                  *
+!                                                                           *
+!       This procedure selects the child characteristics that contributed   *
+!       to the removal.  It also makes sure that NA is printed only once    *
+!       when the indicator is 'Y' or there are no rows found.               *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-CHAR-CHILD-TITLE, PRINT-CHAR-CHILD, PRINT-NA     *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REMOVAL-CHAR-CHILD
+
+    do PRINT-CHAR-CHILD-TITLE
+
+    if $child_indicator = 'Y'
+        do PRINT-NA
+    let $print_flag = 'Y'
+    end-if    
+
+    move 0                                      to #count6
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+DECODE &DEC2
+    move &DEC2                                  to $child_char_decode
+
+    let #count6 = #count6 +1
+    
+    do PRINT-CHAR-CHILD
+
+FROM    CPL                     CPL, 
+        REMOVAL_CHAR_CHILD      B
+      
+WHERE   B.ID_REMOVAL_EVENT  = #input_id_removal_event
+AND     CPL.CODE (+)        = B.CD_REMOV_CHILD_CHAR
+
+END-SELECT
+
+    if #count6 = 0 and $print_flag = 'N'    
+        do PRINT-NA
+    else 
+ let $print_flag = 'N'        
+    end-if
+
+
+END-PROCEDURE GET-REMOVAL-CHAR-CHILD
+
+!****************************************************************************
+!                                                                           *
+!   GET-REMOVAL-CHAR-ADULT                                                  *
+!                                                                           *
+!       This procedure selects the adult characteristics that contributed   *
+!       to the removal.  It also makes sure that NA is printed only once    *
+!       when the indicator is 'Y' or there are no rows found.               *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-CHAR-ADULT-TITLE, PRINT-CHAR-ADULT, PRINT-NA     *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REMOVAL-CHAR-ADULT
+                                                              
+    do PRINT-CHAR-ADULT-TITLE
+
+    if $care_indicator = 'Y'
+        do PRINT-NA
+        let $print_flag = 'Y'
+    end-if    
+
+    move 0                                      to #count7
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+DECODE &DEC3
+    move &DEC3                                  to $adult_char_decode
+
+    let #count7 = #count7 +1
+    
+    do PRINT-CHAR-ADULT
+
+FROM    CREMCHCT                CREMCHCT,
+        REMOVAL_CHAR_ADULT      B
+      
+WHERE   B.ID_REMOVAL_EVENT      = #input_id_removal_event
+AND     CREMCHCT.CODE (+)       = B.CD_REMOV_ADULT_CHAR
+
+END-SELECT
+
+    if #count7 = 0 and $print_flag = 'N'    
+        do PRINT-NA
+    else 
+ let $print_flag = 'N'        
+    end-if
+
+END-PROCEDURE GET-REMOVAL-CHAR-ADULT
+
+!****************************************************************************
+!                                                                           *
+!   GET-REMOVAL-PERSON-HOME                                                 *
+!                                                                           *
+!       This procedure selects the persons living at the child's home at    *
+!       the removal date given the stage and event.                         *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-PERSON-HOME                                      *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REMOVAL-PERSON-HOME
+
+    move 0                                      to #count8
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+B.NM_PERSON_FIRST    !***ENH***
+    move &B.NM_PERSON_FIRST                          to $person_first
+    
+B.NM_PERSON_MIDDLE
+    move &B.NM_PERSON_MIDDLE                         to $person_middle
+    
+B.NM_PERSON_LAST
+    move &B.NM_PERSON_LAST                           to $person_last
+    
+CSUFFIX2B.decode !***ENH***
+    move &CSUFFIX2B.decode                           to $person_suffix
+
+CRELVICT.decode
+    move &CRELVICT.decode                       to $relationship
+
+to_char(B.DT_PERSON_BIRTH, 'MM/DD/YYYY') &date3  
+    move &date3                                 to $DOB_person
+
+B.CD_PERSON_SEX
+    move &B.CD_PERSON_SEX                       to $person_sex
+
+B.IND_PERSON_DOB_APPROX
+    move &B.IND_PERSON_DOB_APPROX               to $DOB_approx_indicator
+
+    let #count8 = #count8 + 1
+
+    do  PRINT-PERSON-HOME
+
+FROM    PERSON_HOME_REMOVAL     A,
+        PERSON                  B,
+        CSUFFIX2                CSUFFIX2B,   !***ENH***
+        CRELVICT                CRELVICT,
+        STAGE_PERSON_LINK       D
+
+WHERE   A.ID_REMOVAL_EVENT   = #input_id_removal_event
+AND     A.ID_PERS_HM_REMOVAL = B.ID_PERSON
+AND     A.ID_PERS_HM_REMOVAL = D.ID_PERSON
+AND     CRELVICT.CODE (+)    = D.CD_STAGE_PERS_REL_INT
+AND     D.ID_STAGE           = #id_event_stage
+AND     B.CD_PERSON_SUFFIX   = CSUFFIX2B.CODE(+) !***ENH***
+
+END-SELECT
+    
+END-PROCEDURE GET-REMOVAL-PERSON-HOME
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-REMOVAL-ROWS                                                      *
+!                                                                           *
+!       This procedure prints the removal date and the age at removal.      *
+!                                                                           * 
+!       CALLED BY  : GET-REMOVAL-ROWS                                       *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-REMOVAL-ROWS
+
+print 'REMOVAL DATE: '                          (+2,1) 
+print $removal_date                             (+0,15) 
+print 'AGE AT REMOVAL: '                        (+1,1)
+print #removal_age_yr                           (+0,17)  edit 09
+print 'Yr'                                      (+0,20)
+print #removal_age_mo                           (+0,24)  edit 09
+print 'Months'                                  (+0,27)
+
+END-PROCEDURE PRINT-REMOVAL-ROWS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-REMOVAL-REASONS                                                   *
+!                                                                           *
+!       This procedure prints each reason for removal.                      *
+!                                                                           * 
+!       CALLED BY  : GET-REMOVAL-REASONS                                    *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-REMOVAL-REASONS
+
+    if #count5 = 1    
+        print 'REMOVAL REASONS: '                       (+2,1)
+        print $reasons_decode                           (+1,1)
+    else
+        print $reasons_decode                           (+1,1)
+    end-if                           
+
+END-PROCEDURE PRINT-REMOVAL-REASONS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CHAR-CHILD-TITLE                                                  *
+!                                                                           *
+!       This procedure prints the child characteristics title.              *
+!                                                                           * 
+!       CALLED BY  : GET-REMOVAL-CHAR-CHILD                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHAR-CHILD-TITLE
+
+    print 'CHILD CHARACTERISTICS THAT CONTRIBUTED TO REMOVAL: ' (+2,1)    
+
+END-PROCEDURE PRINT-CHAR-CHILD-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-NA                                                                *
+!                                                                           *
+!       This procedure prints Not Applicable when either the indicator is   *
+!           'Y' or there are no rows found.                                 *
+!                                                                           * 
+!       CALLED BY  : GET-REMOVAL-CHAR-CHILD, GET-REMOVAL-CHAR-ADULT         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-NA
+
+    print 'Not Applicable'                                      (+1,1)    
+    
+END-PROCEDURE PRINT-NA
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CHAR-CHILD                                                        *
+!                                                                           *
+!       This procedure prints the child's characteristics for removal.      *
+!                                                                           * 
+!       CALLED BY  : GET-REMOVAL-CHAR-CHILD                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHAR-CHILD
+
+        print $child_char_decode                                (+1,1) wrap 78 2
+
+END-PROCEDURE PRINT-CHAR-CHILD
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CHAR-ADULT-TITLE                                                  *
+!                                                                           *
+!       This procedure prints the adult characteristics title.              *
+!                                                                           * 
+!       CALLED BY  : GET-REMOVAL-CHAR-ADULT                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHAR-ADULT-TITLE
+
+    print 'ADULT CHARACTERISTICS THAT CONTRIBUTED TO REMOVAL: ' (+2,1)    
+
+END-PROCEDURE PRINT-CHAR-ADULT-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CHAR-ADULT                                                        *
+!                                                                           *
+!       This procedure prints the adults' characteristics.                  *
+!                                                                           * 
+!       CALLED BY  : GET-REMOVAL-CHAR-ADULT                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CHAR-ADULT
+
+        print $adult_char_decode                                    (+1,1)
+
+END-PROCEDURE PRINT-CHAR-ADULT
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PERSON-HOME                                                       *
+!                                                                           *
+!       This procedure prints the persons in the home at the removal date.  *
+!                                                                           * 
+!       CALLED BY  : GET-REMOVAL-PERSON-HOME                                *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PERSON-HOME
+
+    if #count8 = 1
+        print 'PERSONS LIVING AT CHILD''S HOME ON REMOVAL DATE' (+2) center
+        print 'NAME'                                            (+2,6)
+        print 'RELATIONSHIP'                                    (+0,27)
+        print 'DOB'                                             (+0,52)
+        print 'APPROX'                                          (+0,63)
+        print 'SEX'                                             (+0,75)
+        if $person_suffix <> '' !***ENH***
+           let $person_name_suff = ', ' || $person_suffix
+        end-if
+        if $person_middle = '' !***ENH***
+           let $person_name = $person_first || ' ' || $person_last || $person__name_suff
+        else
+           let $person_name = $person_first || ' ' || $person_middle || ' ' || $person_last || $person_name_suff 
+        end-if
+        print $person_name                                      (+1,1) wrap 24 4
+	move '' to $person_name_suff  !***ENH***
+        print $relationship                                     (+0,28)
+        print $DOB_person                                       (+0,48)
+        print $DOB_approx_indicator                             (+0,66)
+        print $person_sex                                       (+0,76)
+    else 
+        if $person_suffix <> '' !***ENH***
+           let $person_name_suff = ', ' || $person_suffix
+        end-if
+        if $person_middle = '' !***ENH***
+           let $person_name = $person_first || ' ' || $person_last || $person__name_suff
+        else
+           let $person_name = $person_first || ' ' || $person_middle || ' ' || $person_last || $person_name_suff 
+        end-if
+        print $person_name                                      (+1,1) wrap 24 4
+	move '' to $person_name_suff !***ENH***
+        print $relationship                                     (+0,28)
+        print $DOB_person                                       (+0,48)
+        print $DOB_approx_indicator                             (+0,66)
+        print $person_sex                                       (+0,76)            
+    end-if
+
+END-PROCEDURE PRINT-PERSON-HOME
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+
+
+#INCLUDE 'cfpstamp.sqc'

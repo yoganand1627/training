@@ -1,0 +1,999 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FceEligibility" table="FCE_ELIGIBILITY" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idFceEligibility" type="integer" unsaved-value="0">
+      <column name="ID_FCE_ELIGIBILITY" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_FCE_ELIGIBILITY</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="fcePerson" class="gov.georgia.dhr.dfcs.sacwis.db.FcePerson" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_FCE_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_ELIGIBILITY_EVENT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="fceReview" class="gov.georgia.dhr.dfcs.sacwis.db.FceReview" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_FCE_REVIEW" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="fceApplication" class="gov.georgia.dhr.dfcs.sacwis.db.FceApplication" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_FCE_APPLICATION" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdPerson" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdPrnEarner" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PRN_EARNER" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdLastUpdatePerson" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_LAST_UPDATE_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personAllocMutual1" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON_ALLOC_MUTUAL_1" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personAllocMutual2" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON_ALLOC_MUTUAL_2" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personAllocSngl1" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON_ALLOC_SNGL_1" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personAllocSngl2" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON_ALLOC_SNGL_2" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personDeemIndiv1" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON_DEEM_INDIV_1" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personDeemIndiv2" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON_DEEM_INDIV_2" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="amtAllocAllowanceMutual" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ALLOC_ALLOWANCE_MUTUAL" precision="16"/>
+    </property>
+    <property name="amtAllocAllowanceSngl1" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ALLOC_ALLOWANCE_SNGL_1" precision="16"/>
+    </property>
+    <property name="amtAllocAllowanceSngl2" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ALLOC_ALLOWANCE_SNGL_2" precision="16"/>
+    </property>
+    <property name="amtCountableIncome" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_COUNTABLE_INCOME" precision="16"/>
+    </property>
+    <property name="amtChsupChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CHSUP_CHILD" precision="16"/>
+    </property>
+    <property name="amtChsupCrtfdGrp" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CHSUP_CRTFD_GRP" precision="16"/>
+    </property>
+    <property name="amtCntIncomeEligChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNT_INCOME_ELIG_CHILD" precision="16"/>
+    </property>
+    <property name="amtCntIncomeEligCrtfdGrp" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNT_INCOME_ELIG_CRTFD_GRP" precision="16"/>
+    </property>
+    <property name="amtDeemAlimonyOutsideHh" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_DEEM_ALIMONY_OUTSIDE_HH" precision="16"/>
+    </property>
+    <property name="amtDeemCntNetIncome" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_DEEM_CNT_NET_INCOME" precision="16"/>
+    </property>
+    <property name="amtDeemGrossEarnedIncome" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_DEEM_GROSS_EARNED_INCOME" precision="16"/>
+    </property>
+    <property name="amtDeemLessStdOfNeed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_DEEM_LESS_STD_OF_NEED" precision="16"/>
+    </property>
+    <property name="amtDeemNetEarnedIncome" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_DEEM_NET_EARNED_INCOME" precision="16"/>
+    </property>
+    <property name="amtDeemStdEarnedIncDeduct" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_DEEM_STD_EARNED_INC_DEDUCT" precision="16"/>
+    </property>
+    <property name="amtDeemStdOfNeed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_DEEM_STD_OF_NEED" precision="16"/>
+    </property>
+    <property name="amtDeemSurplusOrDeficit" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_DEEM_SURPLUS_OR_DEFICIT" precision="16"/>
+    </property>
+    <property name="amtDeemTaxDependOutHh" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_DEEM_TAX_DEPEND_OUT_HH" precision="16"/>
+    </property>
+    <property name="amtDeemTotal" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_DEEM_TOTAL" precision="16"/>
+    </property>
+    <property name="amtDeemUnearnedIncome" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_DEEM_UNEARNED_INCOME" precision="16"/>
+    </property>
+    <property name="amtEarnedLessAllDeduct" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_EARNED_LESS_ALL_DEDUCT" precision="16"/>
+    </property>
+    <property name="amtEarnedLessStdDeduct" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_EARNED_LESS_STD_DEDUCT" precision="16"/>
+    </property>
+    <property name="amtGicSurpDefctChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GIC_SURP_DEFCT_CHILD" precision="16"/>
+    </property>
+    <property name="amtGicSurpDefctCrtfdGrp" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GIC_SURP_DEFCT_CRTFD_GRP" precision="16"/>
+    </property>
+    <property name="amtGrossEarnedCrtfdGrp" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GROSS_EARNED_CRTFD_GRP" precision="16"/>
+    </property>
+    <property name="amtGrossIncomeAllocMutual" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GROSS_INCOME_ALLOC_MUTUAL" precision="16"/>
+    </property>
+    <property name="amtGrossIncomeAllocSngl1" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GROSS_INCOME_ALLOC_SNGL_1" precision="16"/>
+    </property>
+    <property name="amtGrossIncomeAllocSngl2" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GROSS_INCOME_ALLOC_SNGL_2" precision="16"/>
+    </property>
+    <property name="amtGrossIncomeCrtfdGrp" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GROSS_INCOME_CRTFD_GRP" precision="16"/>
+    </property>
+    <property name="amtGrossIncomeChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GROSS_INCOME_CHILD" precision="16"/>
+    </property>
+    <property name="amtGrossUnearnedCrtfdGrp" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GROSS_UNEARNED_CRTFD_GRP" precision="16"/>
+    </property>
+    <property name="amtIncomeLimit" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_INCOME_LIMIT" precision="16"/>
+    </property>
+    <property name="amtLessAllocElig" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_LESS_ALLOC_ELIG" precision="16"/>
+    </property>
+    <property name="amtLessAllocStdNeed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_LESS_ALLOC_STD_NEED" precision="16"/>
+    </property>
+    <property name="amtLessDepCareElig" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_LESS_DEP_CARE_ELIG" precision="16"/>
+    </property>
+    <property name="amtLessDepCareStdNeed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_LESS_DEP_CARE_STD_NEED" precision="16"/>
+    </property>
+    <property name="amtNetEarnedIncome" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_NET_EARNED_INCOME" precision="16"/>
+    </property>
+    <property name="amtNetEarnedIncomeChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_NET_EARNED_INCOME_CHILD" precision="16"/>
+    </property>
+    <property name="amtNonexmptRsrcCrtfdGrp" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_NONEXMPT_RSRC_CRTFD_GRP" precision="16"/>
+    </property>
+    <property name="amtPlusChsupChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_PLUS_CHSUP_CHILD" precision="16"/>
+    </property>
+    <property name="amtPlusChsupCrtfdGrp" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_PLUS_CHSUP_CRTFD_GRP" precision="16"/>
+    </property>
+    <property name="amtPlusDeemedElig" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_PLUS_DEEMED_ELIG" precision="16"/>
+    </property>
+    <property name="amtPlusDeemedStdNeed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_PLUS_DEEMED_STD_NEED" precision="16"/>
+    </property>
+    <property name="amtPlusUnearnedElig" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_PLUS_UNEARNED_ELIG" precision="16"/>
+    </property>
+    <property name="amtPlusUnearnedStdNeed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_PLUS_UNEARNED_STD_NEED" precision="16"/>
+    </property>
+    <property name="amtPweIncome" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_PWE_INCOME" precision="10"/>
+    </property>
+    <property name="amtResourceLimitChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_RESOURCE_LIMIT_CHILD" precision="16"/>
+    </property>
+    <property name="amtResourceLimitCrtfdGrp" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_RESOURCE_LIMIT_CRTFD_GRP" precision="16"/>
+    </property>
+    <property name="amtSsi" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SSI" precision="16"/>
+    </property>
+    <property name="amtStdOfNeedAllocMutual" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_STD_OF_NEED_ALLOC_MUTUAL" precision="10"/>
+    </property>
+    <property name="amtStdOfNeedAllocSngl1" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_STD_OF_NEED_ALLOC_SNGL_1" precision="10"/>
+    </property>
+    <property name="amtStdOfNeedAllocSngl2" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_STD_OF_NEED_ALLOC_SNGL_2" precision="10"/>
+    </property>
+    <property name="amtStepparentAlimony" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_STEPPARENT_ALIMONY" precision="10"/>
+    </property>
+    <property name="amtStepparentAllowance" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_STEPPARENT_ALLOWANCE" precision="16"/>
+    </property>
+    <property name="amtStepparentAppliedIncome" type="java.lang.Double" unique="false" optimistic-lock="true"
+              lazy="false" generated="never">
+      <column name="AMT_STEPPARENT_APPLIED_INCOME" precision="16"/>
+    </property>
+    <property name="amtStepparentCntblUnearned" type="java.lang.Double" unique="false" optimistic-lock="true"
+              lazy="false" generated="never">
+      <column name="AMT_STEPPARENT_CNTBL_UNEARNED" precision="16"/>
+    </property>
+    <property name="amtStepparentGrossEarned" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_STEPPARENT_GROSS_EARNED" precision="16"/>
+    </property>
+    <property name="amtStepparentOutsidePmnt" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_STEPPARENT_OUTSIDE_PMNT" precision="16"/>
+    </property>
+    <property name="amtStepparentTotalCntbl" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_STEPPARENT_TOTAL_CNTBL" precision="16"/>
+    </property>
+    <property name="amtStepparentWorkDeduct" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_STEPPARENT_WORK_DEDUCT" precision="16"/>
+    </property>
+    <property name="amtSurpDefctEligChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SURP_DEFCT_ELIG_CHILD" precision="16"/>
+    </property>
+    <property name="amtSurpDefctEligCrtfdGrp" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SURP_DEFCT_ELIG_CRTFD_GRP" precision="16"/>
+    </property>
+    <property name="amtSurpDefctStdNeed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SURP_DEFCT_STD_NEED" precision="16"/>
+    </property>
+    <property name="indAbsentMother" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_ABSENT_MOTHER" length="1"/>
+    </property>
+    <property name="indAbsentFather" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_ABSENT_FATHER" length="1"/>
+    </property>
+    <property name="cdAllocType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ALLOC_TYPE" length="4"/>
+    </property>
+    <property name="cdBlocChild" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_BLOC_CHILD" length="3"/>
+    </property>
+    <property name="cdDeemIndivRel1" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_DEEM_INDIV_REL_1" length="3"/>
+    </property>
+    <property name="cdDeemIndivRel2" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_DEEM_INDIV_REL_2" length="3"/>
+    </property>
+    <property name="cdDeemRespType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_DEEM_RESP_TYPE" length="3"/>
+    </property>
+    <property name="cdDeemSurplusOrDeficit" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_DEEM_SURPLUS_OR_DEFICIT" length="3"/>
+    </property>
+    <property name="cdEligibilityActual" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ELIGIBILITY_ACTUAL" length="3"/>
+    </property>
+    <property name="cdEligibilitySelected" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ELIGIBILITY_SELECTED" length="3"/>
+    </property>
+    <property name="cdEligSurpDefctChild" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ELIG_SURP_DEFCT_CHILD" length="3"/>
+    </property>
+    <property name="cdEligSurpDefctCrtfdGrp" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ELIG_SURP_DEFCT_CRTFD_GRP" length="3"/>
+    </property>
+    <property name="cdGicSurpDefctChild" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_GIC_SURP_DEFCT_CHILD" length="3"/>
+    </property>
+    <property name="cdGicSurpDefctCrtfdGrp" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_GIC_SURP_DEFCT_CRTFD_GRP" length="3"/>
+    </property>
+    <property name="cdMedicaidEligibilityType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_MEDICAID_ELIGIBILITY_TYPE" length="1"/>
+    </property>
+    <property name="cdPersonCitizenship" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PERSON_CITIZENSHIP" length="3"/>
+    </property>
+    <property name="cdStdTestSurpDefct" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STD_TEST_SURP_DEFCT" length="3"/>
+    </property>
+    <property name="indMotherPwe" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_MOTHER_PWE" length="1"/>
+    </property>
+    <property name="indFatherPwe" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_FATHER_PWE" length="1"/>
+    </property>
+    <property name="dtEligibilityEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ELIGIBILITY_END" length="7"/>
+    </property>
+    <property name="dtRemovalChildOrdered" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_REMOVAL_CHILD_ORDERED" length="7"/>
+    </property>
+    <property name="dtReviewDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REVIEW_DATE" length="7"/>
+    </property>
+    <property name="dtRsnblEffortPreventRem" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_RSNBL_EFFORT_PREVENT_REM" length="7"/>
+    </property>
+    <property name="dtEligDtrmntnStart" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ELIG_DTRMNTN_START" length="7"/>
+    </property>
+    <property name="indAbsentAltrntCustody" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ABSENT_ALTRNT_CUSTODY" length="1"/>
+    </property>
+    <property name="indAbsentDeported" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ABSENT_DEPORTED" length="1"/>
+    </property>
+    <property name="indAbsentDeserted" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ABSENT_DESERTED" length="1"/>
+    </property>
+    <property name="indAbsentDied" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_ABSENT_DIED" length="1"/>
+    </property>
+    <property name="indAbsentDivorced" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ABSENT_DIVORCED" length="1"/>
+    </property>
+    <property name="indAbsentHospitalized" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ABSENT_HOSPITALIZED" length="1"/>
+    </property>
+    <property name="indAbsentIncarcerated" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ABSENT_INCARCERATED" length="1"/>
+    </property>
+    <property name="indAbsentMilitaryWork" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ABSENT_MILITARY_WORK" length="1"/>
+    </property>
+    <property name="indAbsentSeparated" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ABSENT_SEPARATED" length="1"/>
+    </property>
+    <property name="indAbsentWorkRelated" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ABSENT_WORK_RELATED" length="1"/>
+    </property>
+    <property name="indChildLivingPrnt6Mnths" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CHILD_LIVING_PRNT_6_MNTHS" length="1"/>
+    </property>
+    <property name="indMeetsDpOrNotEs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MEETS_DP_OR_NOT_ES" length="1"/>
+    </property>
+    <property name="indMeetsDpOrNotSystem" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MEETS_DP_OR_NOT_SYSTEM" length="1"/>
+    </property>
+    <property name="indChildQualifiedCitizen" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CHILD_QUALIFIED_CITIZEN" length="1"/>
+    </property>
+    <property name="indChildSupportOrdered" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CHILD_SUPPORT_ORDERED" length="1"/>
+    </property>
+    <property name="indChildUnder18" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CHILD_UNDER_18" length="1"/>
+    </property>
+    <property name="indCtznshpAttorneyReview" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_ATTORNEY_REVIEW" length="1"/>
+    </property>
+    <property name="indCtznshpAmerIndianCrd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_AMER_INDIAN_CRD" length="1"/>
+    </property>
+    <property name="indCtznshpBirthCrtfctFor" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_BIRTH_CRTFCT_FOR" length="1"/>
+    </property>
+    <property name="indCtznshpBirthCrtfctUs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_BIRTH_CRTFCT_US" length="1"/>
+    </property>
+    <property name="indCtznshpChldFound" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_CHLD_FOUND" length="1"/>
+    </property>
+    <property name="indCtznshpCitizenCrtfct" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_CITIZEN_CRTFCT" length="1"/>
+    </property>
+    <property name="indCtznshpBirthAbroad" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_BIRTH_ABROAD" length="1"/>
+    </property>
+    <property name="indCtznshpCivilServiceEmp" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_CIVIL_SERVICE_EMP" length="1"/>
+    </property>
+    <property name="indCtznshpEvaluation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_EVALUATION" length="1"/>
+    </property>
+    <property name="indCtznshpForDocumentation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_FOR_DOCUMENTATION" length="1"/>
+    </property>
+    <property name="indCtznshpHospitalCrtfct" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_HOSPITAL_CRTFCT" length="1"/>
+    </property>
+    <property name="indCtznshpNoDocumentation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_NO_DOCUMENTATION" length="1"/>
+    </property>
+    <property name="indCtznshpNtrlztnCrtfct" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_NTRLZTN_CRTFCT" length="1"/>
+    </property>
+    <property name="indCtznshpPassport" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_PASSPORT" length="1"/>
+    </property>
+    <property name="indCtznshpResidentCard" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_RESIDENT_CARD" length="1"/>
+    </property>
+    <property name="indCtznshpNorthMarianaId" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_NORTH_MARIANA_ID" length="1"/>
+    </property>
+    <property name="indCtznshpFinalAdoptDecree" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_FINAL_ADOPT_DECREE" length="1"/>
+    </property>
+    <property name="indCtznshpVitalBirthRcrd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_VITAL_BIRTH_RCRD" length="1"/>
+    </property>
+    <property name="indCtznshpMiltryBirthRcrd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_MILTRY_BIRTH_RCRD" length="1"/>
+    </property>
+    <property name="indCtznshpConfrmBirth" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_CONFIRM_BIRTH" length="1"/>
+    </property>
+    <property name="indCtznshpUsHsptlBrthRcrd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_US_HSPTL_BRTH_RCRD" length="1"/>
+    </property>
+    <property name="indCtznshpUsIdCard" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_US_ID_CARD" length="1"/>
+    </property>
+    <property name="indCtznshpLifeInsBrthRcrd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_LIFE_INS_BRTH_RCRD" length="1"/>
+    </property>
+    <property name="indCtznshpCensusBirthRcrd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_CENSUS_BIRTH_RCRD" length="1"/>
+    </property>
+    <property name="indCtznshpMedBirthRcrd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_MED_BIRTH_RCRD" length="1"/>
+    </property>
+    <property name="indCtznshpReligBirthRcrd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_RELIG_BIRTH_RCRD" length="1"/>
+    </property>
+    <property name="indCtznshpRefugee" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_REFUGEE" length="1"/>
+    </property>
+    <property name="indCtznshpLoclGovtBrthRcrd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_LOCL_GOV_BRTH_RCRD" length="1"/>
+    </property>
+    <property name="indCtznshpStudentVisa" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_STUDENT_VISA" length="1"/>
+    </property>
+    <property name="indCtznshpLeglImmiStatExp" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_LEGL_IMMI_STAT_EXP" length="1"/>
+    </property>
+    <property name="indCtznshpUnaccMinorChild" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_UNACC_MINOR_CHILD" length="1"/>
+    </property>
+    <property name="indCtznshpUndocImmigrant" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_UNDOC_IMMIGRANT" length="1"/>
+    </property>
+    <property name="indCtznshpSaveSystem" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_SAVE_SYSTEM" length="1"/>
+    </property>
+    <property name="indCtznshpSuccessSystem" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_SUCCESS_SYSTEM" length="1"/>
+    </property>
+    <property name="indEligibilityCourtMonth" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ELIGIBILITY_COURT_MONTH" length="1"/>
+    </property>
+    <property name="indEligible" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_ELIGIBLE" length="1"/>
+    </property>
+    <property name="indEquity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_EQUITY" length="1"/>
+    </property>
+    <property name="indChildEquity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CHILD_EQUITY" length="1"/>
+    </property>
+    <property name="indHomeIncomeAfdcElgblty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_HOME_INCOME_AFDC_ELGBLTY" length="1"/>
+    </property>
+    <property name="indOtherVerification" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_OTHER_VERIFICATION" length="1"/>
+    </property>
+    <property name="indParentalDeprivation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PARENTAL_DEPRIVATION" length="1"/>
+    </property>
+    <property name="indParentDisabled" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PARENT_DISABLED" length="1"/>
+    </property>
+    <property name="indPrsManagingCvs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PRS_MANAGING_CVS" length="1"/>
+    </property>
+    <property name="indNarrativeApproved" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_NARRATIVE_APPROVED" length="1"/>
+    </property>
+    <property name="cdPweIrregularUnder100" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PWE_IRREGULAR_UNDER_100" length="1"/>
+    </property>
+    <property name="indRemovalChildOrdered" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_REMOVAL_CHILD_ORDERED" length="1"/>
+    </property>
+    <property name="indRsnblEffortPrvtRemoval" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RSNBL_EFFORT_PRVT_REMOVAL" length="1"/>
+    </property>
+    <property name="cdPweSteadyUnder100" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PWE_STEADY_UNDER_100" length="1"/>
+    </property>
+    <property name="indRsdiVerification" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RSDI_VERIFICATION" length="1"/>
+    </property>
+    <property name="indSsiVerification" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_SSI_VERIFICATION" length="1"/>
+    </property>
+    <property name="nbrCertifiedGroup" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CERTIFIED_GROUP" precision="3" scale="0"/>
+    </property>
+    <property name="nbrDeemChildNotInAU" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_DEEM_CHILD_NOT_IN_AU" precision="2" scale="0"/>
+    </property>
+    <property name="nbrDeemResponseIndiv" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_DEEM_RESPONSE_INDIV" precision="2" scale="0"/>
+    </property>
+    <property name="nbrDeemPersonSONLookup" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_DEEM_PERSON_SON_LOOKUP" precision="2" scale="0"/>
+    </property>
+    <property name="nbrDeemTaxDependNotInAU" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_DEEM_TAX_DEPEND_NOT_IN_AU" precision="2" scale="0"/>
+    </property>
+    <property name="nbrIneligChildAllocMutual" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INELIG_CHILD_ALLOC_MUTUAL" precision="2" scale="0"/>
+    </property>
+    <property name="nbrIneligChildAllocSngl1" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INELIG_CHILD_ALLOC_SNGL_1" precision="2" scale="0"/>
+    </property>
+    <property name="nbrIneligChildAllocSngl2" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INELIG_CHILD_ALLOC_SNGL_2" precision="2" scale="0"/>
+    </property>
+    <property name="nbrIneligPersonAllocMutual" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INELIG_PERSON_ALLOC_MUTUAL" precision="2" scale="0"/>
+    </property>
+    <property name="nbrIneligPersonAllocSngl1" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INELIG_PERSON_ALLOC_SNGL_1" precision="2" scale="0"/>
+    </property>
+    <property name="nbrIneligPersonAllocSngl2" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INELIG_PERSON_ALLOC_SNGL_2" precision="2" scale="0"/>
+    </property>
+    <property name="nbrIneligSpouseAllocMutual" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INELIG_SPOUSE_ALLOC_MUTUAL" precision="2" scale="0"/>
+    </property>
+    <property name="nbrIneligSpouseAllocSngl1" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INELIG_SPOUSE_ALLOC_SNGL_1" precision="2" scale="0"/>
+    </property>
+    <property name="nbrIneligSpouseAllocSngl2" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INELIG_SPOUSE_ALLOC_SNGL_2" precision="2" scale="0"/>
+    </property>
+    <property name="nbrParentsHome" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PARENTS_HOME" precision="1" scale="0"/>
+    </property>
+    <property name="txtDeterminationComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_DETERMINATION_COMMENTS" length="300"/>
+    </property>
+    <property name="nbrStepparentChildren" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_STEPPARENT_CHILDREN" precision="2" scale="0"/>
+    </property>
+    <property name="indAbsentNeverCohabitated" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ABSENT_NEVER_COHABITATED" length="1"/>
+    </property>
+    <property name="cdFceEligReason" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_FCE_ELIG_REASON" length="3"/>
+    </property>
+    <property name="indCrtOrdrBestIntrst" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CRT_ORDR_BEST_INTRST" length="1"/>
+    </property>
+    <property name="indCrtOrdrReunify" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CRT_ORDR_REUNIFY" length="1"/>
+    </property>
+    <property name="dtDeprivationChanged" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_DEPRIVATION_CHANGED" length="7"/>
+    </property>
+    <property name="txtMonthsDeprivation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_MONTHS_DEPRIVATION" length="50"/>
+    </property>
+    <property name="indChildCare" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_COST_CARE_EXCEED_AMT" length="1"/>
+    </property>
+    <property name="indOutHomeCare" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_COST_CARE_OUT_OF_HOME" length="1"/>
+    </property>
+    <property name="indEmancipation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_COST_CARE_EMANCIPATION" length="1"/>
+    </property>
+    <property name="indAdoption" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_COST_CARE_ADOPTED" length="1"/>
+    </property>
+    <property name="indPayForCare" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_OTHER_EXPENDITURES" length="1"/>
+    </property>
+    <property name="txtMonthsDepUnemp" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_MONTHS_DEP_UNEMP" length="50"/>
+    </property>
+    <property name="txtMonthsDepUnderEmpl" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_MONTHS_DEP_UNDER_EMPL" length="50"/>
+    </property>
+    <property name="txtMonthsDepDisabled" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_MONTHS_DEP_DISABLED" length="50"/>
+    </property>
+    <property name="indAbsentTprVolRelinq" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ABSENT_TPR_VOL_RELINQ" length="1"/>
+    </property>
+    <property name="txtMonthsLivingRelCust" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_MONTHS_LIVING_REL_CUST" length="100"/>
+    </property>
+    <property name="amtStandardOfNeed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_STANDARD_OF_NEED" precision="16"/>
+    </property>
+    <property name="amtGrossIncomeCeiling" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GROSS_INCOME_CEILING" precision="16"/>
+    </property>
+    <property name="amtDependentCareDeduct" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_DEPENDENT_CARE_DEDUCT" precision="16"/>
+    </property>
+    <property name="amtAllocAllowance" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_ALLOC_ALLOWANCE" precision="16"/>
+    </property>
+    <property name="amtCntIncomeStdNeed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNT_INCOME_STD_NEED" precision="16"/>
+    </property>
+    <property name="amtCntIncome30OneThird" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNT_INCOME_30_ONE_THIRD" precision="16"/>
+    </property>
+    <property name="amtStdEarnedIncomeDeduct" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_STD_EARNED_INCOME_DEDUCT" precision="16"/>
+    </property>
+    <property name="amtCntblResourceChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNTBL_RESOURCE_CHILD" precision="16"/>
+    </property>
+    <property name="amtGrossEarnedChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GROSS_EARNED_CHILD" precision="16"/>
+    </property>
+    <property name="amtGrossUnearnedChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_GROSS_UNEARNED_CHILD" precision="16"/>
+    </property>
+    <property name="amtTotalGrossIncomeChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_TOTAL_GROSS_INCOME_CHILD" precision="16"/>
+    </property>
+    <property name="amtCntblIncStdNeedChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNTBL_INC_STD_NEED_CHILD" precision="16"/>
+    </property>
+    <property name="amtCntblInc30OneChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CNTBL_INC_30_ONE_CHILD" precision="16"/>
+    </property>
+    <property name="amtGrossIncomeCeilingChild" type="java.lang.Double" unique="false" optimistic-lock="true"
+              lazy="false"
+              generated="never">
+      <column name="AMT_GROSS_INCOME_CEILING_CHILD" precision="16"/>
+    </property>
+    <property name="amtStdOfNeedChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_STD_OF_NEED_CHILD" precision="16"/>
+    </property>
+    <property name="amtDepCareDeducChild" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_DEP_CARE_DEDUC_CHILD" precision="16"/>
+    </property>
+    <property name="indCtznshpDriverLicOrId" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_DRIVER_LIC_OR_ID" length="1"/>
+    </property>
+    <property name="indCtznshpSchoolRec" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_SCHOOL_REC" length="1"/>
+    </property>
+    <property name="indCtznshpMilitaryDepdntId" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_MILITARY_DEPDNT_ID" length="1"/>
+    </property>
+    <property name="indChildReceivingSsi" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CHILD_RECEIVING_SSI" length="1"/>
+    </property>
+    <property name="indCtznshpCertIndBlood" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_CERT_IND_BLOOD" length="1"/>
+    </property>
+    <property name="indCtznshpDocImmigNatAct" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_DOC_IMMIG_NAT_ACT" length="1"/>
+    </property>
+    <property name="indCtznshpSchoolIdPhoto" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_SCHOOL_ID_PHOTO" length="1"/>
+    </property>
+    <property name="indCtznshpClinicDocHosDoc" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_CLINIC_DOC_HOS_DOC" length="1"/>
+    </property>
+    <property name="indCtznshpDaycareNurseRcrd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_DAYCARE_NURSE_RCRD" length="1"/>
+    </property>
+    <property name="indCtznshpAffidavitSigned" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_AFFIDAVIT_SIGNED" length="1"/>
+    </property>
+    <property name="indCtznshpCertReportBirth" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTZNSHP_CERT_REPORT_BIRTH" length="1"/>
+    </property>
+    <property name="idOtherRelativePerson" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ID_OTHER_RELATIVE_PERSON" precision="16" scale="0"/>
+    </property>
+    <property name="ind30OneThirdTestElgblty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_30_ONE_THIRD_TEST_ELGBLTY" length="1"/>
+    </property>
+    <property name="ind3013ChildTestElgblty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_30_1_3_CHILD_TEST_ELGBLTY" length="1"/>
+    </property>
+    <property name="indCtnblResChildElgblty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CTNBL_RES_CHILD_ELGBLTY" length="1"/>
+    </property>
+    <property name="indGrossIncCeilingElgblty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_GROSS_INC_CEILING_ELGBLTY" length="1"/>
+    </property>
+    <property name="indGrossIncChildElgblty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_GROSS_INC_CHILD_ELGBLTY" length="1"/>
+    </property>
+    <property name="indSonChildTestElgblty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_SON_CHILD_TEST_ELGBLTY" length="1"/>
+    </property>
+    <property name="indStdOfNeedTestElgblty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_STD_OF_NEED_TEST_ELGBLTY" length="1"/>
+    </property>
+    <property name="cdVerifMethod" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_VERIF_METHOD" length="3"/>
+    </property>
+    <property name="cdVerifDocType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_VERIF_DOC_TYPE" length="3"/>
+    </property>
+    <property name="indRecv100PctVa" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_RECV_100_PCT_VA" length="1"/>
+    </property>
+    <property name="indRecvRrRsdi" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_RECV_RR_RSDI" length="1"/>
+    </property>
+    <property name="indPeRecvUnemp" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PE_RECV_UNEMP" length="1"/>
+    </property>
+    <property name="indPeNotAcptEmpTrn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PE_NOT_ACPT_EMP_TRN" length="1"/>
+    </property>
+    <property name="indPeWrkEngEduTrn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PE_WRK_ENG_EDU_TRN" length="1"/>
+    </property>
+    <property name="amtCsupWithUnearnedIncome" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_CSUP_WITH_UNEARNED_INCOME" precision="16"/>
+    </property>  
+    <bag name="fceIncomes" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FCE_ELIGIBILITY" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceIncome" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="fcePersons" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FCE_ELIGIBILITY" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FcePerson" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="fceExpenditureses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FCE_ELIGIBILITY" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceExpenditures" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="fceReasonNotEligibles" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FCE_ELIGIBILITY" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceReasonNotEligible" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="fceReviews" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FCE_ELIGIBILITY" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceReview" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="fceApplications" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FCE_ELIGIBILITY" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceApplication" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

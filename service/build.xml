@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="service" default="all" basedir=".">
+  <!-- Project-specific overrides. -->
+  <property file="build.properties"/>
+
+  <!-- Common properties. -->
+  <import file="../build-common.xml"/>
+
+  <property name="service.build.generated" location="${service.build}/generated"/>
+  <property name="service.build.generated.java" location="${service.build.generated}/java"/>
+  <property name="service.build.generated.classes" location="${service.build.generated}/classes"/>
+
+  <path id="service.build.path">
+    <fileset dir="${service.lib}">
+      <include name="*_service.jar"/>
+    </fileset>
+    <pathelement location="${launcher-api.exploded}"/>
+    <pathelement location="${dao.exploded}"/>
+    <pathelement location="${core.exploded}"/>
+    <dirset refid="hibernate.exploded.dirset"/>
+    <dirset refid="structs.exploded.dirset"/>
+    <fileset refid="xmlstructs.exploded.dirset"/>
+
+    <fileset refid="lib.fileset"/>
+    <fileset refid="lib.oracle.fileset"/>
+    <fileset refid="lib.commons-logging.fileset"/>
+    <fileset refid="lib.j2ee.fileset"/>
+  </path>
+
+  <path id="ws.generate.path">
+    <fileset dir="${service.lib}/">
+      <include name="jaxb-xjc-2.0.1.jar"/>
+    </fileset>
+    <fileset refid="lib.fileset"/>
+    <fileset refid="lib.commons-logging.fileset"/>
+  </path>
+
+  <!-- Task and macro for wsdl generation. -->
+  <macrodef name="ws-client-gen">
+    <attribute name="ws-name"/>
+    <attribute name="ws-jar-name"/>
+    <sequential>
+      <!-- Define the task here to make sure that it's defined when used. -->
+      <taskdef name="wsgen" classname="org.codehaus.xfire.gen.WsGenTask" classpathref="ws.generate.path"/>
+      <mkdir dir="${service.build.generated}"/>
+      <mkdir dir="${service.build.generated.java}"/>
+      <mkdir dir="${service.build.generated.classes}"/>
+      <mkdir dir="${service.build.generated.java}/@{ws-name}"/>
+      <mkdir dir="${service.build.generated.classes}/@{ws-name}"/>
+      <wsgen outputDirectory="${service.build.generated.java}/@{ws-name}" binding="jaxb" explicitannotation="true"
+             wsdl="${service.src.conf}/@{ws-name}.wsdl" package="gov.georgia.dhr.dfcs.sacwis.ws.@{ws-name}"/>
+      <javac source="1.5" target="1.5" debug="${build.debug}" srcdir="${service.build.generated.java}/@{ws-name}"
+             destdir="${service.build.generated.classes}/@{ws-name}"
+             classpathref="service.build.path">
+        <include name="**/*.java"/>
+      </javac>
+      <jar destfile="${service.lib}/@{ws-jar-name}">
+        <fileset dir="${service.build.generated.classes}/@{ws-name}"/>
+        <!-- Also grab everything but the java files. -->
+        <fileset dir="${service.build.generated.java}/@{ws-name}" excludes="**/*.java"/>
+      </jar>
+    </sequential>
+  </macrodef>
+
+  <target name="clean" description="Removes files used to build the service layer.">
+    <!-- Do not delete the whole service/build directory becuase IDEs use it.. -->
+    <delete failonerror="false">
+      <fileset dir="${service.build}" includes="*"/>
+    </delete>
+    <delete dir="${service.build.generated.classes}"/>
+    <delete dir="${service.build.test}"/>
+    <delete dir="${service.exploded}"/>
+    <delete file="${service.jar}"/>
+  </target>
+
+  <target name="clean.all" depends="clean" description="Removes all build artifacts.">
+    <delete dir="${service.build}"/>
+    <delete>
+      <fileset refid="lib.service-ws.fileset"/>
+    </delete>
+  </target>
+<!--
+  <target name="prepare" depends="common-prepare" description="Prepares for generation of structs classes"> -->
+    <target name="prepare" description="Prepares for generation of structs classes">
+    <mkdir dir="${service.build}"/>
+    <mkdir dir="${service.build.test}"/>
+    <mkdir dir="${service.build.test.classes}"/>
+    <mkdir dir="${service.exploded}"/>
+    <!-- Define this here because the directories must exist. -->
+    <path id="service.test.path">
+      <!-- Add configuration directory. -->
+      <pathelement location="${test}/"/>
+      <pathelement location="${service.test.conf}"/>
+      <pathelement location="${service.build.test.classes}"/>
+      <!-- Put the original conf files before the the built ones because the originals have default-lazy-init set to false. -->
+      <pathelement location="${service.src.conf}"/>
+      <pathelement location="${service.exploded}"/>
+      <pathelement location="${core.build.test.classes}"/>
+      <!-- We need sacwis.properties. -->
+      <pathelement location="${main-war.src.conf}"/>
+      <path refid="base.test.libs"/>
+      <path refid="service.build.path"/>
+    </path>
+    <!-- Determine whether to rebuild the web service client jars. -->
+    <uptodate property="service.wsclient.uptodate">
+      <srcfiles dir="${service.src.conf}" includes="*.wsdl"/>
+      <mapper>
+        <mapper type="glob" from="crsregistration.wsdl" to="${service.lib}/crsregistration_service.jar"/>
+        <mapper type="glob" from="crsscreening.wsdl" to="${service.lib}/crsscreening_service.jar"/>
+      </mapper>
+    </uptodate>
+    <condition property="service.wsclient.skip">
+      <and>
+        <isset property="service.wsclient.uptodate"/>
+        <not>
+          <istrue value="${service.wsclient.force}"/>
+        </not>
+      </and>
+    </condition>
+
+    <!--Determine whether or not to include the OLH. -->
+    <condition property="olh.skip.flag">
+      <and>
+        <isset property="olh"/>
+        <isfalse value="${olh}"/>
+      </and>
+    </condition>
+  </target>
+
+  <target name="wscompile" unless="service.wsclient.skip" depends="prepare"
+          description="Rebuilds WS Client jars from WSDL.">
+    <ws-client-gen ws-name="crsregistration" ws-jar-name="crsregistration_service.jar"/>
+    <ws-client-gen ws-name="crsscreening" ws-jar-name="crsscreening_service.jar"/>
+  </target>
+
+  <target name="compile" depends="wscompile" description="Compiles the service classes.">
+    <javac source="1.5" target="1.5" debug="${build.debug}"
+           srcdir="${service.src.java}" destdir="${service.exploded}" classpathref="service.build.path">
+      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation,unchecked"/>
+      <include name="**/*.java"/>
+    </javac>
+    <javac source="1.5" target="1.5" debug="${build.debug}"
+           srcdir="${service.test.java}" destdir="${service.build.test.classes}">
+      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation,unchecked"/>
+      <classpath>
+        <pathelement location="${service.exploded}"/>
+        <path refid="service.build.path"/>
+        <fileset refid="lib.test.fileset"/>
+      </classpath>
+      <include name="**/*.java"/>
+    </javac>
+  </target>
+
+  <target name="package.exploded" depends="compile"
+          description="Copies compiled classes to the exploded ear directory.">
+    <copy todir="${service.exploded}" preservelastmodified="true" overwrite="false">
+      <fileset dir="${service.src.conf}"/>
+      <filterchain>
+        <replacestring from="default-lazy-init=&quot;false&quot;"
+                       to="default-lazy-init=&quot;${development.mode}&quot;"/>
+      </filterchain>
+    </copy>
+    <copy todir="${build.exploded}">
+      <fileset dir="${service.lib}" includes="*_service.jar"/>
+    </copy>
+  </target>
+
+  <target name="package.ear" depends="compile" description="Jars classes to the ear directory.">
+    <jar destfile="${service.jar}" basedir="${service.exploded}"/>
+    <copy todir="${build.ear}">
+      <fileset dir="${service.lib}" includes="*_service.jar"/>
+    </copy>
+  </target>
+
+  <target name="test.spring" depends="compile" description="Tests the Spring configuration.">
+    <junit dir="${service.build}" printsummary="false" haltonfailure="${junit.haltonfailure}" fork="true"
+           haltonerror="true">
+      <jvmarg value="-Xmx512m"/>
+      <jvmarg value="-Djava.util.logging.config.file=${test}/logging.properties"/>
+      <!--<jvmarg value="-Xdebug"/>-->
+      <!--<jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=9268"/>-->
+      <classpath refid="service.test.path"/>
+      <formatter type="xml" usefile="true"/>
+      <formatter type="plain" usefile="false"/>
+      <test name="gov.georgia.dhr.dfcs.sacwis.service.SpringServiceConfigurationTest" haltonerror="true"
+            haltonfailure="true" todir="${build.junit-reports}"/>
+    </junit>
+  </target>
+
+  <target name="test.fast" depends="test.spring" description="Runs only tests that can be executed quickly."/>
+
+  <target name="test.all" depends="compile" description="Copies generated jar to build dir.">
+    <junit dir="${service.build}" printsummary="true" haltonfailure="false" fork="true" forkmode="perBatch">
+      <jvmarg value="-Xmx512m"/>
+      <jvmarg value="-Djava.util.logging.config.file=${test}/logging.properties"/>
+      <classpath refid="service.test.path"/>
+      <formatter type="xml" usefile="true"/>
+      <formatter type="plain" usefile="false"/>
+      <batchtest todir="${build.junit-reports}">
+        <fileset dir="${service.test.java}"
+                 includes="gov/georgia/dhr/dfcs/sacwis/service/SpringServiceConfigurationTest.java"/>
+      </batchtest>
+      <batchtest todir="${build.junit-reports}">
+        <fileset dir="${service.test.java}" includes="gov/georgia/dhr/dfcs/sacwis/service/BaseServiceTest.java"/>
+        <fileset dir="${service.test.java}">
+          <include name="**/*Test.java"/>
+          <exclude name="gov/georgia/dhr/dfcs/sacwis/service/SpringServiceConfigurationTest.java"/>
+          <exclude name="gov/georgia/dhr/dfcs/sacwis/service/BaseServiceTest.java"/>
+        </fileset>
+      </batchtest>
+    </junit>
+  </target>
+
+  <target name="update" depends="package.exploded" description="Incremental build for development."/>
+
+  <target name="all" depends="clean, test.fast, package.exploded"
+          description="Cleans, builds, runs basic tests and packages to the exploded ear directory."/>
+
+  <target name="dist" depends="all,package.ear"
+          description="Cleans, builds, runs basic tests and packages to the ear directory."/>
+</project>

@@ -1,0 +1,845 @@
+!*****************************************************************************
+! RISK ASSESSMENT REPORT (civ19o00.sqr)                                      *
+! (was INTRANET RISK ASSESSMENT REPORT prior to SIR23483)                    *
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         civ19o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     opt/caps/sys/prod/sqr                                *
+!                                                                            *
+!                                                                            *
+! DATE:                 07/01/99                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Suman Sharma                                         *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This is a report of the information from the         *
+!                       Intranet Risk Assessment. Note, the word Intranet    *
+!                       removed with SIR23483.                               *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 07/01/99   Sharmas     Initial Programming                                 *
+!                                                                            *
+! 06/26/2001 hafelela     IRA2001 - IRA Narrative Enhancement brought the    *
+!                         narrative back into   To do this a new task   *
+!                         code (2295) was created which replaces the old Risk*
+!                         Asmt code - 2290.  Change were made in here to look*
+!                         for the new code.                                  *
+!                                                                            *
+!                                                                            *
+! 07/26/2001 Sharmas     IRA -- Development Phase II                         *
+!                        Made formatting changes to the report to accomodate *
+!                        the rewritten risk_area, risk_categories, and risk_ *
+!                        factors.                                            *
+!                                                                            *
+! 03/05/2002 Sharmas     SIR#  16057                                         *
+!                        The 'date assessment complete' date for the         *
+!                        risk assessment report will be now fetched from the *
+!                        dt_stage_close date of the stage table instead of   *
+!                        the event table.                                    *
+!                                                                            *
+! 03/21/2004 Millersr    SIR# 22532                                          *
+!                        Modify the SQR report to use new Risk Assessment    *
+!                        Lookup tables and CODES_TABLES code types added for *
+!                        IMPACT.                                             *
+!                                                                            *
+!                        RISK_AREA_LOOKUP                                    *
+!                        RISK_CATEGORY_LOOKUP                                *
+!                        RISK_FACTORS_LOOKUP                                 *
+!                        CRISKSOC                                            *
+!                                                                            *
+! 05/05/2004 Fraserkr    SIR# 22532                                          *
+!                        Per M.Prindle - in System Test - report is not      *
+!                        displaying category scales of concern.              *
+!                        References to BATCH_CODES_TABLES.BATCH_CODE_TYPE    *
+!                        CIRACSCL (category of scale) and CIRAASCL (area of  *
+!                        scale) remained.  Fixed code to use the CRISKSOC    *
+!                        table.                                              *
+!                                                                            *
+! 04/04/2004 Fraserkr    SIR23483 - Removed "Intranet" from Report heading,  *
+!                           Verified that the word is not used anywhere else *
+!                           on the report.                                   *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of      *
+!       report message and other wrap up functions.                          *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+DATE-TIME () HH:MI:SS &run_time
+SHOW &run_time
+
+do HOUSEKEEPING
+
+do PROCESS-REPORT
+
+do WRAP-UP
+
+DATE-TIME () HH:MI:SS &run_time
+SHOW &run_time
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters.                                 *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                      !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'            ! control codes for Portrait
+                                       ! On Demand Reports
+
+    ask ID_STAGE                       !input parameter
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 4
+
+  #INCLUDE 'header04.sqc'               !Include file with Header Information
+                                        !Specific to portrait on demand reports
+
+  ! SIR 23483 print 'INTRANET RISK ASSESSMENT REPORT'   (+2) center bold
+  print 'RISK ASSESSMENT REPORT'   (+2) center bold
+
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+                                ! specific to portrait on demand report
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+   move {ID_STAGE}                  to #input_id_stage
+
+  !************************************************
+  ! Variables and Constants                       *
+  !************************************************
+
+  move 'ASM'                        to $ASM
+  move 'COMP'                       to $COMP
+  move 'APRV'                       to $APRV
+  move 'PEND'                       to $PEND
+
+  ! Task codes for each stage type
+  move '2295'                       to $2295  !INV task code - IRA2001
+  move '3250'                       to $3250  !SUB task code
+  move '7185'                       to $7185  !FPR task code
+  move '8750'                       to $8750  !ADO task code
+  move '9240'                       to $9240  !PAD task code
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-CASE-NAME-NUMBER, GET-RISK-ASSESS-PURP-FIND,       *
+!               GET-DT-UPDATE, PRINT-FINDINGS, GET-ALLEG-PERS-NAMES,        *
+!               GET-RISK-ASSESSMENT-INFORMATION,                            *
+!           PRINT-RISK-FACTORS-TITLE,                                       *
+!               GET-AREA-CATEGORY-FACTOR-RESPONSE.                          *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT
+
+    do GET-CASE-NAME-NUMBER
+    do GET-RISK-ASSESS-PURP-FIND
+    do GET-DT-UPDATE
+    do PRINT-FINDINGS
+    do GET-ALLEG-PERS-NAMES
+    do GET-RISK-ASSESSMENT-INFORMATION
+    do PRINT-RISK-FACTORS-TITLE
+    do GET-AREA-CATEGORY-FACTOR-RESPONSE
+
+END-PROCEDURE PROCESS-REPORT
+
+!****************************************************************************
+!                                                                           *
+!   GET-CASE-NAME-NUMBER                                                    *
+!                                                                           *
+!       This procedure will select case name and number from CAPS_CASE table*
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CASE-NAME-NUMBER
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.NM_CASE
+    move &A.NM_CASE                         to $Case_Name
+
+A.ID_CASE
+    move &A.ID_CASE                         to #Case_Number
+
+CCINVCLS.decode
+    move &CCINVCLS.decode                   to $case_action
+
+FROM    CAPS_CASE     A,
+        STAGE         B,
+        CCINVCLS      CCINVCLS
+
+WHERE   A.ID_CASE  = B.ID_CASE
+AND     B.ID_STAGE = #input_id_stage
+AND     CCINVCLS.CODE(+) = B.CD_STAGE_REASON_CLOSED
+
+END-SELECT
+
+END-PROCEDURE GET-CASE-NAME-NUMBER
+
+!****************************************************************************
+!                                                                           *
+!   GET-RISK-ASSESS-PURP-FIND                                               *
+!                                                                           *
+!       This procedure will select everything from the RISK_ASSESSMENT table*
+!       that is used in the report.                                         *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-RISK-ASSESS-PURP                                 *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-RISK-ASSESS-PURP-FIND
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CPURPRSK.decode
+    move &CPURPRSK.decode                       to $purpose
+
+CCRSKFND.decode
+    move &CCRSKFND.decode                       to $finding
+
+CRAFNDDF.decode
+    move &CRAFNDDF.decode                       to $finding_def
+
+    do PRINT-RISK-ASSESS-PURP
+
+FROM    CPURPRSK        CPURPRSK,
+        CCRSKFND        CCRSKFND,
+        CRAFNDDF        CRAFNDDF,
+        RISK_ASSESSMENT R
+
+WHERE   R.ID_STAGE = #input_id_stage
+AND     CPURPRSK.CODE(+) = R.CD_RISK_ASSMT_PURPOSE
+AND     CCRSKFND.CODE(+) = R.CD_RISK_ASSMT_RISK_FIND
+AND     CRAFNDDF.CODE(+) = R.CD_RISK_ASSMT_RISK_FIND
+
+END-SELECT
+
+END-PROCEDURE GET-RISK-ASSESS-PURP-FIND
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-RISK-ASSESS-PURP                                                  *
+!                                                                           *
+!       This procedure prints the purpose for the assessment.               *
+!                                                                           *
+!       CALLED BY  : GET-RISK-ASSESS-PURP-FIND                              *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-RISK-ASSESS-PURP
+
+print 'Purpose: '                               (+2,1)
+print $purpose                                  (+0,10)
+
+END-PROCEDURE PRINT-RISK-ASSESS-PURP
+
+!****************************************************************************
+!                                                                           *
+!   GET-DT-UPDATE                                                           *
+!                                                                           *
+!       This procedure will select the dt last update from the event table. *
+!       Changed the dt last update from the event table to stage table.     *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-DT-UPDATE                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-DT-UPDATE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(DT_STAGE_CLOSE, 'MM/DD/YYYY') &date1
+    move &date1                                 to $date_completed !SIR 16057
+
+ID_STAGE
+    move &ID_STAGE                              to #id_stage
+
+    do PRINT-DT-UPDATE
+
+FROM    STAGE S, EVENT E
+
+WHERE   S.ID_STAGE      = #input_id_stage
+AND     S.ID_STAGE      = E.ID_EVENT_STAGE
+AND     S.ID_CASE       = E.ID_CASE
+AND     CD_EVENT_TYPE   = $ASM
+AND    (CD_TASK         = $2295             !SIR 5022 - added task codes for
+ OR     CD_TASK         = $3250             !each stage type -> IRA2001
+ OR     CD_TASK         = $7185
+ OR     CD_TASK         = $8750
+ OR     CD_TASK         = $9240)            !Added to assure the risk
+                                            !assessment is retrieved
+
+END-SELECT
+
+END-PROCEDURE GET-DT-UPDATE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-DT-UPDATE                                                         *
+!                                                                           *
+!       This procedure prints the date of assessment completion.            *
+!                                                                           *
+!       CALLED BY  : GET-DT-UPDATE                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-DT-UPDATE
+
+print 'Date Assessment Completed: '             (+1,1)
+print $date_completed                           (+0,28)
+
+END-PROCEDURE PRINT-DT-UPDATE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-FINDINGS                                                          *
+!                                                                           *
+!       This procedure prints the findings and recommended actions for risk *
+!  assessment.                                                              *
+!                                                                           *
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-FINDINGS
+
+print 'RISK ASSESSMENT FINDING AND RECOMMENDED ACTION:'     (+2,1)
+print 'Finding: '                                           (+1,1)
+print $finding                                              (+0,10)
+print $finding_def                                          (+1,1) wrap 77 5
+print 'Recommended Action: '                                (+2,1)
+print $case_action                                          (+0,21)
+
+print 'NATURE AND EXTENT OF THE ABUSE OR NEGLECT:  Each type of abuse and neglect'
+                                                            (+2,1)
+print 'that has been investigated is shown.'                (+1,1)
+
+END-PROCEDURE PRINT-FINDINGS
+
+!****************************************************************************
+!                                                                           *
+!   GET-ALLEG-PERS-NAMES                                                    *
+!                                                                           *
+!       This procedure will select all allegation and person names.         *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-ALLEG-PERS-NAMES                                 *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ALLEG-PERS-NAMES
+
+    move 0                                          to #count5
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+B.NM_PERSON_FIRST                                   !***ENH***
+    move &B.NM_PERSON_FIRST                         to $victim_first
+
+B.NM_PERSON_MIDDLE
+    move &B.NM_PERSON_MIDDLE                        to $victim_middle
+
+B.NM_PERSON_LAST
+    move &B.NM_PERSON_LAST                          to $victim_last
+
+CSUFFIX2A.decode
+    move &CSUFFIX2A.decode                          to $victim_suffix
+
+C.NM_PERSON_FIRST                                   !***ENH***
+    move &C.NM_PERSON_FIRST                         to $perp_first
+
+C.NM_PERSON_MIDDLE
+    move &C.NM_PERSON_MIDDLE                        to $perp_middle
+
+C.NM_PERSON_LAST
+    move &C.NM_PERSON_LAST                          to $perp_last
+
+CSUFFIX2B.decode
+    move &CSUFFIX2B.decode                          to $perp_suffix
+
+CABALTYP.decode
+    move &CABALTYP.decode                           to $allegation
+
+CCIVALDS.decode
+    move &CCIVALDS.decode                           to $disposition
+
+CSEVERTY.decode
+    move &CSEVERTY.decode                           to $severity
+
+    do PRINT-ALLEG-PERS-NAMES
+
+FROM    CABALTYP            CABALTYP,
+        CCIVALDS            CCIVALDS,
+        CSEVERTY            CSEVERTY,
+        CSUFFIX2            CSUFFIX2A,
+        CSUFFIX2            CSUFFIX2B,
+        PERSON              B,
+        PERSON              C,
+        ALLEGATION          A
+
+WHERE   A.ID_VICTIM                = B.ID_PERSON
+AND     B.CD_PERSON_SUFFIX         = CSUFFIX2A.CODE(+)
+AND     C.CD_PERSON_SUFFIX         = CSUFFIX2B.CODE(+)
+AND     A.CD_ALLEG_TYPE            = CABALTYP.CODE(+)
+AND     A.CD_ALLEG_DISPOSITION     = CCIVALDS.CODE(+)
+AND     A.CD_ALLEG_SEVERITY        = CSEVERTY.CODE(+)
+AND     A.ID_ALLEGED_PERPETRATOR   = C.ID_PERSON(+)
+AND     A.ID_ALLEGATION_STAGE      = #input_id_stage
+
+ORDER BY A.CD_ALLEG_TYPE
+
+END-SELECT
+
+END-PROCEDURE GET-ALLEG-PERS-NAMES
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ALLEG-PERS-NAMES                                                  *
+!                                                                           *
+!       This procedure prints the victim, alleged perpetrator, allegation,  *
+!       disposition, and severity.                                          *
+!                                                                           *
+!       CALLED BY  : GET-ALLEG-PERS-NAMES                                   *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ALLEG-PERS-NAMES
+
+print 'Victim: '                                    (+2,1)
+if $victim_suffix <> ''  !***ENH***
+   let $victim_name_suff = ', ' || $victim_suffix
+end-if
+if $victim_middle = ''
+   let $victim_name = $victim_first || ' ' || $victim_last || $victim_name_suff
+else
+   let $victim_name = $victim_first || ' ' || $victim_middle || ' ' || $victim_last || $victim_name_suff
+end-if
+print $victim_name                                  (+0,14) wrap 28 4 keep-top
+move '' to $victim_name_suff  !***ENH***
+print 'AP: '                                        (+0,50)
+if $perp_suffix <> ''  !***ENH***
+   let $perp_name_suff = ', ' || $perp_suffix
+end-if
+if $perp_middle = ''
+   let $perp_name = $perp_first || ' ' || $perp_last || $perp_name_suff
+else
+   let $perp_name = $perp_first || ' ' || $perp_middle || ' ' || $perp_last || $perp_name_suff
+end-if
+print $perp_name                                    (+0,61) wrap 17 4
+move '' to $perp_name_suff !***ENH***
+print 'Allegation: '                                (+1,1)
+print $allegation                                   (+0,14)
+print 'Disposition: '                               (+1,1)
+print $disposition                                  (+0,14)
+print 'Severity: '                                  (+0,50)
+print $severity                                     (+0,61)
+
+END-PROCEDURE PRINT-ALLEG-PERS-NAMES
+
+!****************************************************************************
+!                                                                           *
+!   GET-RISK-ASSESSMENT-INFORMATION                                         *
+!                                                                           *
+!       This procedure gets the Risk Assessment Information. It gets the    *
+!  overall scale of concern for the various areas of risk and the           *
+!       corresponding categories of risk for each area.                     *
+!     SIR# 22532 use new IMPACT risk assessment tables                      *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-RISK-ASSESSMENT-INFORMATION-TITLE                *
+!           PRINT-RISK-ASSESSMENT-INFORMATION                               *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-RISK-ASSESSMENT-INFORMATION
+
+do PRINT-RISK-ASSESSMENT-INFORMATION-TITLE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+/*+ ORDERED*/ !This command helps to run the sql much faster
+
+RAL1.TXT_AREA
+    move &RAL1.TXT_AREA                 to $risk_area
+
+RCL1.TXT_CATEGORY
+    move &RCL1.TXT_CATEGORY             to $risk_category
+
+AREASOC.decode
+    move &AREASOC.decode                to $area_scale
+
+CATEGORYSOC.decode
+    move &CATEGORYSOC.decode            to $category_scale
+
+     do    PRINT-RISK-ASSESSMENT-INFORMATION
+
+FROM       RISK_AREA            RA,
+       RISK_CATEGORY            RC,
+       RISK_AREA_LOOKUP         RAL1,
+       RISK_CATEGORY_LOOKUP     RCL1,
+       (SELECT CODE,
+               DECODE
+        FROM   CRISKSOC)        AREASOC,     ! area scale of concern
+       (SELECT CODE,
+               DECODE
+        FROM   CRISKSOC)        CATEGORYSOC  ! category scale of concern
+
+WHERE    RA.ID_STAGE                =  #input_id_stage
+AND      RA.ID_STAGE                =  RC.ID_STAGE
+AND      RA.ID_EVENT                =  RC.ID_EVENT
+AND      RA.ID_RISK_AREA            =  RC.ID_RISK_CATEG_AREA
+AND      RAL1.CD_AREA               =  RA.CD_RISK_AREA
+AND      AREASOC.CODE(+)            =  RA.CD_RISK_AREA_CONCERN_SCALE
+AND      RCL1.CD_CATEGORY           =  RC.CD_RISK_CATEG
+AND      RAL1.CD_AREA               =  RCL1.CD_AREA
+AND      CATEGORYSOC.CODE(+)        =  RC.CD_RISK_CATEG_CONCERN_SCALE
+
+
+END-SELECT
+
+END-PROCEDURE GET-RISK-ASSESSMENT-INFORMATION
+!****************************************************************************
+!                                                                           *
+!   PRINT-RISK-ASSESSMENT-INFORMATION-TITLE                                 *
+!                                                                           *
+!       This procedure prints the risk assessment information title.        *
+!                                                                           *
+!       CALLED BY  : GET-RISK-ASSESSMENT-INFORMATION                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-RISK-ASSESSMENT-INFORMATION-TITLE
+
+print  'RISK ASSESSMENT INFORMATION'       (+2) center bold
+
+print  'Scale'                 (+2,28)     bold
+print  'Scale'                 (+0,67)     bold
+print  'Area'                  (+1,22)     bold
+print  'of Concern'            (+0,28)     bold
+print  'Category'              (+0,57)     bold
+print  'of Concern'            (+0,67)     bold
+print  ''                      (+1)
+
+END-PROCEDURE PRINT-RISK-ASSESSMENT-INFORMATION-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-RISK-ASSESSMENT-INFORMATION                                       *
+!                                                                           *
+!  This procedure prints the various risk factor areas, the overall         *
+!  scale of concern, the risk factor categories under each area and         *
+!  their corresponding scale of concern.                                    *
+!                                                                           *
+!       CALLED BY  : GET-RISK-ASSESSMENT-INFORMATION                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-RISK-ASSESSMENT-INFORMATION
+
+Let #count0 = #count0 + 1
+if  #count0 = 1
+
+let #col1 = 26 - length($risk_area)
+   print $risk_area                    (+1,#col1) on-break
+   procedure = PRINT-AREA-SCALE
+   print $area_scale                   (+0,28)
+   let #col2 = 65 - length($risk_category)
+   print $risk_category                (+1,#col2)
+   print $category_scale               (+0,67)
+
+else
+   print $risk_area                    (+1,#col1) on-break print = never
+   procedure = PRINT-AREA-SCALE
+   let #col2 = 65 - length($risk_category)
+   print $risk_category                (+0,#col2)
+   print $category_scale               (+0,67)
+
+end-if
+
+END-PROCEDURE PRINT-RISK-ASSESSMENT-INFORMATION
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-AREA-SCALE                                                        *
+!                                                                           *
+!       This procedure prints the overall scale of concern for each area    *
+!       of risk.                                                            *
+!                                                                           *
+!       CALLED BY  : PRINT-RISK-ASSESSMENT-INFORMATION                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-AREA-SCALE
+
+    let $try   =  $risk_area || '  ' || $area_scale
+    let #col1  =  26 - length($risk_area)
+    print $try                     (+1,#col1)
+
+END-PROCEDURE PRINT-AREA-SCALE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-RISK-FACTORS-TITLE                                                *
+!                                                                           *
+!       This procedure prints the Risk Factors title and message.           *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-RISK-FACTORS-TITLE
+
+print 'RISK FACTORS:  The following questions are intended to identify possible'
+                                                    (+2,1)
+print '"risk factors" - elements of family functioning that may place a child'
+                                                    (+1,1)
+print 'at risk of abuse or neglect.'                (+1,1)
+
+END-PROCEDURE PRINT-RISK-FACTORS-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   GET-AREA-CATEGORY-FACTOR-RESPONSE                                       *
+!                                                                           *
+!   This function gets the responses for all factors under categories       *                                                                !   for different areas of risk.                                            *
+!                                                                           *
+!   SIR# 22532 use new IMPACT risk assessment tables.                       *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-AREA-CATEGORY-FACTOR-RESPONSE                    *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-AREA-CATEGORY-FACTOR-RESPONSE
+
+    move 0     to #count1
+
+BEGIN-SELECT   ON-ERROR=SqlErrorHandle
+
+/*+ INDEX(RC2 IND_RISK_CATEGORY_2) INDEX(RF2 IND_RISK_FACTORS_4) */
+
+RAL.TXT_AREA
+   move &RAL.TXT_AREA                  to $area
+
+RCL.TXT_CATEGORY
+   move &RCL.TXT_CATEGORY              to $category
+
+RFL.TXT_FACTOR
+   move &RFL.TXT_FACTOR                to $factor
+
+RP.DECODE
+   move &RP.DECODE                     to $factor_response
+
+RF2.TXT_RISK_FACTOR_COMMENT
+   move &RF2.TXT_RISK_FACTOR_COMMENT   to $factor_comment
+
+   do PRINT-AREA-CATEGORY-FACTOR-RESPONSE
+
+FROM    RISK_AREA            RA2,
+        RISK_CATEGORY        RC2,
+        RISK_FACTORS         RF2,
+        RISK_AREA_LOOKUP     RAL,
+        RISK_FACTORS_LOOKUP  RFL,
+        RISK_CATEGORY_LOOKUP RCL,
+        CRSKRESP             RP
+WHERE   RA2.ID_STAGE           =       #input_id_stage
+AND    RA2.ID_STAGE            =       RC2.ID_STAGE
+AND    RA2.ID_STAGE            =       RF2.ID_STAGE
+AND    RA2.ID_RISK_AREA        =       RC2.ID_RISK_CATEG_AREA
+AND    RC2.ID_RISK_CATEGORY    =       RF2.ID_RISK_FACTOR_CATEG
+AND    RP.CODE   (+)           =       RF2.CD_RISK_FACTOR_RESPONSE
+AND    RAL.CD_AREA             =       RA2.CD_RISK_AREA
+AND    RCL.CD_AREA             =       RAL.CD_AREA
+AND    RCL.CD_CATEGORY         =       RC2.CD_RISK_CATEG
+AND    RFL.CD_FACTOR           =       RF2.CD_RISK_FACTOR
+AND    RFL.CD_CATEGORY         =       RCL.CD_CATEGORY
+
+
+END-SELECT
+
+END-PROCEDURE GET-AREA-CATEGORY-FACTOR-RESPONSE
+
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-AREA-CATEGORY-FACTOR-RESPONSE                                     *
+!                                                                           *
+!       This procedure prints the area of risk and the categories under     *
+!       each area in order.                                                 *
+!                                                                           *
+!       CALLED BY  : GET-AREA-CATEGORY-FACTOR-RESPONSE                      *
+!       CALLS      : PRINT-AREA-CATEGORY                                    *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-AREA-CATEGORY-FACTOR-RESPONSE
+
+let #count1 = #count1 + 1
+   if #count1 = 1
+
+   Let $area = upper($area)
+   print $area      (+2,1) on-break print = change
+   let #col3 =      (length($area) + 1)
+   print ':'        (+0,#col3)
+   else
+   Let $area = upper($area)
+   print $area      (+1,1) on-break print = never
+
+   end-if
+
+   let #col4 =      ( length($area) + 3)
+   print $category  (+0,#col4) on-break
+   procedure = PRINT-AREA
+   print $factor_response          (+1,1)
+   print $factor                   (+0,11) wrap 66 3
+   print 'Comments: '              (+1,11)
+   print $factor_comment           (+0,22) wrap 56 5
+
+END-PROCEDURE PRINT-AREA-CATEGORY-FACTOR-RESPONSE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-AREA                                                              *
+!                                                                           *
+!       This procedure prints the area of risk and the categories under     *
+!       each area in order.                                                 *
+!                                                                           *
+!       CALLED BY  : PRINT-AREA-CATEGORY-FACTOR-RESPONSE                    *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-AREA
+
+        print  $area               (+2,1)
+        let #col3 =   (length($area) + 1)
+        print ':'              (+0,#col3)
+
+END-PROCEDURE PRINT-AREA
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!****************************************************************************
+!                                                                           *
+! SqlErrorHandle                                                            *
+!                                                                           *
+!      This section handles formatting of messages for SQL errors.          *
+!      When an SQL error is encounterd, the program will write to           *
+!      the log file, program processing does not stop for SQL errors.       *
+!                                                                           *
+!  CALLS:  None                                                             *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+
+
+#INCLUDE 'cfpstamp.sqc'

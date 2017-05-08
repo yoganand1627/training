@@ -1,0 +1,427 @@
+!*****************************************************************************  
+!  Prior Period Adjustments                                                  *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cfn100.sqr                                           *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/heardtd/work/sqr                               *
+!                                                                            *
+!                                                                            *
+! DATE:                 01/22/96                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Tony Heard                                           *
+!                                                                            *
+! PROGRAM DESCRIPTION:   The Prior Period Adjustment module was designed to  *
+!                        find and reverse Foster Care Invoice line items that*
+!                        were affected by changes to key data on existing    *
+!                        PLACEMENT, ELIGIBILITY, and Billing PERSON_LOC      *
+!                        records.                                            *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 01/22/96   Tony Heard     Intial Program                                   *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+	do HOUSEKEEPING
+
+	do PROCESS-REPORT        
+
+	do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+	#ifdef ORACLE                           !compiler directive
+		ask dbname 'Database Name'
+		use {dbname}
+	#endif
+
+	#INCLUDE 'setup01a.sqc'            ! control codes for landscape   
+					   ! on demand reports             
+
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 6
+
+   move 'cfn100'                            to $ReportID
+   move 'PRIOR PERIOD ADJUSTMENT'           to $ReportTitle
+
+print   'Adjustment Invoice ID:'            (+2,1) 
+print   #old_id_invoice                     (+0,24) edit 9999999999999999  
+
+  #INCLUDE 'header01.sqc'               
+
+
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+
+   move '****END OF REPORT****' to $end_of_report 	! Initialize Working
+							! Storage constants
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-CLIENT-INFO                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+	do GET-CLIENT-INFO    
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-CLIENT-INFO                                                         *
+!             Retrieves all the information needed to                       *
+!             populate a client account invoice.                            *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : PRINT-CLIENT-TITLE, PRINT-CLIENT-INFO, GET-CHANGE      *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CLIENT-INFO 
+
+    move 0		to #count		!initialize a counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+PPA.ID_PPA_INVOICE
+    move &PPA.ID_PPA_INVOICE                     to #id_invoice
+
+PPA.ID_PPA_PERSON
+   move &PPA.ID_PPA_PERSON                       to #id_person  
+
+N.NM_NAME_FIRST||' '||N.NM_NAME_MIDDLE||' '||N.NM_NAME_LAST &person_name
+   move &person_name                             to $person_name
+
+CSUFFIX.DECODE
+    move &CSUFFIX.DECODE                         to $suff_dec
+
+PPA.YR_PPA_SVC_YEAR 
+   move &PPA.YR_PPA_SVC_YEAR                     to #svc_year 
+
+PPA.MO_PPA_SVC_MONTH
+    move &PPA.MO_PPA_SVC_MONTH                   to #svc_month
+
+PPA.NBR_PPA_FROM_DAY
+    move &PPA.NBR_PPA_FROM_DAY                   to #from
+
+PPA.NBR_PPA_TO_DAY
+    move &PPA.NBR_PPA_TO_DAY                     to #to
+
+PPA.ID_PPA_ORIG_INVOICE
+     move &PPA.ID_PPA_ORIG_INVOICE               to #orig_inv   
+
+PPA.ID_PPA_FACIL
+     move &PPA.ID_PPA_FACIL                      to #resource_id
+
+PPA.CD_PPA_ELIG_SELECTED
+     move &PPA.CD_PPA_ELIG_SELECTED              to $elig_type
+
+PPA.CD_PPA_MED_ELIG_GROUP
+    move &PPA.CD_PPA_MED_ELIG_GROUP              to $elig_group
+
+PPA.CD_PPA_PLOC_CHILD
+   move &PPA.CD_PPA_PLOC_CHILD                   to $bill_loc
+
+PPA.DT_PPA_START
+    move &PPA.DT_PPA_START                       to $adjust_start
+
+PPA.DT_PPA_END
+    move &PPA.DT_PPA_END                         to $end 
+
+      let #count = #count + 1
+
+         if #count = 1
+	    do PRINT-CLIENT-TITLE
+	    do PRINT-CLIENT-INFO
+         else 
+	 if #old_id_invoice <> #id_invoice 
+	        do GET-CHANGE
+		NEW-PAGE
+	        do PRINT-CLIENT-TITLE
+	        do PRINT-CLIENT-INFO
+         else
+	 if #old_id_person <> #id_person
+                do GET-CHANGE
+	        do PRINT-CLIENT-TITLE
+	        do PRINT-CLIENT-INFO
+         else
+	        do PRINT-CLIENT-INFO
+         end-if 
+         end-if
+         end-if
+                   
+FROM    PPA_REPORT PPA,
+       	CSUFFIX      CSUFFIX,
+        NAME       N
+
+WHERE   N.ID_PERSON  = PPA.ID_PPA_PERSON
+AND     CSUFFIX.CODE = N.CD_NAME_SUFFIX
+AND     N.IND_NAME_PRIMARY = 'Y'
+AND     N.DT_NAME_END_DATE = '12/31/4712'
+ORDER BY  PPA.ID_PPA_INVOICE, PPA.ID_PPA_PERSON, PPA.YR_PPA_SVC_YEAR,
+	  PPA.NBR_PPA_FROM_DAY, PPA.DT_PPA_START
+END-SELECT
+
+    
+END-PROCEDURE GET-CLIENT-INFO 
+
+!****************************************************************************
+!                                                                           *
+!   GET-CHANGE                                                              *
+!       Determines if there is a adjustment in a client account information.*
+!                                                                           * 
+!       CALLED BY  : GET-CLIENT-INFO                                        *
+!       CALLS      : PRINT-ELIG-CHANGE-TRUE                                 *
+!       CALLS      : PRINT-ELIG-CHANGE-FALSE                                *
+!****************************************************************************
+
+
+BEGIN-PROCEDURE GET-CHANGE       
+
+    move 0		to #count2		!initialize a counter
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+E.CD_EVENT_TYPE
+    move &E.CD_EVENT_TYPE                  to $event_type 
+      
+     let #count2 = #count2 + 1
+
+      if #count2 > 0
+	do  PRINT-ELIG-CHANGE-TRUE
+      else 
+	do PRINT-ELIG-CHANGE-FALSE
+      end-if
+
+FROM              EVENT E,
+                  ADJUSTMENT_REQUEST A,
+                  PPA_REPORT PPA
+
+WHERE   A.ID_ADJ_REQ_PERSON = #id_person
+AND     E.CD_EVENT_TYPE IN ('PLA', 'FCD','LOC')
+AND     A.DT_ADJ_REQ_START <= PPA.DT_PPA_END
+AND     A.DT_ADJ_REQ_END   >= PPA.DT_PPA_START
+
+
+
+END-SELECT
+
+END-PROCEDURE GET-CHANGE    
+
+!****************************************************************************
+!   PRINT-CLIENT-INFO                                                       *
+!                                                                           *
+!       Prints the client's invoice information.                            *
+!                                                                           * 
+!       CALLED BY  : GET-CLIENT-INFO                                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CLIENT-INFO
+
+print  #svc_month                       (+1,9)  edit 99 
+print  #svc_year                        (+0,21) edit 9999
+print  #from                            (+0,34) edit 99
+print  #to                              (+0,43) edit 99
+print  #orig_inv                        (+0,56) edit 9999999999999999
+print  #resource_id                     (+0,85) edit 9999999999999999
+print  $elig_type                       (+0,103)
+print  $elig_group                      (+0,117)
+print  $bill_loc                        (+0,135)
+print  $adjust_start                    (+0,147)  
+print  $end                            (+0,161)
+
+	    move #id_person           to #old_id_person
+	    move #id_invoice          to #old_id_invoice
+
+END-PROCEDURE PRINT-CLIENT-INFO
+
+!****************************************************************************
+!   PRINT-CLIENT-TITLE                                                      *
+!                                                                           *
+!      Prints the invoice titles.                                           *
+!                                                                           * 
+!       CALLED BY  : GET-CLIENT-INFO                                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CLIENT-TITLE      
+
+print   'Client ID'                     (+2,1)
+print    #id_person                     (+0,13) edit 999999999999999
+print   'Client Name'                   (+0,42)
+print    $person_name                   (+0,55)
+print    $suff_dec                      (+0,73)
+print   'Svc Mo.'                       (+2,9)
+print   'Svc Year'                      (+0,21)
+print   'From'                          (+0,34)
+print   'To'                            (+0,43)
+print   'Original Invoice ID'           (+0,56)
+print   'Resource Id'                   (+0,85)
+print   'Elig. Type'                    (+0,103)
+print   'Medical Group'                 (+0,117)
+print   'BLOC'                          (+0,135)
+print   'Date Start'                    (+0,147)
+print   'Date End'                      (+0,161)
+
+END-PROCEDURE PRINT-CLIENT-TITLE 
+
+!****************************************************************************
+!   PRINT-ELIG-CHANGE-TRUE                                                  *
+!                                                                           *
+!       Prints 'Y' if adjustments where made to a clients invoice.        *
+!                                                                           *
+!       CALLED BY  : GET-CHANGE                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE   PRINT-ELIG-CHANGE-TRUE
+
+print 'Change In:'      (+2,74)
+print 'Placement?'      (+0,85)
+print 'Y'               (+0,96)
+print 'Eligibility?'    (+0,104)
+print 'Y'               (+0,117)
+print 'BLOC?'           (+0,135)
+print 'Y'               (+0,142)
+
+
+END-PROCEDURE PRINT-ELIG-CHANGE-TRUE
+
+!****************************************************************************
+!   PRINT-ELIG-CHANGE-FALSE                                                 *
+!                                                                           *
+!      Prints 'N' if there where not any changes to a client invoice.      *
+!                                                                           *
+!       CALLED BY  : GET-CHANGE                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE   PRINT-ELIG-CHANGE-FALSE
+
+print 'Change In:'      (+1,74)
+print 'Placement?'      (+0,85)
+print 'N'               (+0,96)
+print 'Eligibility?'    (+0,104)
+print 'N'               (+0,117)
+print 'BLOC?'           (+0,135)
+print 'N'               (+0,142)
+
+
+END-PROCEDURE PRINT-ELIG-CHANGE-FALSE
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+

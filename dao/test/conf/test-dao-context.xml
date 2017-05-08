@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+       default-dependency-check="none">
+
+  <import resource="advice-context.xml"/>
+
+  <bean id="dataSource" class="org.springframework.jdbc.datasource.SingleConnectionDataSource">
+    <property name="driverClassName" value="${jdbc.driverClassName}"/>
+    <property name="url" value="${jdbc.url}"/>
+    <property name="username" value="${jdbc.username}"/>
+    <property name="password" value="${jdbc.password}"/>
+    <property name="suppressClose" value="true"/>
+  </bean>
+
+  <!-- This provides values for ${} variables above. -->
+  <bean id="placeholderConfig" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="location" value="jdbc.properties"/>
+  </bean>
+
+  <!-- Transaction management-->
+  <bean id="hibernateTxManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+    <property name="sessionFactory" ref="sessionFactory"/>
+  </bean>
+
+  <!--
+  This is the SessionFactory object used to manage hibernate sessions; Spring provides its own implementation that will
+    participate in transactions automatically.
+
+  Note: This bean definition file deliberately does not define a dataSource;
+        it should be configured by the container or testing classes.
+  -->
+  <bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+    <property name="dataSource" ref="dataSource"/>
+    <property name="configLocation" value="classpath:hibernate.cfg.xml"/>
+    <property name="hibernateProperties">
+      <props>
+        <!-- The show sql flag is off because it's too verbose for the HQLTranslationTest on the server. -->
+        <prop key="hibernate.show_sql">false</prop>
+        <prop key="hibernate.format_sql">true</prop>
+        <prop key="hibernate.use_sql_comments">true</prop>
+        <!-- The Oracle hibernate dialect -->
+        <prop key="hibernate.dialect">org.hibernate.dialect.Oracle9Dialect</prop>
+        <!-- Oracle performs best with this turned on becuase it does not correctly cache column name mappings. -->
+        <prop key="hibernate.jdbc.wrap_result_sets">true</prop>
+      </props>
+    </property>
+  </bean>
+</beans>

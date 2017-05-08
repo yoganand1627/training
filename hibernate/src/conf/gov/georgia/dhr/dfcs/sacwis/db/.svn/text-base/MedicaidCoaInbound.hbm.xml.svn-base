@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.MedicaidCoaInbound" table="MEDICAID_COA_INBOUND" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idMedicaidCoaInbound" type="integer" unsaved-value="0">
+      <column name="ID_MEDICAID_COA_INBOUND" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_MEDICAID_COA_INBOUND</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="medCoa" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="MED_COA" length="3"/>
+    </property>
+    <property name="dtFirstDayLiability" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_FIRST_DAY_LIABILITY" length="7"/>
+    </property>
+    <property name="amtFirstDayLiability" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_FIRST_DAY_LIABILITY" precision="7"/>
+    </property>
+    <property name="bnftMonth" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="BNFT_MONTH" precision="6" scale="0"/>
+    </property>
+    <property name="cdClientStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CLIENT_STATUS" length="1"/>
+    </property>
+    <property name="dtClientStatus" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CLIENT_STATUS" length="7"/>
+    </property>
+    <property name="returnCode" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="RETURN_CODE" length="10"/>
+    </property>
+    <property name="nbrCrsId" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CRS_ID" precision="9" scale="0"/>
+    </property>
+    <property name="idMedicaidCoareqOutbound" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ID_MEDICAID_COAREQ_OUTBOUND" precision="16" scale="0"/>
+    </property>
+  </class>
+</hibernate-mapping>

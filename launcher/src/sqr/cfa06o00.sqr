@@ -1,0 +1,317 @@
+!*****************************************************************************
+!  Adoption Subsidy Closure Report                                           *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cfa06o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 11/15/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brad McCleary                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This report is produced from the Adoption Subsidy    *
+!                       Maintenance Batch process.  This report will show    *
+!                       all the adoption subsidies that expire at the end    *
+!                       of the month and do not have closure reasons entered.*
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 11/15/95   B. McCleary  Initial Programming                                *
+! 03/29/96   B. McCleary  SIR 4217 - Added column to show type; changed title*
+! 12/07/03   S. Miller	  SIR 18561 Agency name change- "Department of Family*
+!                         and Protective Services."                          *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    if $continue_flag = 'Y'
+
+        do PROCESS-REPORT        
+    
+    end-if
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #INCLUDE 'setup01a.sqc'             ! control codes for Landscape  
+                                        ! batch reports                    
+
+        ASK INPUT_FILE                  ! name of the file to be inputed
+                                        ! if the SQR report does not reside
+                                        ! in the same directory as the file
+                                        ! to be read then the full path must be 
+                                        ! given
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. 8  lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines.                         *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 11 
+
+PRINT 'REPORT ID: '                      (1,1)
+PRINT 'cfa06o00'                         ()
+PRINT 'DEPARTMENT OF FAMILY AND PROTECTIVE SERVICES'  (1) center 
+PRINT 'PAGE:'                            (+0,118)
+      page-number                        (+0,124)
+PRINT 'ADOPTION SUBSIDY CLOSURE REPORT'  (+1) center !***SIR 4217 ***
+PRINT 'DATE: '                           (+0,118)
+date-time () 'MM/DD/YY' &date
+PRINT &date                              (+0,124)
+PRINT 'TIME: '                           (+1,118)
+date-time () 'HH12:MI AM' &time
+PRINT &time                              (+0,124)
+
+PRINT 'ADOPTION SUBSIDIES TO BE CLOSED AT THE END OF THIS MONTH: '  (+3,1)
+
+print 'ASSIGNED WORKER: '				(+2,1)
+print $previous_worker	                                ()
+print 'START DATE'					(+2,1)
+print 'END DATE'      					(+0,16)
+print 'CHILD'						(+0,31)
+print 'PAYEE'						(+0,61)
+print 'TYPE'               				(+0,91)
+print '-'						(+1,1,10) fill
+print '-'						(+0,16,8) fill
+print '-'						(+0,31,5) fill
+print '-'						(+0,61,5) fill
+print '-'               				(+0,91,4) fill
+
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS      : OPEN-FILE                                              *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+   move '{INPUT_FILE}' to $input_file
+
+   do OPEN-FILE
+
+if $continue_flag = 'Y'
+
+   read 1 into $start_date:10
+           $end_date:10
+           $child_name:25
+           $payee_name:25
+           $worker_name:25
+           $type:5          !SIR 4217 - Added to show a type of PEND or CLOSE
+
+    do PRINT-RECORD
+
+    if #end-file
+        PRINT 'NO DETAIL LINES FOUND'       (+5) center
+        move 'N' to $continue_flag
+        let #return-status = 32    
+    end-if
+
+end-if
+
+   move '****END OF REPORT****' to $end_of_report    ! Initialize Working
+                                                     ! Storage constants
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   OPEN-FILE                                                               *
+!                                                                           *
+!       This procedure will open the file to be read and if there is a      *
+!       problem it will print it in the report and finish the processing.   *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE OPEN-FILE
+
+OPEN $input_file AS 1 FOR-READING
+    RECORD=100  status=#file_status       
+
+if #file_status = 0
+    move 'Y' to $continue_flag
+else
+    PRINT 'ERROR OPENING FILE'      (+4) center
+    let $printout = 'FILE '||$input_file||' DOES NOT EXIST' 
+    PRINT $printout                 (+1) center
+    let #return-status = 30    
+    move 'N' to $continue_flag
+    move 'N' to $close_file
+end-if
+
+END-PROCEDURE OPEN-FILE
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!      This procedure wraps up the report.  It will close the file if open  *
+!      and print a final end of report message                              *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP          
+
+if $close_file = 'N'    
+else
+    CLOSE 1
+end-if
+
+print $end_of_report            (+4,) center
+
+NEW-PAGE
+
+END-PROCEDURE WRAP-UP                          
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!       This procedure will call the meat of the report, calling for page   *
+!       and other necessary processes to be executed                        *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : PRINT-LINE                                             *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT
+
+   WHILE $continue_flag = 'Y'       
+
+   read 1 into $start_date:10
+           $end_date:10
+           $child_name:25
+           $payee_name:25
+           $worker_name:25
+           $type:5          !SIR 4217 - Added to show a type of PEND or CLOSE
+
+    if #end-file
+        break
+    end-if
+
+    if $worker_name != $previous_worker      
+        NEW-PAGE                  
+        do PRINT-RECORD
+    else
+        do PRINT-RECORD
+    end-if
+
+end-while
+
+    if #end-file
+!    PRINT 'ERROR WITH FILE'        (+4) center
+!    let $printout = 'FILE '||$input_file||' HAS UNEXPECTED END-OF-FILE'
+!        PRINT $printout            (+1) center
+!        let #return-status = 31    
+    else
+    if $change_flag != '1' and $change_flag != '2'
+                 PRINT 'ERROR WITH FILE'        (+4) center
+     let $printout = 'FILE '||$input_file||' HAS UNEXPECTED RECORD'       
+         PRINT $printout            (+1) center
+         let #return-status = 32    
+    end-if
+    end-if
+
+END-PROCEDURE PROCESS-REPORT
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-RECORD                                                            *
+!                                                                           *
+!       This procedure will print one detail line for address change        *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-RECORD
+
+    move $worker_name to $previous_worker      
+
+print $start_date					(+1,1)
+print $end_date						(+0,16)
+print $child_name					(+0,31)
+print $payee_name					(+0,61)
+print $type      					(+0,91)
+
+END-PROCEDURE PRINT-RECORD
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *   
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle

@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.ChildrenFirstReferral" table="CHILDREN_FIRST_REFERRAL" >
+        <id name="idEvent" type="integer">
+            <column name="ID_EVENT" precision="16" scale="0"/>
+            <generator class="foreign">
+            <param name="property">eventByIdEvent</param>
+             </generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="null" source="vm"/>
+        <many-to-one name="eventByIdGenerationEvent" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select">
+            <column name="ID_GENERATION_EVENT" precision="16" scale="0" />
+        </many-to-one>
+        <many-to-one name="eventByIdEvent" class="gov.georgia.dhr.dfcs.sacwis.db.Event" update="false" insert="false" fetch="select">
+            <column name="ID_EVENT" precision="16" scale="0" not-null="true" unique="true" />
+        </many-to-one>
+        <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select">
+            <column name="ID_CASE" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="idChildReferred" type="integer">
+            <column name="ID_CHILD_REFERRED" precision="16" scale="0" not-null="true" />
+        </property>
+        <property name="dtReferralSent" type="date">
+            <column name="DT_REFERRAL_SENT" length="7" />
+        </property>
+        <property name="indParentalRelease" type="string">
+            <column name="IND_PARENTAL_RELEASE" length="1" />
+        </property>
+        <property name="indComplete" type="string">
+            <column name="IND_COMPLETE" length="1" />
+        </property>
+        <property name="dtAcknowledge" type="date">
+            <column name="DT_ACKNOWLEDGE" length="7" />
+        </property>
+        <property name="dtPhySummary" type="date">
+            <column name="DT_PHY_SUMMARY" length="7" />
+        </property>
+        <property name="indFurtherAssmt" type="string">
+            <column name="IND_FURTHER_ASSMT" length="1" />
+        </property>
+        <property name="dtIfsp" type="date">
+            <column name="DT_IFSP" length="7" />
+        </property>
+        <property name="txtComments" type="string">
+            <column name="TXT_COMMENTS" length="500" />
+        </property>
+        <property name="dtGeneration" type="date">
+            <column name="DT_GENERATION" length="7" />
+        </property>
+        <property name="relOnFile" type="string">
+            <column name="RELEASE_ON_FILE" length="1" />
+        </property>
+    </class>
+</hibernate-mapping>

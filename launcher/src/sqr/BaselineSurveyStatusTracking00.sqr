@@ -1,0 +1,734 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Mon Apr 11 13:12:50 2011 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2011\NYTD Baseline Status Tracking\BaselineSurveyStatusTracking00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.200 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Text $var_Prep_meet 
+ Date $VAR_DT_OUTCOME 
+ Text $SURVEY_START_DATE 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=240    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (14,1,0) Underline  Bold 
+ Print 'ILP Coordinator:' (166,1,0) Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Outcome Status' (461,3,0) Underline  Bold 
+ Print 'Key' (443,3,0) Underline  Bold 
+ Print 'YP - Youth Participated                                                   ' (477,10,27)
+ Print 'YD - Youth Declined                           ' (490,10,26)
+ Print 'PD - Parent Declined' (477,117,31)
+ Print 'YI - Youth Incapacitated' (491,119,30)
+ Print 'IN - Incarcerated' (477,239,33)
+ Print 'Rm - Runaway/Missing' (491,237,46)
+ Print 'UL - Unable to locate/Invite' (477,349,45)
+ Print 'DE - Death' (492,349,26)
+ Print 'NS - Not in sample' (478,482,28)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Child ID:' (100,1,11) Bold 
+ Print 'Child Name:' (117,1,12) Bold 
+ Print 'DOB:' (134,1,11) Bold 
+ Print 'Case Manager:' (150,1,16) Bold 
+ Print 'Prep Meeting Held:' (198,1,20) Bold 
+ Print 'Acct Created:' (278,1,16) Bold 
+ Print 'Survey Start Date:' (310,1,21) Bold 
+ Print 'Survey Status:' (325,1,16) Bold 
+ Print 'Outcome Date:' (261,1,14) Bold 
+ Print 'Outcome Status:' (245,1,17) Bold 
+ Print 'Days Remaining:' (356,1,19) Bold 
+ Print 'need to have his/her 17th birthday while in care but the youth must have been in foster care 45 days following his/her birthday during the specified reporting period.' (49,1,189)
+ Print 'The youth has 45 days from his/her birthday to complete the survey. The report excludes youth who are in a dentention facility. ' (65,1,191)
+ Print 'This report displays a list of youth in DFCS custody whose 17th birthday occurs during the specified reporting period and/or month/year. The youth does not ' (34,1,200) Wrap 200 4 line-height=12 Keep-Top on=   
+ Page-Number (552,657) '' ' of '
+ Last-Page (552,686) 
+ Print 'A unique ID assigned to the primary youth on the case.' (100,102,95)
+ Print 'The name of the primary youth in the foster care (FCC) stage.' (117,101,86)
+ Print 'The primary youth''s date of birth.' (134,101,90)
+ Print 'Name of the current case manager assigned to the case.' (150,101,112)
+ Print 'Most recently assigned ILP Coordinator to the case. (ILP Coordinators are identified as secondary assignees and are identified by employees ' (166,101,165)
+ Print 'with following job titles -  ''ILP Coordinator'' ''Social Services Case Manager-Independent Living'' , ''Social Services Supervisor-Independent Living'')' (182,101,198)
+ Print 'An indicator that identifies if a contact with a purpose of ''NYTD Prep Meeting'' has been held and documented with the primary youth on the ' (198,101,192)
+ Print 'case before or during the reporting period.' (214,101,0)
+ Print 'a contact with the purpose of ''NYTD Prep Meeting has NOT been documented.' (229,101,139)
+ Print 'Outcome data recorded on the Youth Detail Page.' (245,101,109)
+ Print 'The date the outcome status on the Youth Detail Page.' (261,101,147)
+ Print 'An indicator that identifies if a Portal account has been created for the youth to take the NYTD survey.' (277,101,155)
+ Print 'created for the youth; ' (293,101,123)
+ Print 'The date the youth save the survey for the first time.' (310,101,123)
+ Print '''N''' (293,198,0) Bold 
+ Print ' indicates a Portal account has not been created for the youth. ' (294,211,166)
+ Print '''Y''' (277,558,3) Bold 
+ Print 'indicates an account has been ' (277,575,61)
+ Print '''Y''' (214,289,0) Bold 
+ Print 'indicates a contact with the purpose of NYTD Prep Meeting has been documented;  ' (214,304,85)
+ Print '''Y''' (325,519,3) Bold 
+ Print 'indicates all survey questions have been ' (325,538,72)
+ Print 'An indicator that identifies whether a NYTD survey has been completed for the primary youth.  ' (325,101,98)
+ Print '''N''' (340,151,0) Bold 
+ Print 'answered; ' (340,101,0)
+ Print 'indicates if none or at least one of the questions on the survey have been answered.' (340,168,146)
+ Print 'The number of days a youth has to complete the NYTD survey. A youth has 45 days from his/her 17th birth day to complete the NYTD Survey. ' (355,101,195)
+ Print 'A number between 0 and 45 indicates the number of days the youth has to complete the NYTD survey; any number greater than 45 indicates' (371,101,180)
+ Print 'that the youth has not had his/her 17th birthday and are not eligible to take the survey due to their birth date; a zero indicates that the child ' (388,101,185)
+ Print 'does not have any more days left to take the survey.' (403,101,126)
+ Print '''N''' (214,673,3) Bold 
+ Print 'indicates' (214,691,33)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=84   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+ Do GetReportingPeriod
+ Do Optional-Parameters
+ Do Master_Query
+ Do DisplayResult
+End-Program
+Begin-Procedure GetReportingPeriod
+INPUT $_DT_REPORTING_END 'Enter the Reporting Period End (MM/YYYY)' MAXLEN=19 TYPE=DATE FORMAT='MM/YYYY'
+IF IsNull ($_DT_REPORTING_END) or IsBlank($_DT_REPORTING_END)
+ Show 'Input Error (7734): No value was enterred. A value is required.' 
+ Let #return-status = 7734
+ Stop
+End-If
+!----------------BREAK DOWN OF DT REPORTING END-----------------------------------------------
+Let $_dt_rpt_end_to = datetostr(strtodate($_DT_REPORTING_END,'MM/YYYY'),'MM/DD/YYYY')
+Let $var_month = datetostr(strtodate($_DT_REPORTING_END,'MM/YYYY'),'MM')
+Let $_years = datetostr(strtodate($_DT_REPORTING_END,'MM/YYYY'),'YYYY')
+Let $c =  datetostr(dateadd(strtodate($_dt_rpt_end_to,'MM/DD/YYYY'),'day',30),'MM/DD/YYYY')
+Let $_dt_from =  datetostr(dateadd(strtodate($c,'MM/DD/YYYY'),'month',-6),'MM/DD/YYYY')
+Let $_dt_contact_checked =  datetostr(dateadd(strtodate($c,'MM/DD/YYYY'),'month',-12),'MM/DD/YYYY')
+!---------------IF REPORTING MONTH END IS MARCH---------------------------------------------- 
+If $var_month = '03'
+ Let $_to_date_cmpl =  datetostr(dateadd(strtodate($_dt_rpt_end_to,'MM/DD/YYYY'),'day',30),'MM/DD/YYYY')
+
+ let #_year = to_number($_years) - 1
+ let $_yearchar = to_char(#_year)
+ Let $_dt_from2 = '10/01/' || $_yearchar
+! Print $_dt_from2 (100,40,60)
+
+End-If
+
+If $var_month = '09'
+Let $_to_date_cmpl =  datetostr(dateadd(strtodate($_dt_rpt_end_to,'MM/DD/YYYY'),'day',29),'MM/DD/YYYY')
+ Let $_dt_from2 = '04/01/' || $_years
+End-If
+
+End-Procedure
+
+
+Begin-Procedure Optional-Parameters
+!------------------------------------------
+!Input month/Year parameter
+Input $_RptMonth 'Enter Month/Year (MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+!IF ISNULL ($_RptMonth) OR ISBLANK ($_RptMonth)OR ($_RptMonth = '0')or 
+if ($_RptMonth = '12/4712')
+ LET $_VAR_RptMonth = 'N'
+ LET $_HEADER_RPTMONTH = '  '
+else
+ LET $_VAR_RptMonth = 'Y'
+ LET $_HEADER_RPTMONTH = 'Report Month/Year: ' || $_RptMonth
+ END-IF
+MOVE $_HEADER_RPTMONTH TO $_VARMONTH
+!------------------------------------------
+! Get Region Optional Parameter
+Input $_I201_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I201_CD_STAGE_REGION) or IsBlank($_I201_CD_STAGE_REGION) or ($_I201_CD_STAGE_REGION = '0') 
+  Let $_where_clause_region = 'CD_STAGE_REGION is not null'
+  Let $regionSelected = 'N'
+Else
+  Let $_where_clause_region = 'CD_STAGE_REGION = ' || '''' ||  $_I201_CD_STAGE_REGION || ''''
+  Let $regionSelected = 'Y'
+End-If
+!-------------------------------------
+! Get county Optional Parameter
+Input $_I101_CD_COUNTY 'Enter a value for CD_COUNTY' MaxLen=3  Type=Char
+If IsNull($_I101_CD_COUNTY) or IsBlank($_I101_CD_COUNTY) or ($_I101_CD_COUNTY = '0') 
+  Let $_where_clause_county = 'CD_STAGE_CNTY is not null'
+  Let $countySelected = 'N'
+Else
+ Let $_where_clause_county = 'CD_STAGE_CNTY= ' || '''' || $_I101_CD_COUNTY || ''''
+ Let $countySelected = 'Y'
+End-If
+Let $_where_clause_region_county = $_where_clause_region || ' and ' || $_where_clause_county
+Do Make_Header
+End-Procedure
+!--------------------------------------------
+! Creates region county label for page header
+Begin-Procedure Make_Header
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_I101_CD_COUNTY || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_I101_CD_COUNTY = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_I201_CD_STAGE_REGION
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_I201_CD_STAGE_REGION
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+!!----------------------------------------------------------
+!--------------------- NYTD PREP MEETING HELD -------------------------
+Begin-Procedure NYTD_Contact (#CASEID2, #PERSONID2, $_to_date_cmpl, $_dt_contact_checked,:$var_Prep_Meet)
+Begin-Select 
+COUNT(CONTACT_CHILD.ID_CASE) &NYTD_Contact_COUNT
+From  CAPS.CONTACT CONTACT_CHILD, CAPS.EVENT_PERSON_LINK
+,      CAPS.PERSON_ENC PERSON_ENC_CHILD
+      Where CONTACT_CHILD.ID_EVENT = CAPS.EVENT_PERSON_LINK.ID_EVENT
+            And PERSON_ENC_CHILD.ID_PERSON = CAPS.EVENT_PERSON_LINK.ID_PERSON
+ And CONTACT_CHILD.ID_CASE = #CASEID2
+ AND PERSON_ENC_CHILD.ID_PERSON = #PERSONID2
+ And (CONTACT_CHILD.IND_CONTACT_ATTEMPTED IS NULL OR CONTACT_CHILD.IND_CONTACT_ATTEMPTED <> 'Y')
+ And (EXISTS (SELECT 1 FROM CONTACT_CBX CBX_PUR WHERE CBX_PUR.ID_CONTACT_EVENT=CONTACT_CHILD.ID_EVENT AND CBX_PUR.CD_CBX_CODE_TYPE = 'CCNTPURP'
+      AND CBX_PUR.CD_CONTACT_CBX IN ('NYP')))
+! And add_months( PERSON_ENC_child.DT_PERSON_BIRTH  , 12*17) <=  CONTACT_CHILD.DT_CONTACT_OCCURRED
+ And CONTACT_CHILD.DT_CONTACT_OCCURRED  <= to_date($_to_date_cmpl,'MM/DD/YYYY')
+ AND CONTACT_CHILD.DT_CONTACT_OCCURRED  >= to_date($_dt_contact_checked,'MM/DD/YYYY')
+End-Select
+MOVE &NYTD_Contact_COUNT to #NYTD_contact2
+if (#NYTD_contact2 = 0)  
+Let $Prep_Meet = 'N'
+ELSE
+LET $Prep_Meet = 'Y'
+END-IF
+MOVE $Prep_Meet to $var_Prep_Meet
+End-Procedure
+
+!--------------------------------------------------------------------
+!------- GET SURVEY STATUS AND SURVEY START DATE ------------------------
+Begin-Procedure SURVEY_INFO(#PERSONID2, $_years, $OUTCOME_STAT2, $OUTCOME_DATE2, :$SURVEY_COMPLETE, :$SURVEY_START_DATE, :#_PERCENT_COMPLETE, :#_PERCENT_NOT_COMPLETE, :#_CNT_SURV_START, :#_CNT_SURV_NOT_START) 
+BEGIN-SELECT
+IND_NYTD_SURVEY_COMPLETE &SURVEY_COMP, DT_SURVEY_START &DATE_SURVEY_START
+ !Move &DATE_SURVEY_START to $FORMAT_DATE_SURVEY_START 'mm/dd/yyyy'
+FROM CAPS.YRPP_LINK, PERSON PERSON_OUTCOME
+WHERE REPORTING_YEAR = $_years
+AND PERSON_OUTCOME.ID_PERSON = YRPP_LINK.ID_PERSON(+)
+AND PERSON_OUTCOME.ID_PERSON = #PERSONID2
+END-SELECT
+
+If (&SURVEY_COMP = 'Y')
+  ADD 1 TO #_VAR_PERC_SURVEY_COMP
+  LET $VAR_SURVEY_COMP = 'Y'
+ ELSE 
+
+BEGIN-SELECT 
+CD_OUTCOME_RPT_STAT &OUTCOME_STAT3
+FROM YOUTH_REPORT_DTL
+WHERE ID_PERSON = #PERSONID2
+AND DT_OUTCOME_DATE IS NOT NULL
+END-SELECT 
+
+If (&OUTCOME_STAT3 = 'YI') OR (&OUTCOME_STAT3 = 'YP') 
+  ADD 1 TO #_VAR_PERC_SURVEY_COMP
+  LET $VAR_SURVEY_COMP = 'Y'
+ ELSE
+  ADD 1 TO #_VAR_PERC_SURVEY_NOT_COMP
+  LET $VAR_SURVEY_COMP = 'N'
+END-IF
+END-IF
+
+If IsNull (&DATE_SURVEY_START) 
+ADD 1 TO #SURV_NOT_START
+ ELSE
+ADD 1 TO #SURV_START
+END-IF
+
+MOVE $VAR_SURVEY_COMP TO $SURVEY_COMPLETE
+MOVE &DATE_SURVEY_START TO $SURVEY_START_DATE 'mm/dd/yyyy'
+MOVE #_VAR_PERC_SURVEY_COMP TO #_PERCENT_COMPLETE
+MOVE #_VAR_PERC_SURVEY_NOT_COMP TO #_PERCENT_NOT_COMPLETE
+MOVE #SURV_START TO #_CNT_SURV_START
+MOVE #SURV_NOT_START TO #_CNT_SURV_NOT_START
+END-PROCEDURE
+
+
+!----------------PORTAL USER ACCOUNT CREATED ---------------------------
+BEGIN-PROCEDURE PORTAL_ACCT_CREATED(#PERSONID2,:$ACCT_CREATED)
+BEGIN-SELECT
+PORTAL_USER.ID_USER &PORTAL_USER_ACCT
+FROM YRPP_LINK, PORTAL_USER
+WHERE  YRPP_LINK.ID_PERSON = #PERSONID2
+AND YRPP_LINK.ID_PORTAL_USER = PORTAL_USER.ID_USER 
+END-SELECT
+!Print $PORTAL_USER_ACCT (100,40,60)
+move &PORTAL_USER_ACCT to $PORTAL_USER_ACCT
+!Print $PORTAL_USER_ACCT (100,40,60)
+IF IsBlank ($PORTAL_USER_ACCT)
+ LET $USER_ACCT = 'N'
+ELSE
+ LET $USER_ACCT = 'Y'
+END-IF
+MOVE $USER_ACCT TO $ACCT_CREATED
+
+END-PROCEDURE
+
+!--------- GET DAYS YOUTH HAVE REMAINING TO COMPLETET SURVEY-----------------------
+BEGIN-PROCEDURE DAYS_REMAINING(#PERSONID2,:#DAYSREMAINING)
+BEGIN-SELECT   
+TRUNC(((add_months( PERSON.DT_PERSON_BIRTH , 12*17)+45) - SYSDATE)) &Days
+from person
+where person.id_person = #PERSONID2
+END-SELECT
+MOVE &DAYS TO #VAR_DAYS
+IF (#VAR_DAYS < 0) OR (#VAR_DAYS = 0) 
+LET #DAYS_DISPLAY = '0'
+END-IF
+
+IF (#VAR_DAYS >= 1)  
+ LET #DAYS_DISPLAY = #VAR_DAYS
+END-IF
+
+MOVE #DAYS_DISPLAY TO #DAYSREMAINING 
+END-PROCEDURE
+!-------------------------------------------------
+
+
+!----------------- Calculates THE PERCENTAGE OF SURVEYS COMPLETE AND NOT COMPLETE---------------------------
+Begin-Procedure SURVEY_COMPLETE(#ReportTotal,#_PERCENT_COMPLETE, #_PERCENT_NOT_COMPLETE, #_CNT_SURV_START, #_CNT_SURV_NOT_START, :#SURV_COMP, :#SURV_NOT_COMP, :#PER_SURV_START, :#PER_SURV_NOT_START)
+If #ReportTotal = 0
+ Let #SURVEY_Percent_COMP = 0
+ Let #SURVEY_Percent_NOT_COMP = 0
+ else
+ Let #SURVEY_Percent_COMP = (#_PERCENT_COMPLETE/#ReportTotal) * 100
+ Let #SURVEY_Percent_NOT_COMP = (#_PERCENT_NOT_COMPLETE/#ReportTotal) * 100
+ Let #PERCENT_START = (#_CNT_SURV_START/#ReportTotal) * 100
+ Let #PERCENT_NOT_START = (#_CNT_SURV_NOT_START/#ReportTotal) * 100
+ end-if
+ Move #SURVEY_Percent_COMP to #SURV_COMP
+ Move #SURVEY_Percent_NOT_COMP to #SURV_NOT_COMP
+ Move #PERCENT_START to #PER_SURV_START
+ Move #PERCENT_NOT_START to #PER_SURV_NOT_START
+end-procedure
+
+
+
+
+Begin-Procedure Master_Query
+
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select Distinct
+STAGE.ID_STAGE &STAGEID2
+STAGE.ID_CASE &CASEID2
+PERSON00.ID_PERSON &PERSONID2 
+CD_OUTCOME_RPT_STAT &OUTCOME_STAT2
+DT_OUTCOME_DATE &OUTCOME_DATE2
+
+(TRUNC(((ADD_MONTHS(PERSON00.DT_PERSON_BIRTH, 12*17)+45) - SYSDATE))) &DAYSREMAIN2
+ DO NYTD_Contact (&CASEID2, &PERSONID2, $_to_date_cmpl, $_dt_contact_checked, $var_Prep_Meet)
+ DO SURVEY_INFO(&PERSONID2, $_years, &OUTCOME_STAT2, &OUTCOME_DATE2, $SURVEY_COMPLETE, $SURVEY_START_DATE, #_PERCENT_COMPLETE, #_PERCENT_NOT_COMPLETE, #_CNT_SURV_START, #_CNT_SURV_NOT_START) 
+ DO PORTAL_ACCT_CREATED(&PERSONID2, $ACCT_CREATED) 
+ DO DAYS_REMAINING(&PERSONID2,#DAYSREMAINING)
+
+ 
+DT_OUTCOME_DATE &Master_Query_DT_OUTCOME_DATE
+CD_OUTCOME_RPT_STAT &Master_Query_CD_OUTCOME_RPT_STAT
+(Round(((add_months( PERSON00.DT_PERSON_BIRTH  , 12*17)+45) - SYSDATE))) &DAYS_REMAINING
+DT_RPT_PERIOD_END &Master_Query_DT_RPT_PERIOD_END
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_STAGE_REGION &Master_Query_CD_STAGE_REGION () On-Break Set=1 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc101 After=Master_QueryCD_STAGE_REGION_AfterProc101
+CAPS.CCOUNT.DECODE &County_Decode () On-Break Set=1 Level=2 Print=Never Before=Master_QueryDECODE_BeforeProc102 After=Master_QueryDECODE_AfterProc102
+ Alter-Printer Font=4 Point-Size=9    ! [SQR.INI] 4=Arial,proportional
+PERSON00.NM_PERSON_FULL &Child (12,47,21)
+PERSON00.DT_PERSON_BIRTH &DOB (12,153) Edit MM/DD/YYYY
+CAPS.STAGE.ID_CASE &CaseID (12,206) Edit 99999999na
+PERSON_CM.NM_PERSON_FULL &CaseM20anager (12,249,20)
+ Do ILPQuery(&CaseID)
+ Print &ILP_Coordinator (12,356,20)
+PERSON00.ID_PERSON &ChildID (12,1) Edit 888888888na
+ Let $var_Prep_meet=$var_Prep_Meet
+ Print $var_Prep_meet (12,463,2)
+ Let $SURVEY_START_DATE=$SURVEY_START_DATE
+ Print $SURVEY_START_DATE (12,615,11)
+ Let $SURVEY_COMPLETE=$SURVEY_COMPLETE
+ Print $SURVEY_COMPLETE (12,675,2)
+ Do OutcomeInfo(&ChildID)
+ Print &OutcomeInfo_CD_OUTCOME_RPT_STAT (12,500,2)
+ Print &OutcomeInfo_DT_OUTCOME_DATE (12,521) Edit MM/DD/YYYY
+ Let $ACCT_CREATED=$ACCT_CREATED
+ Print $ACCT_CREATED (12,584,3)
+ Let #DAYSREMAINING=#DAYSREMAINING
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #DAYSREMAINING (13,693) Edit 9999
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Next-Listing  Need=13
+From  CAPS.STAGE, CAPS.PERSON PERSON00
+,      CAPS.STAGE_PERSON_LINK, CAPS.CCOUNT, CAPS.STAGE_PERSON_LINK STAGE_PERSON_LINK_CM
+,      CAPS.PERSON PERSON_CM, CAPS.CODES_TABLES CODES_TABLES_OutcomeDecode, CAPS.YOUTH_REPORT_DTL
+,      CAPS.LEGAL_STATUS_VIEW
+      Where CAPS.STAGE.ID_STAGE = CAPS.STAGE_PERSON_LINK.ID_STAGE
+            And CAPS.STAGE_PERSON_LINK.ID_PERSON = PERSON00.ID_PERSON
+            And CAPS.STAGE.CD_STAGE_CNTY = CAPS.CCOUNT.CODE
+            And STAGE_PERSON_LINK_CM.ID_STAGE = CAPS.STAGE.ID_STAGE
+            And STAGE_PERSON_LINK_CM.ID_PERSON = PERSON_CM.ID_PERSON
+            And PERSON00.ID_PERSON = CAPS.LEGAL_STATUS_VIEW.ID_PERSON
+ And CAPS.STAGE_PERSON_LINK.CD_STAGE_PERS_ROLE = 'PC'
+ And CD_STAGE IN ('SUB')
+ And STAGE_PERSON_LINK_CM.CD_STAGE_PERS_ROLE IN ('PR','HP')
+ And ((LEGAL_STATUS_VIEW.IN_DFCS_CUSTODY = 'Y' and DT_LEGAL_STAT_STATUS_DT >= add_months(PERSON00.DT_PERSON_BIRTH  , 12*17) ) Or (LEGAL_STATUS_VIEW.IN_DFCS_CUSTODY = 'Y' and  (DT_LEGAL_STAT_END >= add_months(PERSON00.DT_PERSON_BIRTH  , 12*17) or DT_LEGAL_STAT_END
+     is null  )) Or (DT_LEGAL_STAT_STATUS_DT <= add_months(PERSON00.DT_PERSON_BIRTH  , 12*17) and  DT_LEGAL_STAT_END > add_months( PERSON00.DT_PERSON_BIRTH
+      , 12*17)))
+ And PERSON00.ID_PERSON =  YOUTH_REPORT_DTL.ID_PERSON(+)
+ And (($_VAR_RptMonth = 'Y'
+ And to_date($_dt_from2 ,'MM/DD/YYYY') < last_day(to_date($_RptMonth,'MM/YYYY'))+1
+ And to_date($_to_date_cmpl,'MM/DD/YYYY') >= to_date($_RptMonth,'MM/YYYY')
+ And add_months(person00.dt_person_birth,12*17) < last_day(to_date($_RptMonth,'MM/YYYY'))+1
+ And add_months(person00.dt_person_birth,12*17)>= to_date($_RptMonth,'MM/YYYY')
+ And [$_where_clause_region_county]) Or ($_VAR_RptMonth = 'N'
+ And add_months(  PERSON00.DT_PERSON_BIRTH  , 12*17) >= to_date($_dt_from2 ,'MM/DD/YYYY')
+ And add_months( PERSON00.DT_PERSON_BIRTH , 12*17) <= to_date($_to_date_cmpl,'MM/DD/YYYY')))
+ And [$_where_clause_region_county]
+ And exists  (SELECT distinct PLACEMENT.ID_PLCMT_CHILD FROM PLACEMENT WHERE PLACEMENT.DT_PLCMT_START = (SELECT(max(PLACEMENT_2.DT_PLCMT_START
+     )) FROM  EVENT EVENT_2, PLACEMENT PLACEMENT_2, event_person_link epl WHERE EVENT_2.ID_EVENT = PLACEMENT_2.ID_PLCMT_EVENT AND  EVENT_2.CD_EVENT_STATUS
+     = 'APRV'  and epl.id_person = PLACEMENT_2.id_plcmt_child and epl.id_event = event_2.id_event and (PLACEMENT_2.dt_plcmt_end >= add_months
+    (PERSON00.DT_PERSON_BIRTH  , 12*17) or PLACEMENT_2.dt_plcmt_end is null or PLACEMENT_2.dt_plcmt_end = to_date('12/31/4712','MM/DD/YYYY'))and
+     PLACEMENT_2.id_plcmt_child = PLACEMENT.ID_PLCMT_CHILD and placement_2.CD_PLCMT_ACT_PLANNED = 'A'  and  placement_2.cd_plcmt_type in 
+    ( 'RFH','DFH','CFH','IFH','ADH','CCI','EMS','GRH','HOS','NRP','OTA','OTP','OTR','REP','REU','RNA','SFH' )  and (PLACEMENT_2.CD_TEMP_TYPE
+     is null or PLACEMENT_2.CD_TEMP_TYPE not in ('RED','REN','COR'))) and PLACEMENT.cd_plcmt_type <> 'YDC' and PLACEMENT.ID_PLCMT_CHILD =
+     PERSON00.ID_PERSON)
+ And (DT_STAGE_CLOSE IS NULL  or DT_STAGE_CLOSE  >= add_months(person00.dt_person_birth, 17*12))
+ AND STAGE_PERSON_LINK.ID_STAGE =        
+        ( case when (select count (*)
+                     from stage_person_link stage_person_link2, stage stage2                   
+                      where stage_person_link2.CD_STAGE_PERS_ROLE = 'PC' !--primary child
+                      and stage_person_link2.id_stage = stage2.id_stage
+                      and stage2.CD_STAGE IN ('SUB')
+                      and (stage2.CD_STAGE_REASON_CLOSED NOT IN ('97', '06') or stage2.CD_STAGE_REASON_CLOSED is null) !--excluding stages closed to merge
+                      and STAGE.ID_CASE = stage_person_link2.ID_CASE
+                      and STAGE_PERSON_LINK.ID_PERSON = stage_person_link2.ID_PERSON
+                      and stage2.DT_STAGE_CLOSE is null) > 0 !-- exists foster care stage open,  
+            then (select max (stage2.ID_STAGE)            !   -- get the id of the last open from the open group  
+                     from stage_person_link stage_person_link2, stage stage2                   
+                      where stage_person_link2.CD_STAGE_PERS_ROLE = 'PC' !--primary child
+                      and stage_person_link2.id_stage = stage2.id_stage
+                      and stage2.CD_STAGE IN ('SUB')
+                      and (stage2.CD_STAGE_REASON_CLOSED NOT IN ('97', '06') or stage2.CD_STAGE_REASON_CLOSED is null) !--excluding stages closed to merge
+                      and STAGE.ID_CASE = stage_person_link2.ID_CASE
+                      and STAGE_PERSON_LINK.ID_PERSON = stage_person_link2.ID_PERSON
+                      and stage2.DT_STAGE_CLOSE is null
+             )
+            else (select max (stage3.id_stage) !-- all fc stages closed, get the id of the last fc stage closed 
+                   from stage_person_link stage_person_link3, stage stage3                   
+                    where stage_person_link3.CD_STAGE_PERS_ROLE = 'PC' !--primary child
+                    and stage_person_link3.id_stage = stage3.id_stage
+                    and stage3.CD_STAGE IN ('SUB')
+                    and (stage3.CD_STAGE_REASON_CLOSED NOT IN ('97', '06') or stage3.CD_STAGE_REASON_CLOSED is null) !--excluding stages closed to merge
+                    and STAGE.ID_CASE = stage_person_link3.ID_CASE
+                    and STAGE_PERSON_LINK.ID_PERSON = stage_person_link3.ID_PERSON
+                    and stage3.DT_STAGE_CLOSE = (  select max(stage2.DT_STAGE_CLOSE)
+                                                    from stage_person_link stage_person_link2, stage stage2                   
+                                                    where stage_person_link2.CD_STAGE_PERS_ROLE = 'PC' !--primary child
+                                                    and stage_person_link2.id_stage = stage2.id_stage
+                                                    and stage2.CD_STAGE IN ('SUB')
+                                                    and (stage2.CD_STAGE_REASON_CLOSED NOT IN ('97', '06') or stage2.CD_STAGE_REASON_CLOSED is null) !--excluding stages closed to merge
+                                                    and STAGE.ID_CASE = stage_person_link2.ID_CASE
+                                                    and STAGE_PERSON_LINK.ID_PERSON = stage_person_link2.ID_PERSON
+                                                 )
+                  ) end )    
+
+ And ( STAGE.CD_STAGE_REASON_CLOSED  NOT IN ('97', '06') or  STAGE.CD_STAGE_REASON_CLOSED  is null)
+ And (to_date(TO_char(DT_RPT_PERIOD_END,'MM-DD-YYYY'), 'MM-DD-YYYY') = TO_date($_to_date_cmpl,'MM-DD-YYYY') OR DT_RPT_PERIOD_END IS NULL)
+ And (youth_report_dtl.ind_follow_up = 'N' or youth_report_dtl.ind_follow_up is null)
+Order By CD_STAGE_REGION
+,      CAPS.CCOUNT.DECODE
+,      PERSON00.NM_PERSON_FULL
+End-Select
+ Next-Listing
+ Next-Listing  Need=129
+ If #1ROW_COUNT > 0
+ Graphic (2,2,717) Horz-Line 20 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Report Total:'  (23,2) Bold 
+ let #ReportTotal = #1ROW_COUNT
+  Print #ReportTotal (23,69) Bold  Edit 8888888888na
+  Print 'Report Summary'  (66,1) Underline  Bold 
+   Let #SURV_COMP=(#_PERCENT_COMPLETE/#ReportTotal) * 100
+ Print #SURV_COMP (114,181) Edit 9999 Bold 
+   Let #SURV_NOT_COMP=(#_PERCENT_NOT_COMPLETE/#ReportTotal) * 100
+ Print #SURV_NOT_COMP (129,181) Edit 9999 Bold 
+  Print 'Percentage of Surveys Complete:'  (114,1) Bold 
+  Print 'Percentage of Surveys Not Complete:'  (129,1) Bold 
+  Print '%'  (114,208)
+  Print '%'  (129,207)
+  Print 'Percentage of Surveys Not Started:'  (99,1) Bold 
+  Print 'Percentage of Surveys Started:'  (83,1) Bold 
+  Print '%'  (83,205)
+  Print '%'  (101,207)
+   Let #PERCENT_START=(#_CNT_SURV_START/#ReportTotal) * 100
+ Print #PERCENT_START (83,181) Edit 9999 Bold 
+   Let #PER_SURV_NOT_START=(#_CNT_SURV_NOT_START/#ReportTotal) * 100
+ Print #PER_SURV_NOT_START (101,181) Edit 9999 Bold 
+ End-If
+ Next-Listing
+ DO SURVEY_COMPLETE(#ReportTotal,#_PERCENT_COMPLETE, #_PERCENT_NOT_COMPLETE, #_CNT_SURV_START, #_CNT_SURV_NOT_START, #SURV_COMP, #SURV_NOT_COMP, #PER_SURV_START, #PER_SURV_NOT_START)
+
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+!Display no data message on page header
+Begin-procedure DisplayResult
+if #1ROW_COUNT = 0
+ Let $textdisp = 'No results matching the report parameter are available'
+end-if
+Move $textdisp to $outText
+end-procedure
+
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc101
+If $regionSelected = 'N' and $countySelected = 'N'
+! Do Nothing
+
+ Next-Listing  Need=19
+ Graphic (2,2,716) Horz-Line 20 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CD_STAGE_REGION (19,38,2) Bold 
+ Print 'Region'  (19,1) Bold 
+   Position (+12,)
+ Next-Listing  Need=13
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc101
+If $regionSelected = 'N' and $countySelected = 'N'
+! Do Nothing
+
+ Next-Listing  Need=16
+ Graphic (1,2,716) Horz-Line 15 
+ Position (2,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region Total:'  (16,1) Bold 
+ let #RegionTotalCases = #101ROW_COUNT
+ Print #RegionTotalCases (16,69) Bold  Edit 99999999na
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=13
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_BeforeProc102
+If $countySelected = 'N'
+! Do Nothing
+
+ Next-Listing  Need=19
+ Graphic (1,2,716) Horz-Line 15 
+ Position (2,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &County_Decode (19,1,55) Bold 
+   Position (+12,)
+ Next-Listing  Need=13
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc102
+If $countySelected = 'N'
+! Do Nothing
+
+ Next-Listing  Need=18
+ Graphic (1,2,716) Horz-Line 10 
+ Position (2,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'County Total: '  (18,1) Bold 
+ let #CountyTotalCases = #102ROW_COUNT
+ Print #CountyTotalCases (18,69) Bold  Edit 99999999na
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  Need=13
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure ILPQuery (#P1_ID_CASE)
+Begin-Select Loops=1
+PERSON_Emp.NM_PERSON_FULL &_ILP_Coordinator
+From  CAPS.EMPLOYEE EMPLOYEE_1, CAPS.PERSON PERSON_Emp
+,      CAPS.STAGE_ASSIGN_HISTORY
+      Where EMPLOYEE_1.ID_PERSON = PERSON_Emp.ID_PERSON
+            And CAPS.STAGE_ASSIGN_HISTORY.ID_PERSON = EMPLOYEE_1.ID_PERSON
+ And ID_CASE = #P1_ID_CASE
+ And EMPLOYEE_1.CD_EMPLOYEE_CLASS in ('G1007','14203ILP','14201ILP')
+ And STAGE_ASSIGN_HISTORY.ID_STG_ASSGN_HSTRY  = (select max(sahtemp.id_stg_assgn_hstry) from stage_assign_history sahtemp,employee e where
+     STAGE_ASSIGN_HISTORY.ID_CASE = sahtemp.ID_CASE and sahtemp.id_person = e.id_person and e.cd_employee_class in ('G1007','14203ILP','14201ILP'))
+
+End-Select
+End-Procedure
+
+Begin-Procedure OutcomeInfo (#P1_ID_PERSON)
+Begin-Select Loops=1
+CD_OUTCOME_RPT_STAT &_OutcomeInfo_CD_OUTCOME_RPT_STAT
+DT_OUTCOME_DATE &_OutcomeInfo_DT_OUTCOME_DATE
+From  CAPS.YOUTH_REPORT_DTL
+Where ID_PERSON = #P1_ID_PERSON
+ And YOUTH_REPORT_DTL.DT_RPT_PERIOD_END = TO_DATE($_TO_DATE_CMPL,'MM/DD/YYYY')
+End-Select
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 84 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Children and Family Services' (16,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'NYTD Baseline Survey Status Tracking ' (42,224,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (14,585,0)
+ Let $region_header=$region_header
+ Print $region_header (75,326,25) Bold 
+ Let $region_county_header=$region_county_header
+ Print $region_county_header (60,313,25) Bold 
+ Let $outText=$outText
+ Print $outText (126,210,55) Bold 
+ Let $daterange=$_DT_REPORTING_END
+ Print $daterange (90,392,7) Bold 
+ Print 'Report Period End:' (90,298,0) Bold 
+ Let $HEADERMONTH=$_VARMONTH
+ Print $HEADERMONTH (108,298,27) Bold 
+ Print $current-date (14,651) edit 'MM/DD/YYYY'
+ Alter-Printer Font=4 Point-Size=9    ! [SQR.INI] 4=Arial,proportional
+ Print 'ILP Coordinator' (203,356,18) Underline  Bold 
+ Print 'Child Name' (203,47,0) Underline  Bold 
+ Print 'DOB' (203,153,0) Underline  Bold 
+ Print 'Case ID' (203,206,7) Underline  Bold 
+ Print 'Case Manager' (203,249,0) Underline  Bold 
+ Print 'Outcome ' (203,489,7) Underline  Bold  Wrap 7 2 line-height=11 Keep-Top
+ Print 'Outcome' (203,533,7) Underline  Bold  Wrap 7 2 line-height=11 Keep-Top
+ Print 'Days ' (203,692,5) Underline  Bold 
+ Print 'Remaining' (215,692,0) Underline  Bold 
+ Print 'Acct' (203,578,7) Underline  Bold 
+ Print 'Survey' (203,658,0) Underline  Bold 
+ Print 'Created' (215,578,0) Underline  Bold 
+ Print 'Status' (215,659,7) Underline  Bold 
+ Print 'Status' (215,494,0) Underline  Bold 
+ Print 'Date' (215,534,9) Underline  Bold 
+ Print 'Child ID' (203,1,8) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Date' (228,622,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=9    ! [SQR.INI] 4=Arial,proportional
+ Print 'Start' (215,622,9) Underline  Bold 
+ Print 'Survey' (203,622,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Held' (228,451,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=9    ! [SQR.INI] 4=Arial,proportional
+ Print 'Meeting' (215,451,0) Underline  Bold 
+ Print 'Prep ' (203,451,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'ILP Coordinator' (44,356,18) Underline  Bold 
+ Print 'Child Name' (44,47,0) Underline  Bold 
+ Print 'DOB' (44,153,0) Underline  Bold 
+ Print 'Case ID' (44,206,7) Underline  Bold 
+ Print 'Case Manager' (44,249,0) Underline  Bold 
+ Print 'Outcome ' (44,489,7) Underline  Bold  Wrap 7 2 line-height=11 Keep-Top
+ Print 'Outcome' (44,533,7) Underline  Bold  Wrap 7 2 line-height=11 Keep-Top
+ Print 'Days ' (44,692,5) Underline  Bold 
+ Print 'Remaining' (56,692,0) Underline  Bold 
+ Print 'Acct' (44,578,7) Underline  Bold 
+ Print 'Survey' (44,658,0) Underline  Bold 
+ Print 'Created' (56,578,0) Underline  Bold 
+ Print 'Status' (56,659,7) Underline  Bold 
+ Print 'Status' (56,494,0) Underline  Bold 
+ Print 'Date' (56,534,9) Underline  Bold 
+ Print 'Child ID' (44,1,8) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Date' (69,622,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=9    ! [SQR.INI] 4=Arial,proportional
+ Print 'Start' (56,622,9) Underline  Bold 
+ Print 'Survey' (44,622,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Held' (69,451,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=9    ! [SQR.INI] 4=Arial,proportional
+ Print 'Meeting' (56,451,0) Underline  Bold 
+ Print 'Prep ' (44,451,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (18,652) '' ' of '
+ Last-Page (18,680) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

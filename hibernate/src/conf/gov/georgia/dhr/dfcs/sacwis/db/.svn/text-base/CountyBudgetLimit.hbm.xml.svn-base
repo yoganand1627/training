@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CountyBudgetLimit" table="COUNTY_BUDGET_LIMIT" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idCountyBudgetLimit" type="integer" unsaved-value="0">
+      <column name="ID_COUNTY_BUDGET_LIMIT" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_COUNTY_BUDGET_LIMIT</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="cdCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_COUNTY" length="3" not-null="true"/>
+    </property>
+    <property name="cdProgram" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PROGRAM" length="3" not-null="true"/>
+    </property>
+    <property name="nbrFiscalYear" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_FISCAL_YEAR" precision="4" scale="0"/>
+    </property>
+    <property name="amtBudgetLimit" type="double" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="AMT_BUDGET_LIMIT" precision="13" not-null="true"/>
+    </property>
+    <property name="amtSpent" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SPENT" precision="13"/>
+    </property>
+    <property name="amtObg" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_OBG" precision="13"/>
+    </property>
+    <property name="amtBalance" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_BALANCE" precision="13"/>
+    </property>
+  </class>
+</hibernate-mapping>

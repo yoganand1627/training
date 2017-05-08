@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ApprovalRejection" table="APPROVAL_REJECTION" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idApprovalRejection" type="integer" unsaved-value="0">
+      <column name="ID_APPROVAL_REJECTION" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_APPROVAL_REJECTION</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="approval" class="gov.georgia.dhr.dfcs.sacwis.db.Approval" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+        <column name="ID_APPROVAL" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_REJECTOR" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="dtRejection" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REJECTION" length="7" not-null="true"/>
+    </property>
+    <property name="indApsEffort" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_APS_EFFORT" length="1" not-null="true"/>
+    </property>
+    <property name="indProblems" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PROBLEMS" length="1"/>
+    </property>
+    <property name="indEvidence" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_EVIDENCE" length="1"/>
+    </property>
+    <property name="indMissingEvidRptr" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MISSING_EVID_RPTR" length="1"/>
+    </property>
+    <property name="indMissingEvidAp" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MISSING_EVID_AP" length="1"/>
+    </property>
+    <property name="indMissingEvidMp" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MISSING_EVID_MP" length="1"/>
+    </property>
+    <property name="indMissingEvidCol" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MISSING_EVID_COL" length="1"/>
+    </property>
+    <property name="indMissingEvidPhotos" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MISSING_EVID_PHOTOS" length="1"/>
+    </property>
+    <property name="indMissingEvidDe" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MISSING_EVID_DE" length="1"/>
+    </property>
+    <property name="indMissingEvidOth" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MISSING_EVID_OTH" length="1"/>
+    </property>
+    <property name="indDiscretionary" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_DISCRETIONARY" length="1" not-null="true"/>
+    </property>
+    <property name="txtApproversCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_APPROVERS_CMNTS" length="1000"/>
+    </property>
+  </class>
+</hibernate-mapping>

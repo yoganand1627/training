@@ -1,0 +1,919 @@
+!*****************************************************************************
+!  FACILITY PLACEMENT LOG REPORT                                             *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cfa04o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/heardtd/work/sqr                         *
+!                                                                            *
+!                                                                            *
+! DATE:                 12/14/95 revised                                     *
+!                                                                            *
+! PROGRAMMER NAME:      Tony Heard                                           *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The Facility Placement Log Report will allow the     *
+!                       user to create a hard copy of the Facility Placement *
+!                       Log window with some additional information that is  *
+!                       not on the window.                                   * 
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 11/11/95   T. Heard     Initial Programming                                *
+! 02/27/96   B. McCleary  SIR 3444 - Changed the SQR so that each SQL is     *
+!                         called independently instead of nested in the      *
+!                         preceding call.                                    *
+! 02/29/96   B. McCleary  SIR 3487 - Prints blank when MAXDATE.              *
+!                         Rearranged SQL calls into correct order.           *
+! 03/19/96   B. McCleary  SIR 4045 - Changed the order by for the placements *
+! 03/20/96   B. McCleary  SIR 3953 - Changed the input from stage to rsrc.   *
+! 03/21/96   B. McCleary  SIR 4086 - Reset all host variables in order to    *
+!                         clear their value when no row is selected from an  *
+!                         independent SQL call.                              *
+! 03/22/96   B. McCleary  SIR 4181 - Changed where clause to retrieve most   *
+!                         recent LOC for an open or closed plcmt.            *
+! 03/26/96   B. McCleary  SIR 4261 - Added plcmt act planned code to where   *
+!                         clause.                                            *
+! 03/28/96   B. McCleary  SIR 4347 - Added SQL to get the child name when the*
+!                         date name start is after the placement begins.     *
+! 04/02/96   B. McCleary  SIR 20102 - Added next-listing to keep sections    *
+!                         together.                                          *
+! 04/19/96   B. McCleary  SIR 3519 - Change the SQL to retrieve the worker   *
+!                         from the plcmt stage instead of the child's stage. *
+! 04/19/96   B. McCleary  SIR 20519 - Added id stage as an input for case    *
+!                         file print;  the window will pass only one of the  *
+!                         two input parameters.                              *
+! 04/25/96   B. McCleary  SIR 20657 - Made the where clause dynamic in order *
+!                         to retrieve header info using either the input id  *
+!                         stage or the input id resource.                    *
+! 10/29/03   HadjimH      SIR 19836 - Facility Placement Log reports for     *
+!			  Basic Child Care Facilities, such as Buckner's     *
+!			  (resource ID 200045) do not display the facility   *
+!			  name in the header.  The section is blank, and     *
+!			  should be filled. 				     *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                       !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'             ! control codes for Portrait
+                                        ! On Demand Reports              
+
+    !****************************************************
+    !SIR 3953 - Changed the input from stage to resource
+    !****************************************************
+    !****************************************************
+    !SIR 20519 - Added stage as input for case file print
+    !****************************************************
+
+    ask INPUT_ID_RESOURCE                             
+    ask INPUT_ID_STAGE                                
+    
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 7 
+
+print 'FACILITY NAME:'       (+1,34)
+print $nm_name          (+0,50) 
+print 'FACILITY #:'        (+1,37)
+print #id_resource            (+0,50) edit 8888888888888888
+print 'CASE #:'               (+1,41)          
+print #Case_Number            (+0,50) edit 8888888888888888
+print 'FACILITY PLACEMENT LOG REPORT' (+3) center
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+                                ! specific to portrait on demand report
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS:     GET-COUNT-INFO                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+   move  {INPUT_ID_RESOURCE}                    to #input_id_resource
+   move  {INPUT_ID_STAGE}                       to #input_id_stage   
+
+ do GET-COUNT-INFO
+   
+   move 'PC'     to $PC
+   move 'PR'     to $PR
+   move 'HP'     to $HP
+   move 'ALOC'     to $ALOC
+   move 'A'     to $A
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-HEADER-INFO, GET-ADDRESS-INFO, PRINT-COUNT-INFO    *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do GET-HEADER-INFO 
+
+!SIR 20519 - This resets the host variable to the input id resource if it
+!            exists.  Otherwise, the resource remains the one selected using
+!            the input id stage.
+
+    if #input_id_resource <> 0
+ move #input_id_resource   to #id_resource
+    end-if
+
+    do GET-ADDRESS-INFO
+    do PRINT-COUNT-INFO
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-HEADER-INFO                                                         *
+!                                                                           *
+!       This procedure will get all of the header info based on the input   *
+!       stage.                                                              *
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-HEADER-INFO 
+
+!SIR 20657 - The where clause must be dynamic in order to retrieve the header
+!            info when only one of the parameters exists.  This code also 
+!            formats the input number as a string for the where clause.
+
+if #input_id_stage <> 0
+    let $where_id_stage = to_char(#input_id_stage)
+    let $where_clause = ' A.ID_RSRC_FA_HOME_STAGE = ' || $where_id_stage
+else
+    let $where_id_resource = to_char(#input_id_resource)
+    let $where_clause = ' A.ID_RESOURCE = ' || $where_id_resource
+end-if
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.ID_RESOURCE
+    move &A.ID_RESOURCE                             to #id_resource
+    
+A.NM_RESOURCE
+    move &A.NM_RESOURCE                             to $nm_name
+
+B.ID_CASE
+    move &B.ID_CASE                                 to #Case_Number
+
+FROM    CAPS_RESOURCE   A,
+        STAGE           B
+
+WHERE   B.ID_STAGE = A.ID_RSRC_FA_HOME_STAGE
+AND     [$where_clause]
+
+END-SELECT    
+
+!****************************************************************************
+!   SIR #19836. Added the if statement								    *
+!****************************************************************************
+  
+if #Case_Number = 0
+let $where_clause = ' B.ID_RESOURCE = ' || $where_id_resource
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+B.ID_RESOURCE
+    move &B.ID_RESOURCE                             to #temp_id
+    
+B.NM_RESOURCE
+    move &B.NM_RESOURCE                             to $temp_name
+
+FROM    CAPS_RESOURCE   B
+
+WHERE   [$where_clause]
+
+END-SELECT    
+
+let #id_resource = #temp_id
+let $nm_name = $temp_name
+
+end-if
+
+END-PROCEDURE GET-HEADER-INFO 
+
+
+!****************************************************************************
+!                                                                           *
+!    GET-ADDRESS-INFO                                                       *  
+!                                                                           *
+!       This procedure will get all of the facility address info.  It also  *
+!       calls another procedure to get the placement info for each address  * 
+!       for each address row that is achieved.                              * 
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : PRINT-ADDRESS-INFO, GET-PLACEMENT-INFO                 *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ADDRESS-INFO 
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.ADDR_RSRC_ST_LN_1
+   move &A.ADDR_RSRC_ST_LN_1         to $addr_rsrc_1
+
+A.ADDR_RSRC_ST_LN_2
+   move &A.ADDR_RSRC_ST_LN_2                    to $addr_rsrc_2
+
+A.ADDR_RSRC_CITY
+   move &A.ADDR_RSRC_CITY                       to $addr_city
+
+CCOUNT.DECODE &cnty_dec
+   move &cnty_dec                         to $cnty_dec
+
+CSTATE.DECODE  
+   move &CSTATE.DECODE                          to $state_dec
+
+A.ADDR_RSRC_ZIP
+   move &A.ADDR_RSRC_ZIP                      to $addr_zip
+
+    do PRINT-ADDRESS-INFO
+    do GET-PLACEMENT-INFO
+
+FROM  CAPS_RESOURCE  A,
+      CCOUNT         CCOUNT,
+      CSTATE         CSTATE
+
+WHERE   A.ID_RESOURCE = #id_resource
+AND    CCOUNT.CODE(+) = A.CD_RSRC_CNTY
+AND    CSTATE.CODE(+) = A.CD_RSRC_STATE
+
+END-SELECT    
+
+END-PROCEDURE GET-ADDRESS-INFO
+
+!****************************************************************************
+!                                                                           *
+!    GET-PLACEMENT-INFO                                                     *
+!                                                                           *
+!       This procedure will get all of the base placement information that  *
+!       is to be printed.  It also calls every other SQL for each placement *
+!       row selected.                                                       *
+!                                                                           * 
+!       CALLED BY  : GET-ADDRESS-INFO                                       *
+!       CALLS      : GET-CHILD-NAME, GET-EVENT-STAGE,                       *
+!                    GET-WORKER, GET-PERSON-LOC,                            *
+!                    GET-LEGAL-STATUS, GET-WORKER-PHONE, GET-WORKER-NAME    * 
+!                    PRINT-PLACEMENT-INFO                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PLACEMENT-INFO
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(A.DT_PLCMT_START, 'MM/DD/YYYY') &plcmt_start
+   move &plcmt_start                            to $plcmt_start
+
+to_char(A.DT_PLCMT_END, 'MM/DD/YYYY') &plcmt_end
+    move &plcmt_end                      to $plcmt_end
+
+A.ID_PLCMT_CHILD
+    move &A.ID_PLCMT_CHILD   to #id_child
+
+A.ID_PLCMT_EVENT
+    move &A.ID_PLCMT_EVENT   to #id_plcmt_event
+
+ if ($plcmt_start <= $today and $plcmt_start  >= $first_day)
+     let #count_start = #count_start + 1
+        end-if
+        
+ if ($plcmt_end   <= $today and $plcmt_end   >= $first_day)
+     let #count_end = #count_end + 1
+        end-if
+        
+ let #count_total = #count_total + 1
+
+    do GET-CHILD-NAME            !SIR 3444 - calls each SQL independently
+    do GET-EVENT-STAGE   !SIR 3519 - Get the worker from the plcmt stage
+    do GET-WORKER
+    do GET-PERSON-LOC
+    do GET-LEGAL-STATUS
+    do GET-WORKER-PHONE
+    do GET-WORKER-NAME
+    do PRINT-PLACEMENT-INFO
+
+FROM  PLACEMENT          A
+
+WHERE A.ID_RSRC_FACIL = #id_resource  
+AND   A.CD_PLCMT_ACT_PLANNED = $A                     !***SIR 4261***
+
+ORDER BY A.DT_PLCMT_END DESC, A.DT_PLCMT_START DESC   !***SIR 4045***
+
+END-SELECT
+
+END-PROCEDURE GET-PLACEMENT-INFO
+
+!****************************************************************************
+!                                                                           *
+!    GET-CHILD-NAME                                                         *
+!                                                                           *
+!       This procedure will get the child name of the id child in the       *
+!       procedure above.                                                    *
+!                                                                           * 
+!       CALLED BY  : GET-PLACMENT-INFO                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CHILD-NAME    
+
+!*************************************************************
+!SIR 4086 - Reset value of all host variables
+!*************************************************************
+
+    move ''                                     to $child_name
+    move ''                                     to $DOB
+    move 0     to #count1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.NM_NAME_FIRST  !***ENH***
+    move &A.NM_NAME_FIRST                       to $child_first
+    
+A.NM_NAME_MIDDLE
+    move &A.NM_NAME_MIDDLE                      to $child_middle     
+    
+A.NM_NAME_LAST
+    move &A.NM_NAME_LAST                        to $child_last
+
+CSUFFIX2A.decode
+    move &CSUFFIX2A.decode                      to $child_suffix
+
+C.DT_PERSON_BIRTH    
+    move &C.DT_PERSON_BIRTH   to $DOB        
+
+  let #count1 = #count1 + 1
+
+FROM  NAME               A,
+      PERSON             C,
+      CSUFFIX2           CSUFFIX2A
+
+WHERE A.ID_PERSON = #id_child
+AND   A.DT_NAME_START_DATE <= $plcmt_start      
+AND   A.DT_NAME_END_DATE  > $plcmt_start      
+AND   A.IND_NAME_PRIMARY = 'Y'
+AND   A.IND_NAME_INVALID = 'N' 
+AND   C.ID_PERSON = A.ID_PERSON
+AND   CSUFFIX2A.CODE(+) = A.CD_NAME_SUFFIX              
+
+END-SELECT
+
+  if #count1 = 0
+    do GET-CHILD-NAME-MIN  !***SIR 4347***
+  end-if
+
+END-PROCEDURE GET-CHILD-NAME
+
+!****************************************************************************
+!                                                                           *
+!    GET-CHILD-NAME-MIN                                                     *
+!                                                                           *
+!       This procedure will get the name of the id child when the name is   *
+!       started after the placement.                                        *
+!                                                                           * 
+!       CALLED BY  : GET-PLACMENT-INFO                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CHILD-NAME-MIN
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+B.NM_NAME_FIRST  !***ENH***
+    move &B.NM_NAME_FIRST                       to $child_first
+    
+B.NM_NAME_MIDDLE
+    move &B.NM_NAME_MIDDLE                      to $child_middle     
+    
+B.NM_NAME_LAST
+    move &B.NM_NAME_LAST                        to $child_last
+
+CSUFFIX2B.decode
+    move &CSUFFIX2B.decode                      to $child_suffix
+
+C.DT_PERSON_BIRTH &min_dob    
+    move &min_dob    to $DOB        
+
+FROM  NAME               B,
+      PERSON             C,
+      CSUFFIX2           CSUFFIX2B
+
+WHERE B.ID_PERSON = #id_child
+AND   B.DT_NAME_START_DATE =   (SELECT MIN(N.DT_NAME_START_DATE)
+    FROM NAME N
+    WHERE N.ID_PERSON = #id_child)
+AND   B.IND_NAME_PRIMARY = 'Y'
+AND   B.IND_NAME_INVALID = 'N' 
+AND   C.ID_PERSON = B.ID_PERSON
+AND   CSUFFIX2B.CODE(+) = B.CD_NAME_SUFFIX !***ENH***              
+
+END-SELECT
+
+END-PROCEDURE GET-CHILD-NAME-MIN
+
+!****************************************************************************
+!                                                                           *
+!    GET-EVENT-STAGE                                                        *
+!                                                                           *
+!       This procedure will get the stage of the placement; the worker will *
+!       be selected in the next call.                                       *
+!                                                                           * 
+!       CALLED BY  : GET-PLACEMENT-INFO                                     *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-EVENT-STAGE
+
+    move 0                                      to #id_stage
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+ID_EVENT_STAGE
+   move &ID_EVENT_STAGE           to #id_stage
+
+FROM  EVENT  
+
+WHERE ID_EVENT = #id_plcmt_event
+
+END-SELECT
+
+END-PROCEDURE GET-EVENT-STAGE
+
+!****************************************************************************
+!                                                                           *
+!    GET-WORKER                                                             *
+!                                                                           *
+!       This procedure will select the worker from the child's stage.       *
+!                                                                           * 
+!       CALLED BY  : GET-PLACEMENT-INFO                                     *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WORKER     
+
+    move 0                                      to #id_worker
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SPL.ID_PERSON
+   move &SPL.ID_PERSON           to #id_worker
+
+SPL.CD_STAGE_PERS_ROLE
+   move &SPL.CD_STAGE_PERS_ROLE   to $role      
+
+FROM   STAGE_PERSON_LINK SPL,
+ STAGE   S
+
+WHERE  SPL.ID_STAGE = #id_stage
+AND SPL.ID_STAGE = S.ID_STAGE
+AND    SPL.CD_STAGE_PERS_ROLE in ($HP, $PR)
+
+END-SELECT
+
+END-PROCEDURE GET-WORKER     
+
+!****************************************************************************
+!                                                                           *
+!    GET-PERSON-LOC                                                         *
+!                                                                           *
+!       This procedure will get the level of care decode.                   *
+!                                                                           * 
+!       CALLED BY  : GET-PLACEMENT-INFO                                     *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PERSON-LOC    
+
+  move ''                                         to $aloc_dec
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CATHPLOC.DECODE
+   move &CATHPLOC.DECODE                          to $aloc_dec
+
+FROM  PERSON_LOC         D,
+      CATHPLOC           CATHPLOC
+
+WHERE #id_child         = D.ID_PERSON 
+AND   CATHPLOC.CODE(+)  = D.CD_PLOC_CHILD
+AND   D.CD_PLOC_TYPE      = $ALOC
+AND   D.DT_PLOC_START   <= $plcmt_end    !SIR 4181 - changed where clause to get
+AND   D.DT_PLOC_END    != D.DT_PLOC_START  !most current LOC for open or closed 
+AND   D.DT_PLOC_END = (SELECT MAX(Q.DT_PLOC_END)  !placements
+         FROM PERSON_LOC Q
+         WHERE Q.ID_PERSON      = #id_child
+         AND   Q.DT_PLOC_START <= $plcmt_end 
+         AND   Q.DT_PLOC_START != Q.DT_PLOC_END 
+         AND   Q.CD_PLOC_TYPE   = $ALOC)
+
+END-SELECT
+
+END-PROCEDURE GET-PERSON-LOC     
+
+!****************************************************************************
+!                                                                           *
+!    GET-LEGAL-STATUS                                                       *
+!                                                                           *
+!       This procedure will get the county and region decodes.              *
+!                                                                           * 
+!       CALLED BY  : GET-PLACEMENT-INFO                                     *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-LEGAL-STATUS  
+
+  move ''                                         to $legal_cnty_dec
+  move ''                                         to $region_dec
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CCOUNT.DECODE        
+    move &CCOUNT.DECODE                          to $legal_cnty_dec
+
+CCNTYREG.DECODE        
+    move &CCNTYREG.DECODE                        to $region_dec
+
+FROM LEGAL_STATUS E,
+     CCOUNT       CCOUNT,
+     CCNTYREG     CCNTYREG
+
+WHERE #id_child        = E.ID_PERSON
+AND   CCOUNT.CODE(+)   = E.CD_LEGAL_STAT_CNTY
+AND   CCNTYREG.CODE(+) = E.CD_LEGAL_STAT_CNTY
+
+END-SELECT
+
+END-PROCEDURE GET-LEGAL-STATUS   
+
+!****************************************************************************
+!                                                                           *
+!    GET-WORKER-PHONE                                                       *
+!                                                                           *
+!       This procedure will select the worker's phone number and extension. *
+!                                                                           * 
+!       CALLED BY  : GET-PLACEMENT-INFO                                     *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WORKER-PHONE  
+
+  move ''                                         to $phone
+  move ''                                         to $phone_ext
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+J.NBR_PERSON_PHONE
+     move &J.NBR_PERSON_PHONE   to $phone 
+
+J.NBR_PERSON_PHONE_EXTENSION
+     move &J.NBR_PERSON_PHONE_EXTENSION  to $phone_ext
+
+FROM     PERSON_PHONE       J
+WHERE J.ID_PERSON = #id_worker 
+AND   J.IND_PERSON_PHONE_PRIMARY = 'Y'
+AND   J.DT_PERSON_PHONE_START   <= $plcmt_start    
+AND   J.DT_PERSON_PHONE_END > $plcmt_start    
+
+END-SELECT
+
+END-PROCEDURE GET-WORKER-PHONE    
+
+!****************************************************************************
+!                                                                           *
+!    GET-WORKER-NAME                                                        *
+!                                                                           *
+!       This procedure will get the worker name based on the placement dates*
+!                                                                           * 
+!       CALLED BY  : GET-PLACEMENT-INFO                                     *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WORKER-NAME   
+
+    move ''                                     to $worker_name
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+I.NM_NAME_FIRST  !***ENH***
+    move &I.NM_NAME_FIRST                       to $worker_first
+    
+I.NM_NAME_MIDDLE
+    move &I.NM_NAME_MIDDLE                      to $worker_middle     
+    
+I.NM_NAME_LAST
+    move &I.NM_NAME_LAST                        to $worker_last
+
+CSUFFIX2C.decode
+    move &CSUFFIX2C.decode                      to $worker_suffix
+ 
+
+FROM      NAME               I,
+          CSUFFIX2           CSUFFIX2C    !***ENH***
+
+WHERE I.ID_PERSON = #id_worker 
+AND   I.DT_NAME_START_DATE <= $plcmt_start 
+AND   I.DT_NAME_END_DATE   > $plcmt_start
+AND   I.IND_NAME_PRIMARY = 'Y'
+AND   I.IND_NAME_INVALID = 'N' 
+AND   I.CD_NAME_SUFFIX   = CSUFFIX2C.CODE(+)  !***ENH***
+
+END-SELECT
+
+END-PROCEDURE GET-WORKER-NAME     
+
+!****************************************************************************
+!                                                                           *
+!   GET-COUNT-INFO                                                          *
+!                                                                           *
+!       This procedure resets the counters for the entire report. It also   *
+!       retrieves the sysdate in order to use it and the first day of the   * 
+!       month in some later conditions.                                     * 
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-COUNT-INFO     
+
+    move 0  to #count_start 
+    move 0  to #count_end   
+    move 0              to #count_total
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SYSDATE
+   move &SYSDATE                                to $today 
+
+FROM DUAL 
+
+END-SELECT
+
+    let $first_day = substr($today,1,3)||'01'||substr($today,6,5)
+
+END-PROCEDURE GET-COUNT-INFO  
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ADDRESS-INFO                                                      *
+!                                                                           *
+!       This procedure prints the facility address information.             *
+!       to the next page                                                    *
+!                                                                           * 
+!       CALLED BY  : GET-ADDRESS-INFO                                       *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ADDRESS-INFO 
+
+print 'FACILITY ADDRESS:' (+2,1)
+print $addr_rsrc_1        (+0,20)
+
+if $addr_rsrc_2 <> ''
+  print $addr_rsrc_2      (+1,20)
+end-if
+
+if $addr_city <> ''
+  print $addr_city        (+1,20)
+  print ', '    ()
+  print $state_dec        ()
+end-if
+print $cnty_dec           (+1,20)
+print ' '    ()
+print $addr_zip           ()
+
+END-PROCEDURE PRINT-ADDRESS-INFO     
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PLACEMENT-INFO                                                    *
+!                                                                           *
+!       This procedure prints all of the placement info after every SQL call*
+!       has been made.                                                      *
+!                                                                           * 
+!       CALLED BY  : GET-PLACEMENT-INFO                                     *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PLACEMENT-INFO 
+
+next-listing need = 8  !***SIR 20102***
+
+print 'NAME:'            (+3,1)
+if $child_suffix <> '' !***ENH***
+   let $child_name_suff = ', ' || $child_suffix
+end-if
+if $child_middle = ''
+   let $child_name = $child_first || ' ' || $child_last || $child_name_suff
+else
+   let $child_name = $child_first || ' ' || $child_middle || ' ' || $child_last || $child_name_suff
+end-if
+print $child_name          (+0,14)
+move '' to $child_name_suff      !***ENH***
+
+print 'PLCMT START:'       (+1,1)
+print $plcmt_start         (+0,14)
+print 'PLCMT END:'         (+0,48)
+
+if $plcmt_end <> '12/31/4712'           !SIR 3487 - Prints blank when MAXDATE
+  print  $plcmt_end          (+0,60)
+end-if
+
+print 'DOB:'               (+1,1)
+print $DOB                 (+0,14)
+print 'AUTHORIZED SL:'     (+1,1)
+print $aloc_dec            (+0,19) 
+print 'COUNTY OF CVS:'     (+1,1)
+print $legal_cnty_dec      (+0,16) 
+print 'RGN:'               (+0,54)
+print $region_dec          (+0,60)
+print 'CHILD''S WORKER NAME:'  (+1,1)  
+if $worker_suffix <> '' !***ENH***
+   let $worker_name_suff = ', ' || $worker_suffix
+end-if
+if $worker_middle = ''
+   let $worker_name = $worker_first || ' ' || $worker_last || $worker_name_suff
+else
+   let $worker_name = $worker_first || ' ' || $worker_middle || ' ' || $worker_last || $worker_name_suff
+end-if
+print $worker_name             (+0,23)  
+move '' to $worker_name_suff   !***ENH***
+
+print 'CHILD''S WORKER PHONE:' (+1,1)
+
+
+if substr($phone,8,1) = ''
+ let $worker_phone_print = substr($phone,1,3)||'-'||substr($phone,4,4)
+else
+ let $worker_phone_print = '('||substr($phone,1,3)||') '||substr($phone,4,3)||'-'||substr($phone,7,4)
+end-if
+
+if $phone <> ''
+  print $worker_phone_print     (+0,23)
+end-if
+
+print 'EXTENSION:'              (+0,48)
+print $phone_ext                (+0,60)
+
+END-PROCEDURE PRINT-PLACEMENT-INFO
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-COUNT-INFO                                                        *
+!                                                                           *
+!       This procedure prints all of the totals at the end of the report.   *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-COUNT-INFO     
+
+next-listing need =4
+
+print 'NUMBER OF PLACEMENTS THIS MONTH TO DATE:'      (+4,1)
+print #count_start                                   (+0,47) edit 999999
+print 'NUMBER OF DISCHARGES THIS MONTH TO DATE:'     (+1,1)
+print #count_end                                     (+0,47) edit 999999
+print 'TOTAL NUMBER OF PLACEMENTS:'                  (+1,1)
+print #count_total                                   (+0,47) edit 999999
+
+END-PROCEDURE PRINT-COUNT-INFO    
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+! will be used in the report         					    *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc'

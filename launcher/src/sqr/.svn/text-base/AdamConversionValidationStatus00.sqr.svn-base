@@ -1,0 +1,495 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Jul 01 10:35:06 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\_ADAM Conversion\STATUS UNIT\AdamConversionValidationStatus00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+! ID range is left and right inclusive: [LOWER BOUND, UPPPER BOUND]
+
+! ADAM conversion NEW stage ID range
+#define ADAM_LOWER_BOUND '16600000'
+#define ADAM_UPPER_BOUND '16615959'
+! ADAM conversion MODIFIED stage ID range
+#define MODIFIED_LOWER_BOUND '6579'
+#define MODIFIED_UPPER_BOUND '11512516'
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+ Declare-Variable
+  Integer #STAGE_ID_LOWER
+  Integer #STAGE_ID_UPPER
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=180    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'This report displays counts of open stages validated and not validated, closed stages not validated, and validation percent complete per region, county, unit, and/or case manager. For open stages, case manger is the current case manager on the stage. For closed stages, case manger is the last case manager on the stage. Region and county are unit region and county of the primary case manager.' (31,11,111) Wrap 111 4 line-height=12 Keep-Top
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Page-Number (498,491) '' ' of '
+ Last-Page (498,515) 
+ Print 'If a case manager does not have open stages that require validation as of current, the percent complete will not be calculated and the field displays blank. This does not have any bearing on the unit, county, or region percent complete on the open stages group. ' (93,11,111) Wrap 111 3 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=60   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ dO Get_Region_County_Unit
+ Do Make_Header_n_Init_Var
+ Do LoadLookupTables
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Make_Header_n_Init_Var
+! -----------------------------
+
+
+ Let #STAGE_ID_LOWER = {ADAM_LOWER_BOUND}
+ Let #STAGE_ID_UPPER = {ADAM_UPPER_BOUND}
+
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_cd_county || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_cd_county = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_cd_unit_region
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_cd_unit_region
+ Else
+  If $unitSelected = 'N' and $employeeSelected = 'N'
+    Let $region_county_header = 'Statewide' 
+  End-If
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+!--------------------------------------
+Begin-Procedure Get_Region_County_Unit
+! -----------------------------
+! Get region optional input
+Input $_cd_unit_region 'Enter a value for CD_UNIT_REGION' MaxLen=2  Type=Char
+If IsNull($_cd_unit_region) or IsBlank($_cd_unit_region) or ($_cd_unit_region='0')
+  Let $where_clause_region = 'CD_UNIT_REGION IS NOT NULL'
+  Let $regionSelected = 'N'
+Else 
+  Let $where_clause_region = 'CD_UNIT_REGION = ' || '''' || '0' || $_cd_unit_region || ''''
+  Let $regionSelected = 'Y'
+End-If
+
+! Get county optional input
+Input $_cd_county 'Enter a value for CD_COUNTY' MaxLen=3  Type=Char
+If IsNull($_cd_county) or IsBlank($_cd_county) or ($_cd_county='0')
+  Let $where_clause_county = 'CD_COUNTY IS NOT NULL'
+  Let $countySelected = 'N'
+Else 
+  Let $where_clause_county = 'CD_COUNTY = ' || '''' || $_cd_county || ''''
+  Let $countySelected = 'Y'
+End-If
+
+! Get unit optional input
+Input $_nbr_unit 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If IsNull($_nbr_unit) or IsBlank($_nbr_unit) or ($_nbr_unit='0')
+  Let $where_clause_unit = 'NBR_UNIT IS NOT NULL'
+  Let $unitSelected = 'N'
+Else 
+  Let $where_clause_unit = 'NBR_UNIT = ' || '''' || $_nbr_unit || ''''
+  Let $unitSelected = 'Y'
+End-If
+
+! Get employee id optional input
+Input $_id_employee 'Enter a value for CASE_WORKER.ID_PERSON' MaxLen=16  Type=Char
+If IsNull($_id_employee) or IsBlank($_id_employee) or ($_id_employee='0')
+  Let $where_clause_employee = 'CASE_WORKER.ID_PERSON IS NOT NULL'
+  Let $employeeSelected = 'N'
+Else 
+  Let $where_clause_employee = 'CASE_WORKER.ID_PERSON = ' || $_id_employee 
+  Let $employeeSelected = 'Y'
+End-If
+
+! Create where clause for region, county, unit and employee input
+Let $where_clause_region_county = $where_clause_region || ' and ' || $where_clause_county || ' and ' || $where_clause_unit || ' and ' || $where_clause_employee
+
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+ Move 0 To #phase_closed_cnt
+ Move 0 To #phase_validated_tot
+ Move 0 To #phase_not_validated_tot
+Begin-Select Distinct
+(SELECT  (count( DISTINCT STAGE.ID_STAGE ))  FROM  STAGE,  STAGE_PERSON_LINK STAGE_PERSON_LINK00 WHERE STAGE.ID_STAGE = STAGE_PERSON_LINK00.ID_STAGE
+ AND  DT_STAGE_CLOSE IS NOT NULL  AND  STAGE_PERSON_LINK00.CD_STAGE_PERS_ROLE = 'HP' AND  ((STAGE.ID_STAGE >= #STAGE_ID_LOWER AND  STAGE.ID_STAGE <= #STAGE_ID_UPPER) OR  EXISTS (SELECT 1 FROM adoptions_modified_stage WHERE STAGE.ID_STAGE = id_modified_stage)) AND  (IND_ECS_VER IS NULL  OR  IND_ECS_VER = 'N') AND  STAGE_PERSON_LINK00.ID_PERSON = CASE_WORKER.ID_PERSON) &Master_Query_CLOSED_CONV
+(SELECT  (count( DISTINCT STAGE.ID_STAGE ))  FROM  STAGE,  STAGE_PERSON_LINK STAGE_PERSON_LINK01 WHERE STAGE.ID_STAGE = STAGE_PERSON_LINK01.ID_STAGE
+ AND  DT_STAGE_CLOSE IS NULL  AND  STAGE_PERSON_LINK01.CD_STAGE_PERS_ROLE = 'PR' AND  IND_ECS_VER = 'Y' AND  ((STAGE.ID_STAGE >= #STAGE_ID_LOWER AND  STAGE.ID_STAGE <= #STAGE_ID_UPPER) OR  EXISTS (SELECT 1 FROM adoptions_modified_stage WHERE STAGE.ID_STAGE = id_modified_stage)) AND  STAGE_PERSON_LINK01.ID_PERSON = CASE_WORKER.ID_PERSON) &Master_Query_VALIDATED
+(SELECT  (count( DISTINCT STAGE.ID_STAGE ))  FROM  STAGE,  STAGE_PERSON_LINK STAGE_PERSON_LINK02 WHERE STAGE.ID_STAGE = STAGE_PERSON_LINK02.ID_STAGE
+ AND  DT_STAGE_CLOSE IS NULL  AND  (IND_ECS_VER IS NULL  OR  IND_ECS_VER = 'N') AND  STAGE_PERSON_LINK02.CD_STAGE_PERS_ROLE = 'PR' AND  ((STAGE.ID_STAGE >= #STAGE_ID_LOWER AND  STAGE.ID_STAGE <= #STAGE_ID_UPPER) OR  EXISTS (SELECT 1 FROM adoptions_modified_stage WHERE STAGE.ID_STAGE = id_modified_stage)) AND  STAGE_PERSON_LINK02.ID_PERSON = CASE_WORKER.ID_PERSON) &Master_Query_NOT_VALIDATED
+CASE_WORKER.NM_EMPLOYEE_FIRST &cw_nm_first
+CASE_WORKER.NM_EMPLOYEE_LAST &cw_nm_last
+UNIT00.ID_PERSON &approver_id
+CODES_TABLES.DECODE &unit_spec
+(decode( CCOUNT.DECODE , '-None-', '-Multi-County-',  CCOUNT.DECODE )) &cnty_decode_masked
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+UNIT00.CD_UNIT_REGION &region_cd () On-Break Set=1 Level=1 Save=$prev_reg Print=Never Before=Master_QueryCD_UNIT_REGION_BeforeProc101 After=Master_QueryCD_UNIT_REGION_AfterProc101
+CCOUNT.DECODE &cnty_decode () On-Break Set=1 Level=2 Save=$prev_cnty Print=Never Before=Master_QueryDECODE_BeforeProc102 After=Master_QueryDECODE_AfterProc102
+UNIT00.NBR_UNIT &unit_nbr () On-Break Set=1 Level=3 Print=Never Before=Master_QueryNBR_UNIT_BeforeProc103 After=Master_QueryNBR_UNIT_AfterProc103
+ Print &Master_Query_CLOSED_CONV (10,445) Edit 99999999na
+ Print &Master_Query_VALIDATED (10,230) Edit 99999999na
+ Let $cw_nm_full=&cw_nm_last || ', ' ||  &cw_nm_first
+ Print $cw_nm_full (10,52,30)
+ Print &Master_Query_NOT_VALIDATED (10,285) Edit 99999999na
+ Print '%' (10,392,0)
+ If ( &Master_Query_VALIDATED +  &Master_Query_NOT_VALIDATED )=0
+    ! do nothing
+ Else
+ Let #completion=&Master_Query_VALIDATED / ( &Master_Query_VALIDATED +  &Master_Query_NOT_VALIDATED ) * 100
+ Print #completion (10,358) Edit 999.99
+ End-If
+ If #page-count > #pageNum
+  Let #pageNum = #page-count
+  Let $region_cdFirst = &region_cd
+ End-If
+ Add &Master_Query_CLOSED_CONV To #phase_closed_cnt
+ Add &Master_Query_VALIDATED To #phase_validated_tot
+ Add &Master_Query_NOT_VALIDATED To #phase_not_validated_tot
+ Add 1 To #1ROW_COUNT
+ Add &Master_Query_VALIDATED To #reg_validated_tot
+ Add &Master_Query_NOT_VALIDATED To #reg_not_validated_tot
+ Add &Master_Query_CLOSED_CONV To #reg_closed_cnt
+ Add &Master_Query_VALIDATED To #cnty_validated_tot
+ Add &Master_Query_NOT_VALIDATED To #cnty_not_validated_tot
+ Add &Master_Query_CLOSED_CONV To #cnty_closed_cnt
+ Add &Master_Query_VALIDATED To #unit_validated_tot
+ Add &Master_Query_CLOSED_CONV To #unit_closed_cnt
+ Add &Master_Query_NOT_VALIDATED To #unit_not_validated_tot
+ Next-Listing  SkipLines=2 Need=12
+From  UNIT UNIT00, CCOUNT
+,      EMPLOYEE CASE_WORKER, CODES_TABLES
+      Where CASE_WORKER.ID_EMP_UNIT = UNIT00.ID_UNIT
+            And UNIT00.CD_COUNTY = CCOUNT.CODE
+            And UNIT00.CD_UNIT_SPECIALIZATION = CODES_TABLES.CODE
+ And [$where_clause_region_county]
+ And CODE_TYPE = 'CSPCUNTS'
+ And ((SELECT  (count( DISTINCT STAGE.ID_STAGE ))  FROM  STAGE,  STAGE_PERSON_LINK STAGE_PERSON_LINK00 WHERE STAGE.ID_STAGE = STAGE_PERSON_LINK00.ID_STAGE
+
+     AND  DT_STAGE_CLOSE IS NOT NULL  AND  STAGE_PERSON_LINK00.CD_STAGE_PERS_ROLE = 'HP' AND  ((STAGE.ID_STAGE >= #STAGE_ID_LOWER AND  STAGE.ID_STAGE
+     <= #STAGE_ID_UPPER) OR  EXISTS (SELECT 1 FROM adoptions_modified_stage WHERE STAGE.ID_STAGE = id_modified_stage)) AND  (IND_ECS_VER IS
+     NULL  OR  IND_ECS_VER = 'N') AND  STAGE_PERSON_LINK00.ID_PERSON = CASE_WORKER.ID_PERSON) > 0 Or (SELECT  (count( DISTINCT STAGE.ID_STAGE ))  FROM  STAGE,  STAGE_PERSON_LINK STAGE_PERSON_LINK02 WHERE STAGE.ID_STAGE = STAGE_PERSON_LINK02.ID_STAGE
+
+     AND  DT_STAGE_CLOSE IS NULL  AND  (IND_ECS_VER IS NULL  OR  IND_ECS_VER = 'N') AND  STAGE_PERSON_LINK02.CD_STAGE_PERS_ROLE = 'PR' AND
+      ((STAGE.ID_STAGE >= #STAGE_ID_LOWER AND  STAGE.ID_STAGE <= #STAGE_ID_UPPER) OR  EXISTS (SELECT 1 FROM adoptions_modified_stage WHERE
+     STAGE.ID_STAGE = id_modified_stage)) AND  STAGE_PERSON_LINK02.ID_PERSON = CASE_WORKER.ID_PERSON) > 0 Or (SELECT  (count( DISTINCT STAGE.ID_STAGE ))  FROM  STAGE,  STAGE_PERSON_LINK STAGE_PERSON_LINK01 WHERE STAGE.ID_STAGE = STAGE_PERSON_LINK01.ID_STAGE
+
+     AND  DT_STAGE_CLOSE IS NULL  AND  STAGE_PERSON_LINK01.CD_STAGE_PERS_ROLE = 'PR' AND  IND_ECS_VER = 'Y' AND  ((STAGE.ID_STAGE >= #STAGE_ID_LOWER
+     AND  STAGE.ID_STAGE <= #STAGE_ID_UPPER) OR  EXISTS (SELECT 1 FROM adoptions_modified_stage WHERE STAGE.ID_STAGE = id_modified_stage))
+     AND  STAGE_PERSON_LINK01.ID_PERSON = CASE_WORKER.ID_PERSON) > 0)
+Order By UNIT00.CD_UNIT_REGION
+,      CCOUNT.DECODE
+,      UNIT00.NBR_UNIT
+,      CASE_WORKER.NM_EMPLOYEE_LAST
+End-Select
+ Next-Listing
+ Next-Listing  Need=19
+ If #1ROW_COUNT > 0
+ Graphic (2,1,537) Horz-Line 20 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #phase_closed_cnt (19,445) Bold  Edit 99999999na
+  Print #phase_validated_tot (19,229) Bold  Edit 99999999na
+  Print #phase_not_validated_tot (19,285) Bold  Edit 99999999na
+   If (#phase_validated_tot + #phase_not_validated_tot) =0
+    ! do nothing
+ Else
+ Let #phase_completion=#phase_validated_tot / (#phase_validated_tot + #phase_not_validated_tot) * 100
+ Print #phase_completion (19,358) Edit 999.99 Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print '%'  (19,392)
+  Print 'Report Total'  (19,1) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+! Move &Master_Query_VALIDATED to #validated_cnt
+! Move &Master_Query_NOT_VALIDATED to #not_validated_cnt
+! If #validated_cnt + #not_validated_cnt > 0
+!   Let #completion = #validated_cnt / (#validated_cnt + #not_validated_cnt)* 100
+! End-If
+!
+! Move &Master_Query_VALIDATED to #validated_cnt
+! Move &Master_Query_NOT_VALIDATED to #not_validated_cnt
+! If #validated_cnt + #not_validated_cnt > 0
+!   Let #completion = #validated_cnt / (#validated_cnt + #not_validated_cnt) * 100
+! End-If
+!
+! Move &cnty_decode to $prev_cnty_decode
+! Let #completion = 100
+! Move &Master_Query_VALIDATED to #validated_cnt
+! Move &Master_Query_NOT_VALIDATED to #not_validated_cnt
+! If #validated_cnt + #not_validated_cnt > 0
+!   Let #completion = (#validated_cnt / (#validated_cnt + #not_validated_cnt) * 100)
+! End-If
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_BeforeProc102
+ Next-Listing  Need=24
+ Graphic (25,1,537) Horz-Line 15 
+ Position (26,1)
+  Let $cnty_label=&cnty_decode_masked
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $cnty_label (14,1,22) Bold 
+   Position (+12,)
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc102
+If $employeeSelected = 'N'and $unitSelected='N'
+
+ Next-Listing  Need=29
+ Graphic (30,2,537) Horz-Line 15 
+ Position (31,1)
+  Let $cnty_tot_label=replace( $prev_cnty, '-None-', '-Multi-County-') || ' County Total'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $cnty_tot_label (19,37,29) Bold 
+ Print #cnty_validated_tot (19,230) Bold  Edit 99999999na
+ Print #cnty_not_validated_tot (19,285) Bold  Edit 99999999na
+  If (#cnty_validated_tot + #cnty_not_validated_tot) =0
+    ! do nothing
+ Else
+ Let #cnty_completion=#cnty_validated_tot / (#cnty_validated_tot + #cnty_not_validated_tot) * 100
+ Print #cnty_completion (19,358) Edit 999.99na Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print '%'  (19,392)
+ Print #cnty_closed_cnt (19,445) Bold  Edit 99999999na
+   Position (+12,)
+ Move 0 To #cnty_validated_tot
+ Move 0 To #cnty_not_validated_tot
+ Move 0 To #cnty_closed_cnt
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryNBR_UNIT_BeforeProc103
+ Next-Listing  Need=22
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit'  (18,37) Bold 
+  Lookup EMPLOYEE_NAME &approver_id $approver_nm_full
+ Print $approver_nm_full (18,167,50) Bold 
+ Print ' - '  (18,82) Bold 
+ Print 'Supervisor:'  (18,101) Bold 
+  Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+ Print '         '  (22,405)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &unit_nbr (18,65,2) Bold 
+   Position (+12,)
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryNBR_UNIT_AfterProc103
+If $employeeSelected = 'N'
+
+ Next-Listing  Need=21
+ Graphic (22,38,501) Horz-Line 10 
+ Position (23,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #unit_validated_tot (12,230) Bold  Edit 99999999na
+ Print #unit_closed_cnt (12,445) Bold  Edit 99999999na
+ Print 'Unit Total'  (12,52) Bold 
+ Print #unit_not_validated_tot (12,285) Bold  Edit 99999999na
+  If (#unit_validated_tot + #unit_not_validated_tot) =0
+    ! do nothing
+ Else
+ Let #unit_completion=#unit_validated_tot / (#unit_validated_tot + #unit_not_validated_tot) * 100
+ Print #unit_completion (12,358) Edit 999.99 Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print '%'  (13,392)
+   Position (+12,)
+ Move 0 To #unit_validated_tot
+ Move 0 To #unit_closed_cnt
+ Move 0 To #unit_not_validated_tot
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_QueryCD_UNIT_REGION_BeforeProc101
+ Next-Listing  Need=23
+ Graphic (25,1,537) Horz-Line 20 
+ Position (27,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region'  (15,1) Bold 
+   Print &region_cd (15,41,3) Bold 
+   Position (+12,)
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_UNIT_REGION_AfterProc101
+If $employeeSelected = 'N' and $unitSelected = 'N' and $countySelected = 'N'
+
+ Next-Listing  Need=27
+ Graphic (29,1,537) Horz-Line 20 
+ Position (31,1)
+  Let $reg_tot_label='Region ' || $prev_reg || ' Total '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $reg_tot_label (14,21,20) Bold 
+ Print #reg_validated_tot (14,230) Bold  Edit 99999999na
+ Print #reg_not_validated_tot (14,285) Bold  Edit 99999999na
+  If  (#reg_validated_tot + #reg_not_validated_tot) =0
+    ! do nothing
+ Else
+ Let #reg_completion=#reg_validated_tot / (#reg_validated_tot + #reg_not_validated_tot) * 100
+ Print #reg_completion (14,358) Edit 999.99 Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print '%'  (14,392)
+ Print #reg_closed_cnt (14,445) Bold  Edit 99999999na
+   Position (+12,)
+ Move 0 To #reg_validated_tot
+ Move 0 To #reg_not_validated_tot
+ Move 0 To #reg_closed_cnt
+ Next-Listing  SkipLines=2 Need=12
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=EMPLOYEE_NAME
+      Table=EMPLOYEE
+      Key=ID_PERSON
+      Return_Value='NM_EMPLOYEE_LAST || '', '' || NM_EMPLOYEE_FIRST'
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+End-Procedure
+
+Begin-Heading 60 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Adoptions Conversion Validation Status' (44,132,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (14,184,0)
+ Print $current-date (14,472) edit 'MM/DD/YYYY'
+ Print 'Produced On: ' (14,408,0)
+ Let $region_county_header=$region_county_header
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $region_county_header (67,223,13) Bold 
+ Let $region_header=$region_header
+ Print $region_header (85,238,9) Bold 
+ If $unitSelected='N'
+    ! do nothing
+ Else
+ Let $unitHeader='Unit: ' || $_nbr_unit
+ Print $unitHeader (95,1,15) Bold 
+ End-If
+ If $employeeSelected='N'
+    ! do nothing
+ Else
+ Let $cmHeader='Case Manger ID: ' || $_id_employee
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $cmHeader (116,1,33) Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'OPEN STAGES' (137,286,25) Underline  Bold 
+ Print 'Validated' (158,228,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Not$Validated' (158,293,9) Underline  Bold  Wrap 9 2 line-height=12 Keep-Top on=$
+ Print 'CLOSED STAGES' (136,430,25) Underline  Bold 
+ Print '%$Complete' (158,354,9) Underline  Bold  Wrap 9 2 line-height=12 Keep-Top on=$
+ Print 'Not Validated' (158,438,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'OPEN STAGES' (14,286,25) Underline  Bold 
+ Print 'Validated' (35,228,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on=$
+ Print 'Not$Validated' (35,293,9) Underline  Bold  Wrap 9 2 line-height=12 Keep-Top on=$
+ Print 'CLOSED STAGES' (13,430,25) Underline  Bold 
+ Print '%$Complete' (35,354,9) Underline  Bold  Wrap 9 2 line-height=12 Keep-Top on=$
+ Print 'Not Validated' (35,438,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (14,492) '' ' of '
+ Last-Page (14,516) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

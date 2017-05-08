@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.DiligentSearch" table="DILIGENT_SEARCH" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idDiligentSearch" type="integer" unsaved-value="0">
+      <column name="ID_DILIGENT_SEARCH" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_DILIGENT_SEARCH</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdPersonSearch" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_PERSON_SEARCH" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdPersonDetail" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_PERSON_DETAIL" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="indIncDlgnt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_INC_DLGNT" length="1"/>
+    </property>
+    <property name="indCrtkrPrior" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CRTKR_PRIOR" length="1"/>
+    </property>
+    <property name="txtDescRem" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_DESC_REM" length="300"/>
+    </property>
+    <property name="cdRefType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_REF_TYPE" length="3"/>
+    </property>
+    <property name="txtOtherDesc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_OTHER_DESC" length="50"/>
+    </property>
+    <property name="txtRefName" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_REF_NAME" length="50"/>
+    </property>
+    <property name="indSuccCont" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_SUCC_CONT" length="1"/>
+    </property>
+    <property name="txtWhyCont" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_WHY_CONT" length="300"/>
+    </property>
+    <property name="cdCurrOutcome" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CURR_OUTCOME" length="3"/>
+    </property>
+    <property name="indVisitRsrc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_VISIT_RSRC" length="1"/>
+    </property>
+    <property name="indPlcmtRsrc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_PLCMT_RSRC" length="1"/>
+    </property>
+    <property name="txtRsrc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_RSRC" length="300"/>
+    </property>
+    <property name="dtSubsyDiscsd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SUBSY_DISCSD" length="7"/>
+    </property>
+    <property name="txtComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_COMMENTS" length="300"/>
+    </property>
+  </class>
+</hibernate-mapping>

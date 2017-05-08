@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CostReimDtl" table="COST_REIM_DTL" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idCostReim" type="integer" unsaved-value="0">
+      <column name="ID_COST_REIM" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_COST_REIM_DTL</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="invoice" class="gov.georgia.dhr.dfcs.sacwis.db.Invoice" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_INVOICE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="costReimDtl" class="gov.georgia.dhr.dfcs.sacwis.db.CostReimDtl" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_COST_REIM_REVRSAL_ORIG" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="amtCostReimAdminAll" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_COST_REIM_ADMIN_ALL" precision="10"/>
+    </property>
+    <property name="amtCostReimEquip" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_COST_REIM_EQUIP" precision="10"/>
+    </property>
+    <property name="amtCostReimFrgBenft" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_COST_REIM_FRG_BENFT" precision="10"/>
+    </property>
+    <property name="amtCostReimOffItem" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_COST_REIM_OFF_ITEM" precision="10"/>
+    </property>
+    <property name="amtCostReimOther" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_COST_REIM_OTHER" precision="10"/>
+    </property>
+    <property name="amtCostReimSalary" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_COST_REIM_SALARY" precision="10"/>
+    </property>
+    <property name="amtCostReimSupply" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_COST_REIM_SUPPLY" precision="10"/>
+    </property>
+    <property name="amtCostReimTravel" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_COST_REIM_TRAVEL" precision="10"/>
+    </property>
+    <property name="cdCostReimInvoDisptn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_COST_REIM_INVO_DISPTN" length="2"/>
+    </property>
+    <property name="cdCostReimService" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_COST_REIM_SERVICE" length="6"/>
+    </property>
+    <property name="cdCostReimLiType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_COST_REIM_LI_TYPE" length="2"/>
+    </property>
+    <property name="indCostReimRejItm" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_COST_REIM_REJ_ITM" length="1"/>
+    </property>
+    <property name="cdCostReimPac" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_COST_REIM_PAC" length="3"/>
+    </property>
+    <property name="cdCostReimObjCode" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_COST_REIM_OBJ_CODE" length="6"/>
+    </property>
+    <property name="nbrCostReimCsli" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_COST_REIM_CSLI" precision="2" scale="0"/>
+    </property>
+    <property name="nbrCostReimUnitQty" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_COST_REIM_UNIT_QTY" precision="7"/>
+    </property>
+    <property name="nbrCntrctPrd" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CNTRCT_PRD" precision="2" scale="0"/>
+    </property>
+    <bag name="costReimDtls" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_COST_REIM_REVRSAL_ORIG" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CostReimDtl" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

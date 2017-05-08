@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+       default-dependency-check="all"
+       default-lazy-init="false">
+  <bean id="addressValidator" class="gov.georgia.dhr.dfcs.sacwis.service.external.impl.AddressValidatorImpl"/>
+
+  <bean id="phoneticSearchService" class="gov.georgia.dhr.dfcs.sacwis.service.external.impl.PhoneticSearchServiceImpl">
+    <property name="idsConnection">
+      <!-- Use a pool so we don't have to create and destroy a connection for each invocation. -->
+      <bean class="org.springframework.aop.framework.ProxyFactoryBean" dependency-check="none">
+        <property name="targetSource">
+          <!-- Custom pooling target source because we need to validate connections. -->
+          <bean class="gov.georgia.dhr.dfcs.sacwis.service.external.impl.IdsConnectionCommonsPoolTargetSource"
+                dependency-check="none">
+            <property name="targetBeanName" value="idsConnection"/>
+            <!-- The maximum size must be 250 becuase of a hard limit in the IDS connection pool software. -->
+            <property name="maxSize" value="250"/>
+            <property name="maxWait" value="2000"/>
+            <property name="maxIdle" value="10"/>
+            <property name="timeBetweenEvictionRunsMillis" value="60000"/>
+            <property name="minEvictableIdleTimeMillis" value="3600000"/>
+          </bean>
+        </property>
+      </bean>
+    </property>
+  </bean>
+
+  <!-- This bean should only be used by the phonetic search service; it requires the pool that is used there. -->
+  <bean id="idsConnection" class="gov.georgia.dhr.dfcs.sacwis.service.external.impl.IdsConnectionImpl"
+        init-method="init" destroy-method="destroy" scope="prototype">
+    <property name="ssaPrimaryHostname" value="${ids-primary-host}"/>
+    <property name="ssaSecondaryHostname" value="${ids-secondary-host}"/>
+    <property name="ssaPrimaryHostport" value="${ids-primary-port}"/>
+    <property name="ssaSecondaryHostport" value="${ids-secondary-port}"/>
+    <property name="ssaRulebaseBase" value="${ids-rulebase-base}"/>
+    <property name="ssaUsername" value="${ids-username}"/>
+    <property name="ssaPassword" value="${ids-password}"/>
+    <property name="ssaSystem" value="${ids-system}"/>
+    <property name="idsMaxResults" value="${ids-maximum-results}"/>
+  </bean>
+</beans>

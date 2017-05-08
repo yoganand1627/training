@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.AdoSiblingHistory" table="ADO_SIBLING_HISTORY" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idAdoSiblingHistory" type="integer" unsaved-value="0">
+            <column name="ID_ADO_SIBLING_HISTORY" precision="16" scale="0"/>
+            <generator class="sequence">
+              <param name="sequence">SEQ_ADO_SIBLING_HISTORY</param>
+            </generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="adoInfo" class="gov.georgia.dhr.dfcs.sacwis.db.AdoInfo" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_ADO_INFO_EVENT" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <many-to-one name="exchangeChild" class="gov.georgia.dhr.dfcs.sacwis.db.ExchangeChild" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_EVENT_CHILD_REGISTRATION" precision="16" scale="0"/>
+        </many-to-one>
+        <property name="idPerson" type="integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+        </property>
+        <property name="cdNonAvailStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_NON_AVAIL_STATUS" length="2"/>
+        </property>
+        <property name="dtAdoInfoComplete" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_ADO_INFO_COMPLETE" length="7" not-null="true"/>
+        </property>
+        <property name="idSiblingGroup" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ID_SIBLING_GROUP" precision="16" scale="0"/>
+        </property>
+    </class>
+</hibernate-mapping>

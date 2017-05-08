@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.IncomingDetail" table="INCOMING_DETAIL" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idStage" type="integer" unsaved-value="undefined">
+      <column name="ID_STAGE" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">stage</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" constrained="true"/>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="employee" class="gov.georgia.dhr.dfcs.sacwis.db.Employee" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_INCOMING_WORKER" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="employeeByIdIncomingSup" class="gov.georgia.dhr.dfcs.sacwis.db.Employee" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_INCOMING_SUP" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsResourceByIdReferredResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource"
+                 fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_REFERRED_RESOURCE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="nbrIncmgUnit" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_INCMG_UNIT" length="2"/>
+    </property>
+    <property name="cdIncmgRegion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INCMG_REGION" length="2"/>
+    </property>
+    <property name="nmIncomingCallerLast" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_INCOMING_CALLER_LAST" length="22"/>
+    </property>
+    <property name="cdIncmgCallerInt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_CALLER_INT" length="2"/>
+    </property>
+    <property name="addrIncmgWorkerCity" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_INCMG_WORKER_CITY" length="20"/>
+    </property>
+    <property name="nbrIncmgWorkerPhone" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INCMG_WORKER_PHONE" length="10"/>
+    </property>
+    <property name="nbrIncmgWorkerExt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INCMG_WORKER_EXT" length="8"/>
+    </property>
+    <property name="nmIncmgWorkerName" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_INCMG_WORKER_NAME" length="25"/>
+    </property>
+    <property name="cdIncmgAllegType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_ALLEG_TYPE" length="4"/>
+    </property>
+    <property name="cdIncmgCallerAddrType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_CALLER_ADDR_TYPE" length="2"/>
+    </property>
+    <property name="cdIncmgCallerPhonType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_CALLER_PHON_TYPE" length="2"/>
+    </property>
+    <property name="nbrIncmgCallerPhonExt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INCMG_CALLER_PHON_EXT" length="8"/>
+    </property>
+    <property name="cdIncomingCallerSuffix" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCOMING_CALLER_SUFFIX" length="2"/>
+    </property>
+    <property name="cdIncmgSpecHandling" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_SPEC_HANDLING" length="2"/>
+    </property>
+    <property name="indIncmgMaltreatInCare" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCMG_MALTREAT_IN_CARE" length="1"/>
+    </property>
+    <property name="indPolicyViolation" type="string" unique="false" optimistic-lock="true" lazy="false"
+		generated="never">
+     <column name="IND_POLICY_VIOLATION" length="1"/>
+	</property>
+    <property name="indIncmgSensitive" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCMG_SENSITIVE" length="1"/>
+    </property>
+    <property name="indIncmgWorkerSafety" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCMG_WORKER_SAFETY" length="1"/>
+    </property>
+    <property name="txtIncmgWorkerSafety" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_INCMG_WORKER_SAFETY" length="4000"/>
+    </property>
+    <property name="txtIncmgSensitive" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_INCMG_SENSITIVE" length="4000"/>
+    </property>
+    <property name="cdIncomingCallType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCOMING_CALL_TYPE" length="2"/>
+    </property>
+    <property name="cdIncmgSex" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INCMG_SEX" length="1"/>
+    </property>
+    <property name="addrIncmgStreetLn1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_INCMG_STREET_LN_1" length="30"/>
+    </property>
+    <property name="addrIncmgStreetLn2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_INCMG_STREET_LN_2" length="30"/>
+    </property>
+    <property name="indIncmgNoFactor" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCMG_NO_FACTOR" length="1"/>
+    </property>
+    <property name="addrIncmgZip" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_INCMG_ZIP" length="10"/>
+    </property>
+    <property name="nmIncmgRegardingLast" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_INCMG_REGARDING_LAST" length="22"/>
+    </property>
+    <property name="nmIncmgJurisdiction" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_INCMG_JURISDICTION" length="40"/>
+    </property>
+    <property name="addrIncomingCallerCity" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_INCOMING_CALLER_CITY" length="20"/>
+    </property>
+    <property name="dtIncomingCallDisposed" type="timestamp" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_INCOMING_CALL_DISPOSED" length="7"/>
+    </property>
+    <property name="cdIncomingDisposition" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCOMING_DISPOSITION" length="3"/>
+    </property>
+    <property name="cdIncmgStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INCMG_STATUS" length="3"/>
+    </property>
+    <property name="nmIncomingCallerFirst" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_INCOMING_CALLER_FIRST" length="12"/>
+    </property>
+    <property name="cdIncomingCallerState" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCOMING_CALLER_STATE" length="2"/>
+    </property>
+    <property name="dtIncomingCall" type="timestamp" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_INCOMING_CALL" length="7"/>
+    </property>
+    <property name="nmIncmgRegardingFirst" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_INCMG_REGARDING_FIRST" length="12"/>
+    </property>
+    <property name="cdIncomingCallerCounty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCOMING_CALLER_COUNTY" length="3"/>
+    </property>
+    <property name="cdIncomingProgramType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCOMING_PROGRAM_TYPE" length="3"/>
+    </property>
+    <property name="nbrIncomingCallerPhone" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INCOMING_CALLER_PHONE" length="10"/>
+    </property>
+    <property name="nmIncomingCallerMiddle" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_INCOMING_CALLER_MIDDLE" length="12"/>
+    </property>
+    <property name="indIncmgIntInvClsReclass" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCMG_INT_INV_CLS_RECLASS" length="1"/>
+    </property>
+    <property name="indIncmgSuspMeth" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCMG_SUSP_METH" length="1"/>
+    </property>
+    <property name="txtIncmgSuspMeth" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_INCMG_SUSP_METH" length="300"/>
+    </property>
+    <property name="cdNonRsdntReqType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_NON_RSDNT_REQ_TYPE" length="2"/>
+    </property>
+    <property name="cdSpclInvstgtn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SPCL_INVSTGTN" length="4"/>
+    </property>
+    <property name="indCnfidntltyExplnd" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CNFIDNTLTY_EXPLND" length="1"/>
+    </property>
+    <property name="dtCnfidntltyExplntn" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CNFIDNTLTY_EXPLNTN" length="7"/>
+    </property>
+    <property name="indIncmgLawEnfInvol" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCMG_LAW_ENF_INVOL" length="1"/>
+    </property>
+    <property name="cdIncmgWorkerRegion" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_WORKER_REGION" length="3"/>
+    </property>
+    <property name="nmIncmgSupName" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_INCMG_SUP_NAME" length="25"/>
+    </property>
+    <property name="nbrIncmgSupPhone" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INCMG_SUP_PHONE" length="10"/>
+    </property>
+    <property name="nbrIncmgSupExt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_INCMG_SUP_EXT" length="8"/>
+    </property>
+    <property name="cdIncomingWorkerCounty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCOMING_WORKER_COUNTY" length="3"/>
+    </property>
+    <property name="cdSpclCircumstances" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_SPCL_CIRCUMSTANCES" length="3"/>
+    </property>
+    <property name="indMrLetter" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MR_LETTER" length="1"/>
+    </property>
+    <bag name="eventsForIdStage" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EVENT_STAGE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Event" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

@@ -1,0 +1,220 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Tue Apr 08 15:12:24 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong.van.t.vo\My Documents\Reports Layout\HealthLog00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+Begin-Select Loops=1
+NM_CASE &Get_Case_Name_Get_Case_Name_NM_CASE
+From  CAPS_CASE
+Where CAPS_CASE.ID_CASE = [$_I101_ID_CASE]
+End-Select
+ Alter-Report Heading-Size=120    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=12   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do LoadLookupTables
+ Do Get-Input
+ Do get_Person_ID
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I101_ID_CASE 'Enter a value for ID_CASE' MaxLen=16  Type=Number
+If IsNull($_I101_ID_CASE) or IsBlank($_I101_ID_CASE)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Let $brb_tmp = 'ID_CASE'
+Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_ID_CASE
+End-Procedure
+
+Begin-Procedure Get_Person_ID
+Input $_prn_id 'Enter a value for ID_PERSON' MaxLen=16 Type=Number
+If ($_prn_id = '0')
+  Let $where_clause_prn = 'PROFESSIONAL_ASSMT.ID_PERSON_PRINCIPAL IS NOT NULL'
+Else
+  LEt $where_clause_prn = 'PROFESSIONAL_ASSMT.ID_PERSON_PRINCIPAL = ' || $_prn_id
+End-If
+End-Procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select
+(PROFESSIONAL_ASSMT.ADDR_PROF_ASSMT_ST_LN_1 ||  '  ' || PROFESSIONAL_ASSMT.ADDR_PROF_ASSMT_ST_LN_2) &other_address_part1
+(PERSON_ADDRESS.ADDR_PERS_ADDR_ST_LN_1  ||  '  ' ||  PERSON_ADDRESS.ADDR_PERS_ADDR_ST_LN_2) &prof_address_part1
+((case when  PROFESSIONAL_ASSMT.ADDR_PROF_ASSMT_CITY is not null then  PROFESSIONAL_ASSMT.ADDR_PROF_ASSMT_CITY || ', ' ||  PROFESSIONAL_ASSMT.CD_PROF_ASSMT_STATE || '  ' ||  PROFESSIONAL_ASSMT.ADDR_PROF_ASSMT_ZIP else  null end)) &other_address_part2
+((case when PERSON_ADDRESS.ADDR_PERSON_ADDR_CITY is not null then PERSON_ADDRESS.ADDR_PERSON_ADDR_CITY || ', ' ||   PERSON_ADDRESS.CD_PERSON_ADDR_STATE  || '  ' ||   PERSON_ADDRESS.ADDR_PERSON_ADDR_ZIP  else  null end)) &prof_address_part2
+((case when PROFESSIONAL_ASSMT.NBR_PROF_ASSMT_PHONE_EXT is not null then '  Ext. ' ||  PROFESSIONAL_ASSMT.NBR_PROF_ASSMT_PHONE_EXT else  PROFESSIONAL_ASSMT.NBR_PROF_ASSMT_PHONE_EXT end)) &other_phone_ext
+((case when   PERSON_PHONE.NBR_PERSON_PHONE_EXTENSION is not null then '  Ext. ' ||  PERSON_PHONE.NBR_PERSON_PHONE_EXTENSION else  null end)) &prof_phone_ext
+CD_PROF_ASSMT_APPT_RSN &Master_Query_CD_PROF_ASSMT_APPT_RSN
+PERSON_PRN.NM_PERSON_FULL &prn_nm
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ID_PERSON_PRINCIPAL &Master_Query_ID_PERSON_PRINCIPAL () On-Break Set=1 Level=1 Print=Never Before=Master_QueryID_PERSON_PRINCIPAL_BeforeProc101
+ Graphic (3,18,518) Horz-Line 10 
+DT_PROF_ASSMT_APPT &Master_Query_DT_PROF_ASSMT_APPT (25,151) Edit MM/DD/YYYY
+ Print 'Appointment Date' (25,19,0) Bold 
+ Next-Listing   ! Close up the wrapped columns
+ Print 'Reason for Appointment' (15,19,0) Bold 
+ Lookup reason_CT &Master_Query_CD_PROF_ASSMT_APPT_RSN $reason_decode
+ Print $reason_decode (15,151,63)
+ Print 'Comments' (31,19,0) Bold 
+TXT_PROF_ASSMT_FINDINGS &findings (31,151,69) Wrap 69 2 line-height=12 Keep-Top
+ Next-Listing   ! Close up the wrapped columns
+ Print 'Professional on Case' (25,20,0) Bold 
+ Print 'Other Professional' (25,288,0) Bold 
+TXT_PROF_ASSMT_OTHER &other_name (25,391,27) Wrap 27 2 line-height=12 Keep-Top
+NM_PROF_ASSMT_NAME &prof_nm (25,130,26) Wrap 26 2 line-height=12 Keep-Top
+ Next-Listing   ! Close up the wrapped columns
+ Print &other_address_part1 (14,391,27)
+ Print 'Address / Phone' (14,20,0) Bold 
+ Print 'Address / Phone' (14,288,0) Bold 
+ Print &prof_address_part1 (14,130,27) Wrap 27 2 line-height=12 Keep-Top
+ Next-Listing   ! Close up the wrapped columns
+ Print &other_address_part2 (14,391,27) Wrap 27 2 line-height=12 Keep-Top
+ Print &prof_address_part2 (14,130,27) Wrap 27 2 line-height=12 Keep-Top
+ Next-Listing   ! Close up the wrapped columns
+ Print &other_phone_ext (15,450,16)
+PERSON_PHONE.NBR_PERSON_PHONE &prof_phone_number () Nop
+ If (isnull(&prof_phone_number) )
+    ! do nothing
+ Else
+ Print &prof_phone_number (15,130) Edit (xxx)bxxx-xxxx Foreground=(0,0,0)
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+NBR_PROF_ASSMT_PHONE &other_phone_number () Nop
+ If  isnull(&other_phone_number) 
+    ! do nothing
+ Else
+ Print &other_phone_number (15,391) Edit (xxx)bxxx-xxxx
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &prof_phone_ext (15,189,16)
+TXT_PROF_ASSMT_CMNTS &comments (40,151,69) Wrap 69 3 line-height=12 Keep-Top
+ Print 'Other Comments' (40,19,0) Bold 
+ Next-Listing   ! Close up the wrapped columns
+ Print '                  ' (15,132,0)
+ Next-Listing  Need=230
+From  PROFESSIONAL_ASSMT, ADDRESS_PERSON_LINK
+,      PERSON_ADDRESS, PERSON_PHONE, PERSON PERSON_PRN
+      Where PROFESSIONAL_ASSMT.ID_PERSON_PROFESSIONAL = ADDRESS_PERSON_LINK.ID_PERSON(+)
+            And ADDRESS_PERSON_LINK.ID_PERSON_ADDR = PERSON_ADDRESS.ID_PERSON_ADDR(+)
+            And PROFESSIONAL_ASSMT.ID_PERSON_PROFESSIONAL = PERSON_PHONE.ID_PERSON(+)
+            And PROFESSIONAL_ASSMT.ID_PERSON_PRINCIPAL = PERSON_PRN.ID_PERSON
+ And [$where_clause101]
+ And PERSON_PHONE.CD_PERSON_PHONE_TYPE (+) = 'BS'
+ And ADDRESS_PERSON_LINK.CD_PERS_ADDR_LINK_TYPE (+) = 'BS'
+ And [$where_clause_prn]
+Order By PERSON_PRN.NM_PERSON_FULL
+,      DT_PROF_ASSMT_APPT Desc
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryID_PERSON_PRINCIPAL_BeforeProc101
+ Next-Listing  Need=24
+ Graphic (2,1,538) Horz-Line 20 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &prn_nm (24,109,25) Bold 
+ Print 'Principal''s Name: '  (24,19) Bold 
+   Position (+12,)
+ Next-Listing  Need=242
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=reason_CT
+      Table=CARSAPPT
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+End-Procedure
+
+Begin-Heading 12 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (14,184,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Health Log' (44,233,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (14,473) edit 'MM/DD/YYYY'
+ Print 'Produced On: ' (14,408,0)
+ Print 'Case Name:' (90,1,0) Bold 
+Print &Get_Case_Name_Get_Case_Name_NM_CASE (90,66,25) Bold 
+ Print 'Case ID:' (105,1,0) Bold 
+ Let $ID_CASE=$_I101_ID_CASE
+ Print $ID_CASE (105,66,15) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='Reports Layout\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=1    ! [SQR.INI] 4=Arial,proportional
+ Print '   ' (114,1,0)
+ Else   ! put a non combined page header
+ Print '   ' (3,1,0)
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (14,490) '' ' of '
+ Last-Page (14,516) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CaseReviewQuesLookup" table="CASE_REVIEW_QUES_LOOKUP" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.CaseReviewQuesLookupId" mapped="false"
+                  unsaved-value="undefined">
+      <meta attribute="implement-equals">true</meta>
+      <key-property name="cdQuestion" type="string">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="CD_QUESTION" length="10"/>
+      </key-property>
+      <key-property name="cdVersion" type="integer">
+        <meta attribute="use-in-equals">true</meta>
+        <column name="CD_VERSION" />
+      </key-property>
+    </composite-id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="txtQuestion" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_QUESTION" length="1000"/>
+    </property>
+    <property name="nbrQuestionOrder" type="integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_QUESTION_ORDER" precision="3" scale="0"/>
+    </property>
+    <property name="cdItem" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ITEM" length="10"/>
+    </property>
+    <property name="cdSurveyQuestionType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_SURVEY_QUESTION_TYPE" length="10"/>
+    </property>
+    <property name="indQuestionType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_QUESTION_TYPE" length="1"/>
+    </property>
+    <property name="indCbx" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CBX" length="1"/>
+    </property>   
+    <property name="txtQuesHelp" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_QUES_HELP" length="1000"/>
+    </property>     
+    <property name="txtQuestionNum" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_QUESTION_NUM" length="20"/>
+    </property>  
+  </class>
+</hibernate-mapping>

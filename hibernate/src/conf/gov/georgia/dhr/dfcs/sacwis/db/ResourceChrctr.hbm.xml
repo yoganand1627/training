@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ResourceChrctr" table="RESOURCE_CHRCTR" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idRsrcChrctr" type="integer" unsaved-value="0">
+      <column name="ID_RSRC_CHRCTR" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_RESOURCE_CHRCTR</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="resourceService" class="gov.georgia.dhr.dfcs.sacwis.db.ResourceService" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true"
+                 embed-xml="true">
+      <column name="ID_RESOURCE_SERVICE" precision="16" scale="0" not-null="false"/>
+    </many-to-one>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdRsrcCharChrctr" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_CHAR_CHRCTR" length="3"/>
+    </property>
+    <property name="cdRsrcCharCategRsrc" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_CHAR_CATEG_RSRC" length="3"/>
+    </property>
+    <property name="cdRsrcCharCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_CHAR_CNTY" length="3"/>
+    </property>
+    <property name="cdRsrcCharProgram" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_CHAR_PROGRAM" length="2"/>
+    </property>
+    <property name="cdRsrcCharRegion" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_CHAR_REGION" length="2"/>
+    </property>
+    <property name="cdRsrcCharService" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_CHAR_SERVICE" length="6"/>
+    </property>
+    <property name="cdRsrcCharState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_CHAR_STATE" length="2"/>
+    </property>
+    <property name="dtRsrcCharDtAdded" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_RSRC_CHAR_DT_ADDED" length="7"/>
+    </property>
+    <property name="nbrRsrcCharMinMAge" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_CHAR_MIN_M_AGE" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRsrcCharMaxMAge" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_CHAR_MAX_M_AGE" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRsrcCharMinFAge" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_CHAR_MIN_F_AGE" precision="4" scale="0"/>
+    </property>
+    <property name="nbrRsrcCharMaxFAge" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_RSRC_CHAR_MAX_F_AGE" precision="4" scale="0"/>
+    </property>
+    <property name="cdRsrcCharSex" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_CHAR_SEX" length="1"/>
+    </property>
+    <property name="cdRsrcCharServiceType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_RSRC_CHAR_SERVICE_TYPE" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

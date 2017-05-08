@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.DocumentTemplate" table="DOCUMENT_TEMPLATE" mutable="false"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idDocumentTemplate" type="integer" unsaved-value="0">
+      <column name="ID_DOCUMENT_TEMPLATE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_DOCUMENT_TEMPLATE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="documentTemplateType" class="gov.georgia.dhr.dfcs.sacwis.db.DocumentTemplateType" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_DOCUMENT_TEMPLATE_TYPE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="nbrMinorVersion" type="integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_MINOR_VERSION" precision="16" scale="0" not-null="true"/>
+    </property>
+    <property name="nbrMajorVersion" type="integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_MAJOR_VERSION" precision="16" scale="0" not-null="true"/>
+    </property>
+    <property name="nbrRevision" type="integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_REVISION" precision="16" scale="0" not-null="true"/>
+    </property>
+    <property name="txtVersionString" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_VERSION_STRING" not-null="true"/>
+    </property>
+    <property name="txtShortDescription" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_SHORT_DESCRIPTION" not-null="true"/>
+    </property>
+    <property name="txtLongDescription" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_LONG_DESCRIPTION" length="4000"/>
+    </property>
+    <property name="txtHtml" type="blob" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_HTML" not-null="true"/>
+    </property>
+    <property name="indActive" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_ACTIVE" length="1" not-null="true"/>
+    </property>
+    <bag name="fceNarratives" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_DOCUMENT_TEMPLATE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceNarrative" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="intakeReportNarratives" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_DOCUMENT_TEMPLATE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IntakeReportNarrative" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="criminalHistNarrs" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_DOCUMENT_TEMPLATE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CriminalHistNarr" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="contactNarratives" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_DOCUMENT_TEMPLATE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ContactNarrative" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="incomingNarratives" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_DOCUMENT_TEMPLATE" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IncomingNarrative" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

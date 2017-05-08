@@ -1,0 +1,672 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Thu May 15 13:29:13 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong.van.t.vo\My Documents\Reports Layout\FosterCareMonthlyStatus00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Text $removal_date 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+Begin-Select Loops=1
+DECODE &Init_Query_county_decode
+NBR_UNIT &Init_Query_unit_num
+NM_EMPLOYEE_FIRST &Init_Query_mgr_first
+NM_EMPLOYEE_LAST &Init_Query_mgr_last
+From  UNIT, CCOUNT
+,      EMPLOYEE
+      Where UNIT.CD_COUNTY = CCOUNT.CODE
+            And EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+ And EMPLOYEE.ID_PERSON = [$_I5301_EMPLOYEE_ID_PERSON]
+End-Select
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'This report queries all Foster Care stages that are active at one point in the reporting month, having satisfied any other ' (30,9,123)
+ Print 'conditions entered in the Report Launch page. It does not imply that the stage remains active throughout the entire month.' (46,9,122)
+ Print 'Legal Status:' (80,9,0) Bold 
+ Print 'The most recent legal status documented on the stage for the primary child.' (80,133,0)
+ Print 'Note, this report pulls both primary and secondary assignments.' (62,9,0)
+ Print 'The permanency plan of the most recent approved Foster Care Case Plan Family of which the primary child is one of the principals on the plan.' (97,133,93) Wrap 93 3 line-height=12 Keep-Top
+ Print 'The placement type of the most recent approved actual placement for the primary child. Temporary placement of types Concurrent, Respite Night, Respite Day are excluded.' (128,133,95) Wrap 95 3 line-height=12 Keep-Top
+ Print 'The RBWO Program of the current approved and active payment of care for the primary child.' (158,133,0)
+ Print 'Custody Expiration Date:' (177,9,24) Bold  Wrap 24 2 line-height=12 Keep-Top
+ Print 'Custody Removal Date:' (196,9,24) Bold  Wrap 24 2 line-height=12 Keep-Top
+ Print 'The most recent removal date of the primary child. If there is no removal date, this date is the start date of the child''s first actual placement.' (196,133,95) Wrap 95 2 line-height=12 Keep-Top
+ Print 'The Custody Expiration Date of the primary child''s most recent legal status.' (177,133,0)
+ Print 'Case Review Date:' (226,9,17) Bold 
+ Print 'The Court/Action Date from the most recent approved or completed legal action documented on the stage where the Action is Citizens Panel Review or Panel/Admin Review, or where the Hearing Type/Court Order is Immediate Judicial Review, Immediate Permanency Review, or Judicial Review.' (226,133,93) Wrap 93 4 line-height=12 Keep-Top
+ Print 'Next Court Hearing Date:' (280,9,24) Bold  Wrap 24 2 line-height=12 Keep-Top
+ Print 'The earliest upcoming court hearing date from the approved or completed legal actions documented on the stage. This field displays the Next Court Hearing Date from any approved or completed legal actions on the stage where the hearing date has not passed.' (280,133,93) Wrap 93 4 line-height=12 Keep-Top
+ Print 'Last Determination Date:' (323,9,24) Bold  Wrap 24 2 line-height=12 Keep-Top
+ Print 'Redetermination Due Date:' (343,9,24) Bold  Wrap 24 2 line-height=12 Keep-Top
+ Print 'Physical Exam Date:' (371,9,19) Bold 
+ Print 'Number of Placement Changes:' (463,9,24) Bold  Wrap 24 2 line-height=12 Keep-Top
+ Print 'The number of times the primary child has moved during the reporting month. A new placement record for the child is not necessarily a placement change. A placement change occurs when there is neither a match on the same resource ID nor a match to the primary address of the previous placement resource.' (463,133,95) Wrap 95 4 line-height=12 Keep-Top
+ Print 'The start date of the most recent approved Eligibility Summary of the primary child.' (323,133,0)
+ Print 'The Redetermination date of the most recent approved Eligibility Summary of the primary child.' (343,133,0)
+ Print 'The visit date of the most recent health detail of types Physical Exam, Annual Medical Exam, or EPSDT/GA Health Check for the primary child.' (371,133,95) Wrap 95 2 line-height=12 Keep-Top
+ Print 'Psychological Evaluation Date:' (432,9,24) Bold  Wrap 24 2 line-height=12 Keep-Top
+ Print 'Dental Exam Date:' (401,9,0) Bold 
+ Print 'The visit date of the most recent health detail of type Psychological for the primary child.' (432,133,97) Wrap 97 2 line-height=12 Keep-Top
+ Print 'The visit date of the most recent health detail of types Dental 6 Mo. Exm/Cl or Dental (Other) Exm/Trt for the primary child.' (401,133,95) Wrap 95 2 line-height=12 Keep-Top
+ Print 'Permanency Type:' (98,9,20) Bold 
+ Print 'RBWO Program:' (158,9,0) Bold 
+ Print 'Placement Type:' (128,9,0) Bold 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=12   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do LoadLookupTables
+ Do Get-Input
+ Do Get-Date-Input
+ Do Get-Case-Input
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Date-Input
+Input $dt_report 'Enter month and year (MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+End-Procedure
+
+Begin-Procedure Get-Case-Input
+Input $_I5302_STAGE_ID_CASE 'Enter a value for ID_CASE' MaxLen=16  Type=Number
+If ($_I5302_STAGE_ID_CASE = '0') 
+  Let $where_clause5302 = ' STAGE.ID_CASE is not null '
+Else
+  Let $brb_tmp = 'STAGE.ID_CASE'
+  Let $where_clause5302 = $brb_tmp  || ' = ' || $_I5302_STAGE_ID_CASE
+End-If
+End-Procedure
+
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I5301_EMPLOYEE_ID_PERSON 'Enter a value for ID_PERSON' MaxLen=16  Type=Number
+If IsNull($_I5301_EMPLOYEE_ID_PERSON) or IsBlank($_I5301_EMPLOYEE_ID_PERSON)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Let $brb_tmp = 'EMPLOYEE.ID_PERSON'
+Let $where_clause5301 = $brb_tmp  || ' = ' || $_I5301_EMPLOYEE_ID_PERSON
+End-Procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select Distinct
+(NVL(to_char(stage.DT_STAGE_CLOSE, 'MM/DD/YYYY'), 'NO')) &dt_close_excpt
+((decode(cd_stage, 'SUB', 'FCC',cd_stage))) &cd_stage_masked
+STAGE.ID_STAGE &Master_Query_STAGE.ID_STAGE
+((decode(cd_role, 'PR', 'Primary','SE','Secondary',cd_role))) &cd_role_decoded
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+STAGE.ID_CASE &Master_Query_STAGE.ID_CASE () On-Break Set=53 Level=1 Print=Never Before=Master_QueryID_CASE_BeforeProc5301
+NM_STAGE &Master_Query_NM_STAGE () On-Break Set=53 Level=2 Print=Never Before=Master_QueryNM_STAGE_BeforeProc5302 After=Master_QueryNM_STAGE_AfterProc5302
+ Graphic (3,2,535) Horz-Line 10 
+ Do Get_Contacts_Count(&Master_Query_STAGE.ID_STAGE)
+ Do Get_Custody_Removal_Or_Placement(&Master_Query_STAGE.ID_STAGE) 
+ Print &dt_close_excpt (23,439,11)
+ Print &dt_close_excpt (23,439,11)
+ Print &cd_stage_masked (24,160,3)
+ Print 'Stage Type:' (24,36,0)
+ Print 'Stage Closed:' (24,296,22)
+ Print 'Legal Status:' (42,36,0)
+ Do Legal_Stat(&Master_Query_STAGE.ID_STAGE)
+ Print &legal_stat_decode (42,160,60)
+ Print 'Permanency Plan:' (61,36,22)
+ Do Permanency(&Master_Query_STAGE.ID_STAGE)
+ Print &perm_type (61,160,60)
+ Print 'Placement Type:' (80,36,22)
+ Do Latest_Placement(&Master_Query_STAGE.ID_STAGE)
+ Print &Latest_Placement_DECODE (80,160,60)
+ Print 'RBWO Program:' (99,36,22)
+ Do RBWO_Prog(&Master_Query_STAGE.ID_STAGE)
+ Print &rbwo_decode (99,160,58)
+ Print &cust_exp_dt (119,160) Edit MM/DD/YYYY
+ Print 'Custody Expiration Date:' (119,36,24) Wrap 24 2 line-height=12 Keep-Top
+ Print 'Custody Removal Date:' (119,296,27)
+ Let $removal_date=&removal_date_calc
+ Print $removal_date (119,439,10)
+ Print 'Physical Exam Date:' (138,296,22)
+ Do Case_Review(&Master_Query_STAGE.ID_STAGE)
+ Print &CASE_REV_DATE (138,160) Edit MM/DD/YYYY
+ Do Physical_Exam(&Master_Query_STAGE.ID_STAGE)
+ Print &dt_phy_exam_max (138,439) Edit MM/DD/YYYY
+ Print 'Case Review Date:' (138,36,21)
+ Print 'Next Court Hearing Date:' (157,36,24)
+ Print 'Dental Exam Date:' (157,296,22)
+ Do Dental_Exam(&Master_Query_STAGE.ID_STAGE)
+ Print &dt_den_exam_max (157,439) Edit MM/DD/YYYY
+ Do Nxt_Crt_Hrg_Dt(&Master_Query_STAGE.ID_STAGE)
+ Print &min_nxt_crt_hrg_dt (157,160) Edit MM/DD/YYYY
+ Print 'Psychological Evaluation Date:' (176,296,31)
+ Do Psy_Exam(&Master_Query_STAGE.ID_STAGE)
+ Print &dt_psy_exam_max (176,439) Edit MM/DD/YYYY
+ Do ReDetermination(&Master_Query_STAGE.ID_STAGE)
+ Print &ReDetermination_DT_ELIG_START (176,160) Edit MM/DD/YYYY
+ Print 'Last Determination Date:' (176,36,0)
+ Print &ReDetermination_DT_ELIG_REVIEW (195,160) Edit MM/DD/YYYY
+ Print 'Redetermination Due Date:' (195,36,0)
+ Print 'Number of Placement Changes:' (196,296,0)
+ Do Placement_Count(&Master_Query_STAGE.ID_STAGE)
+ Print &placement_cnt (196,439) Edit 888na
+ Let $contact_info_header='Contact Information: '
+ Print $contact_info_header (214,9,21) Bold 
+ Let $contact_info_text=$contact_info_text
+ Print $contact_info_text (214,133,66)
+ Next-Listing  Need=214
+ Do Contacts(&Master_Query_STAGE.ID_STAGE)
+From  STAGE, STAGE_ASSIGN_HISTORY
+,      EMPLOYEE
+      Where STAGE.ID_STAGE = STAGE_ASSIGN_HISTORY.ID_STAGE
+            And STAGE_ASSIGN_HISTORY.ID_PERSON = EMPLOYEE.ID_PERSON
+ And CD_STAGE IN ('SUB','ADO')
+ And CD_ROLE IN ('PR','SE')
+ And STAGE_ASSIGN_HISTORY.DT_ASSGND < (LAST_DAY(TO_DATE($dt_report,'MM/YYYY'))+1)
+ And (STAGE_ASSIGN_HISTORY.DT_UNASSGND >= (TO_DATE($dt_report,'MM/YYYY')+1) Or DT_UNASSGND IS NULL )
+ And STAGE.DT_STAGE_START < (LAST_DAY(TO_DATE($dt_report,'MM/YYYY'))+1)
+ And (STAGE.DT_STAGE_CLOSE >= TO_DATE($dt_report,'MM/YYYY') Or DT_STAGE_CLOSE IS NULL )
+ And [$where_clause5301]
+ And [$where_clause5302]
+Order By STAGE.ID_CASE
+,      NM_STAGE
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryID_CASE_BeforeProc5301
+ Next-Listing  Need=34
+ Graphic (2,2,536) Horz-Line 20 
+ Position (4,1)
+ Graphic (35,2,535) Horz-Line 15 
+ Position (36,1)
+   Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case ID'  (24,1) Bold 
+  Print &Master_Query_STAGE.ID_CASE (24,45) Edit 8888888888888888na
+   Position (+12,)
+ Next-Listing  Need=214
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryNM_STAGE_BeforeProc5302
+ Next-Listing  SkipLines=2 Need=13
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Stage Name'  (10,2) Bold 
+  Print &Master_Query_NM_STAGE (10,77,25)
+ Print 'Assignment Type:'  (11,296) Bold 
+  Print &cd_role_decoded (11,439,9)
+   Position (+12,)
+ Next-Listing  Need=214
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryNM_STAGE_AfterProc5302
+ Next-Listing  Need=12
+ Graphic (13,2,535) Horz-Line 15 
+ Position (14,1)
+   Position (+0,)
+ Next-Listing  Need=214
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Legal_Stat (#P1_ID_EVENT_STAGE)
+Begin-Select Loops=1
+LEGAL_STATUS00.DT_LEGAL_STAT_CUS_EXP_DT &_cust_exp_dt
+DECODE &_legal_stat_decode
+From  LEGAL_STATUS LEGAL_STATUS00, EVENT EVENT_LS
+,      CLEGSTAT
+      Where LEGAL_STATUS00.ID_LEGAL_STAT_EVENT = EVENT_LS.ID_EVENT
+            And LEGAL_STATUS00.CD_LEGAL_STAT_STATUS = CLEGSTAT.CODE
+ And EVENT_LS.ID_EVENT_STAGE = #P1_ID_EVENT_STAGE
+ And LEGAL_STATUS00.DT_LEGAL_STAT_STATUS_DT = (SELECT  (max(LEGAL_STATUS.DT_LEGAL_STAT_STATUS_DT))  FROM  EVENT EVENT00,  STAGE_PERSON_LINK
+     STAGE_PERSON_LINK00,  LEGAL_STATUS WHERE EVENT00.ID_EVENT_STAGE = STAGE_PERSON_LINK00.ID_STAGE
+  AND  EVENT00.ID_EVENT = LEGAL_STATUS.ID_LEGAL_STAT_EVENT
+
+      AND  STAGE_PERSON_LINK00.ID_PERSON = LEGAL_STATUS.ID_PERSON
+ AND  STAGE_PERSON_LINK00.CD_STAGE_PERS_ROLE = 'PC' AND  STAGE_PERSON_LINK00.ID_PERSON
+     = LEGAL_STATUS00.ID_PERSON AND  EVENT00.ID_EVENT_STAGE = EVENT_LS.ID_EVENT_STAGE AND  STAGE_PERSON_LINK00.ID_STAGE = EVENT_LS.ID_EVENT_STAGE)
+
+End-Select
+End-Procedure
+Begin-Procedure Get_Contacts_Count (#P1_ID_CONTACT_STAGE)
+ Let #_contact_cnt = 0
+ Let $_contact_info_text =  ''
+Begin-Select
+(count(ID_EVENT)) &_contact_cnt
+From CONTACT
+Where ID_CONTACT_STAGE = #P1_ID_CONTACT_STAGE
+ And CONTACT.DT_CONTACT_OCCURRED >= TO_DATE($_dt_report,'MM/YYYY')
+ And CONTACT.DT_CONTACT_OCCURRED < (LAST_DAY(TO_DATE($_dt_report,'MM/YYYY'))+1)
+End-Select
+Move &_contact_cnt to #_contact_cnt
+If #_contact_cnt = 0 
+ Let $_contact_info_text =  'No Contacts Recorded in the Reporting Month'
+End-If
+End-Procedure
+
+
+Begin-Procedure Contacts (#P1_ID_CONTACT_STAGE)
+Begin-Select Distinct
+CD_CONTACT_METHOD &_Contacts_CD_CONTACT_METHOD
+CD_CONTACT_LOCATION &_Contacts_CD_CONTACT_LOCATION
+CD_CONTACT_PURPOSE &_Contacts_CD_CONTACT_PURPOSE
+CD_CONTACT_TYPE &_Contacts_CD_CONTACT_TYPE
+CD_CONTACT_OTHERS &_Contacts_CD_CONTACT_OTHERS
+ID_CONTACT_STAGE &_Contacts_ID_CONTACT_STAGE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+('Contact Information:') &_contact_info_header () On-Break Set=63 Level=1 Print=Never Before=Contactscontact_info_header_BeforeProc6301
+('Type') &_contact_type_col_header () On-Break Set=63 Level=2 Print=Never
+('Method') &_contact_meth_col_header () On-Break Set=63 Level=3 Print=Never
+('Location') &_contact_loc_col_header () On-Break Set=63 Level=4 Print=Never
+('Others Contacted') &_contact_oth_col_header () On-Break Set=63 Level=5 Print=Never
+('Date') &_contact_date_col_header () On-Break Set=63 Level=6 Print=Never
+('Purpose') &_contact_pur_col_header () On-Break Set=63 Level=7 Print=Never
+ Graphic (1,9,526) Horz-Line 12 
+ Graphic (9,10,525) Box 27 0 10 
+ Lookup Contact_Type_CT &_Contacts_CD_CONTACT_TYPE $_type_decode
+ Print $_type_decode (20,78,17) Wrap 17 3 line-height=12 Keep-Top
+ Lookup Contact_Location_CT &_Contacts_CD_CONTACT_LOCATION $_location_decode
+ Print $_location_decode (20,371,16) Wrap 16 2 line-height=12 Keep-Top
+ Lookup Contact_Other_CT &_Contacts_CD_CONTACT_OTHERS $_others_decode
+ Print $_others_decode (20,460,13) Wrap 13 2 line-height=12 Keep-Top
+ Lookup Contact_Method_CT &_Contacts_CD_CONTACT_METHOD $_method_decode
+ Print $_method_decode (20,266,19) Wrap 19 2 line-height=12 Keep-Top
+ Lookup Contact_Purpose_CT &_Contacts_CD_CONTACT_PURPOSE $_purpose_decode
+ Print $_purpose_decode (20,174,16) Wrap 16 2 line-height=12 Keep-Top
+DT_CONTACT_OCCURRED &_Contacts_DT_CONTACT_OCCURRED (20,11) Edit MM/DD/YYYY
+ Print ' Persons Contacted:' (49,6,0) Bold 
+ Print 'Name' (49,113,0)
+ Print 'Role' (49,252,0)
+ Print 'Relationship' (49,391,0)
+ Graphic (51,110,425) Horz-Line 10 
+ Next-Listing  Need=50
+ID_EVENT &_Contacts_ID_EVENT
+ Do Contact_Person(&_Contacts_ID_EVENT, &_Contacts_ID_CONTACT_STAGE)
+From  CONTACT
+Where ID_CONTACT_STAGE = #P1_ID_CONTACT_STAGE
+ And CONTACT.DT_CONTACT_OCCURRED >= TO_DATE($_dt_report,'MM/YYYY')
+ And CONTACT.DT_CONTACT_OCCURRED < (LAST_DAY(TO_DATE($_dt_report,'MM/YYYY'))+1)
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Contactscontact_info_header_BeforeProc6301
+ Next-Listing  Need=14
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Date'  (14,11)
+ Print 'Type'  (14,78)
+ Print 'Method'  (14,266)
+ Print 'Location'  (14,371)
+ Print 'Others Contacted'  (14,458)
+ Print 'Purpose'  (14,174)
+   Position (+12,)
+ Next-Listing  Need=50
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Contact_Person (#P1_ID_EVENT, #P2_ID_STAGE)
+ Move 0 To #_97ROW_COUNT
+Begin-Select
+CD_STAGE_PERS_REL_INT &_Contact_Person_CD_STAGE_PERS_REL_INT
+CD_STAGE_PERS_ROLE &_Contact_Person_CD_STAGE_PERS_ROLE
+ID_EVENT &_Contact_Person_ID_EVENT
+ID_STAGE &_Contact_Person_ID_STAGE
+ Graphic (5,110,425) Box 14 0 10 
+ Lookup Person_Rel_CT &_Contact_Person_CD_STAGE_PERS_REL_INT $_person_rel_decode
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $_person_rel_decode (15,391,26)
+ Lookup Person_Role_CT &_Contact_Person_CD_STAGE_PERS_ROLE $_person_role_decode
+ Print $_person_role_decode (15,251,21)
+NM_PERSON_FULL &_Contact_Person_NM_PERSON_FULL (15,113,25)
+ Add 1 To #_97ROW_COUNT
+ Next-Listing  SkipLines=3 Need=18
+From  EVENT_PERSON_LINK, STAGE_PERSON_LINK
+,      PERSON
+      Where EVENT_PERSON_LINK.ID_PERSON = STAGE_PERSON_LINK.ID_PERSON
+            And STAGE_PERSON_LINK.ID_PERSON = PERSON.ID_PERSON
+ And ID_EVENT = #P1_ID_EVENT
+ And ID_STAGE = #P2_ID_STAGE
+End-Select
+ Next-Listing
+ Next-Listing  SkipLines=1 Need=12
+ If #_97ROW_COUNT > 0
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+  Print '      '  (11,1)
+ End-If
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Case_Review (#P1_ID_EVENT_STAGE)
+Begin-Select Loops=1
+LEGAL_ACTION00.DT_CRT_ACT_DATE &_CASE_REV_DATE
+From  LEGAL_ACTION LEGAL_ACTION00, EVENT EVENT00
+      Where LEGAL_ACTION00.ID_LEGAL_ACT_EVENT = EVENT00.ID_EVENT
+ And EVENT00.ID_EVENT_STAGE = #P1_ID_EVENT_STAGE
+ And LEGAL_ACTION00.DT_CRT_ACT_DATE = (SELECT  (max( LEGAL_ACTION.DT_CRT_ACT_DATE ))  FROM  EVENT EVENT01,  LEGAL_ACTION WHERE EVENT01.ID_EVENT
+     = LEGAL_ACTION.ID_LEGAL_ACT_EVENT
+ AND  EVENT01.CD_EVENT_STATUS IN ('APRV','COMP') AND  (CD_LEGAL_ACT_ACTION IN ('PAR','CPR') OR  CD_HR_TYP_CRT_ORD
+     IN ('IJR','IPR','JDR')) AND  EVENT01.ID_EVENT_STAGE = EVENT00.ID_EVENT_STAGE)
+ And EVENT00.CD_EVENT_STATUS IN ('COMP','APRV')
+ And (LEGAL_ACTION00.CD_LEGAL_ACT_ACTION IN ('CPR','PAR') Or LEGAL_ACTION00.CD_HR_TYP_CRT_ORD IN ('IJR','IPR','JDR'))
+End-Select
+End-Procedure
+
+Begin-Procedure ReDetermination (#P1_ID_EVENT_STAGE)
+Begin-Select Loops=1
+DT_ELIG_REVIEW &_ReDetermination_DT_ELIG_REVIEW
+DT_ELIG_START &_ReDetermination_DT_ELIG_START
+From  ELIGIBILITY, EVENT EVENT_ELIG
+      Where ELIGIBILITY.ID_ELIG_EVENT = EVENT_ELIG.ID_EVENT
+ And EVENT_ELIG.ID_EVENT_STAGE = #P1_ID_EVENT_STAGE
+ And EVENT_ELIG.CD_EVENT_STATUS = 'APRV'
+ And EVENT_ELIG.CD_EVENT_TYPE = 'FCD'
+Order By DT_ELIG_START Desc
+End-Select
+End-Procedure
+
+Begin-Procedure Physical_Exam (#P1_ID_STAGE)
+Begin-Select Loops=1
+(max( PROFESSIONAL_ASSMT.DT_PROF_ASSMT_APPT )) &_dt_phy_exam_max
+From  PROFESSIONAL_ASSMT, STAGE_PERSON_LINK
+      Where PROFESSIONAL_ASSMT.ID_PERSON_PRINCIPAL = STAGE_PERSON_LINK.ID_PERSON
+ And ID_STAGE = #P1_ID_STAGE
+ And CD_STAGE_PERS_ROLE = 'PC'
+ And CD_PROF_ASSMT_APPT_RSN IN ('PYL','PYM','EPS')
+End-Select
+End-Procedure
+
+Begin-Procedure Dental_Exam (#P1_ID_STAGE)
+Begin-Select Loops=1
+(max( PROFESSIONAL_ASSMT.DT_PROF_ASSMT_APPT )) &_dt_den_exam_max
+From  PROFESSIONAL_ASSMT, STAGE_PERSON_LINK
+      Where PROFESSIONAL_ASSMT.ID_PERSON_PRINCIPAL = STAGE_PERSON_LINK.ID_PERSON
+ And ID_STAGE = #P1_ID_STAGE
+ And CD_PROF_ASSMT_APPT_RSN IN ('DAA','DAB')
+ And CD_STAGE_PERS_ROLE = 'PC'
+End-Select
+End-Procedure
+
+Begin-Procedure Psy_Exam (#P1_ID_STAGE)
+Begin-Select Loops=1
+(max( PROFESSIONAL_ASSMT.DT_PROF_ASSMT_APPT )) &_dt_psy_exam_max
+From  PROFESSIONAL_ASSMT, STAGE_PERSON_LINK
+      Where PROFESSIONAL_ASSMT.ID_PERSON_PRINCIPAL = STAGE_PERSON_LINK.ID_PERSON
+ And ID_STAGE = #P1_ID_STAGE
+ And CD_PROF_ASSMT_APPT_RSN = 'PHL'
+ And CD_STAGE_PERS_ROLE = 'PC'
+End-Select
+End-Procedure
+
+Begin-Procedure Get_Custody_Removal_Or_Placement(#P1_ID_STAGE)
+Begin-Select 
+(to_char(NVL((select max (cnsrvtrshp_removal.DT_REMOVAL)  from cnsrvtrshp_removal  where cnsrvtrshp_removal.ID_CASE = stage.ID_CASE
+  and cnsrvtrshp_removal.ID_VICTIM = stage_person_link.ID_PERSON), 
+      (select min (placement.DT_PLCMT_START)      from placement, event      where placement.ID_CASE = stage.ID_CASE
+      and placement.ID_PLCMT_CHILD = stage_person_link.ID_PERSON
+      and placement.ID_PLCMT_EVENT = event.ID_EVENT
+      and event.CD_EVENT_STATUS = 'APRV')), 'MM/DD/YYYY')) &_removal_date_calc
+From stage, stage_person_link 
+Where stage.id_stage = #P1_ID_STAGE  and stage.id_stage = stage_person_link.id_stage 
+and stage_person_link.CD_STAGE_PERS_ROLE = 'PC'
+End-Select
+End-Procedure
+
+Begin-Procedure Placement_Count (#P1_ID_STAGE)
+Begin-Select Loops=1
+(count( PLACEMENT.ID_PLCMT_EVENT )) &_placement_cnt
+From  PLACEMENT, STAGE_PERSON_LINK
+      Where PLACEMENT.ID_PLCMT_CHILD = STAGE_PERSON_LINK.ID_PERSON
+            And PLACEMENT.ID_CASE = STAGE_PERSON_LINK.ID_CASE
+ And ID_STAGE = #P1_ID_STAGE
+ And IND_PLCMT_NOT_APPLIC = 'N'
+ And CD_STAGE_PERS_ROLE = 'PC'
+ And (PLACEMENT.DT_PLCMT_START >= to_date($_dt_report, 'MM/YYYY')
+ And PLACEMENT.DT_PLCMT_START < last_day(to_date($_dt_report, 'MM/YYYY'))+1)
+End-Select
+End-Procedure
+
+Begin-Procedure Permanency (#P1_ID_STAGE)
+Begin-Select Loops=1
+DECODE &_perm_type
+From  FCCP_FAMILY FCCP_FAMILY00, STAGE_PERSON_LINK STAGE_PERSON_LINK00
+,      EVENT_PERSON_LINK, CODES_TABLES
+      Where FCCP_FAMILY00.ID_CASE = EVENT_PERSON_LINK.ID_CASE
+            And STAGE_PERSON_LINK00.ID_PERSON = EVENT_PERSON_LINK.ID_PERSON
+            And STAGE_PERSON_LINK00.ID_CASE = FCCP_FAMILY00.ID_CASE
+            And FCCP_FAMILY00.ID_EVENT = EVENT_PERSON_LINK.ID_EVENT
+            And FCCP_FAMILY00.CD_PRIM_PERM_PLAN = CODES_TABLES.CODE
+ And STAGE_PERSON_LINK00.ID_STAGE = #P1_ID_STAGE
+ And FCCP_FAMILY00.ID_EVENT = (SELECT  (max(FCCP_FAMILY01.ID_EVENT))  FROM  EVENT,  EVENT_PERSON_LINK EVENT_PERSON_LINK00,  FCCP_FAMILY FCCP_FAMILY01
+     WHERE EVENT.ID_EVENT = EVENT_PERSON_LINK00.ID_EVENT
+  AND  EVENT_PERSON_LINK00.ID_EVENT = FCCP_FAMILY01.ID_EVENT
+  AND  EVENT_PERSON_LINK00.ID_CASE
+     = FCCP_FAMILY01.ID_CASE
+  AND  EVENT.ID_CASE = EVENT_PERSON_LINK00.ID_CASE
+ AND  CD_EVENT_STATUS = 'APRV' AND  FCCP_FAMILY01.ID_CASE
+     = FCCP_FAMILY00.ID_CASE AND  EVENT_PERSON_LINK00.ID_PERSON = STAGE_PERSON_LINK00.ID_PERSON)
+ And STAGE_PERSON_LINK00.CD_STAGE_PERS_ROLE = 'PC'
+ And CODE_TYPE = 'CPERMPLN'
+End-Select
+End-Procedure
+
+Begin-Procedure Latest_Placement (#P1_ID_EVENT_STAGE)
+Begin-Select Loops=1
+PLACEMENT00.CD_PLCMT_TYPE &_Latest_Placement_PLACEMENT00.CD_PLCMT_TYPE
+PLACEMENT00.ID_PLCMT_EVENT &_Latest_Placement_PLACEMENT00.ID_PLCMT_EVENT
+DECODE &_Latest_Placement_DECODE
+From  EVENT PLA_EVENT, PLACEMENT PLACEMENT00
+,      CPLMNTYP
+      Where PLA_EVENT.ID_EVENT = PLACEMENT00.ID_PLCMT_EVENT
+            And PLACEMENT00.CD_PLCMT_TYPE = CPLMNTYP.CODE
+ And PLA_EVENT.ID_EVENT_STAGE = #P1_ID_EVENT_STAGE
+ And PLA_EVENT.CD_EVENT_STATUS = 'APRV'
+ And PLACEMENT00.DT_PLCMT_START = (SELECT  (max( PLACEMENT_SUB.DT_PLCMT_START ))  FROM  EVENT EVENT_SUB,  PLACEMENT PLACEMENT_SUB WHERE EVENT_SUB.ID_EVENT
+     = PLACEMENT_SUB.ID_PLCMT_EVENT
+ AND  EVENT_SUB.CD_EVENT_STATUS = 'APRV' AND  PLACEMENT_SUB.ID_PLCMT_CHILD = PLACEMENT00.ID_PLCMT_CHILD
+     AND  EVENT_SUB.ID_EVENT_STAGE = PLA_EVENT.ID_EVENT_STAGE)
+ And (PLACEMENT00.CD_TEMP_TYPE IS NULL  Or PLACEMENT00.CD_TEMP_TYPE NOT IN ('COR','RED','REN'))
+ And PLACEMENT00.CD_PLCMT_ACT_PLANNED = 'A'
+End-Select
+End-Procedure
+
+Begin-Procedure RBWO_Prog (#P1_ID_EVENT_STAGE)
+Begin-Select Loops=1
+CD_RBWO_PROGRAM &_rbwo_cd
+DECODE &_rbwo_decode
+From  EVENT, EVENT_PERSON_LINK
+,      PAYMENT_OF_CARE, STAGE_PERSON_LINK, CODES_TABLES
+      Where EVENT.ID_EVENT = EVENT_PERSON_LINK.ID_EVENT
+            And EVENT_PERSON_LINK.ID_EVENT = PAYMENT_OF_CARE.ID_POC_EVENT
+            And EVENT_PERSON_LINK.ID_PERSON = STAGE_PERSON_LINK.ID_PERSON
+            And STAGE_PERSON_LINK.ID_STAGE = EVENT.ID_EVENT_STAGE
+            And PAYMENT_OF_CARE.CD_RBWO_PROGRAM = CODES_TABLES.CODE
+ And ID_EVENT_STAGE = #P1_ID_EVENT_STAGE
+ And CD_EVENT_STATUS = 'APRV'
+ And (DT_START <= sysdate
+ And (DT_TERMINATE IS NULL  Or DT_TERMINATE >= sysdate)
+ And (PAYMENT_OF_CARE.DT_END IS NULL  Or PAYMENT_OF_CARE.DT_END >= sysdate))
+ And CD_STAGE_PERS_ROLE = 'PC'
+ And CODES_TABLES.CODE_TYPE = (CASE PAYMENT_OF_CARE.IND_CCI WHEN 'Y' THEN 'CRBPROGI' ELSE 'CRBPROGA' END)
+End-Select
+End-Procedure
+
+Begin-Procedure Nxt_Crt_Hrg_Dt (#P1_ID_EVENT_STAGE)
+Begin-Select Loops=1
+(min( LEGAL_ACTION.DT_NXT_HEAR_DATE )) &_min_nxt_crt_hrg_dt
+From  LEGAL_ACTION, EVENT
+      Where LEGAL_ACTION.ID_LEGAL_ACT_EVENT = EVENT.ID_EVENT
+ And ID_EVENT_STAGE = #P1_ID_EVENT_STAGE
+ And CD_EVENT_STATUS IN ('COMP','APRV')
+ And DT_NXT_HEAR_DATE >= sysdate
+End-Select
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=Contact_Method_CT
+      Table=CODES_TABLES
+      Key=CODE
+      Return_Value=DECODE where=CODE_TYPE='CCNTMETH'
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+   Load-Lookup
+      Name=Contact_Purpose_CT
+      Table=CODES_TABLES
+      Key=CODE
+      Return_Value=DECODE Where=CODE_TYPE='CCNTPURP'
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+   Load-Lookup
+      Name=Contact_Type_CT
+      Table=CODES_TABLES
+      Key=CODE
+      Return_Value=DECODE Where= CODE_TYPE='CCNTCTYP'
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+   Load-Lookup
+      Name=Contact_Location_CT
+      Table=CODES_TABLES
+      Key=CODE
+      Return_Value=DECODE Where=CODE_TYPE='CCNCTLOC'
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+   Load-Lookup
+      Name=Person_Role_CT
+      Table=CODES_TABLES
+      Key=CODE
+      Return_Value=DECODE Where=CODE_TYPE='CROLEALL'
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+   Load-Lookup
+      Name=Person_Rel_CT
+      Table=CODES_TABLES
+      Key=CODE
+      Return_Value=DECODE Where=CODE_TYPE='CRPTRINT'
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+   Load-Lookup
+      Name=Contact_Other_CT
+      Table=COTHCNCT
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+End-Procedure
+
+Begin-Heading 12 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+Alter-Printer Font=4 Point-Size=10
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (11,184,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Foster Care and Adoption Monthly Status' (45,127,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (11,474) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (11,409,0)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='D:\Documents and Settings\hong.van.t.vo\My Documents\Reports Layout\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Manager:' (106,301,0) Bold 
+Print &Init_Query_county_decode (128,107,28)
+Print &Init_Query_unit_num (128,393,8)
+ Print 'County:' (127,1,0) Bold 
+ Print 'Unit: ' (127,301,0) Bold 
+ Let $mgr_full=&Init_Query_mgr_last || ', ' || &Init_Query_mgr_first
+ Print $mgr_full (106,393,21)
+ Print 'Reporting Month:' (106,1,0) Bold 
+ Let $rpt_month=$dt_report
+ Print $rpt_month (106,107,15)
+ Alter-Printer Font=4 Point-Size=1    ! [SQR.INI] 4=Arial,proportional
+ Print '  ' (138,1,0)
+ Else   ! put a non combined page header
+ Print '  ' (3,1,0)
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (13,490) '' ' of '
+ Last-Page (13,516) 
+ Alter-Printer Font=901 Point-Size=10
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Footing
+

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.SaSafetyFactor" table="SA_SAFETY_FACTOR" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idSaSafetyFactor" type="integer" unsaved-value="0">
+      <column name="ID_SA_SAFETY_FACTOR" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_SA_SAFETY_FACTOR</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="saSafetyAssessment" class="gov.georgia.dhr.dfcs.sacwis.db.SaSafetyAssessment" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdPersonCaretaker" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_PERSON_CARETAKER" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdPersonChild" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_PERSON_CHILD" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdSfFactor" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SF_FACTOR" length="4"/>
+    </property>
+    <property name="cdSfFactorRps" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SF_FACTOR_RPS" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

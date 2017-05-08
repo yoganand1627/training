@@ -1,0 +1,473 @@
+!*****************************************************************************
+! SERVICES AND REFERRALS CHECKLIST REPORT                                    *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         civ20o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     opt/caps/sys/prod/sqr                                *
+!                                                                            *
+!                                                                            *
+! DATE:                 10/18/01                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Linda Hafele                                         *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This report reports the information entered in       *
+!                       the Services and Referrals Checklist.                *
+!                                                                            *
+!                                                                            *
+! casdorjm   SIR# 15963 Added code to strip visible carriage returns fro     * 
+!                       the comments field.  Also added ORDER_BY clause to   *
+!                       order Services/Referrals Provided alphabetically.    *
+!                       Added code to print footer on correct page.          *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 10/18/01   hafelela     Initial Programming                                *
+! 01/02/02   casdorjm     SIR# 15963					     *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of      *
+!       report message and other wrap up functions.                          *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+DATE-TIME () HH:MI:SS &run_time
+SHOW &run_time
+
+do HOUSEKEEPING
+
+do PROCESS-REPORT
+
+do WRAP-UP
+
+DATE-TIME () HH:MI:SS &run_time
+SHOW &run_time
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters.                                 *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                      !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'            ! control codes for Portrait
+                                       ! On Demand Reports
+
+    ask ID_STAGE                       !input parameter
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called "header04.sqc" for portrait reports.         *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 4
+
+  print 'Case Name: '      (1,28)
+  print $Case_Name         (+0,39)
+  
+  print 'Case #: '         (+1,31)
+  print #Case_Number       (+0,39) edit 8888888888888888
+
+  print 'Stage: '          (+1,32)
+  print $Stage             (+0,39)
+ 
+  print 'SERVICES AND REFERRALS CHECKLIST REPORT'   (+2) center bold
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+                                ! specific to portrait on demand report
+END-FOOTING
+
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'            !Set printer environment
+
+   move {ID_STAGE}                  to #input_id_stage
+
+  !************************************************
+  ! Variables and Constants                       *
+  !************************************************
+  ! none needed for this report currently
+  
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-CASE-NAME-NUMBER,                                  *
+! 		     GET-CHECKLIST-INFO,                                    *
+! 		     PRINT-DT-FIRST-REFERRAL,                               *
+!                    PRINT-SERVICES-PROVIDED-HEADER,                        *
+!                    GET-REF-SRVCS-PROVIDED,                                *
+!                    CHECK-SERVICES-PROVIDED,                               *
+!                    PRINT-FAMILY-RESPONSE,                                 *
+!                    PRINT-COMMENTS                                         *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT
+
+    do GET-CASE-NAME-NUMBER
+    do GET-CHECKLIST-INFO
+    do PRINT-DT-FIRST-REFERRAL
+    do PRINT-SERVICES-PROVIDED-HEADER
+    do GET-REF-SRVCS-PROVIDED
+    do CHECK-SERVICES-PROVIDED
+    do PRINT-FAMILY-RESPONSE
+    do PRINT-COMMENTS
+
+END-PROCEDURE PROCESS-REPORT
+
+!****************************************************************************
+!                                                                           *
+!   GET-CASE-NAME-NUMBER                                                    *
+!                                                                           *
+!       This procedure will select case name and number from                *
+!       CAPS_CASE table                                                     *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CASE-NAME-NUMBER
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.NM_CASE
+    move &A.NM_CASE                         to $Case_Name
+
+A.ID_CASE
+    move &A.ID_CASE                         to #Case_Number
+    
+B.CD_STAGE
+    move &B.CD_STAGE                        to $Stage
+
+FROM    CAPS_CASE     A,
+        STAGE         B
+
+WHERE   A.ID_CASE  = B.ID_CASE
+AND     B.ID_STAGE = #input_id_stage
+
+
+END-SELECT
+
+END-PROCEDURE GET-CASE-NAME-NUMBER
+
+!****************************************************************************
+!                                                                           *
+!   GET-CHECKLIST-INFO                                                      *
+!                                                                           *
+!       This procedure will select all the checklist information from the   *
+!       CPS_CHECKLIST table.                                                *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CHECKLIST-INFO
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_date(DT_FIRST_REFERRAL, 'MM/DD/YYYY') &date1
+    move &date1                                 to $referral_date
+  
+C.IND_REFERRAL
+    move &C.IND_REFERRAL                        to $referral_ind
+    
+C.CD_FAMILY_RESP
+    move &C.CD_FAMILY_RESP                      to $family_resp
+
+C.TXT_COMMENTS
+    move &C.TXT_COMMENTS                        to $comments
+
+FROM    CPS_CHECKLIST C        
+
+WHERE   C.ID_STAGE = #input_id_stage
+
+END-SELECT
+
+END-PROCEDURE GET-CHECKLIST-INFO
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-DT-FIRST-REFERRAL                                                 *
+!                                                                           *
+!       If services were referred, this procedure prints the first referral *
+!       date.  If services were not referred, then it is indicated by the   *
+!       'N' next to Services/Referrals.                                     *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-DT-FIRST-REFERRAL
+
+print 'Date of First Referral: '           (+2,1)
+print $referral_date                       (+0,25)
+
+print 'No Services/Referrals: '            (+1,1)
+print $referral_ind                        (+0,24)
+
+END-PROCEDURE PRINT-DT-FIRST-REFERRAL
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-SERVICES-PROVIDED-HEADER                                          *
+!                                                                           *
+!       This procedure prints the "Services/Referrals Provided' header.     *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-SERVICES-PROVIDED-HEADER
+
+print ''					      (+2)
+print 'Services/Referrals Provided'                   (+2) center bold
+print ''                                              (+1)
+
+END-PROCEDURE PRINT-SERVICES-PROVIDED-HEADER
+
+!****************************************************************************
+!                                                                           *
+!   GET-REF-SRVCS-PROVIDED                                                  *
+!                                                                           *
+!       This procedure will select all services or referrals made for a     *
+!       client from the CPS_CHECKLIST_ITEM table.  Only those referred will *
+!       appear in the report.                                               *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-REF-SRVCS-PROVIDED                               *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-REF-SRVCS-PROVIDED
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CSRCKLST.decode
+    move &CSRCKLST.decode                       to $service
+
+    do PRINT-REF-SRVCS-PROVIDED
+    
+FROM    CSRCKLST        CSRCKLST,
+        CPS_CHECKLIST_ITEM I        
+
+WHERE   I.ID_STAGE = #input_id_stage
+AND     CSRCKLST.CODE(+) = I.CD_SRVC_REFERRED
+ORDER BY I.CD_SRVC_REFERRED
+
+END-SELECT
+
+END-PROCEDURE GET-REF-SRVCS-PROVIDED
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-REF-SRVCS-PROVIDED                                                *
+!                                                                           *
+!       This procedure prints the services provided by the worker.          *
+!                                                                           *
+!       CALLED BY  : GET-REF-SRVCS-PROVIDED                                 *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-REF-SRVCS-PROVIDED
+
+print $service                             (+1,1) wrap 76 3 
+
+END-PROCEDURE PRINT-REF-SRVCS-PROVIDED
+
+!****************************************************************************
+!                                                                           *
+!   CHECK-SERVICES-PROVIDED                                                 *
+!                                                                           *
+!       This procedure prints the services provided by the worker.          *
+!                                                                           *
+!       CALLED BY  : PROCESS_REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE CHECK-SERVICES-PROVIDED
+
+if $referral_ind = 'Y'
+   move 'None' to $service
+   print $service                          (+1,6) 
+end-if
+
+END-PROCEDURE CHECK-SERVICES-PROVIDED
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-FAMILY-RESPONSE                                                   *
+!                                                                           *
+!       If services were referred, this procedure prints the first referral *
+!       date.  If services were not referred, then it is indicated by the   *
+!       'N' next to Services/Referrals.                                     *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-FAMILY-RESPONSE
+
+if $family_resp = '1'
+   let $chckmrk1 = 'X'
+end-if
+if $family_resp = '2'
+   let $chckmrk2 = 'X'
+end-if
+if $family_resp = '3'
+   let $chckmrk3 = 'X'
+end-if
+if $family_resp = ''
+   let $chckmrkNA = 'X'
+end-if
+
+print ''					                     (+2)
+print 'Family Response'                                              (+2) center bold
+print $chckmrk1				                             (+2,1)
+print 'At least one person in the family agreed to seek or accept'   (+0,6)
+print 'one or more of the resources or services.'                    (+1,6)
+print $chckmrk2				                             (+2,1)
+print 'No one in the family agreed to seek or accept any of these'   (+0,6)
+print 'resources or services.'                                       (+1,6)
+print $chckmrk3				                             (+2,1)
+print 'Other (explain).'   					     (+0,6)
+print $chckmrkNA			                             (+2,1)
+print 'Not Applicable.'   					     (+0,6)
+
+END-PROCEDURE PRINT-FAMILY-RESPONSE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-COMMENTS                                                          *
+!                                                                           *
+!       This procedure prints the comments made by a worker.                *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-COMMENTS
+
+print ''			           (+2)
+print 'Comments'                           (+2) center bold
+print $comments                            (+2,1) wrap 76 100 strip=<13> on=<10>
+
+END-PROCEDURE PRINT-COMMENTS
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!****************************************************************************
+!                                                                           *
+! SqlErrorHandle                                                            *
+!                                                                           *
+!      This section handles formatting of messages for SQL errors.          *
+!      When an SQL error is encounterd, the program will write to           *
+!      the log file, program processing does not stop for SQL errors.       *
+!                                                                           *
+!  CALLS:  None                                                             *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!   NOTE:  NONE WERE NEEDED AT THE TIME OF CREATING THIS REPORT.            *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc'

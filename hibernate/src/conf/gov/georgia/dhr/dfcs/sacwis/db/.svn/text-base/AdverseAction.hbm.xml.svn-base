@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.AdverseAction" table="ADVERSE_ACTION" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+        <id name="aaid" type="java.lang.Integer">
+            <column name="AAID" precision="4" scale="0" />
+            <generator class="assigned" />
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+	
+        <many-to-one name="facility" class="gov.georgia.dhr.dfcs.sacwis.db.Facility" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true" property-ref="facid">
+           <column name="FACID" length="16" />
+        </many-to-one>
+        <property name="facid" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="FACID" length="16" />
+        </property>
+        <property name="trackid" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TRACKID" length="4" />
+        </property>
+        <property name="aasrc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="AASRC" length="3" />
+        </property>
+        <property name="srcother" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="SRCOTHER" length="100" />
+        </property>
+        <property name="eventid" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="EVENTID" length="50" />
+        </property>
+        <property name="fureq" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="FUREQ" length="1" />
+        </property>
+        <property name="aasrcdate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="AASRCDATE" length="7" />
+        </property>
+        <property name="prtypeid" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="PRTYPEID" length="50" />
+        </property>
+        <property name="aaltrdate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="AALTRDATE" length="7" />
+        </property>
+        <property name="grltrdate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="GRLTRDATE" length="7" />
+        </property>
+        <property name="ext" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="EXT" length="1" />
+        </property>
+        <property name="extdate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="EXTDATE" length="7" />
+        </property>
+        <property name="extdays" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="EXTDAYS" precision="4" scale="0" />
+        </property>
+        <property name="lettercomments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="LETTERCOMMENTS" />
+        </property>
+        <property name="monreq" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="MONREQ" length="1" />
+        </property>
+        <property name="monitsrtdate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="MONITSRTDATE" length="7" />
+        </property>
+        <property name="monvisits" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="MONVISITS" length="50" />
+        </property>
+        <property name="svynotes" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="SVYNOTES" />
+        </property>
+        <property name="revoutcome" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="REVOUTCOME" length="250" />
+        </property>
+        <property name="prehearoutcome" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="PREHEAROUTCOME" length="25" />
+        </property>
+        <property name="hearoutcome" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="HEAROUTCOME" length="25" />
+        </property>
+        <property name="hearingdec" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="HEARINGDEC" length="25" />
+        </property>
+        <property name="attny" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ATTNY" length="50" />
+        </property>
+        <property name="notes" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="NOTES" />
+        </property>
+        <property name="compldate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="COMPLDATE" length="7" />
+        </property>
+        <property name="unloutcome" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="UNLOUTCOME" length="25" />
+        </property>
+        <property name="finaloutcome" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="FINALOUTCOME" length="25" />
+        </property>
+        <property name="legltrrequest" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="LEGLTRREQUEST" length="3" />
+        </property>
+        <property name="legnotltrdate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="LEGNOTLTRDATE" length="7" />
+        </property>
+        <property name="legdatehearreq" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="LEGDATEHEARREQ" length="7" />
+        </property>
+        <property name="prehearconfdate1" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="PREHEARCONFDATE1" length="7" />
+        </property>
+        <property name="legdecisiondate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="LEGDECISIONDATE" length="7" />
+        </property>
+        <property name="co" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CO" length="1" />
+        </property>
+        <property name="ca" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CA" length="1" />
+        </property>
+        <property name="sa" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="SA" length="1" />
+        </property>
+        <property name="alj" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ALJ" length="1" />
+        </property>
+        <property name="codate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CODATE" length="7" />
+        </property>
+        <property name="coexpdate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="COEXPDATE" length="7" />
+        </property>
+        <property name="legcowo" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="LEGCOWO" length="1" />
+        </property>
+        <property name="legcoterms" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="LEGCOTERMS" />
+        </property>
+        <property name="fineeff" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="FINEEFF" length="7" />
+        </property>
+        <property name="originalfine" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ORIGINALFINE" precision="13" />
+        </property>
+        <property name="amtfine" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="AMTFINE" precision="13" />
+        </property>
+        <property name="pmtterms" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="PMTTERMS" precision="13" />
+        </property>
+        <property name="duedate" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DUEDATE" length="50" />
+        </property>
+        <property name="acknpymltr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ACKNPYMLTR" length="1" />
+        </property>
+        <property name="appeal" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="APPEAL" length="1" />
+        </property>
+        <property name="appealdhr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="APPEALDHR" length="1" />
+        </property>
+        <property name="appealcourt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="APPEALCOURT" length="1" />
+        </property>
+        <property name="appealors" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="APPEALORS" length="1" />
+        </property>
+        <property name="appealrrsp" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="APPEALRRSP" length="1" />
+        </property>
+        <property name="appealoutcome" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="APPEALOUTCOME" length="50" />
+        </property>
+        <property name="appealdate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="APPEALDATE" length="7" />
+        </property>
+        <property name="legnotes" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="LEGNOTES" />
+        </property>
+    </class>
+</hibernate-mapping>

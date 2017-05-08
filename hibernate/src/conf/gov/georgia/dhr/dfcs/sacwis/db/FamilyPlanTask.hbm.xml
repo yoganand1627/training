@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FamilyPlanTask" table="FAMILY_PLAN_TASK" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idFamilyPlanTask" type="integer" unsaved-value="0">
+      <column name="ID_FAMILY_PLAN_TASK" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_FAMILY_PLAN_TASK</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="familyPlanItem" class="gov.georgia.dhr.dfcs.sacwis.db.FamilyPlanItem" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_FAMILY_PLAN_ITEM" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="indCourtOrdered" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_COURT_ORDERED" length="1"/>
+    </property>
+    <property name="txtTask" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_TASK" length="1000"/>
+    </property>
+    <property name="dtCreated" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CREATED" length="7"/>
+    </property>
+    <property name="dtCompleted" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_COMPLETED" length="7"/>
+    </property>
+    <property name="dtApproved" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_APPROVED" length="7"/>
+    </property>
+    <property name="dtTaskComp" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_TASK_COMP" length="7"/>
+    </property>
+    <property name="dtCourtAct" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_COURT_ACT" length="7"/>
+    </property>
+    <property name="indCourtClose" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_COURT_CLOSE" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

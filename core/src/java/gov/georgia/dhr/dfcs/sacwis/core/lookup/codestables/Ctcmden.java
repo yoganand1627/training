@@ -1,0 +1,64 @@
+package gov.georgia.dhr.dfcs.sacwis.core.lookup.codestables;
+
+public interface Ctcmden {
+
+  public static final String CTCMDEN = "CTCMDEN";
+  public static final String CTCMDEN_0242 = "0242";
+  public static final String CTCMDEN_0252 = "0252";
+  public static final String CTCMDEN_0274 = "0274";
+  public static final String CTCMDEN_0284 = "0284";
+  public static final String CTCMDEN_0285 = "0285";
+  public static final String CTCMDEN_0439 = "0439";
+  public static final String CTCMDEN_0465 = "0465";
+  public static final String CTCMDEN_0471 = "0471";
+  public static final String CTCMDEN_0535 = "0535";
+  public static final String CTCMDEN_0578 = "0578";
+  public static final String CTCMDEN_0737 = "0737";
+  public static final String CTCMDEN_0778 = "0778";
+  public static final String CTCMDEN_1128 = "1128";
+  public static final String CTCMDEN_1153 = "1153";
+  public static final String CTCMDEN_1156 = "1156";
+  public static final String CTCMDEN_2031 = "2031";
+  public static final String CTCMDEN_2064 = "2064";
+  public static final String CTCMDEN_2091 = "2091";
+  public static final String CTCMDEN_2141 = "2141";
+  public static final String CTCMDEN_2143 = "2143";
+  public static final String CTCMDEN_2222 = "2222";
+  public static final String CTCMDEN_2266 = "2266";
+  public static final String CTCMDEN_2343 = "2343";
+  public static final String CTCMDEN_2517 = "2517";
+  public static final String CTCMDEN_2521 = "2521";
+  public static final String CTCMDEN_2665 = "2665";
+  public static final String CTCMDEN_2712 = "2712";
+  public static final String CTCMDEN_2714 = "2714";
+  public static final String CTCMDEN_2716 = "2716";
+  public static final String CTCMDEN_2723 = "2723";
+  public static final String CTCMDEN_2725 = "2725";
+  public static final String CTCMDEN_2727 = "2727";
+  public static final String CTCMDEN_2746 = "2746";
+  public static final String CTCMDEN_2750 = "2750";
+  public static final String CTCMDEN_2806 = "2806";
+  public static final String CTCMDEN_3699 = "3699";
+  public static final String CTCMDEN_4034 = "4034";
+  public static final String CTCMDEN_4112 = "4112";
+  public static final String CTCMDEN_4117 = "4117";
+  public static final String CTCMDEN_4321 = "4321";
+  public static final String CTCMDEN_4354 = "4354";
+  public static final String CTCMDEN_4355 = "4355";
+  public static final String CTCMDEN_4423 = "4423";
+  public static final String CTCMDEN_4450 = "4450";
+  public static final String CTCMDEN_4714 = "4714";
+  public static final String CTCMDEN_4908 = "4908";
+  public static final String CTCMDEN_5609 = "5609";
+  public static final String CTCMDEN_5750 = "5750";
+  public static final String CTCMDEN_5761 = "5761";
+  public static final String CTCMDEN_6007 = "6007";
+  public static final String CTCMDEN_6029 = "6029";
+  public static final String CTCMDEN_6101 = "6101";
+  public static final String CTCMDEN_6288 = "6288";
+  public static final String CTCMDEN_6380 = "6380";
+  public static final String CTCMDEN_6386 = "6386";
+  public static final String CTCMDEN_9918 = "9918";
+  public static final String CTCMDEN_9955 = "9955";
+
+}

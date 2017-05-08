@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.DelvrdSvcDtl" table="DELVRD_SVC_DTL" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idSvcDtl" type="integer" unsaved-value="0">
+      <column name="ID_SVC_DTL" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_DELVRD_SVC_DTL</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="svcAuthDetail" class="gov.georgia.dhr.dfcs.sacwis.db.SvcAuthDetail" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_SVC_AUTH_DTL" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_SVC_DTL_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="invoice" class="gov.georgia.dhr.dfcs.sacwis.db.Invoice" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_INVOICE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="delvrdSvcDtl" class="gov.georgia.dhr.dfcs.sacwis.db.DelvrdSvcDtl" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_SVC_DTL_REVRSAL_ORIG" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdSvcDtlCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SVC_DTL_COUNTY" length="3"/>
+    </property>
+    <property name="amtSvcDtlFeePaid" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SVC_DTL_FEE_PAID" precision="10"/>
+    </property>
+    <property name="amtSvcDtlIncome" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SVC_DTL_INCOME" precision="10"/>
+    </property>
+    <property name="amtSvcDtlUnitRate" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SVC_DTL_UNIT_RATE" precision="7"/>
+    </property>
+    <property name="cdSvcDtlInvoDisptn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_SVC_DTL_INVO_DISPTN" length="2"/>
+    </property>
+    <property name="cdSvcDtlLiType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SVC_DTL_LI_TYPE" length="2"/>
+    </property>
+    <property name="cdSvcDtlObjCode" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SVC_DTL_OBJ_CODE" length="6"/>
+    </property>
+    <property name="cdSvcDtlObjCert" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SVC_DTL_OBJ_CERT" length="6"/>
+    </property>
+    <property name="cdSvcDtlObjPure" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SVC_DTL_OBJ_PURE" length="6"/>
+    </property>
+    <property name="cdSvcDtlPac" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SVC_DTL_PAC" length="3"/>
+    </property>
+    <property name="cdSvcDtlService" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SVC_DTL_SERVICE" length="6"/>
+    </property>
+    <property name="cdSvcDtlUnitType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_SVC_DTL_UNIT_TYPE" length="3"/>
+    </property>
+    <property name="indSvcDtlRejItem" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_SVC_DTL_REJ_ITEM" length="1"/>
+    </property>
+    <property name="moSvcDtlSvcMonth" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="MO_SVC_DTL_SVC_MONTH" precision="2" scale="0"/>
+    </property>
+    <property name="nbrSvcDtlCsli" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SVC_DTL_CSLI" precision="4" scale="0"/>
+    </property>
+    <property name="nbrSvcDtlFromDay" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SVC_DTL_FROM_DAY" precision="3" scale="0"/>
+    </property>
+    <property name="nbrSvcDtlObjCert" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SVC_DTL_OBJ_CERT" precision="9" scale="6"/>
+    </property>
+    <property name="nbrSvcDtlObjCode" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SVC_DTL_OBJ_CODE" precision="9" scale="6"/>
+    </property>
+    <property name="nbrSvcDtlObjPure" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SVC_DTL_OBJ_PURE" precision="9" scale="6"/>
+    </property>
+    <property name="nbrSvcDtlToDay" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SVC_DTL_TO_DAY" precision="3" scale="0"/>
+    </property>
+    <property name="nbrSvcDtlUnitQty" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SVC_DTL_UNIT_QTY" precision="7"/>
+    </property>
+    <property name="yrSvcDtlSvcYear" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="YR_SVC_DTL_SVC_YEAR" precision="4" scale="0"/>
+    </property>
+    <property name="cdSvcDtlFundStream" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_SVC_DTL_FUND_STREAM" length="2"/>
+    </property>
+    <property name="nbrCntrctPrd" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CNTRCT_PRD" precision="2" scale="0"/>
+    </property>
+    <property name="cdStgFnd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STG_FND" length="3"/>
+    </property>
+    <property name="cdStgTypFnd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STG_TYP_FND" length="5"/>
+    </property>
+    <property name="cdStgUsd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STG_USD" length="3"/>
+    </property>
+    <property name="cdStgTypUsd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STG_TYP_USD" length="5"/>
+    </property>
+    <property name="amtSmilePaid" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="AMT_SMILE_PAID" precision="10"/>
+    </property>
+    <property name="nbrCheck" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CHECK" precision="10" scale="0"/>
+    </property>
+    <property name="dtPaid" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PAID" length="7"/>
+    </property>
+    <bag name="delvrdSvcDtls" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_SVC_DTL_REVRSAL_ORIG" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.DelvrdSvcDtl" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

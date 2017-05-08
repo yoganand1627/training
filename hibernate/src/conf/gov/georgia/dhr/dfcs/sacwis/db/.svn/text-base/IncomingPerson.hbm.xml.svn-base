@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.IncomingPerson" table="INCOMING_PERSON" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idIncmgPerson" type="integer" unsaved-value="0">
+      <column name="ID_INCMG_PERSON" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_INCOMING_PERSON</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="nbrIncmgPersAge" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INCMG_PERS_AGE" precision="3" scale="0"/>
+    </property>
+    <property name="dtIncmgPersDeath" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INCMG_PERS_DEATH" length="7"/>
+    </property>
+    <property name="dtIncmgPersBirth" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INCMG_PERS_BIRTH" length="7"/>
+    </property>
+    <property name="indIncmgPersDobApprox" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCMG_PERS_DOB_APPROX" length="1"/>
+    </property>
+    <property name="cdIncmgPersDeath" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_PERS_DEATH" length="3"/>
+    </property>
+    <property name="cdIncmgPersMaritlStat" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_PERS_MARITL_STAT" length="2"/>
+    </property>
+    <property name="cdIncmgPersLanguage" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_PERS_LANGUAGE" length="2"/>
+    </property>
+    <property name="cdIncmgPersSex" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INCMG_PERS_SEX" length="1"/>
+    </property>
+    <property name="nmIncmgPersFull" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_INCMG_PERS_FULL" length="25"/>
+    </property>
+    <property name="cdIncmgPersEthnic" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_PERS_ETHNIC" length="2"/>
+    </property>
+    <property name="indInfoSwap" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_INFO_SWAP" length="1"/>
+    </property>
+    <property name="cdIncmgPersTitle" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_PERS_TITLE" length="3"/>
+    </property>
+    <property name="cdIncmgPersRsnDeath" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_PERS_RSN_DEATH" length="3"/>
+    </property>
+    <property name="indIncmgPersAgeApprox" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCMG_PERS_AGE_APPROX" length="1"/>
+    </property>
+    <property name="cdIncmgPersMatchType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_PERS_MATCH_TYPE" length="3"/>
+    </property>
+    <property name="cdIncmgPersPrfCitizenship" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_PERS_PRF_CITIZENSHIP" length="4"/>
+    </property>
+    <property name="indIncmgPersUsCitizen" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCMG_PERS_US_CITIZEN" length="1"/>
+    </property>
+    <property name="cdIncmgPersImmgrtnStatus" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_PERS_IMMGRTN_STATUS" length="4"/>
+    </property>
+    <property name="cdIncmgPersCntryOrigin" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INCMG_PERS_CNTRY_ORIGIN" length="4"/>
+    </property>
+    <bag name="incomingPersonIds" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_INCMG_PERSON" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IncomingPersonId" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="incomingNames" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_INCMG_PERSON" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IncomingName" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="incomingPhones" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_INCMG_PERSON" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IncomingPhone" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="incomingEthnicities" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IncomingEthnicity" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="incomingRaces" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IncomingRace" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="incomingAddresses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_INCMG_PERSON" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IncomingAddress" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

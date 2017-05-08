@@ -1,0 +1,273 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Tue Jan 08 15:09:19 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\sacwis\launcher\src\sqr\CaseloadListing00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.200 
+  Right-Margin  = 0.300 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Date $rmvlDt 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Perm Plan : Permanency Plan' (26,8,0) Underline 
+ Print 'Plcmt Type: Placement Type' (26,271,0) Underline 
+ Print 'Legal Status' (26,454,0) Underline 
+ Print 'CFH - CPA Family Foster Home ' (71,270,0)
+ Print 'IFH - CCI Family Foster Home ' (186,270,0)
+ Print 'ADH - Adoptive Home ' (42,270,0)
+ Print 'EMS - Emergency Shelter ' (100,270,0)
+ Print 'GRH - Group Home ' (114,270,0)
+ Print 'CCI - Child Care Institution ' (57,270,0)
+ Print 'SFH - Specialized Foster Home' (330,270,0)
+ Print 'PRN - Parent' (258,270,11)
+ Print 'REP - Relative - Paid' (287,270,0)
+ Print 'NRP - Non-Relative Paid' (215,270,0)
+ Print 'REU - Relative - Unpaid' (301,270,23) Wrap 23 2 line-height=10 Keep-Top on= 
+ Print 'RFH - Relative Foster Home' (272,270,26) Wrap 26 2 line-height=10 Keep-Top on= 
+ Print 'DFH - DFCS Family Foster Home' (85,270,0)
+ Print 'LAF - ILP/AfterCare' (201,270,16)
+ Print 'ICR - ICPC - Relative' (172,270,21) Wrap 21 2 line-height=10 Keep-Top on= 
+ Print 'ICF - ICPC - Foster' (157,270,19) Wrap 19 2 line-height=10 Keep-Top on= 
+ Print 'ICA - ICPC - Adoptive' (143,270,0)
+ Print 'HOS - Hospital' (129,270,18)
+ Print 'RNA - Runaway' (316,270,16)
+ Print 'YDC - YDC/RYDC' (344,270,14)
+ Print 'OTR - Other Resource' (244,270,22)
+ Print 'OTP - Other Person' (229,270,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions:' (13,7,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'RUI - Reunification' (147,8,0)
+ Print 'LLR - Live with fit and willing Relatives' (115,8,0)
+ Print 'ADA - Adoption' (42,8,0)
+ Print 'FCO - Another Planned Permanent Living Arrangement Through Long Term Foster Care' (56,8,52) Wrap 52 3 line-height=10 Keep-Top on= 
+ Print 'LAE - Another Planned Permanent Living Arrangement through Emancipation' (94,8,53) Wrap 53 3 line-height=10 Keep-Top on= 
+ Print 'GDS - Guardianship' (80,8,18)
+ Print 'NOS - None Selected' (133,8,17)
+ Print 'AFS - Aftercare/Supervision' (42,454,0)
+ Print 'CTD - Committed To DJJ' (56,454,0)
+ Print 'ILP - ILP Aftercare' (71,454,0)
+ Print 'JCD - Joint Commitment With DJJ' (85,454,0)
+ Print 'NAF - Not In DFCS Custody - Adoption Finalized' (99,454,0)
+ Print 'NCT - Not In DFCS Custody - Child Turned 18 (No ILP)' (114,454,0)
+ Print 'NCD - Not In DFCS Custody - Child Death' (128,454,0)
+ Print 'NTT - Not In DFCS Custody - Custody Transferred To Tribe' (157,454,0)
+ Print 'NCO - Not In DFCS Custody - Custody To Other' (143,454,0)
+ Print 'NGP - Not In DFCS Custody - Guardianship' (186,454,0)
+ Print 'NPR - Not In DFCS Custody - Perm Custody To Relative For Adoption' (215,454,0)
+ Print 'NPC - Not In DFCS Custody - Parental Custody' (200,454,0)
+ Print 'NCE - Not In DFCS Custody - Emancipated' (172,454,0)
+ Print 'PCT - Permanent Court' (229,454,0)
+ Print 'PVL - Permanent Voluntary' (244,454,0)
+ Print 'STE - Short Term Emergency Care' (258,454,0)
+ Print 'TCT - Temporary Court' (272,454,0)
+ Print 'TVL - Temporary Voluntary' (287,454,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (355,706) '' ' of '
+ Last-Page (355,731) 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=60   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+Do Get-Input
+ Position (1,1)
+ Do Master_Query
+End-Program
+begin-procedure Get-Input
+! -----------------------------
+Input $_I102_ID_WKLD_PERSON 'Enter a value for ID_WKLD_PERSON' MaxLen=16  Type=Number
+If IsNull($_I102_ID_WKLD_PERSON) or IsBlank($_I102_ID_WKLD_PERSON)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Let $brb_tmp = 'ID_WKLD_PERSON'
+Let $where_clause102 = $brb_tmp  || ' = ' || $_I102_ID_WKLD_PERSON
+
+End-procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select
+(SELECT  Placement1.CD_PLCMT_TYPE  FROM  EVENT,  PLACEMENT Placement1 WHERE Placement1.ID_PLCMT_EVENT = (select max(placement01.id_plcmt_event) from placement placement01 where placement01.id_plcmt_child=Placement1.ID_PLCMT_CHILD) AND  EVENT.ID_EVENT = Placement1.ID_PLCMT_EVENT AND  Placement1.ID_PLCMT_CHILD = PERSON00.ID_PERSON) &Master_Query_PlcmtSub
+(SELECT  Legal_Status1.CD_LEGAL_STAT_STATUS  FROM  EVENT,  LEGAL_STATUS Legal_Status1 WHERE Legal_Status1.ID_LEGAL_STAT_EVENT =(select max(LEGAL_STATUS01.ID_LEGAL_STAT_EVENT) from legal_status legal_status01 where legal_status01.id_person=Legal_Status1.ID_PERSON) AND  EVENT.ID_EVENT = Legal_Status1.ID_LEGAL_STAT_EVENT AND  Legal_Status1.ID_PERSON = PERSON00.ID_PERSON) &Master_Query_LegStatus
+(SELECT  FCCP_Family1.CD_PRIM_PERM_PLAN  FROM  EVENT,  FCCP_FAMILY FCCP_Family1 WHERE FCCP_Family1.ID_EVENT=(select max(FCCP_FAMILY01.ID_EVENT) from FCCP_FAMILY FCCP_FAMILY01 where FCCP_FAMILY01.id_case=FCCP_Family1.ID_CASE) AND  EVENT.ID_EVENT = FCCP_Family1.ID_EVENT AND  FCCP_Family1.ID_CASE = STAGE_PERSON_LINK00.ID_CASE) &Master_Query_PermPlan
+(SELECT  Legal_Status2.DT_LEGAL_STAT_CRT_ODR_EXP_DT  FROM  LEGAL_STATUS Legal_Status2,  EVENT WHERE Legal_Status2.ID_LEGAL_STAT_EVENT =(select max(LEGAL_STATUS02.ID_LEGAL_STAT_EVENT) from legal_status legal_status02 where  legal_status02.id_person=Legal_Status2.ID_PERSON) AND  EVENT.ID_EVENT = Legal_Status2.ID_LEGAL_STAT_EVENT AND  Legal_Status2.ID_PERSON = PERSON00.ID_PERSON) &Master_Query_CrtOrderDtSub
+(SELECT  CN_Removal1.DT_REMOVAL  FROM  EVENT,  CNSRVTRSHP_REMOVAL CN_Removal1 WHERE CN_Removal1.ID_REMOVAL_EVENT =(select max( CNSRVTRSHP_REMOVAL01.ID_REMOVAL_EVENT)  from cnsrvtrshp_removal cnsrvtrshp_removal01 where cnsrvtrshp_removal01.id_victim=CN_Removal1.ID_VICTIM) AND  CN_Removal1.ID_REMOVAL_EVENT = EVENT.ID_EVENT AND  CN_Removal1.ID_VICTIM = PERSON00.ID_PERSON) &Master_Query_Cnsr_Rmvl
+(SELECT  (trunc(months_between(sysdate, CN_Removal2.DT_REMOVAL )))  FROM  CNSRVTRSHP_REMOVAL CN_Removal2,  EVENT WHERE CN_Removal2.ID_REMOVAL_EVENT = (select max(CNSRVTRSHP_REMOVAL00.ID_REMOVAL_EVENT) from CNSRVTRSHP_REMOVAL CNSRVTRSHP_REMOVAL00 where   CNSRVTRSHP_REMOVAL00.ID_VICTIM  =  CN_Removal2.ID_VICTIM) AND  CN_Removal2.ID_REMOVAL_EVENT = EVENT.ID_EVENT AND  CN_Removal2.ID_VICTIM = PERSON00.ID_PERSON) &Master_Query_MnthsnCare
+ID_WKLD_PERSON &Master_Query_ID_WKLD_PERSON
+ID_WKLD_STAGE &Master_Query_ID_WKLD_STAGE
+PERSON00.ID_PERSON &Master_Query_PERSON00.ID_PERSON
+PERSON00.NM_PERSON_FULL &Master_Query_PERSON00.NM_PERSON_FULL
+PERSON.NM_PERSON_FULL &Master_Query_PERSON.NM_PERSON_FULL
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+NM_WKLD_STAGE &Master_Query_NM_WKLD_STAGE (15,2,18) Wrap 18 4 line-height=12 Keep-Top on= 
+ID_WKLD_CASE &Master_Query_ID_WKLD_CASE (15,103) Edit 8888888888na
+PERSON00.DT_PERSON_BIRTH &Master_Query_PERSON00.DT_PERSON_BIRTH (15,342) Edit MM/DD/YYYY
+PERSON00.CD_PERSON_SEX &Master_Query_PERSON00.CD_PERSON_SEX (15,430,4)
+DT_CASE_OPENED &Master_Query_DT_CASE_OPENED (15,158) Edit MM/DD/YYYY
+DT_WKLD_STAGE_PERS_LINK &Master_Query_DT_WKLD_STAGE_PERS_LINK (15,218) Edit MM/DD/YYYY
+CD_WKLD_STAGE_PERS_ROLE &Master_Query_CD_WKLD_STAGE_PERS_ROLE (15,277,5)
+CD_RACE &Master_Query_CD_RACE (15,402,2)
+CD_STAGE_CURR_PRIORITY &Master_Query_CD_STAGE_CURR_PRIORITY (15,311,3)
+ Print &Master_Query_PlcmtSub (15,542,4)
+ Print &Master_Query_LegStatus (15,469,3)
+ Print &Master_Query_PermPlan (15,511,3)
+ Print &Master_Query_CrtOrderDtSub (15,586) Edit MM/DD/YYYY
+ Print &Master_Query_Cnsr_Rmvl (15,643) Edit MM/DD/YYYY
+ Print &Master_Query_MnthsnCare (15,705) Edit 888888na
+ Next-Listing   ! Close up the wrapped columns
+ If #page-count > #pageNum
+  Let #pageNum = #page-count
+  Let $Master_Query_ID_WKLD_PERSONFirst = &Master_Query_ID_WKLD_PERSON
+  Let $Master_Query_ID_WKLD_PERSONFirst = &Master_Query_ID_WKLD_PERSON
+  Let $Master_Query_PERSON.NM_PERSON_FULLFirst = &Master_Query_PERSON.NM_PERSON_FULL
+ End-If
+ Add 1 To #1ROW_COUNT
+ Next-Listing  Need=22
+From  STAGE_PERSON_LINK STAGE_PERSON_LINK00, WORKLOAD
+,      PERSON PERSON00, STAGE, CAPS_CASE
+,      PERSON_RACE, PERSON
+      Where STAGE.ID_CASE = CAPS_CASE.ID_CASE
+            And STAGE_PERSON_LINK00.ID_PERSON = PERSON00.ID_PERSON
+            And STAGE.ID_STAGE = STAGE_PERSON_LINK00.ID_STAGE
+            And PERSON00.ID_PERSON = PERSON_RACE.ID_PERSON
+            And STAGE.ID_STAGE = WORKLOAD.ID_WKLD_STAGE
+            And WORKLOAD.ID_WKLD_PERSON = PERSON.ID_PERSON
+ And ((WORKLOAD.CD_WKLD_STAGE_PERS_ROLE  IN ('PR','SE')
+ And (WORKLOAD.CD_WKLD_STAGE  IN ('SUB','ADO','PFC','PAD')
+ And STAGE_PERSON_LINK00.CD_STAGE_PERS_ROLE = 'PC')) Or (WORKLOAD.CD_WKLD_STAGE_PERS_ROLE  IN ('PR','SE')
+ And (WORKLOAD.CD_WKLD_STAGE  NOT IN ('SUB','ADO','PFC','PAD','FSU','INT','FAD')
+ And STAGE_PERSON_LINK00.CD_STAGE_PERS_REL_INT = 'PK')))
+ And [$where_clause102]
+Order By NM_WKLD_STAGE
+End-Select
+ Next-Listing
+ Next-Listing  Need=19
+ If #1ROW_COUNT > 0
+ let #cntStage = #1ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #cntStage (19,43) Bold  Edit 99999999na
+  Print 'Total:'  (19,4) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 60 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (15,688) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (15,622,0)
+ Print 'Division of Family and Children Services' (14,292,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Caseload Listing ' (55,319,0) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='C:\SQRNewReports\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'CaseManager:' (107,4,12) Bold 
+ Print $Master_Query_ID_WKLD_PERSONFirst (107,72) Edit 9999999999na Bold 
+ Print 'Case ID' (130,103,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on= 
+ Print 'Stage Name' (130,2,0) Underline  Bold 
+ Print 'DOB' (130,342,5) Underline  Bold 
+ Print 'Gender' (130,430,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top on=  
+ Print 'Assgn Date' (130,218,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top on=  
+ Print 'Assgn Type' (130,277,5) Underline  Bold  Wrap 5 3 line-height=12 Keep-Top on= 
+ Print 'Race' (130,402,4) Underline  Bold 
+ Print 'Date Case Opened' (130,158,10) Underline  Bold  Wrap 10 3 line-height=12 Keep-Top on=  
+ Print 'Resp Time' (130,311,4) Underline  Bold  Wrap 4 2 line-height=12 Keep-Top on= 
+ Print 'Plcmt Type' (130,541,5) Underline  Bold  Wrap 5 2 line-height=12 Keep-Top on= 
+ Print 'Legal Status' (130,468,6) Underline  Bold  Wrap 6 3 line-height=12 Keep-Top on=  
+ Print 'Perm Plan' (130,508,4) Underline  Bold  Wrap 4 3 line-height=12 Keep-Top on= 
+ Print 'Ct Ordr Exp Dt' (130,582,9) Underline  Bold  Wrap 9 3 line-height=12 Keep-Top on=  
+ Print 'Rmvl Dt' (130,638,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on= 
+ Print 'Mnths in Care' (130,701,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on=  
+ Print $Master_Query_PERSON.NM_PERSON_FULLFirst (106,133,25) Bold 
+ Else   ! put a non combined page header
+ Print 'CaseManager:' (20,4,12) Bold 
+ Print $Master_Query_ID_WKLD_PERSONFirst (20,72) Edit 9999999999na Bold 
+ Print 'Case ID' (43,103,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on= 
+ Print 'Stage Name' (43,2,0) Underline  Bold 
+ Print 'DOB' (43,342,5) Underline  Bold 
+ Print 'Gender' (43,430,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top on=  
+ Print 'Assgn Date' (43,218,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top on=  
+ Print 'Assgn Type' (43,277,5) Underline  Bold  Wrap 5 3 line-height=12 Keep-Top on= 
+ Print 'Race' (43,402,4) Underline  Bold 
+ Print 'Date Case Opened' (43,158,10) Underline  Bold  Wrap 10 3 line-height=12 Keep-Top on=  
+ Print 'Resp Time' (43,311,4) Underline  Bold  Wrap 4 2 line-height=12 Keep-Top on= 
+ Print 'Plcmt Type' (43,541,5) Underline  Bold  Wrap 5 2 line-height=12 Keep-Top on= 
+ Print 'Legal Status' (43,468,6) Underline  Bold  Wrap 6 3 line-height=12 Keep-Top on=  
+ Print 'Perm Plan' (43,508,4) Underline  Bold  Wrap 4 3 line-height=12 Keep-Top on= 
+ Print 'Ct Ordr Exp Dt' (43,582,9) Underline  Bold  Wrap 9 3 line-height=12 Keep-Top on=  
+ Print 'Rmvl Dt' (43,638,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on= 
+ Print 'Mnths in Care' (43,701,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on=  
+ Print $Master_Query_PERSON.NM_PERSON_FULLFirst (20,133,25) Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (14,707) '' ' of '
+ Last-Page (14,731) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

@@ -1,0 +1,585 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Thu Feb 18 09:35:52 2010 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2010\Data Fixes 2010\Case Review\CaseReviewList00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 1.000 
+  Bottom-Margin = 1.000 
+  Left-Margin   = 0.600 
+  Right-Margin  = 0.600 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=204    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (10,1,0) Underline  Bold 
+ Print 'reviews the Review Period is the month prior to the date the sample was generated. A sample generated 11/1/2009 would have a review period of 10/2009.' (49,1,150)
+ Print 'Case Manager:' (163,1,0) Bold 
+ Print 'Date Assigned:' (242,1,0) Bold 
+ Print 'Date Complete:' (273,1,0) Bold 
+ Print 'Date Corrections Due:' (306,1,0) Bold 
+ Print 'Date Corrections Complete:' (338,1,0) Bold 
+ Print 'The most recent primary case manager assigned to the stage being reviewed.' (163,141,135)
+ Print 'Date the case was assigned/generated to the reviewer. Date Assigned is mapped to the "Date Entered" on the Case Review ' (242,141,140)
+ Print 'Date the case review is completed by the reviewer. Date Completed is mapped to the "Date Review Completed" on the Case' (273,141,174)
+ Print 'Due date of corrections noted in the case review. Date Corrections Due is mapped to the "Date Corrections Due" on the Case ' (306,141,165)
+ Print 'Date Corrections completed by staff. Date Corrections Complete is mapped to the "Date Corrections Complete" on the Case' (339,141,196)
+ Print 'Review Status:' (226,1,13) Bold 
+ Print 'The status of the case review: new = new; proc = in progress; comp = complete' (226,141,105)
+ Print 'Review Page.' (290,141,52)
+ Print 'Review Page under the summary tab.' (322,141,61)
+ Print 'Review Page under the summary tab.' (355,141,62)
+ Print 'The report is sorted by Case Manager, Case ID, and Stage Name ascending.' (109,1,98)
+ Print 'This report displays a list of cases to be reviewed for a specific review month and type with optional region, county, and unit parameters. Note, for sample ' (34,2,195)
+ Print 'Assigned Reviewer:' (147,1,0) Bold 
+ Print 'The name of the person who has been assigned to complete the case review.' (147,141,135)
+ Print 'Originally Assigned:' (179,1,0) Bold 
+ Print 'The name of the person who was originally assigned to conduct the case review.' (179,141,100)
+ Print 'When the Assigned Reviewer''s County differs from the stage county, the Assigned Reviewer''s county is displayed in parentheses to the right of the Assigned' (64,1,189)
+ Print 'Reviewer''s name. "Multi-County" will display beside the Assigned Reviewer''s name when the reviewer is in a non-county specific unit.' (79,1,169)
+ Print 'List page.' (257,141,86)
+ Print 'C/S:' (195,1,0) Bold 
+ Print 'The batch sample type indicator. C=County Director Sample; S= Supervisor Sample.  This field will be blank for Case Reviews ' (195,141,173)
+ Print 'other than Sample Review. ' (210,141,61)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get_Date
+ Do Get-Input
+ Do Get_Region_County
+ Do ReportTotal($_dt_report,$_where_clause_region_county,$_I1001_CD_REVIEW_TYPE,#RptTotal)
+ Do CountCompReviews($_dt_report,$_where_clause_region_county,$_I1001_CD_REVIEW_TYPE,#CountReviews)
+
+
+ Position (1,1)
+ 
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I1001_CD_REVIEW_TYPE 'Enter a value for CD_REVIEW_TYPE' MaxLen=3  Type=Char
+If IsNull($_I1001_CD_REVIEW_TYPE) or IsBlank($_I1001_CD_REVIEW_TYPE)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Let $Rev_Type = $_I1001_CD_REVIEW_TYPE
+Do Get-RevTypeDecode
+If SubStr($_I1001_CD_REVIEW_TYPE, 1, 1) != ''''
+  Let $_I1001_CD_REVIEW_TYPE = '''' || $_I1001_CD_REVIEW_TYPE || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I1001_CD_REVIEW_TYPE,'''',0) = 0 and instr($_I1001_CD_REVIEW_TYPE,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_REVIEW_TYPE'
+   Let $where_clause1001 = $brb_tmp  || ' = ' ||  '''' || $_I1001_CD_REVIEW_TYPE || '''' 
+ Else
+   If (instr($_I1001_CD_REVIEW_TYPE,'''',0) = 0 and instr($_I1001_CD_REVIEW_TYPE,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_REVIEW_TYPE'
+     Let $where_clause1001 = $brb_tmp  || ' = ' || $_I1001_CD_REVIEW_TYPE
+   End-If
+ End-If
+End-Procedure
+Begin-Procedure Get-RevTypeDecode
+Begin-Select
+Decode &ReviewType1
+from codes_tables
+where codes_tables.CODE_TYPE = 'CCSRTYPE'
+and code = $_I1001_CD_REVIEW_TYPE
+end-select
+ move &ReviewType1 to $_Rev_Type
+end-procedure
+
+
+
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #10ROW_COUNT
+Begin-Select Distinct
+(EMPLOYEE.NM_EMPLOYEE_LAST  || ', ' ||  EMPLOYEE.NM_EMPLOYEE_FIRST) &OrginallyAssigned
+ID_REVIEWER_PERSON &Rever
+STAGE.ID_STAGE &Master_Query_STAGE.ID_STAGE
+CD_REVIEW_TYPE &Master_Query_CD_REVIEW_TYPE
+NBR_UNIT &Master_Query_NBR_UNIT
+CD_STAGE_CNTY &Master_Query_CD_STAGE_CNTY
+ReviewTypeDecode.DECODE &Review_Type
+DT_REVIEW &Master_Query_DT_REVIEW
+ID_CREATED_FOR_PERSON &Creator
+(EMP_REVIEWER.NM_EMPLOYEE_LAST  || ', ' ||  EMP_REVIEWER.NM_EMPLOYEE_FIRST) &REVIEWER
+('(' || DECODE( Reviewer_County.DECODE , '-None-',  '-Multi-County-',   Reviewer_County.DECODE ) || ')') &ReviewerCounty_Decode
+CD_COUNTY &Master_Query_CD_COUNTY
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_STAGE_REGION &Master_Query_CD_STAGE_REGION () On-Break Set=10 Level=1 Save=$prev_stage_region Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc1001 After=Master_QueryCD_STAGE_REGION_AfterProc1001
+StageCountyDecode.DECODE &StageCntyDecode () On-Break Set=10 Level=2 Save=$prev_stage_cnty Print=Never Before=Master_QueryDECODE_BeforeProc1002 After=Master_QueryDECODE_AfterProc1002
+UNIT.ID_UNIT &Master_Query_UNIT.ID_UNIT () On-Break Set=10 Level=3 Print=Never Before=Master_QueryID_UNIT_BeforeProc1003 After=Master_QueryID_UNIT_AfterProc1003
+EMP_REVIEWER.ID_PERSON &EmpReviewer () On-Break Set=10 Level=4 Print=Never Before=Master_QueryID_PERSON_BeforeProc1004
+NM_STAGE &Master_Query_NM_STAGE (15,56,22)
+CaseManager.NM_PERSON_FULL &CaseManager (15,171,22)
+STAGE.ID_CASE &Master_Query_STAGE.ID_CASE (15,1) Edit 8888888888na
+DT_CORRECTION_DUE &Master_Query_DT_CORRECTION_DUE (15,599) Edit MM/DD/YYYY
+DT_CORRECTION_COMPLETE &Master_Query_DT_CORRECTION_COMPLETE (15,655) Edit MM/DD/YYYY
+CD_EVENT_STATUS &Master_Query_CD_EVENT_STATUS (15,454,4)
+StageTypeDecode.DECODE &Stage_Type (15,427,4)
+DT_EVENT_OCCURRED &Master_Query_DT_EVENT_OCCURRED (15,488) Edit MM/DD/YYYY
+ Print &OrginallyAssigned (15,288,22)
+DT_REVIEW_COMPLETE &Master_Query_DT_REVIEW_COMPLETE (15,544) Edit MM/DD/YYYY
+CD_BATCH_SAMPLE_TYPE &Master_Query_CD_BATCH_SAMPLE_TYPE (15,406,3)
+ Add 1 To #10ROW_COUNT
+ Add 1 To #1001ROW_COUNT
+ Add 1 To #1002ROW_COUNT
+ Add 1 To #1003ROW_COUNT
+ Next-Listing  Need=15
+From  STAGE, EVENT
+,      CASE_REVIEW, STAGE_PERSON_LINK SPL_CM, PERSON CaseManager
+,      UNIT, CCOUNT StageCountyDecode, CODES_TABLES ReviewTypeDecode
+,      CODES_TABLES StageTypeDecode, EMPLOYEE, EMPLOYEE EMP_REVIEWER
+,      CCOUNT Reviewer_County
+      Where CASE_REVIEW.ID_CSR_EVENT = EVENT.ID_EVENT
+            And CASE_REVIEW.ID_STAGE = EVENT.ID_EVENT_STAGE
+            And STAGE.ID_STAGE = EVENT.ID_EVENT_STAGE
+            And SPL_CM.ID_STAGE = STAGE.ID_STAGE
+            And CaseManager.ID_PERSON = SPL_CM.ID_PERSON
+            And STAGE.CD_STAGE_CNTY = StageCountyDecode.CODE
+            And CASE_REVIEW.CD_REVIEW_TYPE = ReviewTypeDecode.CODE
+            And STAGE.CD_STAGE = StageTypeDecode.CODE
+            And UNIT.ID_UNIT = EMP_REVIEWER.ID_EMP_UNIT
+            And Reviewer_County.CODE = UNIT.CD_COUNTY
+ And SPL_CM.CD_STAGE_PERS_ROLE IN ('PR','HP')
+ And [$where_clause1001]
+ And TO_DATE(CASE_REVIEW.REVIEW_PERIOD,'MM/YYYY') = to_DATE($_dt_report, 'MM/YYYY')
+ And ReviewTypeDecode.CODE_TYPE = 'CCSRTYPE'
+ And [$_where_clause_region_county]
+ And StageTypeDecode.CODE_TYPE = 'CTXTOGA'
+ And EMP_REVIEWER.ID_PERSON = NVL( CASE_REVIEW.ID_REVIEWER_PERSON , CASE_REVIEW.ID_CREATED_FOR_PERSON)
+ And EMPLOYEE.ID_PERSON = NVL( CASE_REVIEW.ID_CREATED_FOR_PERSON , CASE_REVIEW.ID_REVIEWER_PERSON)
+Order By CD_STAGE_REGION
+,      StageCountyDecode.DECODE
+,      NBR_UNIT
+,      UNIT.ID_UNIT
+,      (EMP_REVIEWER.NM_EMPLOYEE_LAST  || ', ' ||  EMP_REVIEWER.NM_EMPLOYEE_FIRST)
+,      ID_REVIEWER_PERSON
+,      STAGE.ID_CASE
+,      NM_STAGE
+,      CaseManager.NM_PERSON_FULL
+End-Select
+ Next-Listing
+ Next-Listing  Need=54
+ If #10ROW_COUNT > 0
+ Graphic (5,1,703) Horz-Line 20 
+ Position (7,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Report Total of Case Reviews:'  (21,1) Bold 
+ let #ReportTotal = #10ROW_COUNT
+  Print #ReportTotal (21,278) Bold  Edit 99999999na
+   Let #CountCompReviews=#countReviews
+ Print #CountCompReviews (38,289) Edit 999999 Bold 
+  Print 'Report Total of Completed Case Reviews:'  (38,1) Bold 
+   If #RptTotal = 0
+    ! do nothing
+ Else
+ Let #CountCompReviews=#countReviews
+ Let #RptTotal=#RptTotal
+ Let #PercentReviews2=(#CountCompReviews/ #RptTotal ) *100
+ Print #PercentReviews2 (54,301) Edit 9999na Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Report Total Percentage of Completed Case Reviews:'  (54,1) Bold 
+  Print '%'  (54,327) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+Begin-Procedure Get_Date
+! -----------------------------
+! Get month and year- this is required parameter,; validation is done in the launch page
+Input $_dt_report 'Month/Year (MM/YYYY)' MaxLen=10 Type=date Format='MM/YYYY'
+! -----------------------------
+end-Procedure
+
+Begin-Procedure Get_Region_County
+! Get region optional input
+Input $_cd_stage_region 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_cd_stage_region) or IsBlank($_cd_stage_region) or ($_cd_stage_region='0')
+  Let $where_clause_region = 'CD_STAGE_REGION IS NOT NULL'
+  Let $regionSelected = 'N'
+Else 
+  Let $where_clause_region = 'CD_STAGE_REGION = ' || '''' || $_cd_stage_region || ''''
+  Let $regionSelected = 'Y'
+End-If
+
+! Get county optional input
+Input $_cd_stage_county 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_cd_stage_county) or IsBlank($_cd_stage_county) or ($_cd_stage_county='0')
+  Let $where_clause_county = 'CD_STAGE_CNTY IS NOT NULL'
+  Let $countySelected = 'N'
+Else 
+  Let $where_clause_county = 'CD_STAGE_CNTY = ' || '''' || $_cd_stage_county || ''''
+  Let $countySelected = 'Y'
+End-If
+
+! Get unit optional input
+Input $_nbr_unit 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If IsNull($_nbr_unit) or IsBlank($_nbr_unit) or ($_nbr_unit='0')
+  Let $where_clause_unit = 'NBR_UNIT IS NOT NULL'
+  Let $unitSelected = 'N'
+Else 
+  Let $where_clause_unit = 'NBR_UNIT = ' || '''' || $_nbr_unit || ''''
+  Let $unitSelected = 'Y'
+End-If
+
+! Create where clause for region, county and unit input
+Let $_where_clause_region_county = $where_clause_region || ' and ' || $where_clause_county || ' and ' || $where_clause_unit
+!
+Do Make_Header
+End-Procedure
+
+!
+Begin-Procedure Make_Header
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_cd_stage_county || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_cd_stage_county = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_cd_stage_region
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_cd_stage_region
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+!
+Begin-Procedure CountCompReviews($dt_report,$where_clause_region_county,$I1001_CD_REVIEW_TYPE,:#countReviews)
+Begin-Select
+distinct (count(CASE_REVIEW00.ID_CASE)) &CcountReviews
+ FROM 
+    STAGE STAGE00, 
+    EVENT EVENT00, 
+    CASE_REVIEW CASE_REVIEW00, 
+    STAGE_PERSON_LINK SPL_CM00, 
+    PERSON CaseManager00, 
+    UNIT UNIT00, 
+    CCOUNT StageCountyDecode00, 
+    CODES_TABLES ReviewTypeDecode00, 
+    CODES_TABLES StageTypeDecode00, 
+    EMPLOYEE EMPLOYEE00, 
+    EMPLOYEE EMP_REVIEWER00
+WHERE
+    CASE_REVIEW00.ID_CSR_EVENT = EVENT00.ID_EVENT and 
+    CASE_REVIEW00.ID_STAGE = EVENT00.ID_EVENT_STAGE AND 
+    STAGE00.ID_STAGE = EVENT00.ID_EVENT_STAGE AND 
+    SPL_CM00.ID_STAGE = STAGE00.ID_STAGE AND
+    CaseManager00.ID_PERSON = SPL_CM00.ID_PERSON AND 
+    STAGE00.CD_STAGE_CNTY = StageCountyDecode00.CODE AND 
+    CASE_REVIEW00.CD_REVIEW_TYPE = ReviewTypeDecode00.CODE AND
+    STAGE00.CD_STAGE = StageTypeDecode00.CODE AND
+    UNIT00.ID_UNIT = EMP_REVIEWER00.ID_EMP_UNIT AND
+    CD_EVENT_TYPE = 'CSR' AND 
+    SPL_CM00.CD_STAGE_PERS_ROLE IN ('PR','HP') AND 
+    CASE_REVIEW00.CD_REVIEW_TYPE = [$I1001_CD_REVIEW_TYPE] AND
+    TO_DATE(CASE_REVIEW00.REVIEW_PERIOD,'MM/YYYY') = to_DATE($dt_report, 'MM/YYYY') AND 
+    ReviewTypeDecode00.CODE_TYPE = 'CCSRTYPE' AND 
+    [$where_clause_region_county] AND 
+    StageTypeDecode00.CODE_TYPE = 'CTXTOGA' AND 
+    EMP_REVIEWER00.ID_PERSON = NVL(CASE_REVIEW00.ID_REVIEWER_PERSON , CASE_REVIEW00.ID_CREATED_FOR_PERSON)AND
+    EMPLOYEE00.ID_PERSON = NVL(CASE_REVIEW00.ID_CREATED_FOR_PERSON, CASE_REVIEW00.ID_REVIEWER_PERSON)
+    AND EVENT00.CD_EVENT_STATUS = 'COMP'
+End-select
+ Move &CcountReviews to #countReviews
+End-Procedure
+
+Begin-Procedure ReportTotal($dt_report,$where_clause_region_county,$I1001_CD_REVIEW_TYPE,:#RptTotal)
+Begin-Select
+distinct (count(CASE_REVIEW00.ID_CASE)) &RepTotals
+ FROM 
+    STAGE STAGE00, 
+    EVENT EVENT00, 
+    CASE_REVIEW CASE_REVIEW00, 
+    STAGE_PERSON_LINK SPL_CM00, 
+    PERSON CaseManager00, 
+    UNIT UNIT00, 
+    CCOUNT StageCountyDecode00, 
+    CODES_TABLES ReviewTypeDecode00, 
+    CODES_TABLES StageTypeDecode00, 
+    EMPLOYEE EMPLOYEE00, 
+    EMPLOYEE EMP_REVIEWER00
+WHERE
+    CASE_REVIEW00.ID_CSR_EVENT = EVENT00.ID_EVENT and 
+    CASE_REVIEW00.ID_STAGE = EVENT00.ID_EVENT_STAGE AND 
+    STAGE00.ID_STAGE = EVENT00.ID_EVENT_STAGE AND 
+    SPL_CM00.ID_STAGE = STAGE00.ID_STAGE AND
+    CaseManager00.ID_PERSON = SPL_CM00.ID_PERSON AND 
+    STAGE00.CD_STAGE_CNTY = StageCountyDecode00.CODE AND 
+    CASE_REVIEW00.CD_REVIEW_TYPE = ReviewTypeDecode00.CODE AND
+    STAGE00.CD_STAGE = StageTypeDecode00.CODE AND
+    UNIT00.ID_UNIT = EMP_REVIEWER00.ID_EMP_UNIT AND
+    CD_EVENT_TYPE = 'CSR' AND 
+    SPL_CM00.CD_STAGE_PERS_ROLE IN ('PR','HP') AND 
+    CASE_REVIEW00.CD_REVIEW_TYPE = [$I1001_CD_REVIEW_TYPE] AND
+    TO_DATE(CASE_REVIEW00.REVIEW_PERIOD,'MM/YYYY') = to_DATE($dt_report, 'MM/YYYY') AND 
+    ReviewTypeDecode00.CODE_TYPE = 'CCSRTYPE' AND 
+    [$where_clause_region_county] AND 
+    StageTypeDecode00.CODE_TYPE = 'CTXTOGA' AND 
+    EMP_REVIEWER00.ID_PERSON = NVL(CASE_REVIEW00.ID_REVIEWER_PERSON , CASE_REVIEW00.ID_CREATED_FOR_PERSON)AND
+    EMPLOYEE00.ID_PERSON = NVL(CASE_REVIEW00.ID_CREATED_FOR_PERSON, CASE_REVIEW00.ID_REVIEWER_PERSON)
+  !  AND EVENT00.CD_EVENT_STATUS = 'COMP'
+End-select
+ Move &RepTotals to #RptTotal
+End-Procedure
+
+
+
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc1001
+if $regionSelected = 'N' and $countySelected = 'N'
+!do nothing
+ Next-Listing  Need=22
+ Graphic (6,1,699) Horz-Line 20 
+ Position (8,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region:'  (22,1) Bold 
+  Print &Master_Query_CD_STAGE_REGION (21,44,2) Bold 
+   Position (+12,)
+ Next-Listing  Need=15
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc1001
+if $regionSelected = 'N' and $countySelected = 'N'
+!do nothing
+ Next-Listing  Need=20
+ Graphic (1,2,699) Horz-Line 10 
+ Position (2,1)
+  Let $RegionTotalLabel='Region ' || $prev_stage_region || ' Total of Case Review(s): '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $RegionTotalLabel (20,1,46) Bold 
+ let #RegionCOunt = #1001ROW_COUNT
+ Print #RegionCOunt (20,278) Bold  Edit 99999999na
+   Position (+12,)
+ Move 0 To #1001ROW_COUNT
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_BeforeProc1002
+If $countySelected = 'N'
+!do nothing
+ Next-Listing  Need=18
+ Graphic (2,2,699) Horz-Line 20 
+ Position (4,1)
+   Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &StageCntyDecode (18,1,32) Bold 
+   Position (+12,)
+ Next-Listing  Need=15
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc1002
+If $countySelected = 'N'
+!do nothing
+ Next-Listing  Need=21
+ Graphic (1,2,699) Horz-Line 10 
+ Position (2,1)
+  Let $CountyTotalLabel=$prev_stage_cnty || ' Total of Case Review(s): '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $CountyTotalLabel (21,1,46) Bold 
+ let #CountyCount = #1002ROW_COUNT
+ Print #CountyCount (21,278) Bold  Edit 99999999na
+   Position (+12,)
+ Move 0 To #1002ROW_COUNT
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_BeforeProc1003
+ Next-Listing  Need=20
+ Graphic (2,2,699) Horz-Line 20 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit:'  (20,1) Bold 
+  Print &Master_Query_NBR_UNIT (20,28,2) Bold 
+   Position (+12,)
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_AfterProc1003
+If $countySelected = 'N'
+!do nothing
+
+ Next-Listing  Need=19
+ Graphic (1,2,699) Horz-Line 10 
+ Position (2,1)
+  Let $UnitTotal='Unit Total of Case Review(s):'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $UnitTotal (19,1,46) Bold 
+ let #UnitCount_2 = #1003ROW_COUNT
+ Print #UnitCount_2 (19,278) Bold  Edit 99999999na
+   Position (+12,)
+ Move 0 To #1003ROW_COUNT
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure Master_QueryID_PERSON_BeforeProc1004
+ Next-Listing  Need=30
+ Graphic (6,1,699) Horz-Line 20 
+ Position (8,1)
+ Graphic (31,1,699) Horz-Line 10 
+ Position (32,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Assigned Reviewer:'  (24,1) Bold 
+  Print &REVIEWER (24,101,27) Bold 
+  If &Master_Query_CD_STAGE_CNTY=&Master_Query_CD_COUNTY
+    ! do nothing
+ Else
+ Print &ReviewerCounty_Decode (24,262,35) Bold 
+ End-If
+   Position (+12,)
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='C:\sacwis\launcher\src\images\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (15,636) edit 'MM/DD/YYYY'
+ Print 'Produced on:' (15,570,11)
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'Review Type:' (159,1,13) Bold 
+ Let $RegionCntyHeader=$region_county_header
+ Print $RegionCntyHeader (72,275,13) Bold 
+ Let $Dt_Report=datetostr(strtodate($_dt_report, 'mm/yyyy') , 'mm/yyyy')
+ Print $Dt_Report (138,96,9) Bold 
+ Let $RegionHeader=$region_header
+ Print $RegionHeader (89,246,16) Bold 
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Review List' (56,265,26) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (38,238,40)
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'Review Period:' (138,1,15) Bold 
+ Let $Rev_Type=$_Rev_Type
+ Print $Rev_Type (159,96,26) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case ID' (189,1,8) Underline  Bold 
+ Print 'Stage Name' (189,56,11) Underline  Bold 
+ Print 'Stage Type' (189,419,5) Underline  Bold  Wrap 5 2 line-height=12 Keep-Top
+ Print 'Review Complete' (189,544,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top
+ Print 'Correction Due' (189,599,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'Review Assigned' (189,488,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top
+ Print 'Review Status' (189,449,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top
+ Print 'Case Manager' (189,171,12) Underline  Bold 
+ Print 'Originally Assigned' (189,288,20) Underline  Bold 
+ Print 'Correction Complete' (189,655,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'C/S' (189,398,4) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Case ID' (18,1,8) Underline  Bold 
+ Print 'Stage Name' (18,56,11) Underline  Bold 
+ Print 'Stage Type' (18,419,5) Underline  Bold  Wrap 5 2 line-height=12 Keep-Top
+ Print 'Review Complete' (18,544,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top
+ Print 'Correction Due' (18,599,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'Review Assigned' (18,488,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top
+ Print 'Review Status' (18,449,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top
+ Print 'Case Manager' (18,171,12) Underline  Bold 
+ Print 'Originally Assigned' (18,288,20) Underline  Bold 
+ Print 'Correction Complete' (18,655,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top
+ Print 'C/S' (18,398,4) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (16,639) '' ' of    '
+ Last-Page (16,669) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

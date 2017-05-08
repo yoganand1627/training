@@ -1,0 +1,951 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Thu Oct 29 15:54:22 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Reports\CasemanagerParentVisitStatusFC00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=204    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Page-Number (645,489) '' ' of '
+ Last-Page (645,519) 
+ Print 'Eligible FC Cases:' (364,10,0) Bold 
+ Print 'Case Manager:' (323,10,0) Bold 
+ Print 'The last case manager assigned on the Foster Care Child (FCC) or Adoption (ADO) stage.' (323,131,211) Wrap 211 3 line-height=12 Keep-Top on=$
+ Print 'Assigned FC Cases:' (344,10,0) Bold 
+ Print 'The number of FC cases active in the reporting month where the primary child is living and less than 18 years old as of the first day of the reporting month, in DFCS custody at any point during the reporting month whose most recent permanency goal as of the first day of the reporting month is reunification. ' (364,131,88) Wrap 88 5 line-height=12 Keep-Top
+ Print 'Total number of active FC cases assigned to the case manager in the Unit or County or Region.' (344,131,0)
+ Print 'Cases W/O All Parental Contacts:' (421,10,18) Bold  Wrap 18 2 line-height=12 Keep-Top
+ Print 'The number of Eligible FC cases where at least one parent was not contacted in the reporting month or there is missing parent.' (421,131,88) Wrap 88 5 line-height=12 Keep-Top
+ Print '% Father Not Contacted:' (508,10,23) Bold 
+ Print 'The percentage of Eligible FC cases where at least one living father was not contacted or no father identified.     ' (508,131,74) Wrap 74 2 line-height=12 Keep-Top
+ Print 'The number of active FC cases refers to the count of unique primary children. If a child has both FCC and ADO active in the month, it counts as one for the case manager that has both stages. If FCC and ADO are assigned to different case managers, it counts for the case manager of the most recent stage. Most recent stage is one with greater stage id number when both stages active in the month.' (569,10,111) Wrap 111 4 line-height=12 Keep-Top
+ Print '% Mother Not Contacted:' (536,10,23) Bold 
+ Print 'The percentage of Eligible FC cases where at least one living mother was not contacted or no mother identified.     ' (536,131,72) Wrap 72 2 line-height=12 Keep-Top
+ Print 'Valid case manager parent visits are actual, face to face contacts with purpose of CM - Mother Visit and/or CM - Father Visit. Contact date should be within the reporting month. The parental figure should be selected in the Principals/Collaterals Contacted section for that contact. ' (263,10,100) Wrap 100 3 line-height=12 Keep-Top
+ Print 'The report can be run statewide, by region, county, or unit and for a specific month. The report uses stage county and region in grouping stages. If a stage is being worked by a case manager from another county, the case manager''s home county will be displayed in parenthesis to the right of the unit supervisor''s name at the unit group level.' (127,10,111) Wrap 111 4 line-height=12 Keep-Top
+ Print 'This report provides summary and status view of monthly case manager parent visit for Foster Care (FC) cases in Foster Care Child (FCC) or Adoption (ADO) stages. The report lists case manager with counts of assigned cases, eligible cases, cases where at least one living parent was not seen in the reporting month or there is missing parent(s), cases where at least one living father was not seen or no father identified, cases where at least one living mother was not seen or no mother identified, the percentage of cases where not all parental contact was made, percentage where not all father was seen or none was identified, and percentage where not all mother was seen or none was identified.' (30,10,111) Wrap 111 8 line-height=12 Keep-Top
+ Print 'Father Not Contacted Cases:' (453,10,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'Mother Not Contacted Cases:' (481,10,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'Total number of eligible FC cases where at least living one father was not contacted or no father identified.' (453,131,88) Wrap 88 2 line-height=12 Keep-Top
+ Print 'Total number of eligible FC cases where at least living one mother was not contacted or no mother identified.' (481,131,88) Wrap 88 2 line-height=12 Keep-Top
+ Print 'Most recent permanency goal is calculated through two steps: first determine the child''s the most recent and approved case plan where Current Review Date is on or before the last day of the reporting month. If the primary child has multiple case plans with the same most recent Current Review Date, the one with the greatest Event ID is the most recent; secondly, if this case plan''s Permanency Plan is Reunification (01) then the child''s most recent permanency goal is reunification.' (188,10,111) Wrap 111 5 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=60   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+ Do Get_MonthYear
+ Do Get_Region_County 
+
+ Do Master_Query
+End-Program
+
+Begin-Procedure Master_Query
+ Let #allPNIcases= 0
+ Let #allcasescnt=0 
+ Let #allEligcases= 0
+
+ Let #unitAllCases = 0
+ Let #unitEligCases = 0
+ Let #unitPNICases = 0
+
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select Distinct
+(SELECT (COUNT(  DISTINCT STAGE_ONG_E.ID_STAGE  )) FROM PERSON_ENC PERSON_CHILD_E, STAGE STAGE_ONG_E,
+ STAGE_PERSON_LINK STAGE_PERSON_LINK_CHILD_E, STAGE_PERSON_LINK STAGE_PERSON_LINK_CM_E
+ ,   FCCP_FAMILY FCCP_FAMILY_CHILD,     EVENT_PERSON_LINK EVENT_PERSON_LINK_FCCP
+ WHERE  PERSON_CHILD_E.ID_PERSON = STAGE_PERSON_LINK_CHILD_E.ID_PERSON    
+        AND STAGE_ONG_E.ID_STAGE = STAGE_PERSON_LINK_CHILD_E.ID_STAGE     
+        AND STAGE_ONG_E.ID_STAGE = STAGE_PERSON_LINK_CM_E.ID_STAGE  AND STAGE_ONG_E.CD_STAGE IN ('SUB','ADO')  
+        and    EVENT_PERSON_LINK_FCCP.ID_EVENT = FCCP_FAMILY_CHILD.ID_EVENT   
+        AND EVENT_PERSON_LINK_FCCP.ID_PERSON = PERSON_CHILD_E.ID_PERSON   
+        AND STAGE_ONG_E.ID_CASE = FCCP_FAMILY_CHILD.ID_CASE   
+        AND FCCP_FAMILY_CHILD.cd_prim_perm_plan = 'RUI'   
+        AND FCCP_FAMILY_CHILD.ID_EVENT = 
+            (SELECT MAX(fccpfamily2.id_event) FROM event event2, fccp_family fccpfamily2, event_person_link epl2 
+             WHERE  event2.cd_event_status IN ('APRV')  AND event2.id_event = fccpfamily2.id_event AND fccpfamily2.id_event = epl2.id_event 
+             AND fccpfamily2.id_case = STAGE_PERSON_LINK_CHILD_E.id_case AND epl2.id_person = STAGE_PERSON_LINK_CHILD_E.id_person 
+             AND fccpfamily2.dt_curr_rev = 
+                 (SELECT MAX(fccpfamily3.dt_curr_rev) FROM event e3, fccp_family fccpfamily3, event_person_link epl3 
+                  WHERE e3.id_event = fccpfamily3.id_event AND e3.id_event = epl3.id_event  
+                  AND epl3.id_person = epl2.id_person AND epl3.id_case = event2.id_case 
+                  AND e3.cd_event_status = 'APRV' AND fccpfamily3.dt_curr_rev < LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+1  
+                 )  
+            ) 
+AND ADD_MONTHS( PERSON_CHILD_E.DT_PERSON_BIRTH , 12*18) >=  TO_DATE($dt_report, 'mm/yyyy') AND STAGE_PERSON_LINK_CHILD_E.CD_STAGE_PERS_ROLE = 'PC' 
+AND (STAGE_ONG_E.DT_STAGE_CLOSE IS NULL OR  STAGE_ONG_E.DT_STAGE_CLOSE >= TO_DATE($dt_report,'mm/yyyy')) AND STAGE_ONG_E.DT_STAGE_START< LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+ 1 
+AND STAGE_PERSON_LINK_CM_E.CD_STAGE_PERS_ROLE IN ('PR','HP') AND PERSON_CHILD_E.DT_PERSON_BIRTH < LAST_DAY(TO_DATE($dt_report, 'mm/yyyy')) + 1 AND 
+ (PERSON_CHILD_E.DT_PERSON_DEATH IS NULL OR PERSON_CHILD_E.DT_PERSON_DEATH >= LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))) AND 
+(exists (select lv2.cd_legal_stat_status from legal_status_view lv2 WHERE lv2.DT_LEGAL_STAT_END >= TO_DATE($dt_report,'mm/yyyy') AND 
+lv2.IN_DFCS_CUSTODY  = 'Y' AND lv2.dt_legal_stat_status_dt < last_day(to_date($dt_report,'mm/yyyy')) + 1 and 
+lv2.id_person = STAGE_PERSON_LINK_CHILD_E.id_person AND lv2.id_case = STAGE_PERSON_LINK_CHILD_E.id_case )) AND STAGE_ONG_E.ID_STAGE =(SELECT MAX (stage2.ID_STAGE) FROM STAGE_PERSON_LINK stage_person_link2, STAGE stage2 
+WHERE stage_person_link2.CD_STAGE_PERS_ROLE = 'PC' AND stage_person_link2.id_stage = stage2.id_stage AND stage2.CD_STAGE IN ('SUB','ADO') 
+AND stage_person_link_child_E.ID_CASE = stage_person_link2.ID_CASE AND stage_person_link_child_E.ID_PERSON = stage_person_link2.ID_PERSON AND (stage2.dt_stage_start < LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+ 1) 
+and (stage2.dt_stage_close is null or stage2.dt_stage_close >= to_date($dt_report,'mm/yyyy'))) AND 
+STAGE_ONG_E.CD_STAGE_CNTY = STAGE_ONG.CD_STAGE_CNTY AND STAGE_ONG_E.CD_STAGE_REGION = STAGE_ONG.CD_STAGE_REGION AND STAGE_ONG_E.ID_UNIT = UNIT_STAGE.ID_UNIT and STAGE_PERSON_LINK_CM_E.ID_PERSON = PERSON_CM.ID_PERSON 
+) &allEligcases
+
+! Parent Not Involved cases
+(SELECT (COUNT(  DISTINCT STAGE_ONG_E.ID_STAGE  )) FROM PERSON_ENC PERSON_CHILD_E, PERSON_ENC PERSON_PARENT_E, 
+  STAGE STAGE_ONG_E, STAGE_PERSON_LINK STAGE_PERSON_LINK_PARENT_E, STAGE_PERSON_LINK STAGE_PERSON_LINK_CHILD_E, 
+  STAGE_PERSON_LINK STAGE_PERSON_LINK_CM_E
+  ,   FCCP_FAMILY FCCP_FAMILY_CHILD,     EVENT_PERSON_LINK EVENT_PERSON_LINK_FCCP
+  WHERE PERSON_CHILD_E.ID_PERSON = STAGE_PERSON_LINK_CHILD_E.ID_PERSON  
+  AND PERSON_PARENT_E.ID_PERSON = STAGE_PERSON_LINK_PARENT_E.ID_PERSON  
+  AND STAGE_ONG_E.ID_STAGE = STAGE_PERSON_LINK_PARENT_E.ID_STAGE  
+  AND STAGE_ONG_E.ID_STAGE = STAGE_PERSON_LINK_CHILD_E.ID_STAGE     
+AND STAGE_ONG_E.ID_STAGE = STAGE_PERSON_LINK_CM_E.ID_STAGE   AND STAGE_ONG_E.CD_STAGE IN ('SUB','ADO') AND  
+ADD_MONTHS( PERSON_CHILD_E.DT_PERSON_BIRTH , 12*18) >=  TO_DATE($dt_report, 'mm/yyyy') 
+AND STAGE_PERSON_LINK_CHILD_E.CD_STAGE_PERS_ROLE = 'PC'  
+        and    EVENT_PERSON_LINK_FCCP.ID_EVENT = FCCP_FAMILY_CHILD.ID_EVENT   
+        AND EVENT_PERSON_LINK_FCCP.ID_PERSON = PERSON_CHILD_E.ID_PERSON   
+        AND STAGE_ONG_E.ID_CASE = FCCP_FAMILY_CHILD.ID_CASE   
+        AND FCCP_FAMILY_CHILD.cd_prim_perm_plan = 'RUI'   
+        AND FCCP_FAMILY_CHILD.ID_EVENT = 
+            (SELECT MAX(fccpfamily2.id_event) FROM event event2, fccp_family fccpfamily2, event_person_link epl2 
+             WHERE  event2.cd_event_status IN ('APRV')  AND event2.id_event = fccpfamily2.id_event AND fccpfamily2.id_event = epl2.id_event 
+             AND fccpfamily2.id_case = STAGE_PERSON_LINK_CHILD_E.id_case AND epl2.id_person = STAGE_PERSON_LINK_CHILD_E.id_person 
+             AND fccpfamily2.dt_curr_rev = 
+                 (SELECT MAX(fccpfamily3.dt_curr_rev) FROM event e3, fccp_family fccpfamily3, event_person_link epl3 
+                  WHERE e3.id_event = fccpfamily3.id_event AND e3.id_event = epl3.id_event  
+                  AND epl3.id_person = epl2.id_person AND epl3.id_case = event2.id_case 
+                  AND e3.cd_event_status = 'APRV' AND fccpfamily3.dt_curr_rev < LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+1  
+                 )  
+            )
+ AND 
+(STAGE_ONG_E.DT_STAGE_CLOSE IS NULL OR  STAGE_ONG_E.DT_STAGE_CLOSE >= TO_DATE($dt_report,'mm/yyyy')) AND STAGE_ONG_E.DT_STAGE_START< LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+ 1 
+AND STAGE_PERSON_LINK_CM_E.CD_STAGE_PERS_ROLE IN ('PR','HP') AND PERSON_CHILD_E.DT_PERSON_BIRTH < LAST_DAY(TO_DATE($dt_report, 'mm/yyyy')) + 1 AND 
+ (PERSON_CHILD_E.DT_PERSON_DEATH IS NULL OR PERSON_CHILD_E.DT_PERSON_DEATH >= LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))) AND 
+(exists (select lv2.cd_legal_stat_status from legal_status_view lv2
+ WHERE lv2.DT_LEGAL_STAT_END >= TO_DATE($dt_report,'mm/yyyy') AND lv2.IN_DFCS_CUSTODY  = 'Y' AND 
+lv2.dt_legal_stat_status_dt < last_day(to_date($dt_report,'mm/yyyy')) + 1 and 
+lv2.id_person = STAGE_PERSON_LINK_CHILD_E.id_person AND lv2.id_case = STAGE_PERSON_LINK_CHILD_E.id_case )) 
+AND STAGE_ONG_E.ID_STAGE =(SELECT MAX (stage2.ID_STAGE) FROM STAGE_PERSON_LINK stage_person_link2, STAGE stage2 
+WHERE stage_person_link2.CD_STAGE_PERS_ROLE = 'PC' AND stage_person_link2.id_stage = stage2.id_stage AND stage2.CD_STAGE IN ('SUB','ADO') 
+AND stage_person_link_child_E.ID_CASE = stage_person_link2.ID_CASE AND stage_person_link_child_E.ID_PERSON = stage_person_link2.ID_PERSON AND (stage2.dt_stage_start < LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+ 1) 
+and (stage2.dt_stage_close is null or stage2.dt_stage_close >= to_date($dt_report,'mm/yyyy'))) AND 
+(EXISTS  
+ (SELECT 1 FROM stage_person_link spl1 , person p1 WHERE  STAGE_ONG_E.ID_STAGE  = spl1.id_stage 
+        AND spl1.cd_stage_pers_rel_int IN ('BF','LM','AB','BM','BB','BP','LF','PA','PF') AND   
+        p1.id_person = spl1.id_person AND p1.cd_person_sex IN  ('M','F') AND 
+        spl1.id_person = STAGE_PERSON_LINK_PARENT_E.ID_PERSON   
+        AND (p1.DT_PERSON_DEATH IS NULL OR p1.DT_PERSON_DEATH >=  LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))) 
+    AND   
+  (STAGE_PERSON_LINK_PARENT_E.ID_PERSON NOT IN 
+ (SELECT  EVENT_PERSON_LINK_CONTACT.ID_PERSON  FROM  CONTACT CONTACT_PARENT,  EVENT_PERSON_LINK EVENT_PERSON_LINK_CONTACT,  STAGE STAGE_SUBFSU 
+ WHERE CONTACT_PARENT.ID_EVENT = EVENT_PERSON_LINK_CONTACT.ID_EVENT
+   AND  CONTACT_PARENT.ID_CONTACT_STAGE = STAGE_SUBFSU.ID_STAGE
+  AND  CONTACT_PARENT.DT_CONTACT_OCCURRED < last_day(to_date($dt_report, 'mm/yyyy')) +1 AND 
+ CONTACT_PARENT.DT_CONTACT_OCCURRED >= to_date($dt_report, 'mm/yyyy') AND  
+ (CONTACT_PARENT.IND_CONTACT_ATTEMPTED is null or CONTACT_PARENT.IND_CONTACT_ATTEMPTED  <> 'Y') AND  
+ STAGE_SUBFSU.CD_STAGE  IN ('SUB','FSU','ADO') AND  
+ (EXISTS (SELECT 1 FROM CONTACT_CBX CBX_PUR WHERE CBX_PUR.ID_CONTACT_EVENT=CONTACT_PARENT.ID_EVENT AND 
+ CBX_PUR.CD_CBX_CODE_TYPE = 'CCNTPURP' AND CBX_PUR.CD_CONTACT_CBX IN ('CFV','CMV') )   ) AND  
+ CONTACT_PARENT.CD_CONTACT_METHOD  IN ('ATF','UTF') AND  CONTACT_PARENT.ID_CASE = STAGE_ONG_E.ID_CASE AND  
+  EVENT_PERSON_LINK_CONTACT.ID_PERSON = STAGE_PERSON_LINK_PARENT_E.ID_PERSON
+        )   ) )
+OR
+(NOT (EXISTS (SELECT 1 FROM stage_person_link spl1 , person p1 WHERE  STAGE_ONG_E.ID_STAGE  = spl1.id_stage AND 
+  spl1.cd_stage_pers_rel_int IN ('BF','LM','AB','BM','BB','BP','LF','PA','PF') AND p1.id_person = spl1.id_person AND  p1.cd_person_sex = 'M') 
+ AND EXISTS (SELECT 1 FROM stage_person_link spl2 , person p2 WHERE  STAGE_ONG_E.ID_STAGE  = spl2.id_stage AND 
+   spl2.cd_stage_pers_rel_int IN ('BF','LM','AB','BM','BB','BP','LF','PA','PF') AND p2.id_person = spl2.id_person AND p2.cd_person_sex = 'F')
+ ) ))
+AND
+STAGE_ONG_E.CD_STAGE_CNTY = STAGE_ONG.CD_STAGE_CNTY AND STAGE_ONG_E.CD_STAGE_REGION = STAGE_ONG.CD_STAGE_REGION AND STAGE_ONG_E.ID_UNIT = UNIT_STAGE.ID_UNIT
+and STAGE_PERSON_LINK_CM_E.ID_PERSON = PERSON_CM.ID_PERSON) &allPNIcases
+
+!All Cases
+(SELECT  (count(distinct  SPL_CHILD_E.ID_PERSON ))  FROM  STAGE_PERSON_LINK STAGE_PERSON_LINKCaseMgr,  STAGE STAGEfccAll, STAGE_PERSON_LINK SPL_CHILD_E WHERE STAGE_PERSON_LINKCaseMgr.ID_STAGE = STAGEfccAll.ID_STAGE
+ AND  STAGEfccAll.CD_STAGE in ('SUB','ADO') AND  STAGEfccAll.DT_STAGE_START < last_day(to_date($dt_report,'mm/yyyy'))+1 AND  (STAGEfccAll.DT_STAGE_CLOSE is null or  
+STAGEfccAll.DT_STAGE_CLOSE >= to_date($dt_report,'mm/yyyy')) AND  STAGE_PERSON_LINKCaseMgr.CD_STAGE_PERS_ROLE IN ('PR','HP') AND 
+SPL_CHILD_E.CD_STAGE_PERS_ROLE = 'PC' AND  
+SPL_CHILD_E.ID_STAGE = STAGEfccAll.ID_STAGE AND
+SPL_CHILD_E.ID_STAGE = (SELECT MAX (stage2.ID_STAGE) FROM STAGE_PERSON_LINK stage_person_link2, STAGE stage2 
+     WHERE stage_person_link2.CD_STAGE_PERS_ROLE = 'PC' AND stage_person_link2.id_stage = stage2.id_stage 
+      AND stage2.CD_STAGE IN ('SUB','ADO') AND SPL_CHILD_E.ID_CASE = stage_person_link2.ID_CASE 
+      AND SPL_CHILD_E.ID_PERSON = stage_person_link2.ID_PERSON 
+      AND (stage2.dt_stage_start < LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+ 1)  
+      and (stage2.dt_stage_close is null or stage2.dt_stage_close >= to_date($dt_report,'mm/yyyy'))) AND
+
+STAGEfccAll.CD_STAGE_REGION = STAGE_ONG.CD_STAGE_REGION AND  
+STAGEfccAll.CD_STAGE_CNTY = STAGE_ONG.CD_STAGE_CNTY AND  STAGE_PERSON_LINKCaseMgr.ID_PERSON = STAGE_PERSON_LINK_CM.ID_PERSON AND  STAGEfccAll.ID_UNIT = UNIT_STAGE.ID_UNIT) &Master_Query_AllCasesQuery2
+!All Father Cases
+(SELECT (COUNT(  DISTINCT STAGE_ONG_E.ID_STAGE  )) FROM PERSON_ENC PERSON_CHILD_E, PERSON_ENC PERSON_PARENT_E, 
+  STAGE STAGE_ONG_E, STAGE_PERSON_LINK STAGE_PERSON_LINK_PARENT_E, STAGE_PERSON_LINK STAGE_PERSON_LINK_CHILD_E, 
+  STAGE_PERSON_LINK STAGE_PERSON_LINK_CM_E
+  ,   FCCP_FAMILY FCCP_FAMILY_CHILD,     EVENT_PERSON_LINK EVENT_PERSON_LINK_FCCP
+WHERE PERSON_CHILD_E.ID_PERSON = STAGE_PERSON_LINK_CHILD_E.ID_PERSON  
+  AND PERSON_PARENT_E.ID_PERSON = STAGE_PERSON_LINK_PARENT_E.ID_PERSON  
+  AND STAGE_ONG_E.ID_STAGE = STAGE_PERSON_LINK_PARENT_E.ID_STAGE  
+  AND STAGE_ONG_E.ID_STAGE = STAGE_PERSON_LINK_CHILD_E.ID_STAGE     
+AND STAGE_ONG_E.ID_STAGE = STAGE_PERSON_LINK_CM_E.ID_STAGE   AND STAGE_ONG_E.CD_STAGE IN ('SUB','ADO') AND  
+ADD_MONTHS( PERSON_CHILD_E.DT_PERSON_BIRTH , 12*18) >=  TO_DATE($dt_report, 'mm/yyyy') 
+AND STAGE_PERSON_LINK_CHILD_E.CD_STAGE_PERS_ROLE = 'PC'
+  and    EVENT_PERSON_LINK_FCCP.ID_EVENT = FCCP_FAMILY_CHILD.ID_EVENT   
+        AND EVENT_PERSON_LINK_FCCP.ID_PERSON = PERSON_CHILD_E.ID_PERSON   
+        AND STAGE_ONG_E.ID_CASE = FCCP_FAMILY_CHILD.ID_CASE   
+        AND FCCP_FAMILY_CHILD.cd_prim_perm_plan = 'RUI'   
+        AND FCCP_FAMILY_CHILD.ID_EVENT = 
+            (SELECT MAX(fccpfamily2.id_event) FROM event event2, fccp_family fccpfamily2, event_person_link epl2 
+             WHERE  event2.cd_event_status IN ('APRV')  AND event2.id_event = fccpfamily2.id_event AND fccpfamily2.id_event = epl2.id_event 
+             AND fccpfamily2.id_case = STAGE_PERSON_LINK_CHILD_E.id_case AND epl2.id_person = STAGE_PERSON_LINK_CHILD_E.id_person 
+             AND fccpfamily2.dt_curr_rev = 
+                 (SELECT MAX(fccpfamily3.dt_curr_rev) FROM event e3, fccp_family fccpfamily3, event_person_link epl3 
+                  WHERE e3.id_event = fccpfamily3.id_event AND e3.id_event = epl3.id_event  
+                  AND epl3.id_person = epl2.id_person AND epl3.id_case = event2.id_case 
+                  AND e3.cd_event_status = 'APRV' AND fccpfamily3.dt_curr_rev < LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+1  
+                 )  
+            )
+ AND 
+(STAGE_ONG_E.DT_STAGE_CLOSE IS NULL OR  STAGE_ONG_E.DT_STAGE_CLOSE >= TO_DATE($dt_report,'mm/yyyy')) AND STAGE_ONG_E.DT_STAGE_START< LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+ 1 
+AND STAGE_PERSON_LINK_CM_E.CD_STAGE_PERS_ROLE IN ('PR','HP') AND PERSON_CHILD_E.DT_PERSON_BIRTH < LAST_DAY(TO_DATE($dt_report, 'mm/yyyy')) + 1 AND 
+ (PERSON_CHILD_E.DT_PERSON_DEATH IS NULL OR PERSON_CHILD_E.DT_PERSON_DEATH >= LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))) AND 
+(exists (select lv2.cd_legal_stat_status from legal_status_view lv2
+ WHERE lv2.DT_LEGAL_STAT_END >= TO_DATE($dt_report,'mm/yyyy') AND lv2.IN_DFCS_CUSTODY  = 'Y' AND 
+lv2.dt_legal_stat_status_dt < last_day(to_date($dt_report,'mm/yyyy')) + 1 and 
+lv2.id_person = STAGE_PERSON_LINK_CHILD_E.id_person AND lv2.id_case = STAGE_PERSON_LINK_CHILD_E.id_case )) 
+AND STAGE_ONG_E.ID_STAGE =(SELECT MAX (stage2.ID_STAGE) FROM STAGE_PERSON_LINK stage_person_link2, STAGE stage2 
+WHERE stage_person_link2.CD_STAGE_PERS_ROLE = 'PC' AND stage_person_link2.id_stage = stage2.id_stage AND stage2.CD_STAGE IN ('SUB','ADO') 
+AND stage_person_link_child_E.ID_CASE = stage_person_link2.ID_CASE AND stage_person_link_child_E.ID_PERSON = stage_person_link2.ID_PERSON AND (stage2.dt_stage_start < LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+ 1) 
+and (stage2.dt_stage_close is null or stage2.dt_stage_close >= to_date($dt_report,'mm/yyyy'))) AND 
+(EXISTS  
+ (SELECT 1 FROM stage_person_link spl1 , person p1 WHERE  STAGE_ONG_E.ID_STAGE  = spl1.id_stage 
+        AND spl1.cd_stage_pers_rel_int IN ('BF','LM','AB','BM','BB','BP','LF','PA','PF') AND   
+        p1.id_person = spl1.id_person AND p1.cd_person_sex IN  ('M') AND 
+        spl1.id_person = STAGE_PERSON_LINK_PARENT_E.ID_PERSON   
+        AND (p1.DT_PERSON_DEATH IS NULL OR p1.DT_PERSON_DEATH >=  LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))) 
+    AND   
+  (STAGE_PERSON_LINK_PARENT_E.ID_PERSON NOT IN 
+ (SELECT  EVENT_PERSON_LINK_CONTACT.ID_PERSON  FROM  CONTACT CONTACT_PARENT,  EVENT_PERSON_LINK EVENT_PERSON_LINK_CONTACT,  STAGE STAGE_SUBFSU 
+ WHERE CONTACT_PARENT.ID_EVENT = EVENT_PERSON_LINK_CONTACT.ID_EVENT
+   AND  CONTACT_PARENT.ID_CONTACT_STAGE = STAGE_SUBFSU.ID_STAGE
+  AND  CONTACT_PARENT.DT_CONTACT_OCCURRED < last_day(to_date($dt_report, 'mm/yyyy')) +1 AND 
+ CONTACT_PARENT.DT_CONTACT_OCCURRED >= to_date($dt_report, 'mm/yyyy') AND  
+ (CONTACT_PARENT.IND_CONTACT_ATTEMPTED is null or CONTACT_PARENT.IND_CONTACT_ATTEMPTED  <> 'Y') AND  
+ STAGE_SUBFSU.CD_STAGE  IN ('SUB','FSU','ADO') AND  
+ (EXISTS (SELECT 1 FROM CONTACT_CBX CBX_PUR WHERE CBX_PUR.ID_CONTACT_EVENT=CONTACT_PARENT.ID_EVENT AND 
+ CBX_PUR.CD_CBX_CODE_TYPE = 'CCNTPURP' AND CBX_PUR.CD_CONTACT_CBX IN ('CFV','CMV') )   ) AND  
+ CONTACT_PARENT.CD_CONTACT_METHOD  IN ('ATF','UTF') AND  CONTACT_PARENT.ID_CASE = STAGE_ONG_E.ID_CASE AND  
+  EVENT_PERSON_LINK_CONTACT.ID_PERSON = STAGE_PERSON_LINK_PARENT_E.ID_PERSON
+        )   ) )
+ OR
+(NOT (EXISTS (SELECT 1 FROM stage_person_link spl1 , person p1 WHERE  STAGE_ONG_E.ID_STAGE  = spl1.id_stage AND 
+  spl1.cd_stage_pers_rel_int IN ('BF','LM','AB','BM','BB','BP','LF','PA','PF') AND p1.id_person = spl1.id_person AND  p1.cd_person_sex = 'M') 
+ ) )
+
+)
+AND
+STAGE_ONG_E.CD_STAGE_CNTY = STAGE_ONG.CD_STAGE_CNTY AND STAGE_ONG_E.CD_STAGE_REGION = STAGE_ONG.CD_STAGE_REGION AND STAGE_ONG_E.ID_UNIT = UNIT_STAGE.ID_UNIT
+and STAGE_PERSON_LINK_CM_E.ID_PERSON = PERSON_CM.ID_PERSON) &allPNIFathercases
+
+!All Mother Cases
+(SELECT (COUNT(  DISTINCT STAGE_ONG_E.ID_STAGE  )) FROM PERSON_ENC PERSON_CHILD_E, PERSON_ENC PERSON_PARENT_E, 
+  STAGE STAGE_ONG_E, STAGE_PERSON_LINK STAGE_PERSON_LINK_PARENT_E, STAGE_PERSON_LINK STAGE_PERSON_LINK_CHILD_E, 
+  STAGE_PERSON_LINK STAGE_PERSON_LINK_CM_E
+  ,   FCCP_FAMILY FCCP_FAMILY_CHILD,     EVENT_PERSON_LINK EVENT_PERSON_LINK_FCCP
+WHERE PERSON_CHILD_E.ID_PERSON = STAGE_PERSON_LINK_CHILD_E.ID_PERSON  
+  AND PERSON_PARENT_E.ID_PERSON = STAGE_PERSON_LINK_PARENT_E.ID_PERSON  
+  AND STAGE_ONG_E.ID_STAGE = STAGE_PERSON_LINK_PARENT_E.ID_STAGE  
+  AND STAGE_ONG_E.ID_STAGE = STAGE_PERSON_LINK_CHILD_E.ID_STAGE     
+AND STAGE_ONG_E.ID_STAGE = STAGE_PERSON_LINK_CM_E.ID_STAGE   AND STAGE_ONG_E.CD_STAGE IN ('SUB','ADO') AND  
+ADD_MONTHS( PERSON_CHILD_E.DT_PERSON_BIRTH , 12*18) >=  TO_DATE($dt_report, 'mm/yyyy') 
+AND STAGE_PERSON_LINK_CHILD_E.CD_STAGE_PERS_ROLE = 'PC' 
+  and    EVENT_PERSON_LINK_FCCP.ID_EVENT = FCCP_FAMILY_CHILD.ID_EVENT   
+        AND EVENT_PERSON_LINK_FCCP.ID_PERSON = PERSON_CHILD_E.ID_PERSON   
+        AND STAGE_ONG_E.ID_CASE = FCCP_FAMILY_CHILD.ID_CASE   
+        AND FCCP_FAMILY_CHILD.cd_prim_perm_plan = 'RUI'   
+        AND FCCP_FAMILY_CHILD.ID_EVENT = 
+            (SELECT MAX(fccpfamily2.id_event) FROM event event2, fccp_family fccpfamily2, event_person_link epl2 
+             WHERE  event2.cd_event_status IN ('APRV')  AND event2.id_event = fccpfamily2.id_event AND fccpfamily2.id_event = epl2.id_event 
+             AND fccpfamily2.id_case = STAGE_PERSON_LINK_CHILD_E.id_case AND epl2.id_person = STAGE_PERSON_LINK_CHILD_E.id_person 
+             AND fccpfamily2.dt_curr_rev = 
+                 (SELECT MAX(fccpfamily3.dt_curr_rev) FROM event e3, fccp_family fccpfamily3, event_person_link epl3 
+                  WHERE e3.id_event = fccpfamily3.id_event AND e3.id_event = epl3.id_event  
+                  AND epl3.id_person = epl2.id_person AND epl3.id_case = event2.id_case 
+                  AND e3.cd_event_status = 'APRV' AND fccpfamily3.dt_curr_rev < LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+1  
+                 )  
+            )
+ AND 
+(STAGE_ONG_E.DT_STAGE_CLOSE IS NULL OR  STAGE_ONG_E.DT_STAGE_CLOSE >= TO_DATE($dt_report,'mm/yyyy')) AND STAGE_ONG_E.DT_STAGE_START< LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+ 1 
+AND STAGE_PERSON_LINK_CM_E.CD_STAGE_PERS_ROLE IN ('PR','HP') AND PERSON_CHILD_E.DT_PERSON_BIRTH < LAST_DAY(TO_DATE($dt_report, 'mm/yyyy')) + 1 AND 
+ (PERSON_CHILD_E.DT_PERSON_DEATH IS NULL OR PERSON_CHILD_E.DT_PERSON_DEATH >= LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))) AND 
+(exists (select lv2.cd_legal_stat_status from legal_status_view lv2
+ WHERE lv2.DT_LEGAL_STAT_END >= TO_DATE($dt_report,'mm/yyyy') AND lv2.IN_DFCS_CUSTODY  = 'Y' AND 
+lv2.dt_legal_stat_status_dt < last_day(to_date($dt_report,'mm/yyyy')) + 1 and 
+lv2.id_person = STAGE_PERSON_LINK_CHILD_E.id_person AND lv2.id_case = STAGE_PERSON_LINK_CHILD_E.id_case )) 
+AND STAGE_ONG_E.ID_STAGE =(SELECT MAX (stage2.ID_STAGE) FROM STAGE_PERSON_LINK stage_person_link2, STAGE stage2 
+WHERE stage_person_link2.CD_STAGE_PERS_ROLE = 'PC' AND stage_person_link2.id_stage = stage2.id_stage AND stage2.CD_STAGE IN ('SUB','ADO') 
+AND stage_person_link_child_E.ID_CASE = stage_person_link2.ID_CASE AND stage_person_link_child_E.ID_PERSON = stage_person_link2.ID_PERSON AND (stage2.dt_stage_start < LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+ 1) 
+and (stage2.dt_stage_close is null or stage2.dt_stage_close >= to_date($dt_report,'mm/yyyy'))) AND 
+(EXISTS  
+ (SELECT 1 FROM stage_person_link spl1 , person p1 WHERE  STAGE_ONG_E.ID_STAGE  = spl1.id_stage 
+        AND spl1.cd_stage_pers_rel_int IN ('BF','LM','AB','BM','BB','BP','LF','PA','PF') AND   
+        p1.id_person = spl1.id_person AND p1.cd_person_sex IN  ('F') AND 
+        spl1.id_person = STAGE_PERSON_LINK_PARENT_E.ID_PERSON   
+        AND (p1.DT_PERSON_DEATH IS NULL OR p1.DT_PERSON_DEATH >=  LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))) 
+    AND   
+  (STAGE_PERSON_LINK_PARENT_E.ID_PERSON NOT IN 
+ (SELECT  EVENT_PERSON_LINK_CONTACT.ID_PERSON  FROM  CONTACT CONTACT_PARENT,  EVENT_PERSON_LINK EVENT_PERSON_LINK_CONTACT,  STAGE STAGE_SUBFSU 
+ WHERE CONTACT_PARENT.ID_EVENT = EVENT_PERSON_LINK_CONTACT.ID_EVENT
+   AND  CONTACT_PARENT.ID_CONTACT_STAGE = STAGE_SUBFSU.ID_STAGE
+  AND  CONTACT_PARENT.DT_CONTACT_OCCURRED < last_day(to_date($dt_report, 'mm/yyyy')) +1 AND 
+ CONTACT_PARENT.DT_CONTACT_OCCURRED >= to_date($dt_report, 'mm/yyyy') AND  
+ (CONTACT_PARENT.IND_CONTACT_ATTEMPTED is null or CONTACT_PARENT.IND_CONTACT_ATTEMPTED  <> 'Y') AND  
+ STAGE_SUBFSU.CD_STAGE  IN ('SUB','FSU','ADO') AND  
+ (EXISTS (SELECT 1 FROM CONTACT_CBX CBX_PUR WHERE CBX_PUR.ID_CONTACT_EVENT=CONTACT_PARENT.ID_EVENT AND 
+ CBX_PUR.CD_CBX_CODE_TYPE = 'CCNTPURP' AND CBX_PUR.CD_CONTACT_CBX IN ('CFV','CMV') )   ) AND  
+ CONTACT_PARENT.CD_CONTACT_METHOD  IN ('ATF','UTF') AND  CONTACT_PARENT.ID_CASE = STAGE_ONG_E.ID_CASE AND  
+  EVENT_PERSON_LINK_CONTACT.ID_PERSON = STAGE_PERSON_LINK_PARENT_E.ID_PERSON
+        )   ) )
+OR
+ (NOT (EXISTS (SELECT 1 FROM stage_person_link spl1 , person p1 WHERE  STAGE_ONG_E.ID_STAGE  = spl1.id_stage AND 
+  spl1.cd_stage_pers_rel_int IN ('BF','LM','AB','BM','BB','BP','LF','PA','PF') AND p1.id_person = spl1.id_person AND  p1.cd_person_sex = 'F') 
+ ) )
+
+)
+AND
+STAGE_ONG_E.CD_STAGE_CNTY = STAGE_ONG.CD_STAGE_CNTY AND STAGE_ONG_E.CD_STAGE_REGION = STAGE_ONG.CD_STAGE_REGION AND STAGE_ONG_E.ID_UNIT = UNIT_STAGE.ID_UNIT
+and STAGE_PERSON_LINK_CM_E.ID_PERSON = PERSON_CM.ID_PERSON) &allPNIMothercases
+ 
+PERSON_SUP.NM_PERSON_FULL &supervisornm
+PERSON_CM.ID_PERSON &CMidperson
+PERSON_SUP.ID_PERSON &supidperson
+('(' ||  CCOUNT_UNIT.DECODE || ')') &nm_sup_county
+STAGE_ONG.CD_STAGE_CNTY &Master_Query_STAGE_ONG.CD_STAGE_CNTY
+UNIT_STAGE.CD_COUNTY &Master_Query_UNIT_STAGE.CD_COUNTY
+UNIT_STAGE.NBR_UNIT &Master_Query_UNIT_STAGE.NBR_UNIT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ 
+! To define custom BeforeProc and AfterProc for Group break on Region 
+STAGE_ONG.CD_STAGE_REGION &Master_Query_STAGE_ONG.CD_STAGE_REGION_2 () On-Break Set=1 Level=2 Save=$prev_stage_region Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc102 After=Master_QueryCD_STAGE_REGION_AfterProc102
+ Move &Master_Query_AllCasesQuery2 To #allcasescnt
+ Add #allcasescnt to #regAllCases
+ Move &allEligcases To #allEligcases
+ Add #allEligcases to #regEligCases
+ Move &allPNIcases To #allPNIcases
+ Add #allPNIcases to #regPNICases
+ Move &allPNIFathercases to #allPNIFathercases
+ Add #allPNIFathercases to #regPNIFatherCases
+ Move &allPNIMothercases to #allPNIMothercases
+ Add #allPNIMothercases to #regPNIMotherCases
+
+CCOUNT_STAGE.DECODE &county_decode_2 () On-Break Set=1 Level=3 Save=$prev_stage_cnty Print=Never Before=Master_QueryDECODE_BeforeProc103 After=Master_QueryDECODE_AfterProc103
+ Move &Master_Query_AllCasesQuery2 To #allcasescnt
+ Add #allcasescnt to #cntyAllCases
+ Move &allEligcases To #allEligcases
+ Add #allEligcases to #cntyEligCases
+ Move &allPNIcases To #allPNIcases
+ Add #allPNIcases to #cntyPNICases
+ Move &allPNIFathercases To #allPNIFathercases
+ Add #allPNIFathercases to #cntyPNIFatherCases
+ Move &allPNIMothercases To #allPNIMothercases
+ Add #allPNIMothercases to #cntyPNIMotherCases
+
+UNIT_STAGE.ID_UNIT &Master_Query_UNIT_STAGE.ID_UNIT_2 () On-Break Set=1 Level=4 Print=Never Before=Master_QueryID_UNIT_BeforeProc104 After=Master_QueryID_UNIT_AfterProc104
+ Move &Master_Query_AllCasesQuery2 To #allcasescnt
+ Add #allcasescnt to #unitAllCases
+ Move &allEligcases To #allEligcases
+ Add #allEligcases to #unitEligCases
+ Move &allPNIcases To #allPNIcases
+ Add #allPNIcases to #unitPNICases
+ Move &allPNIFathercases To #allPNIFathercases
+ Add #allPNIFathercases to #unitPNIFatherCases
+ Move &allPNIMothercases To #allPNIMothercases
+ Add #allPNIMothercases to #unitPNIMotherCases
+
+(1) &dummy_break_2 () On-Break Set=1 Level=1 Print=Never Before=Master_Querydummy_break_BeforeProc101 After=Master_Querydummy_break_AfterProc101
+ Move &Master_Query_AllCasesQuery2 To #allcasescnt
+ Add #allcasescnt to #stateAllCases
+ Move &allEligcases to #allEligcases
+ Add #allEligcases to #stateEligCases
+ Move &allPNIcases To #allPNIcases
+ Add #allPNIcases to #statePNICases
+ Move &allPNIFathercases To #allPNIFathercases
+ Add #allPNIFathercases to #statePNIFatherCases
+ Move &allPNIMothercases To #allPNIMothercases
+ Add #allPNIMothercases to #statePNIMotherCases
+
+ Move &Master_Query_AllCasesQuery2 To #allcasescnt
+ Let #allstgcnt=#allcasescnt
+ Print #allstgcnt (21,129) Edit 99999
+
+ Move &allEligcases To #allEligcases
+ Let #allEligStg=#allEligcases
+ Print #allEligStg (21,188) Edit 99999
+!PERSON_CM.NM_PERSON_FULL &casemgrnm (25,2,25)
+
+ Move &allPNIcases To #allPNIcases
+ Let #allPNI=#allPNIcases
+ Print #allPNI (21,250) Edit 99999
+ 
+ Move &allPNIFathercases To #allPNIFathercases
+ Let #allPNIFather = #allPNIFathercases
+ Print #allPNIFather (21,320) Edit 99999
+
+ Move &allPNIMothercases To #allPNIMothercases
+ Let #allPNIMother = #allPNIMothercases
+ Print #allPNIMother (21,380) Edit 99999
+
+
+ If #allPNIcases <= 0
+    ! do nothing
+ Print 'n/a' (21,440)
+ Else
+ If #allEligcases > 0 and #allPNIFathercases = 0
+ Print '0.00 %' (21,430)
+ Else
+ Let #percentFathercases=(#allPNIFathercases/#allEligcases) * 100
+ Print #percentFathercases (21,430) Edit 999.99
+ Print ' %' (21,459)
+ End-If
+ End-If
+
+ If #allEligcases <= 0
+    ! do nothing
+ Print 'n/a' (21,500)
+ Else
+ If #allEligcases > 0 and #allPNIMothercases = 0
+ Print '0.00 %' (21,490)
+ Else
+ Let #percentMothercases=(#allPNIMothercases/#allEligcases) * 100
+ Print #percentMothercases (21,490) Edit 999.99
+ Print ' %' (21,520)
+ End-If
+ End-If
+
+(1) &dummy_break () On-Break Set=1 Level=1 Print=Never
+STAGE_ONG.CD_STAGE_REGION &Master_Query_STAGE_ONG.CD_STAGE_REGION () On-Break Set=1 Level=2 Save=$prev_stage_region Print=Never
+CCOUNT_STAGE.DECODE &county_decode () On-Break Set=1 Level=3 Save=$prev_stage_cnty Print=Never
+UNIT_STAGE.ID_UNIT &Master_Query_UNIT_STAGE.ID_UNIT () On-Break Set=1 Level=4 Print=Never
+PERSON_CM.NM_PERSON_FULL &cmname (21,1,25)
+ Add 1 To #1ROW_COUNT
+ Next-Listing  Need=21
+From  STAGE STAGE_ONG, CCOUNT CCOUNT_STAGE
+,      UNIT UNIT_STAGE, PERSON_ENC PERSON_SUP, PERSON_ENC PERSON_CM
+,      STAGE_PERSON_LINK STAGE_PERSON_LINK_CM, CCOUNT CCOUNT_UNIT
+      Where STAGE_ONG.CD_STAGE_CNTY = CCOUNT_STAGE.CODE
+            And UNIT_STAGE.ID_PERSON = PERSON_SUP.ID_PERSON
+            And STAGE_PERSON_LINK_CM.ID_PERSON = PERSON_CM.ID_PERSON
+            And STAGE_ONG.ID_STAGE = STAGE_PERSON_LINK_CM.ID_STAGE
+            And UNIT_STAGE.CD_COUNTY = CCOUNT_UNIT.CODE
+            And STAGE_ONG.ID_UNIT = UNIT_STAGE.ID_UNIT
+ And STAGE_ONG.CD_STAGE IN ('SUB','ADO')
+ And [$where_clause_region_county]
+ And (STAGE_ONG.DT_STAGE_CLOSE is null or  STAGE_ONG.DT_STAGE_CLOSE >= to_date($dt_report,'mm/yyyy'))
+ And STAGE_PERSON_LINK_CM.CD_STAGE_PERS_ROLE in ('PR','HP')
+ And STAGE_ONG.DT_STAGE_START < last_day(to_date($dt_report,'mm/yyyy')) + 1
+Order By STAGE_ONG.CD_STAGE_REGION
+,      CCOUNT_STAGE.DECODE
+,      UNIT_STAGE.NBR_UNIT
+,      UNIT_STAGE.ID_UNIT
+,      PERSON_CM.NM_PERSON_FULL
+End-Select
+ Next-Listing
+ Next-Listing 
+ If #1ROW_COUNT > 0
+ Graphic (2,1,533) Horz-Line 20 
+ Position (4,1)
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+Begin-Procedure Master_QueryID_UNIT_BeforeProc104
+If $unitSelected = 'N'
+
+ Next-Listing  Need=20
+ Graphic (1,1,533) Horz-Line 15
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit:'  (15,1) Bold 
+ Print 'Supervisor:'  (15,58) Bold 
+    !Print &Master_Query_UNIT_STAGE.ID_UNIT (14,404) Edit 9999999999999999na
+  Print &Master_Query_UNIT_STAGE.NBR_UNIT (15,29,4)Bold
+  Print &supervisornm (15,122,25)Bold
+  If &Master_Query_STAGE_ONG.CD_STAGE_CNTY = &Master_Query_UNIT_STAGE.CD_COUNTY
+    ! do nothing
+ Else
+ Print &nm_sup_county (15,270,15)Bold
+ End-If
+   Position (+12,)
+ Next-Listing  Need=25
+End-If
+ Move 0 to #unitAllCases
+ Move 0 to #unitEligCases
+ Move 0 to #unitPNICases
+ Move 0 to #unitPNIFatherCases
+ Move 0 to #unitPNIMotherCases
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_AfterProc104
+If $unitSelected = 'N'
+ Next-Listing  Need=19
+ Graphic (4,1,533) Horz-Line 11 
+ Position (5,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit Summary:'  (19,1) Bold 
+ ! Let #unitAllCases=#unitAllCases
+ Print #unitAllCases (19,129) Edit 99999 Bold
+
+ ! Let #unitEligCases=#unitEligCases
+ Print #unitEligCases (19,188) Edit 99999 Bold 
+
+ ! Let #unitPNICases=#unitPNICases
+ Print #unitPNICases (19,250) Edit 99999 Bold
+
+ !Let #unitPNIFatherCases = #unitPNIFatherCases
+ Print #unitPNIFatherCases (19,320) Edit 99999 Bold
+
+ !Let #unitPNIMotherCases = #unitPNIMotherCases
+ Print #unitPNIMotherCases (19,380) Edit 99999 Bold
+
+ If #unitEligCases <= 0
+ Print 'n/a' (19,440) Bold
+    ! do nothing
+ Else
+ If #unitEligCases > 0 and #unitPNIFatherCases = 0
+ Print '0.00 %' (19,430) Bold
+ Else
+ !Let #unitPNIFatherCases=#unitPNIFatherCases
+ Let #unitPercentFatherCases=(#unitPNIFatherCases/#unitEligCases) * 100
+ Print #unitPercentFatherCases (19,430) Edit 999.99 Bold
+ Print ' %' (19,459) Bold
+ End-If
+ End-If
+ If #unitEligCases <= 0
+ Print 'n/a' (19,500) Bold
+    ! do nothing
+ Else
+ If #unitEligCases > 0 and #unitPNIMotherCases = 0
+ Print '0.00 %' (19,490) Bold
+ Else
+ !Let #unitPNIMotherCases=#unitPNIMotherCases
+ Let #unitPercentMotherCases=(#unitPNIMotherCases/#unitEligCases) * 100
+ Print #unitPercentMotherCases (19,490) Edit 999.99 Bold
+ Print ' %' (19,520) Bold
+ End-If
+ End-If
+   Position (+12,)
+ Next-Listing  Need=25
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+ Move 0 to #unitAllCases
+ Move 0 to #unitEligCases
+ Move 0 to #unitPNICases 
+ Move 0 to #unitPNIFatherCases
+ Move 0 to #unitPNIMotherCases
+End-Procedure
+Begin-Procedure Master_QueryDECODE_BeforeProc103
+If $countySelected = 'N'
+! Let #cntyAllCases = 0
+! Let #cntyEligCases = 0
+! Let #cntyPNICases = 0
+
+ Next-Listing  Need=20
+ Graphic (1,1,533) Horz-Line 15 
+ Position (2,1)
+            Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &county_decode (20,1,128)Bold
+   Position (+12,)
+ Next-Listing  Need=25
+ Move 0 to #cntyAllCases
+ Move 0 to #cntyEligCases
+ Move 0 to #cntyPNICases
+ Move 0 to #cntyPNIFatherCases
+ Move 0 to #cntyPNIMotherCases
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc103
+If $countySelected = 'N'
+ Next-Listing  Need=19
+ Graphic (1,1,533) Horz-Line 15 
+ Position (2,1)
+  Let $county_total_label=$prev_stage_cnty || ' Summary:'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $county_total_label (16,1,25) Bold 
+ ! Let #cntyAllCases=#cntyAllCases
+ Print #cntyAllCases (19,129) Edit 99999 Bold
+ ! Let #cntyEligCases=#cntyEligCases
+ Print #cntyEligCases (19,188) Edit 99999 Bold
+ ! Let #cntyPNICases=#cntyPNICases
+ Print #cntyPNICases (19,250) Edit 99999 Bold
+
+ !Let #cntyPNIFatherCases = #cntyPNIFatherCases
+ Print #cntyPNIFatherCases (19,320) Edit 99999 Bold
+
+ !Let #cntyPNIMotherCases = #cntyPNIMotherCases
+ Print #cntyPNIMotherCases (19,380) Edit 99999 Bold
+
+
+  If #cntyEligCases <= 0
+ Print 'n/a' (19,440) Bold
+    ! do nothing
+ Else
+ If #cntyEligCases > 0 and #cntyPNIFatherCases = 0
+ Print '0.00 %' (19,430) Bold
+ Else
+ !Let #cntyPNIFatherCases=#cntyPNIFatherCases
+ Let #cntyPercentFatherCases=(#cntyPNIFatherCases/#cntyEligCases)*100
+ Print #cntyPercentFatherCases (19,430) Edit 999.99 Bold
+ Print ' %' (19,459)Bold
+ End-If
+ End-If
+  If #cntyEligCases <= 0
+ Print 'n/a' (19,500) Bold
+    ! do nothing
+ Else
+ If #cntyEligCases > 0 and #cntyPNIMotherCases = 0
+ Print '0.00 %' (19,490) Bold
+ Else
+ !Let #cntyPNIMotherCases=#cntyPNIMotherCases
+ Let #cntyPercentMotherCases=(#cntyPNIMotherCases/#cntyEligCases)*100
+ Print #cntyPercentMotherCases (19,490) Edit 999.99 Bold
+ Print ' %' (19,520)Bold
+ End-If
+ End-If
+   Position (+12,)
+ Next-Listing  Need=25
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Move 0 to #cntyAllCases
+ Move 0 to #cntyEligCases
+ Move 0 to #cntyPNICases
+ Move 0 to #cntyPNIFatherCases
+ Move 0 to #cntyPNIMotherCases
+End-If 
+End-Procedure
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc102
+If $regionSelected = 'N' and $countySelected = 'N'
+ Next-Listing  Need=17
+ Graphic (1,1,533) Horz-Line 20 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region'  (17,1) Bold 
+           Print &Master_Query_STAGE_ONG.CD_STAGE_REGION (17,50,2) Bold
+   Position (+12,)
+ Next-Listing  Need=25
+ Move 0 to #regAllCases
+ Move 0 to #regEligCases
+ Move 0 to #regPNICases
+ Move 0 to #regPNIFatherCases
+ Move 0 to #regPNIMotherCases
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc102
+ If $regionSelected = 'N' and $countySelected = 'N'
+ Next-Listing  Need=19
+ Graphic (1,1,533) Horz-Line 20 
+ Position (4,1)
+  Let $region_total_label='Region ' ||  $prev_stage_region || ' Summary:'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $region_total_label (18,1,25) Bold 
+ ! Let #regAllCases=#regAllCases
+ Print #regAllCases (19,129) Edit 99999 Bold
+ ! Let #regEligCases=#regEligCases
+ Print #regEligCases (19,188) Edit 99999 Bold
+ ! Let #regPNICases=#regPNICases
+ Print #regPNICases (19,250) Edit 99999 Bold
+
+ !Let #regPNIFatherCases = #regPNIFatherCases
+ Print #regPNIFatherCases (19,320) Edit 99999 Bold
+
+ !Let #regPNIMotherCases = #regPNIMotherCases
+ Print #regPNIMotherCases (19,380) Edit 99999 Bold
+
+
+  If #regEligCases <= 0
+ Print 'n/a' (19,440) Bold
+    ! do nothing
+ Else
+ If #regEligCases > 0 and #regPNIFatherCases = 0
+ Print '0.00 %' (19,430) Bold
+ Else
+ !Let #regPNIFatherCases=#regPNIFatherCases
+ Let #percentRegFatherCases=(#regPNIFatherCases/#regEligCases) * 100
+ Print #percentRegFatherCases (19,430) Edit 999.99 Bold
+ Print ' %' (19,459) Bold
+ End-If
+ End-If
+ If #regEligCases <= 0
+ Print 'n/a' (19,500) Bold
+    ! do nothing
+ Else
+ If #regEligCases > 0 and #regPNIMotherCases = 0
+ Print '0.00 %' (19,490) Bold
+ Else
+ !Let #regPNIMotherCases=#regPNIMotherCases
+ Let #percentRegMotherCases=(#regPNIMotherCases/#regEligCases) * 100
+ Print #percentRegMotherCases (19,490) Edit 999.99 Bold
+ Print ' %' (19,520) Bold
+ End-If 
+End-If
+   Position (+12,)
+ Next-Listing  Need=25
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Move 0 to #regAllCases
+ Move 0 to #regEligCases
+ Move 0 to #regPNICases
+ Move 0 to #regPNIFatherCases
+ Move 0 to #regPNIMotherCases
+End-If
+End-Procedure
+
+Begin-Procedure Master_Querydummy_break_BeforeProc101
+ Next-Listing  Need=14
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ !Print &dummy_break (14,1) Edit 9999999999999999na
+   Position (+12,)
+ Next-Listing  Need=25
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querydummy_break_AfterProc101
+ Next-Listing  SkipLines=1 Need=12
+ Graphic (1,1,533) Horz-Line 20 
+ Position (4,1)
+
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Report Summary:' (18,1,16) Bold
+ !Let #stateAllCases=#stateAllCases
+ Print #stateAllCases (19,129) Edit 99999 Bold
+ ! Let #stateEligCases=#regEligCases
+ Print #stateEligCases (19,188) Edit 99999 Bold
+ ! Let #statePNICases=#statePNICases
+ Print #statePNICases (19,250) Edit 99999 Bold
+
+ !Let #statePNIFatherCases = #statePNIFatherCases
+ Print #statePNIFatherCases (19,320) Edit 99999 Bold
+
+ !Let #statePNIMotherCases = #statePNIMotherCases
+ Print #statePNIMotherCases (19,380) Edit 99999 Bold
+
+  If #stateEligCases <= 0
+    ! do nothing
+ Print 'n/a' (19,440) Bold
+ Else
+ If #stateEligCases > 0 and #statePNIFatherCases = 0
+ Print '0.00 %' (19,430)
+ Else
+ !Let #statePNIFatherCases=#statePNIFatherCases
+ Let #percentStateFatherCases=(#statePNIFatherCases/#stateEligCases) * 100
+ Print #percentStateFatherCases (19,430) Edit 999.99 Bold
+ Print ' %' (19,459) Bold
+ End-If
+ End-If
+ If #stateEligCases <= 0
+    ! do nothing
+ Print 'n/a' (19,500) Bold
+ Else
+ If #stateEligCases > 0 and #statePNIMotherCases = 0
+ Print '0.00 %' (19,490)
+ Else
+ !Let #statePNIMotherCases=#statePNIMotherCases
+ Let #percentStateMotherCases=(#statePNIMotherCases/#stateEligCases) * 100
+ Print #percentStateMotherCases (19,490) Edit 999.99 Bold
+ Print ' %' (19,520) Bold
+ End-If
+ End-If
+   Position (+12,)
+ Next-Listing  Need=25
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Move 0 to #stateAllCases
+ Move 0 to #stateEligCases 
+ Move 0 to #statePNICases
+ Move 0 to #statePNIFatherCases
+ Move 0 to #statePNIMotherCases
+End-Procedure
+
+
+Begin-Procedure Get_Region_County
+! -----------------------------
+! Get region optional input
+Input $_cd_stage_region 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_cd_stage_region) or IsBlank($_cd_stage_region) or ($_cd_stage_region='0')
+  Let $where_clause_region = 'CD_STAGE_REGION IS NOT NULL'
+  Let $regionSelected = 'N'
+Else 
+  Let $where_clause_region = 'CD_STAGE_REGION = ' || '''' || $_cd_stage_region || ''''
+  Let $regionSelected = 'Y'
+End-If
+
+! Get county optional input
+Input $_cd_stage_county 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_cd_stage_county) or IsBlank($_cd_stage_county) or ($_cd_stage_county='0')
+  Let $where_clause_county = 'CD_STAGE_CNTY IS NOT NULL'
+  Let $countySelected = 'N'
+Else 
+  Let $where_clause_county = 'CD_STAGE_CNTY = ' || '''' || $_cd_stage_county || ''''
+  Let $countySelected = 'Y'
+End-If
+
+! Get unit optional input
+Input $_nbr_unit 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If IsNull($_nbr_unit) or IsBlank($_nbr_unit) or ($_nbr_unit='0')
+  Let $where_clause_unit = 'NBR_UNIT IS NOT NULL'
+  Let $unitSelected = 'N'
+Else 
+  Let $where_clause_unit = 'NBR_UNIT = ' || '''' || $_nbr_unit || ''''
+  Let $unitSelected = 'Y'
+End-If
+
+! Create where clause for region, county and unit input
+Let $where_clause_region_county = $where_clause_region || ' and ' || $where_clause_county || ' and ' || $where_clause_unit
+!
+Do Make_Header
+End-Procedure
+
+!
+Begin-Procedure Make_Header
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_cd_stage_county || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_cd_stage_county = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_cd_stage_region
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_cd_stage_region
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+Begin-Procedure Get_MonthYear
+Input $dt_report 'Enter a value for Month and Year(MM/YYYY)' MaxLen=7 Type=Date Format='MM/YYYY'
+End-Procedure
+
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 60 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (16,184,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Cases Without Case Manager Parent Visits' (52,123,0) Bold 
+ Print-Image (5,4)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Print 'Status - Foster Care' (72,191,20) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (16,473) edit 'MM/DD/YYYY'
+ Print 'Produced On: ' (16,410,0)
+ Let $region_county_header=$region_county_header
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $region_county_header (113,223,13) Bold 
+ Let $region_header=$region_header
+ Print $region_header (132,238,9) Bold 
+ If $unitSelected = 'N'
+    ! do nothing
+ Else
+ Let $nbr_unit_header='Unit: ' || $_nbr_unit || '   ' || 'Supervisor: ' || &supervisornm
+ Print $nbr_unit_header (133,1,42) Bold 
+ End-If
+ Let $rptMonth=$dt_report
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $rptMonth (93,245,7) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Manager' (164,1,0) Underline  Bold 
+ Print 'Assigned FC Cases' (164,127,8) Underline  Bold  Wrap 8 3 line-height=12 Keep-Top
+ Print 'Eligible FC Cases' (164,185,8) Underline  Bold  Wrap 8 3 line-height=12 Keep-Top
+ Print 'Cases W/O All Parental Contacts' (164,245,13) Underline  Bold  Wrap 13 3 line-height=12 Keep-Top
+ Print '% Father Not Contacted' (164,433,9) Underline  Bold  Wrap 9 3 line-height=12 Keep-Top
+ Print '% Mother Not Contacted' (164,490,9) Underline  Bold  Wrap 9 3 line-height=12 Keep-Top
+ Print 'Father Not Contacted Cases' (164,322,9) Underline  Bold  Wrap 9 4 line-height=12 Keep-Top
+ Print 'Mother Not Contacted Cases' (164,378,9) Underline  Bold  Wrap 9 4 line-height=12 Keep-Top
+ Else   ! put a non combined page header
+ Print 'Case Manager' (17,1,0) Underline  Bold 
+ Print 'Assigned FC Cases' (17,127,8) Underline  Bold  Wrap 8 3 line-height=12 Keep-Top
+ Print 'Eligible FC Cases' (17,185,8) Underline  Bold  Wrap 8 3 line-height=12 Keep-Top
+ Print 'Cases W/O All Parental Contacts' (17,245,13) Underline  Bold  Wrap 13 3 line-height=12 Keep-Top
+ Print '% Father Not Contacted' (17,433,9) Underline  Bold  Wrap 9 3 line-height=12 Keep-Top
+ Print '% Mother Not Contacted' (17,490,9) Underline  Bold  Wrap 9 3 line-height=12 Keep-Top
+ Print 'Father Not Contacted Cases' (17,322,9) Underline  Bold  Wrap 9 4 line-height=12 Keep-Top
+ Print 'Mother Not Contacted Cases' (17,378,9) Underline  Bold  Wrap 9 4 line-height=12 Keep-Top
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 36 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (21,488) '' ' of '
+ Last-Page (21,517) 
+ Print 'Lower Percentage is Preferable' (20,195,0) Bold 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

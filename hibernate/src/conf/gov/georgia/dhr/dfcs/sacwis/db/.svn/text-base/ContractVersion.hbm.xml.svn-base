@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.ContractVersion" table="CONTRACT_VERSION" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idCnver" type="integer" unsaved-value="0">
+      <column name="ID_CNVER" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_CONTRACT_VERSION</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CNTRCT_WKR" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="contractPeriod" class="gov.georgia.dhr.dfcs.sacwis.db.ContractPeriod" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_CONTRACT" precision="16" scale="0" not-null="true"/>
+      <column name="NBR_CNVER_PERIOD" precision="2" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="nbrCnverVersion" type="integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CNVER_VERSION" precision="2" scale="0" not-null="true"/>
+    </property>
+    <property name="nbrCnverNoShowPct" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_CNVER_NO_SHOW_PCT" precision="3" scale="0"/>
+    </property>
+    <property name="indCnverVerLock" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CNVER_VER_LOCK" length="1"/>
+    </property>
+    <property name="txtCnverComment" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CNVER_COMMENT" length="80"/>
+    </property>
+    <property name="dtCnverCreate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CNVER_CREATE" length="7" not-null="true"/>
+    </property>
+    <property name="dtCnverEffective" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CNVER_EFFECTIVE" length="7" not-null="true"/>
+    </property>
+    <property name="dtCnverEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CNVER_END" length="7" not-null="true"/>
+    </property>
+    <property name="txtLastUpdatedBy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_LAST_UPDATED_BY" length="100"/>
+    </property>
+  </class>
+</hibernate-mapping>

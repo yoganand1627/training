@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://localhost/sacwis/" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" targetNamespace="http://localhost/sacwis/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Case File Processing</wsdl:documentation>
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://localhost/sacwis/">
+      <s:element name="collateCaseFile">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="jobDescriptor" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="collateCaseFileResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="collateCaseFileResult" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="collateCaseFileSoapIn">
+    <wsdl:part name="parameters" element="tns:collateCaseFile" />
+  </wsdl:message>
+  <wsdl:message name="collateCaseFileSoapOut">
+    <wsdl:part name="parameters" element="tns:collateCaseFileResponse" />
+  </wsdl:message>
+  <wsdl:portType name="Case_x0020_File_x0020_ServicesSoap">
+    <wsdl:operation name="collateCaseFile">
+      <wsdl:input message="tns:collateCaseFileSoapIn" />
+      <wsdl:output message="tns:collateCaseFileSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="Case_x0020_File_x0020_ServicesSoap" type="tns:Case_x0020_File_x0020_ServicesSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="collateCaseFile">
+      <soap:operation soapAction="http://localhost/sacwis/collateCaseFile" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="Case_x0020_File_x0020_ServicesSoap12" type="tns:Case_x0020_File_x0020_ServicesSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="collateCaseFile">
+      <soap12:operation soapAction="http://localhost/sacwis/collateCaseFile" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="Case_x0020_File_x0020_Services">
+    <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Case File Processing</wsdl:documentation>
+    <wsdl:port name="Case_x0020_File_x0020_ServicesSoap" binding="tns:Case_x0020_File_x0020_ServicesSoap">
+      <soap:address location="http://localhost/sacwis/casefileservices.asmx" />
+    </wsdl:port>
+    <wsdl:port name="Case_x0020_File_x0020_ServicesSoap12" binding="tns:Case_x0020_File_x0020_ServicesSoap12">
+      <soap12:address location="http://localhost/sacwis/casefileservices.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

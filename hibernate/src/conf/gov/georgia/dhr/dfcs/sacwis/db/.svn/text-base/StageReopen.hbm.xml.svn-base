@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.StageReopen" table="STAGE_REOPEN"
+         mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <property name="txtJustificationComment" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_JUSTIFICATION_COMMENT" length="300"/>
+    </property>
+    <property name="dtStageReopen" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_STAGE_REOPEN" length="7"/>
+    </property>
+    <property name="dtStageClose" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_STAGE_CLOSE" length="7"/>
+    </property>
+    <property name="cdStageReasonClosed" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_STAGE_REASON_CLOSED" length="3"/>
+    </property>
+    <property name="txtStageClosureCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_STAGE_CLOSURE_CMNTS" length="300"/>
+    </property>
+    <property name="txtApproversCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_APPROVERS_CMNTS" length="1000"/>
+    </property>
+    <property name="dtApprovalDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_APPROVAL_DATE" length="7"/>
+    </property>
+    <many-to-one name="approver" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_APPROVER" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="performedByPerson" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERFORMED_BY_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="requestedByPerson" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_REQUESTED_BY_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+  </class>
+</hibernate-mapping>

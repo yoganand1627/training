@@ -1,0 +1,451 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Jan 18 10:10:30 2012 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2012\5.1 Release\Statewide Reports\Completed Statewide Files\FosterHomeOverdueReevaluation00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=204    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (10,4,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Apprvl Type - Apprvl Type(Home Status)' (98,7,0) Underline  Bold 
+ Print 'AFA - Approved(Full) - Active' (115,10,0)
+ Print 'ASA - Approved(Special) - Active' (129,10,0)
+ Print 'Category' (207,7,0) Underline  Bold 
+ Print 'D - Relative Adopt' (223,11,0)
+ Print 'O - Relative Foster' (237,11,0)
+ Print 'A - Adoptive' (251,11,0)
+ Print 'F - Foster' (266,11,0)
+ Print 'L - Foster/Adopt(Legal Risk)' (280,11,0)
+ Print 'I - ICPC' (295,11,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (476,666) '' ' of '
+ Last-Page (476,693) 
+ Print 'List of active DFCS foster homes in the county whose approval end date has passed. The reporting county is determined by the county of the stage, not the unit county of the primary case manager. When the county of the primary case manager differs from the stage county, the unit county displays in parentheses to the right of the unit number.' (29,8,145) Wrap 145 3 line-height=12 Keep-Top
+ Print 'Key' (84,4,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Multi-County:' (317,8,0) Underline  Bold 
+ Print 'These are cases when the primary case manager assigned is in a non-county specific unit.' (317,70,0)
+ Print 'FLG -  Full Approval 30 Day Grace' (143,10,0)
+ Print 'FSG - Special Approval 30 Day Grace' (157,10,0)
+ Print 'AUN - Unapproved' (171,10,0)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=48   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+Do Optional-Parameters
+ Do LoadLookupTables
+
+ Position (1,1)
+ Do Master_Query
+Do DisplayResult
+End-Program
+!----------------------------------
+Begin-Procedure Optional-Parameters
+! Get Region Optional Parameter
+Input $_I201_CD_WKLD_STAGE_REGION 'Enter a value for CD_WKLD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I201_CD_WKLD_STAGE_REGION) or IsBlank($_I201_CD_WKLD_STAGE_REGION) or ($_I201_CD_WKLD_STAGE_REGION = '0') 
+  Let $_where_clause_region = 'CD_WKLD_STAGE_REGION is not null'
+  Let $regionSelected = 'N'
+Else
+  Let $_where_clause_region = 'CD_WKLD_STAGE_REGION= ' || '''' ||  $_I201_CD_WKLD_STAGE_REGION || ''''
+  Let $regionSelected = 'Y'
+End-If
+!-------------------------------------
+! Get county Optional Parameter
+Input $_I101_CD_WKLD_STAGE_COUNTY 'Enter a value for CD_COUNTY' MaxLen=3  Type=Text
+If IsNull($_I101_CD_WKLD_STAGE_COUNTY) or IsBlank($_I101_CD_WKLD_STAGE_COUNTY) or ($_I101_CD_WKLD_STAGE_COUNTY = '0')
+  Let $_where_clause_county = 'CD_WKLD_STAGE_CNTY is not null'
+  Let $countySelected = 'N'
+Else
+ Let $_where_clause_county = 'CD_WKLD_STAGE_CNTY= ' || '''' || $_I101_CD_WKLD_STAGE_COUNTY || ''''
+ Let $countySelected = 'Y'
+End-If
+!--------------------------------------------------------------
+! Get Unit number as optional parameter
+Input $_I102_NBR_UNIT 'Enter a value for NBR_UNIT' MaxLen=3 Type=Char
+If isnull($_I102_NBR_UNIT) or isblank($_I102_NBR_UNIT) or ($_I102_NBR_UNIT='0')
+ Let $_where_clause_unit = 'NBR_UNIT is not null '
+ Let $unitSelected = 'N'
+Else
+ Let $_where_clause_unit = 'NBR_UNIT = ' || '''' || $_I102_NBR_UNIT || ''''
+ Let $unitSelected = 'Y'
+End-If
+!--------------------------------------------------------------
+!Get Caseworker ID
+Input $_I103_ID_WKLD_PERSON 'Enter a value for ID_PERSON' MaxLen=16  Type=Number
+If IsNull($_I103_ID_WKLD_PERSON) or IsBlank($_I103_ID_WKLD_PERSON) or ($_I103_ID_WKLD_PERSON = '0')
+  Let $_where_clause_CM = 'ID_WKLD_PERSON is not null'
+  Let $cmSelected = 'N'
+  Else
+ Let $cmSelected = 'Y'
+Let $brb_tmp = 'ID_WKLD_PERSON'
+Let $_where_clause_CM = $brb_tmp  || ' = ' || $_I103_ID_WKLD_PERSON
+End-if
+!---------------------------------------------------------------
+Let $_where_clause_region_county = $_where_clause_region || ' and ' || $_where_clause_county || ' and ' || $_where_clause_unit || ' and ' || $_where_clause_CM 
+Do Make_Header
+End-Procedure
+
+!--------------------------------------------
+! Creates region county label for page header
+Begin-Procedure Make_Header
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_I101_CD_WKLD_STAGE_COUNTY  || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_I101_CD_WKLD_STAGE_COUNTY = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_I201_CD_WKLD_STAGE_REGION
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_I201_CD_WKLD_STAGE_REGION
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select
+(trunc(sysdate- CAPS_RESOURCE.DT_LIC_END)) &Days_Overdue
+(CAPS_RESOURCE.ADDR_RSRC_ST_LN_1 || ', ' || CAPS_RESOURCE.ADDR_RSRC_CITY  ||  ', ' || CAPS_RESOURCE.CD_RSRC_STATE || ', ' ||  CAPS_RESOURCE.ADDR_RSRC_ZIP) &Address
+ADDR_RSRC_ST_LN_1 &Master_Query_ADDR_RSRC_ST_LN_1
+ADDR_RSRC_CITY &Master_Query_ADDR_RSRC_CITY
+ADDR_RSRC_ZIP &Master_Query_ADDR_RSRC_ZIP
+CD_RSRC_STATE &Master_Query_CD_RSRC_STATE
+CD_COUNTY &Master_Query_CD_COUNTY
+ID_WKLD_PERSON &Master_Query_ID_WKLD_PERSON
+(decode( CCOUNT_UNIT.DECODE, '-None-', 'Multi-County',  CCOUNT_UNIT.DECODE  )) &unit_county_decode_masked
+NBR_UNIT &Master_Query_NBR_UNIT
+CountyDECODE.DECODE &Master_Query_CountyDECODE.DECODE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_WKLD_STAGE_REGION &Master_Query_CD_WKLD_STAGE_REGION () On-Break Set=1 Level=1 Print=Never Before=Master_QueryCD_WKLD_STAGE_REGION_BeforeProc101 After=Master_QueryCD_WKLD_STAGE_REGION_AfterProc101
+CD_WKLD_STAGE_CNTY &Master_Query_CD_WKLD_STAGE_CNTY () On-Break Set=1 Level=2 Print=Never Before=Master_QueryCD_WKLD_STAGE_CNTY_BeforeProc102 After=Master_QueryCD_WKLD_STAGE_CNTY_AfterProc102
+ID_UNIT &Master_Query_ID_UNIT () On-Break Set=1 Level=3 Print=Never Before=Master_QueryID_UNIT_BeforeProc103 After=Master_QueryID_UNIT_AfterProc103
+CaseManager.NM_PERSON_FULL &Master_Query_CaseManager.NM_PERSON_FULL () On-Break Set=1 Level=4 Print=Never Before=Master_QueryNM_PERSON_FULL_BeforeProc104 After=Master_QueryNM_PERSON_FULL_AfterProc104
+NM_RESOURCE &RsrcName (16,39,25)
+ID_RESOURCE &RsrcId (16,176) Edit 9999999999na
+CD_RSRC_CATEGORY &Category (16,468,4)
+DT_LIC_BEGIN &Apprvl_Begin (16,563) Edit MM/DD/YYYY
+DT_LIC_END &Apprvl_End (16,620) Edit MM/DD/YYYY
+ Print &Days_Overdue (16,677) Edit 999999na
+ Print &Address (16,245,36) Wrap 36 2 line-height=12 Keep-Top
+CD_RSRC_FA_HOME_STATUS &ApprvlType (17,518,3)
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Add 1 To #103ROW_COUNT
+ Add 1 To #104ROW_COUNT
+ Next-Listing  Need=22
+From  CAPS.CAPS_RESOURCE, CAPS.PERSON CaseManager
+,      CAPS.UNIT, CAPS.WORKLOAD, CAPS.EMPLOYEE
+,      CAPS.CCOUNT CCOUNT_UNIT, CAPS.CCOUNT CountyDECODE
+      Where CAPS.CAPS_RESOURCE.ID_RSRC_FA_HOME_STAGE = CAPS.WORKLOAD.ID_WKLD_STAGE
+            And CaseManager.ID_PERSON = CAPS.WORKLOAD.ID_WKLD_PERSON
+            And CAPS.WORKLOAD.ID_WKLD_PERSON = CAPS.EMPLOYEE.ID_PERSON
+            And CAPS.EMPLOYEE.ID_EMP_UNIT = CAPS.UNIT.ID_UNIT
+            And CAPS.UNIT.CD_COUNTY = CCOUNT_UNIT.CODE
+            And CountyDECODE.CODE = CAPS.WORKLOAD.CD_WKLD_STAGE_CNTY
+ And CD_RSRC_FA_HOME_STATUS IN ('AFA','ASA','ATA','FLG','FSG')
+ And IND_RSRC_NONDFCS <> 'Y'
+ And DT_LIC_END < sysdate
+ And CD_WKLD_STAGE_PERS_ROLE = 'PR'
+ And [$_where_clause_region_county]
+Order By CD_WKLD_STAGE_REGION
+,      CountyDECODE.DECODE
+,      NBR_UNIT
+,      ID_UNIT Desc
+,      CaseManager.NM_PERSON_FULL Desc
+,      NM_RESOURCE
+End-Select
+ Next-Listing
+ Next-Listing  Need=17
+ If #1ROW_COUNT > 0
+ Graphic (2,1,714) Horz-Line 20 
+ Position (4,1)
+ let #ReportTotal = #1ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #ReportTotal (17,62) Bold  Edit 999999na
+  Print 'Report Total:'  (17,2) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+!Display no data message on page header
+Begin-procedure DisplayResult
+if #1ROW_COUNT = 0
+ Let $textdisp = 'No results matching the report parameter are available'
+end-if
+Move $textdisp to $outText
+end-procedure
+
+
+Begin-Procedure Master_QueryCD_WKLD_STAGE_REGION_BeforeProc101
+If $regionSelected = 'N' and $countySelected = 'N'
+! Do Nothing
+
+ Next-Listing  Need=20
+ Graphic (2,1,717) Horz-Line 20 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CD_WKLD_STAGE_REGION (20,43,2) Bold 
+ Print 'Region:'  (20,1) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_WKLD_STAGE_REGION_AfterProc101
+If $regionSelected = 'N' and $countySelected = 'N'
+! Do Nothing
+
+ Next-Listing  Need=24
+ Graphic (4,2,713) Horz-Line 20 
+ Position (6,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region Total:'  (24,2) Bold 
+ let #RegionTotal = #101ROW_COUNT
+ Print #RegionTotal (24,62) Bold  Edit 999999na
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure Master_QueryCD_WKLD_STAGE_CNTY_BeforeProc102
+If $countySelected = 'N'
+! Do Nothing
+
+ Next-Listing  Need=24
+ Graphic (5,1,714) Horz-Line 15 
+ Position (6,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CountyDECODE.DECODE (24,1,35) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_WKLD_STAGE_CNTY_AfterProc102
+
+If $countySelected = 'N' 
+! Do Nothing
+
+ Next-Listing  Need=22
+ Graphic (4,2,713) Horz-Line 15 
+ Position (5,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'County Total:'  (22,2) Bold 
+ let #CountyTotal = #102ROW_COUNT
+ Print #CountyTotal (22,62) Bold  Edit 999999na
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_BeforeProc103
+ Next-Listing  Need=22
+ Graphic (6,20,694) Horz-Line 10 
+ Position (7,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_NBR_UNIT (22,47,4) Bold 
+  If &Master_Query_CD_COUNTY=&Master_Query_CD_WKLD_STAGE_CNTY
+    ! do nothing
+ Else
+ Let $unit_county_dsp='( ' || &unit_county_decode_masked || ' )'
+ Print $unit_county_dsp (22,75,18) Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit:'  (22,19) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_AfterProc103
+If $unitSelected = 'N'
+!Do Nothing
+ Next-Listing  Need=18
+ Graphic (3,20,694) Horz-Line 10 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit Total:'  (18,19) Bold 
+ let #UnitTotal = #103ROW_COUNT
+ Print #UnitTotal (18,62) Bold  Edit 999999na
+   Position (+12,)
+ Move 0 To #103ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure Master_QueryNM_PERSON_FULL_BeforeProc104
+ Next-Listing  Need=19
+ Graphic (3,41,674) Horz-Line 10 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CaseManager.NM_PERSON_FULL (19,177,25) Bold 
+ Print 'Case Manager:'  (19,39) Bold 
+  Print &Master_Query_ID_WKLD_PERSON (19,119) Edit 9999999999na Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryNM_PERSON_FULL_AfterProc104
+If $cmSelected = 'N'
+!Do Nothing
+ Next-Listing  Need=21
+ Graphic (4,41,674) Horz-Line 10 
+ Position (5,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Manager Total:'  (20,40) Bold 
+ let #CMTotal = #104ROW_COUNT
+ Print #CMTotal (21,125) Bold  Edit 999999na
+   Position (+12,)
+ Move 0 To #104ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=CountyLK
+      Table=CAPS.CCOUNT
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SC
+      Quiet
+
+End-Procedure
+
+Begin-Heading 48 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (17,651) edit 'MM/DD/YYYY'
+ Print-Image (3,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Print 'Division of Children and Family Services' (16,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Foster Home Overdue Re-evaluation Report' (56,221,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (17,580,12)
+ Let $region_county_header=$region_county_header
+ Print $region_county_header (79,322,15) Bold 
+ Let $region_header=$region_header
+ Print $region_header (95,311,20) Bold 
+ Let $outText=$outText
+ Print $outText (114,224,55) Bold 
+ Print 'Rsrc Address' (183,245,14) Underline  Bold 
+ Print 'Category' (183,455,8) Underline  Bold 
+ Print 'Apprvl$Type' (183,509,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top on=$
+ Print 'Apprvl$Begin' (183,563,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top on=$
+ Print 'Apprvl$End' (183,620,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top on=$
+ Print 'Days$Overdue' (183,672,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on=$
+ Print 'Rsrc Name' (183,39,0) Underline  Bold 
+ Print 'Rsrc ID' (183,198,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Rsrc Address' (24,245,14) Underline  Bold 
+ Print 'Category' (24,455,8) Underline  Bold 
+ Print 'Apprvl$Type' (24,509,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top on=$
+ Print 'Apprvl$Begin' (24,563,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top on=$
+ Print 'Apprvl$End' (24,620,6) Underline  Bold  Wrap 6 2 line-height=12 Keep-Top on=$
+ Print 'Days$Overdue' (24,672,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on=$
+ Print 'Rsrc Name' (24,39,0) Underline  Bold 
+ Print 'Rsrc ID' (24,198,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (15,659) '' ' of '
+ Last-Page (15,691) 
+ Alter-Printer Font=901 Point-Size=10
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

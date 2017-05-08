@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Pal" table="PAL" mutable="true" polymorphism="implicit"
+         dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+    <id name="idPalStage" type="integer" unsaved-value="undefined">
+      <column name="ID_PAL_STAGE" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">stage</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" constrained="true"/>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdPalCloseLivArr" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_PAL_CLOSE_LIV_ARR" length="3"/>
+    </property>
+    <property name="dtPalPostasmtDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PAL_POSTASMT_DATE" length="7"/>
+    </property>
+    <property name="dtPalPreasmtDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PAL_PREASMT_DATE" length="7"/>
+    </property>
+    <property name="indPalIlNoIlsAssmt" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PAL_IL_NO_ILS_ASSMT" length="1"/>
+    </property>
+    <property name="indPalIlNoPoasmtScre" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PAL_IL_NO_POASMT_SCRE" length="1"/>
+    </property>
+    <property name="indPalIlNoPrasmtScre" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PAL_IL_NO_PRASMT_SCRE" length="1"/>
+    </property>
+    <property name="nbrPalPostasmtScore" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PAL_POSTASMT_SCORE" precision="3" scale="0"/>
+    </property>
+    <property name="nbrPalPreasmtScore" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PAL_PREASMT_SCORE" precision="3" scale="0"/>
+    </property>
+    <property name="txtPalIlNoIlsRsn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PAL_IL_NO_ILS_RSN" length="300"/>
+    </property>
+    <property name="cdNoIlsReason" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_NO_ILS_REASON" length="2"/>
+    </property>
+    <property name="dtTrainingCmpltd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_TRAINING_CMPLTD" length="7"/>
+    </property>
+  </class>
+</hibernate-mapping>

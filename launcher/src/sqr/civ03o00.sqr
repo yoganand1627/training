@@ -1,0 +1,339 @@
+!*****************************************************************************
+!  EXTERNAL DOCUMENTATION REPORT                                             *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:          civ03o00.sqr                                        *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/heardtd/work/sqr                         *
+!                                                                            *
+!                                                                            *
+! DATE:                 10/18/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Tony Heard                                           *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The External Documentation report will list all of   *
+!                       the external documents which are associated with a   *
+!                       case.                                                *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 10/18/95    Tony Heard      Initial Programming                            *
+! 05/04/98    SOHNJJ          SIR #14298 - MHMR Enhancement Item 3: Allow    *
+!                             the user to sort the items listed on the       *
+!			      Facility Abuse/Neglect document and the        *
+!			      External Documentation report.  Added the      *
+!			      column, CD_EXT_DOC_SORT to the                 *
+!			      EXT_DOCUMENTATION table to store the user's    *
+!			      sort order.                                    *
+!10/22/98    DMV              SIR 14987 Add date obtained to Sort Order      *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02a.sqc'            ! control codes for Portrait 
+                                       ! On Demand Reports              
+    ask INPUT_ID_CASE               
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 7 
+
+  #INCLUDE 'header03.sqc'               !Include file with Header Information
+                                        !Specific to landscape on demand reports
+
+                           
+  print 'EXTERNAL DOCUMENTATION'                             (+2) center
+  print 'DESCRIPTION'     (+2,1)
+  print 'DATE OBTAINED'   (+0,25)          
+  print 'ITEM LOCATION'   (+0,40)
+  print 'DETAILS'         (+0,68)  
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer03.sqc'       ! Include file with footer information
+                                ! specific to portrait on demand report
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+
+  !************************************************
+  ! Variables and Constants                       *
+  !************************************************
+   move {INPUT_ID_CASE}        to #input_id_case
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-HEAD-INFO                                          *
+!       CALLS      : GET-RECORDS                                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do GET-HEAD-INFO  
+    do GET-RECORDS
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!  GET-HEAD-INFO                                                            *
+!                                                                           *
+!    Retrieves the case name field for the header using ID_CASE from input. *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-HEAD-INFO
+
+    move 0      to #count       !initialize a counter
+    
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+NM_CASE
+    move &NM_CASE		to $Case_Name                
+
+ID_CASE
+    move &ID_CASE		to #Case_Number 
+
+FROM CAPS_CASE
+
+WHERE ID_CASE   = 		#input_id_case		 
+   
+END-SELECT
+
+END-PROCEDURE GET-HEAD-INFO 
+
+!****************************************************************************
+!                                                                           *
+!    GET-RECORDS                                                            *
+!                                                                           *
+!       Retrieves the external documentation records using ID_CASE from     *
+!       input.
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-TITLES                                           *
+!       CALLS      : PRINT-GET-RECORD                                       *
+!                                                                           * 
+!****************************************************************************
+BEGIN-PROCEDURE GET-RECORDS
+
+    move 0 to #count_1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(A.DT_EXT_DOC_OBTAINED, 'MM/DD/YYYY') &date
+   move &date				to $date_obtained
+
+A.TXT_EXT_DOC_DETAILS
+   move &A.TXT_EXT_DOC_DETAILS			to $doc_details
+
+A.TXT_EXT_DOC_LOCATION
+   move &A.TXT_EXT_DOC_LOCATION			to $doc_location 
+
+CEXDOTYP.DECODE
+   move &CEXDOTYP.DECODE			to $type_decode
+
+
+   let #count_1 = #count_1 + 1
+
+   if #count_1 = 1
+	do PRINT-GET-RECORDS
+   else
+	do PRINT-GET-RECORDS
+   end-if
+	
+
+FROM EXT_DOCUMENTATION 		    A,
+     CEXDOTYP                 CEXDOTYP
+
+WHERE CEXDOTYP.CODE(+) = A.CD_EXT_DOC_TYPE
+AND  A.ID_CASE         = #input_id_case
+
+ORDER BY CD_EXT_DOC_SORT, DT_EXT_DOC_OBTAINED DESC
+
+END-SELECT
+    
+END-PROCEDURE GET-RECORDS 
+
+!****************************************************************************
+!                                                                           *
+! PRINT-GET-RECORDS                                                         *
+!                                                                           *
+!       This procedure prints the body of the report (i.e. description,     *
+!       date obtained, item location, and details).                         *
+!                                                                           * 
+!       CALLED BY  : GET-RECORDS                                            *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-GET-RECORDS
+   
+   columns 1 25 40 68 
+!if #current-line >= 22
+!    NEW-PAGE
+!end-if
+ 
+!   let #line_to_print = #current-line + 1 
+print $type_decode   	(+0,1)
+    next-column goto-top=1
+print $date_obtained    (+0,1)
+     next-column goto-top=1
+  let #current-line = #line_to_print
+  let $doc_location2 = rtrim($doc_location,'')
+print $doc_location2    (+0,1)              wrap 24 4
+   next-column goto-top=1
+  let $doc_details2  = rtrim($doc_details,'')
+print $doc_details2      (+0,1)              wrap 39 8 
+   next-column goto-top=1
+    
+    next-listing skiplines=2 need=8
+
+END-PROCEDURE PRINT-GET-RECORDS
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+
+#INCLUDE 'cfpstamp.sqc'

@@ -1,0 +1,932 @@
+!*****************************************************************************
+!  CENTRAL REGISTRY DETAIL REPORT                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccm03o01.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/millersr/work/sqr                        *
+!                                                                            *
+! DATE:                 05/15/01                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Susie Miller                                         *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The purpose of this program is to process central    *
+! registry  checks on all employees in child care facilities or for other    *
+! central registry checks.  This report will read a flat file from CCMN01B   *
+! and uses ccmn01a.cpy as the copybook layout.                               *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+! Millersr  SIR 15683   Display all cases for a person id even if the person *
+!                       id is the same.                                      *
+! millersr  SIR  15877  Display employee person id not ssn.                  *
+! Millersr  SIR 18561   Change agency name to "Department of Family          *
+!                       and Protective Services".                            *
+! millersr  SIR 22552   Change the employee function to get information form *
+!                       from the CLASS database instead of IMPACT.           *
+!                       Changed the size of the employee ssn from 11 to 9    *
+!                       As we store the ssn with slashes CLASS does not.     *
+!                       Changed the facility function to get information from*
+!                       the CLASS database instead of IMPACT since CLASS has *
+!                       all Facility ID that are submitting the requests.    *
+!                       Changed the get-facility to get facility nbr not ID. *
+! millersr  SIR 22894   Change facility field size to 10.                    *
+! millersr  SIR 23423   Add merge view functionality.                        *
+! millersr  SIR 24141   Change the file to print duplicates as long as the   *
+!                       facility is different.                               *
+!*****************************************************************************
+!
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                       !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup01a.sqc'            ! control codes for Landscape Batch
+
+    ASK INPUT_FILE                     ! name of the file to be inputed
+                                       ! if the SQR report does not reside
+                                       ! in the same directory as the file
+                                       ! to be read then the full path must
+                                       ! be given
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called setup01a.sqc for landscape reports.          *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 6
+
+    move 'ccm03o02'                                    to $ReportID
+    move 'CHILD ABUSE/NEGLECT CENTRAL REGISTRY CHECK'  to $ReportTitle
+
+  print 'DEPARTMENT OF FAMILY AND PROTECTIVE SERVICES' (+1) center
+  print 'REPORT ID: '       (+1,1)
+  uppercase $ReportTitle
+  print $ReportTitle        ()          center
+  print 'PAGE: '            (+0,115)
+  page-number               (+0,121)
+
+  uppercase $ReportId
+  print $ReportId           (+1,1)
+  print 'Detail Report for Licensing'    (+0)    center
+ 
+!  print 'DATE: '            (+1)    center
+  date-time () 'MM/DD/YY'   &date
+  print &date               (+1,1)    center
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+!
+ BEGIN-FOOTING 1
+ 
+ print 'Status: A = Active, I = Inactive, X = Person ids merged. View the Person Merge/Split page for info.'(1,1) 
+
+ END-FOOTING
+!
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS    : OPEN-FILE                                                *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                    !Set printer environment
+
+    move '{INPUT_FILE}'                     to $input_file
+    move 0                                  to #count3
+    do  OPEN-FILE
+
+     move ' ' to $input_id_employee_ssn
+     move ' ' to $input_seq_number
+     move ' ' to $input_id_facility
+     move ' ' to $output_id_facility
+     move ' ' to $input_id_person
+     move ' ' to $output_id_person
+     move ' ' to $input_person_first
+     move ' ' to $input_person_middle
+     move ' ' to $input_person_last
+     move ' ' to $input_person_suffix
+     move ' ' to $input_request_type
+     move ' ' to $request_type
+     move ' ' to $emp_office_mail
+     move ' ' to $nm_employee_first
+     move ' ' to $nm_employee_middle
+     move ' ' to $nm_employee_last
+     move ' ' to $nm_person_first
+     move ' ' to $nm_person_middle
+     move ' ' to $nm_person_last
+     move ' ' to $cd_person_suffix
+     move ' ' to $DOB
+     move ' ' to $person_city
+     move ' ' to $person_street
+     move ' ' to $person_zip
+     move ' ' to $person_state
+     move ' ' to $person_id_number
+     move ' ' to $stage_pers_role
+     move ' ' to $id_case
+     move ' ' to $stage_program
+     move ' ' to $stage_close
+     move ' ' to $stage_reason_closed
+
+if $continue_flag = 'Y'
+
+       read 1 into
+                   $input_seq_number:16
+                   $input_request_type:2
+                   $input_match_type:2
+                   $input_id_person:16
+                   $input_person_first:12
+                   $input_person_middle:12
+                   $input_person_last:22
+                   $input_person_suffix:2
+                   $input_person_dob:26      
+                   $input_person_ssn:12     
+                   $input_id_facility:10
+                   $filler:1
+                   $input_id_employee_ssn:9
+
+
+move $input_request_type       to $prev_request_type
+
+if #end-file
+     PRINT 'NO DETAIL LINES FOUND'          (+5) center
+     move 'N' to $continue_flag
+end-if
+end-if
+    move 0 to #count2
+    move '*** END OF REPORT ***' to $end_of_report    ! Initialize
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   OPEN-FILE                                                               *
+!                                                                           *
+!      This procedure will open the file to be read and if there is a       *
+!      problem it will print it in the report and finish the processing.    *
+!                                                                           *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE OPEN-FILE
+
+OPEN $input_file AS 1 FOR-READING
+    RECORD=145 status=#file_status
+
+if #file_status = 0
+    move 'Y' to $continue_flag
+else
+    PRINT 'ERROR OPENING FILE'              (+4) center
+    let $printout = 'FILE '||$input_file||' DOES NOT EXIST'
+    PRINT $printout                         (+1) center
+    let #return-status = 30
+    move 'N' to $continue_flag
+    move 'N' to $close_file
+
+end-if
+
+END-PROCEDURE OPEN-FILE
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-EMPLOYEE, GET-FACILITY, GET-PERSON                 *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT
+
+ do GET-EMPLOYEE
+  if $emp_office_mail = ' '
+     goto next
+  end-if
+
+ do GET-FACILITY
+
+!show $input_match_type
+!show $input_seq_number
+!show $hold_seq_number
+
+if $input_match_type = 'IM'
+    and $input_seq_number = $hold_seq_number
+    do PRINT-PERSON-01
+else
+   move $input_seq_number to $hold_seq_number
+  !show 'not im' $input_seq_number
+  !show 'not im'$hold_seq_number
+
+    do GET-PERSON
+end-if
+
+next:
+
+while $continue_flag = 'Y'
+
+     move ' ' to $input_id_employee_ssn
+     move ' ' to $input_seq_number
+     move ' ' to $input_id_facility
+     move ' ' to $output_id_facility
+     move ' ' to $input_id_person
+     move ' ' to $output_id_person
+     move ' ' to $input_person_first
+     move ' ' to $input_person_middle
+     move ' ' to $input_person_last
+     move ' ' to $input_person_suffix
+     move ' ' to $input_request_type
+     move ' ' to $request_type
+     move ' ' to $emp_office_mail
+     move ' ' to $nm_employee_first
+     move ' ' to $nm_employee_middle
+     move ' ' to $nm_employee_last
+     move ' ' to $nm_person_first
+     move ' ' to $nm_person_middle
+     move ' ' to $nm_person_last
+     move ' ' to $cd_person_suffix
+     move ' ' to $DOB
+     move ' ' to $person_city
+     move ' ' to $person_street
+     move ' ' to $person_zip
+     move ' ' to $person_state
+     move ' ' to $person_id_number
+     move ' ' to $stage_pers_role
+     move ' ' to $id_case
+     move ' ' to $stage_program
+     move ' ' to $stage_close
+     move ' ' to $stage_reason_closed
+
+
+       read 1 into
+                   $input_seq_number:16
+                   $input_request_type:2
+                   $input_match_type:2
+                   $input_id_person:16
+                   $input_person_first:12
+                   $input_person_middle:12
+                   $input_person_last:22
+                   $input_person_suffix:2
+                   $input_person_dob:26      
+                   $input_person_ssn:12       
+                   $input_id_facility:10
+                   $filler:1
+                   $input_id_employee_ssn:9
+                   
+
+ if $input_id_employee_ssn <> ''
+    do GET-EMPLOYEE
+ end-if
+
+  if $emp_office_mail = ' '
+     goto next1
+  end-if
+
+ if $input_request_type = '03'
+    do GET-FACILITY
+ end-if
+!show 'process report (if input match type = IM and input seq # = hold seq # call print person 01' $input_match_type
+!show 'input seq number '$input_seq_number
+!show 'hold seq number '$hold_seq_number
+
+ if $input_match_type = 'IM'       
+     and $input_seq_number = $hold_seq_number
+     do PRINT-PERSON-01
+ else
+     do GET-PERSON
+  end-if
+
+next1:
+
+if $input_id_employee_ssn = '' and $input_id_facility = ''
+   and $input_id_person = ''
+     NEW-PAGE
+     PRINT 'SPACES-NO DATA FOUND IN FIELD(S)'  (+5) center
+     move 'N' to $continue_flag
+     PRINT 'TOTAL DB/DP/SP/AP FOUND'         (+0,1)
+     print #count2                           (+,25)
+end-if
+
+if #end-file
+     PRINT 'NO MORE RECORDS FOUND'          (+5) center
+     move 'N' to $continue_flag
+ end-if
+
+end-while
+
+END-PROCEDURE PROCESS-REPORT
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-EMPLOYEE                                                            *
+!                                                                           *
+!       This procedure will retrieve the EMPLOYEE information on the        *
+!       person who requested a Central Registry check.                      *
+!  SIR 22552- MODIFIED THE GET-EMPLOYEE PROCEDURE TO GET THE EMPLOYEE INFORM*
+!       FROM THE CLASS DATABASE IN ORDER TO GET THE PERSON INFORMATION FOR  *
+!       FACILITY WORKERS REQUESTING CRC VIA THE INTERNET.                   *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-EMPLOYEE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CD_MAIL
+    move &CD_MAIL              to $emp_office_mail
+
+NM_FIRST
+    move &NM_FIRST               to $nm_employee_first
+
+NM_MDDL
+    move &NM_MDDL              to $nm_employee_middle
+
+NM_LAST
+    move &NM_LAST                to $nm_employee_last
+ 
+ID_EMPLYEE
+    move &ID_EMPLYEE             to $id_person
+    
+
+FROM    CLASS_EMPLOYEE_VIEW 
+WHERE   NBR_SSN = $input_id_employee_ssn
+
+
+END-SELECT
+
+END-PROCEDURE GET-EMPLOYEE
+
+!****************************************************************************
+!                                                                           *
+!   GET-FACILITY                                                            *
+!                                                                           *
+!       This procedure will retrieve the FACILITY information on the        *
+!       person who the request was run for on a Central Registry check      *
+!       if Licensing (03) was the request type.                             *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-FACILITY
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+NBR_FCLTY
+    move &NBR_FCLTY         to $nbr_facility
+
+ID_FCLTY
+    move &ID_FCLTY          to $output_id_facility
+    
+FROM    CLASS_FACILITY_VIEW 
+
+WHERE ID_FCLTY = $input_id_facility
+
+
+END-SELECT
+   if $output_id_facility = ' '
+   move 'INVALID #' to $output_id_facility
+   end-if
+
+END-PROCEDURE GET-FACILITY
+
+!****************************************************************************
+!                                                                           *
+!   GET-PERSON                                                              *
+!                                                                           *
+!       This procedure will retrieve the most current primary name and      *
+!       information for the input person that a Central Registry check      *
+!       was being done on.                                                  *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-EMPLOYEE, PRINT-TITLE                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PERSON
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+SPL.ID_CASE
+    move &SPL.ID_CASE                       to $id_case
+
+SPL.ID_PERSON
+    move &SPL.ID_PERSON                     to $output_id_person
+
+P.NM_PERSON_FIRST
+    move &P.NM_PERSON_FIRST                 to $nm_person_first
+
+P.NM_PERSON_MIDDLE
+    move &P.NM_PERSON_MIDDLE                to $nm_person_middle
+   
+P.NM_PERSON_LAST
+    move &P.NM_PERSON_LAST                  to $nm_person_last
+    
+P.CD_PERSON_STATUS
+    move &P.CD_PERSON_STATUS            to   $person_status
+
+CSUFFIX2A.decode
+    move &CSUFFIX2A.decode                  to $cd_person_suffix
+
+to_char(P.DT_PERSON_BIRTH, 'MM/DD/YYYY') &date7
+    move &date7                             to $DOB
+
+P.NBR_PERSON_ID_NUMBER
+    move &P.NBR_PERSON_ID_NUMBER            to $person_id_number
+
+SPL.CD_STAGE_PERS_ROLE
+    move &SPL.CD_STAGE_PERS_ROLE            to $stage_pers_role
+
+S.CD_STAGE_PROGRAM
+    move &S.CD_STAGE_PROGRAM                to $stage_program
+
+S.CD_STAGE_REASON_CLOSED
+    move &S.CD_STAGE_REASON_CLOSED          to $stage_reason_closed
+
+to_char(S.DT_STAGE_CLOSE, 'MM/DD/YYYY') &date8
+    move &date8                             to $stage_close
+
+
+ if $input_request_type = '03'
+     if #count3 < 0
+        or $input_request_type <> $prev_request_type
+
+        move 1                                  to #count3
+        NEW-PAGE
+        move $input_request_type                to $prev_request_type
+        do PRINT-EMPLOYEE
+    !   !!  !! moved the next 2 lines so that the employee and title
+    !   !!  !! don't print twice.
+        move $output_id_facility                     to $hold_id_facility
+        move $input_id_employee_ssn                  to $hold_id_employee_ssn
+
+     else
+          if   $hold_id_facility <> $output_id_facility
+                or $output_id_facility <> 'INVALID #'
+               and $hold_id_employee_ssn <> $input_id_employee_ssn
+               and #current-line < 55
+               and $input_request_type = '03'
+                do PRINT-EMPLOYEE
+
+          else
+               if   #current-line >= 55
+                   do PRINT-EMPLOYEE
+               end-if
+          end-if
+     end-if
+
+ else
+       if #count3 < 0
+          or $input_request_type <> $prev_request_type
+
+           NEW-PAGE
+           do PRINT-EMPLOYEE
+           move $input_request_type                to $prev_request_type
+           move $input_id_employee_ssn             to $hold_id_employee_ssn
+           move 1                                  to #count3
+        else
+           if $hold_id_employee_ssn <> $input_id_employee_ssn
+              and #current-line < 55
+              and $input_request_type <> '03'
+              do PRINT-EMPLOYEE
+            else
+                 if   #current-line >= 55
+                     do PRINT-EMPLOYEE
+                 end-if
+           end-if
+        end-if
+ end-if
+ !show 'this is the id case ' $id_case
+ !show 'this is the hold case '$hold_id_case
+ !show 'this is the input person '$input_id_person
+ !show 'this is the hold person ' $hold_id_person
+ !show 'input seq number '$input_seq_number
+ !show 'hold seq number '$hold_seq_number
+
+
+
+ if  $id_case <> $hold_id_case
+   !  or $input_id_person <> $hold_id_person
+   
+     do PRINT-PERSON-LIC
+ else
+ if  $id_case = $hold_id_case
+   !  and $input_id_person <> $hold_id_person
+     and $input_seq_number <> $hold_seq_number   
+   do PRINT-PERSON-LIC
+  
+ else
+     goto next
+     end-if
+ end-if
+ !show 'this is the id case ' $id_case
+ !show 'this is the hold case '$hold_id_case
+ !show 'this is the input person '$input_id_person
+ !show 'this is the hold person ' $hold_id_person
+ 
+ move $output_id_facility                     to $hold_id_facility
+ move $input_id_employee_ssn                  to $hold_id_employee_ssn
+
+ next:
+
+FROM    PERSON P,
+        CSUFFIX2           CSUFFIX2A,
+        STAGE_PERSON_LINK  SPL,
+    STAGE          S,
+    FACILITY_INVST_DTL FID,
+    ALLEGATION     A,
+    PERSON         P2,
+    PERSON_MERGE_VIEW PMV
+WHERE   PMV.ID_PERSON_INPUT         = $input_id_person
+AND     PMV.ID_PERSON_OUTPUT       = P.ID_PERSON
+AND     P.ID_PERSON         = SPL.ID_PERSON
+AND     CSUFFIX2A.CODE(+)   = P.CD_PERSON_SUFFIX
+AND     SPL.ID_STAGE        = S.ID_STAGE
+AND     S.ID_STAGE      = FID.ID_FACIL_INVST_STAGE(+)
+AND     SPL.ID_PERSON       = A.ID_ALLEGED_PERPETRATOR(+)
+AND     SPL.ID_STAGE        = A.ID_ALLEGATION_STAGE(+)
+AND     SPL.ID_CASE     = A.ID_CASE(+)
+AND     A.ID_VICTIM     = P2.ID_PERSON(+)
+AND     S.CD_STAGE       IN('INV')
+AND     ((S.CD_STAGE_PROGRAM     IN('AFC')
+  AND   MONTHS_BETWEEN(FID.DT_FACIL_INVST_INTAKE,P2.DT_PERSON_BIRTH)/12 < 18.0
+  AND   (A.CD_ALLEG_DISPOSITION  IN('CON') OR A.CD_ALLEG_DISPOSITION IS NULL))
+OR      (S.CD_STAGE_PROGRAM      IN('CPS', 'CCL', 'RCL')
+  AND   (A.CD_ALLEG_DISPOSITION  IN('RTB') OR A.CD_ALLEG_DISPOSITION IS NULL)))
+AND     ((SPL.CD_STAGE_PERS_ROLE IN('SP', 'DB', 'DP')
+  AND   S.DT_STAGE_CLOSE IS NOT NULL)
+OR      (SPL.CD_STAGE_PERS_ROLE IN('DB', 'DP', 'AP', 'VP')
+  AND   S.DT_STAGE_CLOSE IS NULL))
+AND     (S.CD_STAGE_CLASSIFICATION != ('SPC')
+  OR    S.CD_STAGE_CLASSIFICATION IS NULL)
+AND     (S.CD_STAGE_REASON_CLOSED  != ('97')
+  OR    S.CD_STAGE_REASON_CLOSED IS NULL)
+ORDER BY SPL.ID_CASE
+
+
+END-SELECT
+
+
+! !! SIR 15455 This will print the persons name in CAPS when they are not in the
+! !! Central Registry.  removed get-person-2 section so that the report
+! !! will only print the persons designated as perps or alleged perps.
+
+! if $output_id_person = ' '
+!   do GET-PERSON-2
+! end-if
+
+   
+END-PROCEDURE GET-PERSON
+
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-EMPLOYEE                                                          *
+!                                                                           *
+!       This procedure prints the current information about the input       *
+!       employee.                                                           *
+!                                                                           *
+!       CALLED BY  : GET-PERSON                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-EMPLOYEE
+ if #current-line >= 55
+   NEW-PAGE
+ end-if
+next-listing need = 14
+
+! SIR 15252 - Added if statement to print FACILITY ID only if input file
+! is for Licensing (03).
+
+if ($input_request_type = '03')
+print 'FACILITY NBR:  '                          (+2,1)
+if ($output_id_facility = ' ') and $input_request_type = '03'
+    move 'INVALID #' to $nbr_facility
+print $nbr_facility                       (+0,15)
+else
+  print $nbr_facility                     (+0,15)
+end-if
+end-if
+print 'REQUESTOR ID:  '                         (+0,28)
+if ($id_person  = ' ') 
+    move 'INVALID SSN #' to $id_person
+ print $id_person                               (+0,43) 
+ else    
+print $id_person                                (+0,43)
+end-if
+print 'MAIL CODE:  '                            (+0,65)
+print $emp_office_mail                          (+0,77)
+print 'REQUEST TYPE:  '                         (+0,85)
+
+
+   move 'LIC' to $request_type
+   print $request_type                          (+0,100)
+
+
+! SIR 15455 - MOVED TITLE INFORMATION TO PRINT-EMPLOYEE
+! PROCEDURE. TO PRINT TOGETHER ON THE SAME PAGE. MOVED
+! "REQUESTED NAME" TO THE PRINT-01 PROCEDURE SO THAT IT
+! PRINTS WITH THE DETAIL INFORMATION.
+
+print 'REQUESTOR NAME:  '                       (+1,1)
+print $nm_employee_first                        (+0,18)
+print $nm_employee_middle                       (+0,30)
+print $nm_employee_last                         (+0,42)
+print 'REQUESTED ID  '                          (+2,1)
+print 'CAPS PRIMARY NAME'                       (+0,20)
+print 'MESSAGE'                                 (+0,76)
+print 'PROGRAM'                                 (+0,99)
+print 'CASE ID'                                 (+0,108)
+print 'ROLE'                                    (+0,118)
+print 'STATUS'                                  (+0,126)
+print 'SSN'                                     (+0,134)
+print 'DATE OF BIRTH'                           (+0,149)
+
+
+END-PROCEDURE PRINT-EMPLOYEE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-TITLE                                                             *
+!                                                                           *
+!       This procedure prints the title for each of the columns on the      *
+!       report.                                                             *
+!                                                                           *
+!       CALLED BY  : GET-PERSON                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-TITLE
+
+print 'REQUESTED ID  '                          (+2,1)
+print 'CAPS PRIMARY NAME'                      (+0,20)
+print 'MESSAGE'                                 (+0,76)
+print 'PROGRAM'                                 (+0,99)
+print 'CASE ID'                                 (+0,108)
+print 'ROLE'                                    (+0,118)
+print 'STATUS'                                  (+0,126)
+print 'SSN'                                     (+0,134)
+print 'DATE OF BIRTH'                           (+0,149)
+
+!print 'REQUESTED NAME'                       (+1,20)
+
+
+END-PROCEDURE PRINT-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PERSON-LIC                                                        *
+!                                                                           *
+!       This procedure prints the persons information for Licensing.        *
+!                                                                           *
+!       CALLED BY  : GET-PERSON                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PERSON-LIC
+
+print $input_id_person                          (+1,1)
+print $input_person_first                       (+0,20)
+print $input_person_middle                      (+0,34)
+print $input_person_last                        (+0,46)
+
+! SIR 15409 COMMENTED THIS SECTION OUT TO AVOID CAPS NAME PRINTING TWICE
+! if ($output_id_person <> ' ')
+!    print $nm_person_first                       (+1,20)
+!    print $nm_person_middle                      (+0,34)
+!    print $nm_person_last                        (+0,46)
+!    print $cd_person_suffix                     (+0,70)
+! else
+!    print $p_nm_person_first                     (+1,20)
+!    print $p_nm_person_middle                    (+0,34)
+!    print $p_nm_person_last                      (+0,46)
+! end-if
+
+if ($output_id_person = '')
+   move 'NO CR RECORD'         to $o_message
+   print $o_message                              (+0,75)
+   move $input_seq_number to $hold_seq_number
+else
+if ($stage_close = '')
+   move 'OPEN INVESTIGATION'                to $o_message
+   print $o_message                              (+0,75)
+let #count2 = #count2 + 1
+   move $input_seq_number to $hold_seq_number
+else
+if ($stage_pers_role = 'SP')
+   move 'SUSTAINED PERPETRATOR'             to $o_message
+   print $o_message                             (+0,75)
+let #count2 = #count2 + 1
+   move $input_seq_number to $hold_seq_number
+else
+if ($stage_pers_role = 'DP')
+   move 'DESIGNATED PERPETRATOR'            to $o_message
+   print $o_message                              (+0,75)
+let #count2 = #count2 + 1
+   move $input_seq_number to $hold_seq_number
+
+else
+if ($stage_pers_role = 'DB')
+   move 'DESIGNATED VICTIM/PERP'            to $o_message
+   print $o_message                              (+0,75)
+let #count2 = #count2 + 1
+   move $input_seq_number to $hold_seq_number
+else
+if ($stage_pers_role = 'NO')
+   move 'NO ROLE'                           to $o_message
+   print $o_message                              (+0,75)
+let #count2 = #count2 + 1
+   move $input_seq_number to $hold_seq_number
+else
+   move 'NOT ON CENTRAL REGISTRY'           to $o_message
+   print $o_message                              (+0,75)
+end-if
+end-if
+end-if
+end-if
+end-if
+end-if
+
+if $person_status = 'M'
+   move 'X' to $person_status
+end-if
+
+   print $stage_program                     (+0,101)
+   print $id_case                           (+0,108)
+   print $stage_pers_role                   (+0,118)
+   print $person_status                     (+0,126)
+   move $input_seq_number                      to $hold_seq_number
+   move $output_id_facility                     to $hold_id_facility
+   move $input_id_employee_ssn                  to $hold_id_employee_ssn
+   move $input_seq_number                       to $hold_seq_number
+   move $id_case                                to $hold_id_case
+   move $input_id_person                        to $hold_id_person
+   move $id_case                                to $previous_id_case
+!show 'person lic '$input_seq_number
+!show 'person lic '$hold_seq_number
+!show 'person id  '$output_id_person
+
+print $person_id_number                     (+0,134)
+print $dob                                  (+0,149)
+
+END-PROCEDURE PRINT-PERSON-LIC
+
+
+
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-PERSON-01                                                         *
+!                                                                           *
+!       This procedure prints the persons information for Licensing.        *
+!       Added per SIR 15409                                                 *
+!       CALLED BY  : MAIN PROCRESS                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-PERSON-01
+
+  move $input_id_facility                     to $hold_id_facility
+  move $input_id_employee_ssn                 to $hold_id_employee_ssn
+  
+print 'REQUESTED NAME'                          (+1,1)
+print $input_person_first                       (+0,20)
+print $input_person_middle                      (+0,34)
+print $input_person_last                        (+0,46)
+print $input_person_ssn                         (+0,134)
+print $input_person_dob                         (+0,149)
+
+next-listing no-advance skiplines = 1
+
+END-PROCEDURE PRINT-PERSON-01
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+if $close_file = 'N'
+else
+    CLOSE 1
+end-if
+
+NEW-PAGE
+
+print $end_of_report                        (+4,) center
+
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  show $error
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  show $error
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  show $sql-error
+  print $error                                            (+1,2)
+  show $error
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+  print 'person id'                                       (+0)
+  print $input_id_person                                  (+1,2)
+  show $input_id_person
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc'

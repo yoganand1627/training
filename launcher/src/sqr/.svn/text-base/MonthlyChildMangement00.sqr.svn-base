@@ -1,0 +1,712 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Nov 16 14:44:28 2011 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\AdoptionsReportDesigns\Nov16\MonthlyChildMangement00.sqr
+! Format  : Tabular
+! Username: JPOTTAMMEL
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Text $dt_tpr_disp 
+ Text $dt_case_plan_aprvd_disp 
+ Text $Update2 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=96    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,2,0) Underline  Bold 
+ Print 'Key' (420,2,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Race' (436,4,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Approval:' (227,12,0) Bold 
+ Print 'The approval date on the Child Life History Checklist.' (227,123,0)
+ Print 'Case Manager:' (76,12,0) Bold 
+ Print 'The most recent case manager on the Adoption stage.' (76,123,0)
+ Print 'The date the Permenancy Unit was notified of the child being free for adoptions.' (210,123,0)
+ Print 'The latest approval date of the case plan of which the child is a principal.' (277,123,80)
+ Print 'Register:' (244,12,0) Bold 
+ Print 'Consider/Hold:' (294,12,0) Bold 
+ Print 'A list of all active considerations for the child''s Adoption Exchange registration.' (294,123,0)
+ Print 'Placed Date:' (311,12,0) Bold 
+ Print 'Perm. 2 File:' (378,12,13) Bold 
+ Print 'The placement start date of the most recent ADH placement from the Placement Information page.' (311,123,114) Wrap 114 3 line-height=12 Keep-Top
+ Print 'The Permission to File date from the most recent Adoption Information record associated with the child registration.' (378,123,121)
+ Print 'The earliest Termination of Parental Right (TPR) or Voluntay Surrender (VS) date.' (93,123,0)
+ Print 'Doc. Sent:' (396,12,0) Bold 
+ Print 'The Document Sent date from the most recent Adoption Information record associated with the child registration.' (396,123,112) Wrap 112 2 line-height=12 Keep-Top
+ Print 'Placed Family:' (328,12,0) Bold 
+ Print 'Placed County:' (345,12,0) Bold 
+ Print 'Placed Agency:' (361,12,0) Bold 
+ Print 'The F/A Home where the child is placed.' (328,123,0)
+ Print 'The FAD stage county of the F/A Home where the child is placed.' (345,123,0)
+ Print 'The Non-DFCS Certifying Entity that operated the F/A Home the child is placed.' (361,123,0)
+ Last-Page (528,645) 
+ Page-Number (528,611) '' ' of '
+ Print 'Last Entry into Foster Care:' (135,12,15) Bold  Wrap 15 2 line-height=12 Keep-Top
+ Print 'The most recent custody removal date for the child across the case.' (135,123,0)
+ Print 'The number of months between the child''s last entry into foster care and the report run date.' (190,123,0)
+ Print 'First Free Date:' (93,12,0) Bold 
+ Print 'Notify:' (210,12,0) Bold 
+ Print 'The date the child was registered with the Adoption Exchange.' (244,123,0)
+ Print 'Months since 1st Free Date:' (109,12,16) Bold  Wrap 16 3 line-height=12 Keep-Top
+ Print 'Months in Care:' (190,12,0) Bold 
+ Print 'Update:' (277,12,0) Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'AA - American Indian/Alaska Native' (452,7,0)
+ Print 'BK - Black/African American' (468,7,0)
+ Print 'BW - Black and White' (482,7,0)
+ Print 'HP - Native Hawaiian/Other Pacific Islander' (452,164,0)
+ Print 'UD - Unable to Determine' (468,164,0)
+ Print 'WT - White' (482,164,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Report displays all children under 18 years of age, in DFCS custody as of the report run date, who have at least one Termination of Parental Rights (TPR) or Voluntary Surrender (VS) or an open ADO stage but have not been adopted. ' (31,10,123) Wrap 123 2 line-height=12 Keep-Top
+ Print 'The number of months from the last entry into foster care date to the event date in calculation.' (162,145,0)
+ Print 'Re-register:' (260,12,0) Bold 
+ Print 'The date the child was re-registered if there is any.' (261,123,0)
+ Print 'Months since Last Entry into Foster Care:' (162,12,23) Bold  Wrap 23 3 line-height=12 Keep-Top
+ Print 'The number of months from the 1st free date to the event date in calculation.' (109,123,80)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=12   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do LoadLookupTables
+ Position (1,1)
+ Do Get-Reg-Cnty
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Reg-Cnty 
+Input $_I201_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=3  Type=Char
+If IsNull($_I201_CD_STAGE_REGION) or IsBlank($_I201_CD_STAGE_REGION) or ($_I201_CD_STAGE_REGION = '0')
+ Let $region_selected = 'N'
+Else
+ Let $region_selected = 'Y'
+End-If
+
+Input $_I201_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_I201_CD_STAGE_CNTY) or IsBlank($_I201_CD_STAGE_CNTY) or ($_I201_CD_STAGE_CNTY = '0')
+ Let $county_selected = 'N'
+Else
+ Let $county_selected = 'Y'
+End-If
+
+If $county_selected = 'Y'
+ Do Decode-County
+ Let $header = $county_decode
+ Let $where_clause_reg_cnty = 'CD_STAGE_CNTY = ' || '''' || $_I201_CD_STAGE_CNTY || ''''
+Else
+ If $region_selected = 'Y'
+  Let $where_clause_reg_cnty = 'CD_STAGE_REGION = ' || '''' || $_I201_CD_STAGE_REGION || ''''
+  Let $header = 'Region ' || $_I201_CD_STAGE_REGION
+ Else
+  Let $header = 'Statewide'
+  Let $where_clause_reg_cnty = 'CD_STAGE_REGION IS NOT NULL'
+ End-If
+End-If 
+ ! Fill spaces in front of the header to make it centered on page. This fix might not place header precisely at center due to Arial font letter takes up different space.
+ ! It is however simple to implement and gives decent result.
+ ! Header possible values:
+ ! - County name: currently the longest county name in GA is 13 chars
+ ! - 'Region xx' is 9 chars
+ ! - 'Statewide' is also 9 chars long
+ Let #header_len = length($header)
+ Let #spaces = (13 - #header_len) ! No need to divide by 2 b/c space is non-character; observation shows that compiler does not bold it, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $header = ' ' || $header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+Begin-Procedure Decode-County
+Let $county_decode = 'County ' || $_I201_CD_STAGE_CNTY
+Let $county_code = '''' || $_I201_CD_STAGE_CNTY || ''''
+Begin-Select
+DECODE &county_decode
+ Move &county_decode to $county_decode
+From  CCOUNT
+Where CCOUNT.CODE = [$county_code]
+End-Select
+    
+End-Procedure
+
+Begin-Procedure Get-Person-Race(#id_person, :$str_race)
+Begin-Select
+cd_race &prace
+ If isnull($str_race) or isblank($str_race)
+  Move &prace to $str_race
+ Else
+  Let $str_race = $str_race || ', ' || &prace
+ End-If
+from person_race
+where id_person = #id_person
+End-Select
+End-Procedure
+
+! Retrieve first free date: it is the earliest court action date of any TPR court action or the earliest court order date of any 
+! VS hearing type. Including old codes for past or converted data. If a VS does not have court order date recorded, use court action
+! date instead due to the current page logic that court order date is not required field where as court action date is
+Begin-Procedure Get_TPR_Date(#id_person_child, #id_case_stage)
+Begin-Select 
+min(TPR_UNION.TPR_date) &_first_TPR_date
+FROM ( 
+              (Select la.DT_CRT_ACT_DATE TPR_date, la.id_person ID_CHILD, la.id_case ID_CASE_CHILD
+                  from legal_action la, event e 
+                  where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT 
+                  and e.CD_EVENT_STATUS in ('COMP','APRV') and la.CD_LEGAL_ACT_ACTION in ('VLM','VAF','VAM','VBF','VSF','VLS','VPF')
+                 ) 
+                  UNION 
+                 (Select la.DT_CRT_ORD_DATE TPR_date, la.id_person ID_CHILD, la.id_case ID_CASE_CHILD
+                  from legal_action la, event e, legal_action_outcome lao 
+                  where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT and la.ID_LEGAL_ACT_EVENT = lao.ID_LEGAL_ACT_EVENT
+                  and e.CD_EVENT_STATUS in ('COMP','APRV') and ( la.cd_legal_act_action in ('HRG','RCO') 
+                  and la.CD_HR_TYP_CRT_ORD in ('TFB','TFL','TFF','TPM','TPA','TFA','TPP') 
+                  and lao.CD_OUTCOME in ('TPG') ) ) 
+) 
+TPR_UNION
+WHERE TPR_UNION.ID_CHILD = #id_person_child AND TPR_UNION.ID_CASE_CHILD = #id_case_stage     
+   
+End-Select
+End-Procedure
+
+Begin-Procedure Dt_Update (#P1_ID_PERSON, #P2_ID_CASE)
+Begin-Select Distinct Loops=1
+(NVL(max( APPROVERS.DT_APPROVERS_DETERMINATION ), sysdate)) &_dt_case_plan_aprvd
+EXC_CHILD.ID_PERSON &_Dt_Update_EXC_CHILD.ID_PERSON
+EVENT_EXC_CHILD.ID_CASE &_Dt_Update_EVENT_EXC_CHILD.ID_CASE
+ If  isnull(&_dt_case_plan_aprvd)  or  isnull(&_first_TPR_date) 
+    ! do nothing 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+From  APPROVERS, APPROVAL_EVENT_LINK
+,      APPROVAL, EVENT, EVENT_PERSON_LINK
+,      EVENT EVENT_EXC_CHILD, EXCHANGE_CHILD EXC_CHILD
+      Where EVENT.ID_EVENT = EVENT_PERSON_LINK.ID_EVENT
+            And EVENT.ID_EVENT = APPROVAL_EVENT_LINK.ID_EVENT
+            And APPROVAL_EVENT_LINK.ID_APPROVAL = APPROVAL.ID_APPROVAL
+            And APPROVERS.ID_APPROVAL = APPROVAL.ID_APPROVAL
+            And EVENT_EXC_CHILD.ID_EVENT = EXC_CHILD.ID_EVENT
+            And EVENT.ID_CASE = EVENT_EXC_CHILD.ID_CASE
+            And EVENT_PERSON_LINK.ID_PERSON = EXC_CHILD.ID_PERSON
+ And EXC_CHILD.ID_PERSON = #P1_ID_PERSON
+ And EVENT_EXC_CHILD.ID_CASE = #P2_ID_CASE
+ And EVENT.CD_EVENT_STATUS = 'APRV'
+ And EVENT.CD_TASK = '7065'
+Group By EXC_CHILD.ID_PERSON
+,      EVENT_EXC_CHILD.ID_CASE
+End-Select
+ Next-Listing
+End-Procedure
+Begin-Procedure Dt_Update_New (#P1_ID_PERSON, #P2_ID_CASE)
+Begin-Select Distinct Loops=1
+childplan.dt_last_update &_dt_case_plan_aprvd2
+From  fccp_child childplan, event e,event_person_link epl, exchange_child ec
+where childplan.id_event = e.id_event and e.id_event = epl.id_event and 
+epl.id_person = ec.id_person and e.id_case = epl.id_case and 
+e.cd_event_status ='COMP' and childplan.id_event = (select max(cplan2.id_event) 
+from fccp_child cplan2, event e2,
+event_person_link epl2 where cplan2.id_event = e2.id_event 
+and e2.id_event = epl2.id_event and 
+epl2.id_person = epl.id_person 
+and e2.id_case = epl2.id_case 
+and e2.id_case = e.id_case and 
+e2.cd_event_status ='COMP'  )
+ And ec.ID_PERSON = #P1_ID_PERSON
+ And e.ID_CASE = #P2_ID_CASE
+ And e.CD_EVENT_STATUS = 'COMP'
+End-Select
+ Next-Listing
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+Begin-Select Distinct
+PERSON_ENC00.ID_PERSON &id_child2
+STAGE00.ID_CASE &id_case2
+ Move '' to $str_race
+ Do Get-Person-Race(&id_child2, $str_race) 
+ Do Get_TPR_Date(&id_child2, &id_case2)
+! Do Dt_Update(&id_child2, &id_case2)
+ Do Dt_Update_New(&id_child2, &id_case2) 
+(EMPLOYEE.NM_EMPLOYEE_LAST || ', ' ||  EMPLOYEE.NM_EMPLOYEE_FIRST) &nm_caseworker
+(replace(EXCHANGE_CHILD.TXT_CHILD_IS_LINKED, chr(10), ' ')) &txt_child_linked_replaced
+STAGE00.CD_STAGE_CNTY &Master_Query_STAGE00.CD_STAGE_CNTY
+PERSON_ENC00.CD_PERSON_SEX &Master_Query_PERSON_ENC00.CD_PERSON_SEX
+DT_FINAL &Master_Query_DT_FINAL
+CAPS.EXCHANGE_CHILD.ID_EVENT &id_child_registration
+STAGE00.ID_STAGE &id_child_stage
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+(1) &dummy_group_break_for_query_total () On-Break Set=2 Level=1 Print=Never Before=Master_Querydummy_group_break_for_query_total_BeforeProc201 After=Master_Querydummy_group_break_for_query_total_AfterProc201
+STAGE00.CD_STAGE_REGION &Master_Query_STAGE00.CD_STAGE_REGION () On-Break Set=2 Level=2 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc202 After=Master_QueryCD_STAGE_REGION_AfterProc202
+(decode( CCOUNT.DECODE , '-None-', '-Multi-County-',  CCOUNT.DECODE )) &nm_county () On-Break Set=2 Level=3 Print=Never Before=Master_Querynm_county_BeforeProc203 After=Master_Querynm_county_AfterProc203
+ Graphic (2,4,713) Horz-Line 15 
+ Print 'Child Name:' (19,23,0) Underline 
+ Print 'DOB:' (19,594,0) Underline 
+PERSON_ENC00.DT_PERSON_BIRTH &Master_Query_PERSON_ENC00.DT_PERSON_BIRTH (19,627) Edit MM/DD/YYYY
+PERSON_ENC00.NM_PERSON_FULL &nm_child (19,97,25)
+STAGE00.ID_CASE &id_child_case (19,483) Edit 8888888888888888na
+ Print 'Person ID:' (19,240,0) Underline 
+ Print 'Case ID:' (19,430,0) Underline 
+PERSON_ENC00.ID_PERSON &id_child (19,290) Edit 8888888888888888na
+ Print 'Gender:' (36,430,0) Underline 
+ Print 'Race:' (36,240,0) Underline 
+ Print 'Case Manager:' (36,23,0) Underline 
+ Let $cd_race=$str_race
+ Print $cd_race (36,290,19)
+ Print &nm_caseworker (36,97,25)
+ Lookup gender_lookup &Master_Query_PERSON_ENC00.CD_PERSON_SEX $dec_gender
+ Print $dec_gender (36,483,7)
+ Print 'First Free Date:' (54,23,0) Underline 
+ Let $dt_tpr_disp=datetostr(&first_TPR_date,'mm/dd/yyyy')
+ Print $dt_tpr_disp (54,97,10)
+ Print 'Months in Care:' (54,430,0) Underline 
+ Do FC_Entry(&id_child, &id_child_case)
+ Print &max_dt_removal (54,367) Edit MM/DD/YYYY
+ If  isnull(&max_dt_removal) or  isblank(&max_dt_removal) 
+    ! do nothing
+ Else
+ Let #months=datediff(datenow(), &max_dt_removal, 'month')
+ Print #months (54,505) Edit 8888
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Last Entry into Foster Care:' (54,240,0) Underline 
+ Print 'Non-Availability:' (70,23,0) Underline 
+CD_NON_AVAIL_STATUS &Master_Query_CD_NON_AVAIL_STATUS (70,98,2)
+ Lookup no_avail_lookup &Master_Query_CD_NON_AVAIL_STATUS $dec_non_avail
+ Print $dec_non_avail (70,116,36)
+ Print 'Child Is Linked:' (90,23,0) Underline 
+ Print &txt_child_linked_replaced (90,97,108) Wrap 108 6 line-height=12 Keep-Top
+ Next-Listing   ! Close up the wrapped columns
+ Graphic (9,19,684) Box 28 10 17 
+ Graphic (9,19,684) Box 28 10 0 
+ Print 'Event' (19,23,5) Underline 
+ Print 'Date' (19,82,4) Underline 
+ Print 'Family' (19,145,0) Underline 
+ Print 'County' (19,306,0) Underline 
+ Print 'Agency' (19,377,6) Underline 
+ Print 'Months since Last Entry into Foster Care' (19,580,22) Underline  Wrap 22 2 line-height=12 Keep-Top
+ Print 'Months since 1st Free Date' (20,482,14) Underline  Wrap 14 2 line-height=12 Keep-Top
+DT_NOTIFIED &Master_Query_DT_NOTIFIED (48,82) Edit MM/DD/YYYY
+ Print 'Notify' (48,23,6) Underline 
+ Let #notify_lapse_months=datediff( &Master_Query_DT_NOTIFIED, &first_TPR_date ,   'month' )
+ Print #notify_lapse_months (48,484) Edit 9999.9
+ Let #months_lastentryFC_Notify=datediff( &Master_Query_DT_NOTIFIED, &max_dt_removal ,'month' )
+ Print #months_lastentryFC_Notify (48,592) Edit 9999.9
+ Let #months_lastFC_Approval=datediff(&Master_Query_DT_APPROVED, &max_dt_removal , 'month'  )
+ Print #months_lastFC_Approval (63,592) Edit 9999.9
+ Print 'Approval' (65,23,0) Underline 
+DT_APPROVED &Master_Query_DT_APPROVED (65,82) Edit MM/DD/YYYY
+ Let #approval_lapse_month=datediff(&Master_Query_DT_APPROVED, &first_TPR_date , 'month'  )
+ Print #approval_lapse_month (65,484) Edit 9999.9
+ Print 'Register' (80,23,0) Underline 
+DT_REGISTERED &Master_Query_DT_REGISTERED (80,82) Edit MM/DD/YYYY
+ Let #register_lapse_month=datediff(   &Master_Query_DT_REGISTERED , &first_TPR_date ,  'month')
+ Print #register_lapse_month (80,484) Edit 9999.9
+ Let #months_FC_register=datediff(   &Master_Query_DT_REGISTERED , &max_dt_removal ,  'month')
+ Print #months_FC_register (80,592) Edit 9999.9
+ Print 'Re-register' (97,23,11) Underline 
+DT_RE_REGISTERED &Master_Query_DT_RE_REGISTERED (97,82) Edit MM/DD/YYYY
+ Let #reregister_lapse_month=datediff(  &Master_Query_DT_RE_REGISTERED , &first_TPR_date ,  'month')
+ Print #reregister_lapse_month (97,484) Edit 9999.9
+ Let #month_FC_reregister=datediff(  &Master_Query_DT_RE_REGISTERED , &max_dt_removal ,  'month')
+ Print #month_FC_reregister (97,592) Edit 9999.9
+ Print 'Update' (114,23,0) Underline 
+ Let $Update2=datetostr(&dt_case_plan_aprvd2,'mm/dd/yyyy')
+ Print $Update2 (114,82,15)
+ Add 1 To #201ROW_COUNT
+ Add 1 To #202ROW_COUNT
+ Add 1 To #203ROW_COUNT
+ Next-Listing  Need=205
+ Do Consider_Hist(&id_child_registration)
+ Do Adptn_Info(&id_child_registration)
+From  CAPS.PERSON_ENC PERSON_ENC00, CAPS.STAGE STAGE00
+,      CAPS.EMPLOYEE, CAPS.EXCHANGE_CHILD, CAPS.STAGE_ASSIGN_HISTORY
+,      CAPS.EVENT, CAPS.CCOUNT
+      Where PERSON_ENC00.ID_PERSON = CAPS.EXCHANGE_CHILD.ID_PERSON
+            And CAPS.EMPLOYEE.ID_PERSON = CAPS.STAGE_ASSIGN_HISTORY.ID_PERSON
+            And STAGE00.ID_STAGE = CAPS.EVENT.ID_EVENT_STAGE
+            And CAPS.EXCHANGE_CHILD.ID_EVENT = CAPS.EVENT.ID_EVENT
+            And CAPS.STAGE_ASSIGN_HISTORY.ID_STAGE = STAGE00.ID_STAGE
+            And STAGE00.CD_STAGE_CNTY = CAPS.CCOUNT.CODE
+ And [$where_clause_reg_cnty]
+ And ID_STG_ASSGN_HSTRY = (SELECT  (max(  STAGE_ASSIGN_HISTORY00.ID_STG_ASSGN_HSTRY  ))  FROM  CAPS.STAGE_ASSIGN_HISTORY STAGE_ASSIGN_HISTORY00
+     WHERE STAGE_ASSIGN_HISTORY00.CD_ROLE = 'PR' AND  STAGE_ASSIGN_HISTORY00.ID_STAGE = STAGE00.ID_STAGE)
+ And DT_CLOSE IS NULL 
+ And CD_REASON_CLOSED IS NULL 
+ And DT_FINAL IS NULL 
+ And exists (select distinct lsv.id_person from legal_status_view lsv where lsv.dt_legal_stat_status_dt= (select max(lsvc.dt_legal_stat_status_dt)
+     from legal_status_view lsvc where lsvc.id_person = lsv.id_person) and lsv.in_dfcs_custody = 'Y' and lsv.id_person = CAPS.EXCHANGE_CHILD.ID_PERSON
+     )
+ And (sysdate-PERSON_ENC00.DT_PERSON_BIRTH)/365 < 18
+ And (( STAGE00.CD_STAGE = 'ADO' and  STAGE00.DT_STAGE_CLOSE is null) Or PERSON_ENC00.ID_PERSON in ( (Select la.id_person ID_CHILD from legal_action la, event e where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT and e.CD_EVENT_STATUS
+     in ('COMP','APRV') and la.CD_LEGAL_ACT_ACTION in ('VLM','VAF','VAM','VBF','VSF','VLS','VPF')) union    (Select la.id_person ID_CHILD
+     from legal_action la, event e, legal_action_outcome lao where la.ID_LEGAL_ACT_EVENT = e.ID_EVENT and la.ID_LEGAL_ACT_EVENT = lao.ID_LEGAL_ACT_EVENT
+     and e.CD_EVENT_STATUS in ('COMP','APRV') and ( la.cd_legal_act_action in ('HRG','RCO') and la.CD_HR_TYP_CRT_ORD in ('TFB','TFL','TFF'
+    ,'TPM','TPA','TFA','TPP') and lao.CD_OUTCOME in ('TPG') ) ) ))
+Order By STAGE00.CD_STAGE_REGION
+,      (decode( CCOUNT.DECODE , '-None-', '-Multi-County-',  CCOUNT.DECODE ))
+,      PERSON_ENC00.NM_PERSON_FULL
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc202
+If $region_selected ='Y' or $county_seleced = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=17
+ Graphic (1,1,714) Horz-Line 20 
+ Position (3,1)
+  let #region_child_tot = #202ROW_COUNT
+ If $region_selected ='Y' or $county_seleced = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #brb_delay_0172A208 (17,106,8) Delay Bold  Edit 99999999na
+ End-If
+  If $region_selected ='Y' or $county_seleced = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_STAGE00.CD_STAGE_REGION (17,49,2) Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region'  (17,8) Bold 
+   Position (+12,)
+ Move 0 To #202ROW_COUNT
+ Next-Listing  Need=205
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-if
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc202
+If $region_selected ='Y' or $county_seleced = 'Y'
+    ! do nothing
+ Else
+ Next-Listing 
+ let #region_child_tot = #202ROW_COUNT
+ If $region_selected ='Y' or $county_seleced = 'Y'
+    ! do nothing
+ Else
+ Set-Delay-Print #brb_delay_0172A208 With #region_child_tot
+ End-If
+ Move 0 To #202ROW_COUNT
+ Next-Listing  Need=205
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querydummy_group_break_for_query_total_BeforeProc201
+ Next-Listing  SkipLines=1 Need=12
+ let #query_child_tot = #201ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #brb_delay_01D86A38 (11,112,9) Delay Bold  Edit 9999999na
+  Let $Report_Total_Header='Report Total:'
+ Print $Report_Total_Header (11,1,15) Bold 
+   Position (+12,)
+ Move 0 To #201ROW_COUNT
+ Next-Listing  Need=205
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querydummy_group_break_for_query_total_AfterProc201
+ Next-Listing 
+ let #query_child_tot = #201ROW_COUNT
+ Set-Delay-Print #brb_delay_01D86A38 With #query_child_tot
+ Move 0 To #201ROW_COUNT
+ Next-Listing  Need=205
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querynm_county_BeforeProc203
+If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=18
+ Graphic (2,2,715) Horz-Line 20 
+ Position (4,1)
+  If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &nm_county (18,16,15) Bold 
+ End-If
+ let #cnty_child_tot = #203ROW_COUNT
+ If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #brb_delay_01DA1470 (18,106,8) Delay Bold  Edit 99999999na
+ End-If
+   Position (+12,)
+ Move 0 To #203ROW_COUNT
+ Next-Listing  Need=205
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure Master_Querynm_county_AfterProc203
+If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing 
+ let #cnty_child_tot = #203ROW_COUNT
+ If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Set-Delay-Print #brb_delay_01DA1470 With #cnty_child_tot
+ End-If
+ Move 0 To #203ROW_COUNT
+ Next-Listing  Need=205
+End-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Consider_Hist (#P1_ID_EVENT)
+Begin-Select
+CAPS.EXCHANGE_CHILD.ID_EVENT &_Consider_Hist_CAPS.EXCHANGE_CHILD.ID_EVENT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CAPS_RESOURCE_CONSIDER_HIST.NM_RESOURCE &_nm_family2 (17,143,28) Wrap 28 3 line-height=12 Keep-Top
+ Print 'Consider' (17,23,0) Underline 
+CAPS_RESOURCE_CONSIDER_HIST.NDFCS_CERT_ENTITY &_nm_agency2 (17,375,25)
+CAPS.EXCHANGE_CHILD_FAM_LINK.DT_OUT &_dt_consideration2 (17,82) Edit MM/DD/YYYY
+DECODE &_nm_fa_stage_county2 (17,304,13)
+ Next-Listing  Need=22
+From  CAPS.CAPS_RESOURCE CAPS_RESOURCE_CONSIDER_HIST, CAPS.EXCHANGE_CHILD_FAM_LINK
+,      CAPS.EXCHANGE_HOME, CAPS.STAGE, CAPS.CCOUNT
+,      CAPS.EXCHANGE_CHILD
+      Where CAPS.EXCHANGE_CHILD_FAM_LINK.ID_EVENT_HOME_REGISTRATION = CAPS.EXCHANGE_HOME.ID_EVENT(+)
+            And CAPS.EXCHANGE_HOME.ID_RESOURCE = CAPS_RESOURCE_CONSIDER_HIST.ID_RESOURCE(+)
+            And CAPS_RESOURCE_CONSIDER_HIST.ID_RSRC_FA_HOME_STAGE = CAPS.STAGE.ID_STAGE(+)
+            And CAPS.STAGE.CD_STAGE_CNTY = CAPS.CCOUNT.CODE(+)
+            And CAPS.EXCHANGE_CHILD.ID_EVENT = CAPS.EXCHANGE_CHILD_FAM_LINK.ID_EVENT_CHILD_REGISTRATION(+)
+ And CAPS.EXCHANGE_CHILD.ID_EVENT = #P1_ID_EVENT
+ And EXCHANGE_CHILD_FAM_LINK.IND_LINK_CURRENT(+) = 'Y'
+Order By CAPS.EXCHANGE_CHILD_FAM_LINK.DT_OUT
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Adptn_Info (#P1_ID_EVENT)
+Begin-Select
+DT_FINAL &_Adptn_Info_DT_FINAL
+CAPS.EXCHANGE_CHILD.ID_EVENT &_Adptn_Info_CAPS.EXCHANGE_CHILD.ID_EVENT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Placed' (16,23,0) Underline 
+ID_PERSON &_Adptn_Info_ID_PERSON
+ID_CASE &_Adptn_Info_ID_CASE
+ Do Placement(&_Adptn_Info_ID_PERSON, &_Adptn_Info_ID_CASE)
+ Print &_nm_placement (16,143,29)
+ If  isnull(&_nm_placement) OR  isblank(&_nm_placement) 
+    ! do nothing
+ Else
+ Print &_dec_pla_cnty (16,305,13)
+ End-If
+ If  isnull(&_nm_placement) OR  isblank(&_nm_placement) 
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &_nm_agency (16,376,16)
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &_Placement_PLACEMENT00.DT_PLCMT_START (16,82) Edit MM/DD/YYYY
+ Let #_placedmonths1=datediff(&_Placement_PLACEMENT00.DT_PLCMT_START,&_first_TPR_date , 'month')
+ Print #_placedmonths1 (16,484) Edit 9999.9
+ Let #_PlacedLEFCmonths=datediff(&_Placement_PLACEMENT00.DT_PLCMT_START, &_max_dt_removal , 'month')
+ Print #_PlacedLEFCmonths (17,592) Edit 9999.9
+ Print 'Perm. 2 File' (33,23,0) Underline 
+ Do Adpt_Info_Dates(&_Adptn_Info_CAPS.EXCHANGE_CHILD.ID_EVENT, &_Adptn_Info_ID_PERSON)
+ If  isnull(&_nm_placement) OR  isblank(&_nm_placement) 
+    ! do nothing
+ Else
+ Print &_Adpt_Info_Dates_ADO_INFO00.DT_PERM_FILE (33,82) Edit MM/DD/YYYY
+ End-If
+ Let #_perm2file_months=datediff(&_Adpt_Info_Dates_ADO_INFO00.DT_PERM_FILE,  &_first_TPR_date , 'month')
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #_perm2file_months (33,485) Edit 9999.9
+ Let #_PermLEFCmonth=datediff(&_Adpt_Info_Dates_ADO_INFO00.DT_PERM_FILE,  &_max_dt_removal , 'month')
+ Print #_PermLEFCmonth (33,592) Edit 9999.9
+ Let #_DocSentLEFC_month=datediff(&_Adpt_Info_Dates_ADO_INFO00.DT_DOC_SENT, &_max_dt_removal, 'month' )
+ Print #_DocSentLEFC_month (49,592) Edit 9999.9
+ If  isnull(&_nm_placement) OR  isblank(&_nm_placement) 
+    ! do nothing
+ Else
+ Print &_Adpt_Info_Dates_ADO_INFO00.DT_DOC_SENT (50,82) Edit MM/DD/YYYY
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Doc. Sent' (51,23,0) Underline 
+ Let #_doc_sent_month=datediff(&_Adpt_Info_Dates_ADO_INFO00.DT_DOC_SENT, &_first_TPR_date, 'month' )
+ Print #_doc_sent_month (52,485) Edit 9999.9
+ Alter-Printer Font=4 Point-Size=2    ! [SQR.INI] 4=Arial,proportional
+ Print '  ' (61,4,15)
+ Next-Listing  Need=61
+From  CAPS.EXCHANGE_CHILD, CAPS.EVENT
+      Where CAPS.EXCHANGE_CHILD.ID_EVENT = CAPS.EVENT.ID_EVENT
+ And CAPS.EXCHANGE_CHILD.ID_EVENT = #P1_ID_EVENT
+End-Select
+ New-Page
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Placement (#P1_ID_PLCMT_CHILD, #P2_ID_CASE)
+Begin-Select Loops=1
+NM_RESOURCE &_nm_placement
+DECODE &_dec_pla_cnty
+NDFCS_CERT_ENTITY &_nm_agency
+PLACEMENT00.DT_PLCMT_START &_Placement_PLACEMENT00.DT_PLCMT_START
+From  CAPS.CAPS_RESOURCE, CAPS.EVENT
+,      CAPS.CCOUNT, CAPS.PLACEMENT PLACEMENT00, CAPS.STAGE
+      Where CAPS.EVENT.ID_EVENT = PLACEMENT00.ID_PLCMT_EVENT
+            And CAPS.CAPS_RESOURCE.ID_RESOURCE = PLACEMENT00.ID_RSRC_FACIL
+            And CAPS.CAPS_RESOURCE.ID_RSRC_FA_HOME_STAGE = CAPS.STAGE.ID_STAGE
+            And CAPS.CCOUNT.CODE = CAPS.STAGE.CD_STAGE_CNTY
+ And PLACEMENT00.ID_PLCMT_CHILD = #P1_ID_PLCMT_CHILD
+ And PLACEMENT00.ID_CASE = #P2_ID_CASE
+ And CD_EVENT_STATUS = 'APRV'
+ And PLACEMENT00.CD_PLCMT_ACT_PLANNED = 'A'
+ And (PLACEMENT00.CD_TEMP_TYPE IS NULL  Or PLACEMENT00.CD_TEMP_TYPE IN ('REN','RED','COR'))
+ And PLACEMENT00.CD_PLCMT_TYPE = 'ADH'
+ And PLACEMENT00.DT_PLCMT_END = to_date('12/31/4712','mm/dd/yyyy')
+ And PLACEMENT00.ID_PLCMT_EVENT =(select max(p2.id_plcmt_event) from placement p2,event e2 where p2.id_plcmt_event = e2.id_event and p2.cd_plcmt_type
+     = 'ADH' and p2.dt_plcmt_end = to_date('12/31/4712','mm/dd/yyyy') and e2.cd_event_status= 'APRV' and p2.CD_PLCMT_ACT_PLANNED = 'A'  AND
+     (p2.CD_TEMP_TYPE IS NULL  OR  p2.CD_TEMP_TYPE IN ('COR','REN','RED')) and p2.id_plcmt_child =  PLACEMENT00.ID_PLCMT_CHILD  and p2.id_case
+     =  PLACEMENT00.ID_CASE )
+Order By PLACEMENT00.DT_PLCMT_START
+End-Select
+End-Procedure
+
+Begin-Procedure Adpt_Info_Dates (#P1_ID_EVENT_CHILD_REGISTRATION, #P2_ID_PERSON)
+Begin-Select Loops=1
+ADO_INFO00.DT_PERM_FILE &_Adpt_Info_Dates_ADO_INFO00.DT_PERM_FILE
+ADO_INFO00.DT_DOC_SENT &_Adpt_Info_Dates_ADO_INFO00.DT_DOC_SENT
+From  CAPS.ADO_INFO ADO_INFO00, CAPS.EVENT
+,      CAPS.EVENT_PERSON_LINK
+      Where ADO_INFO00.ID_EVENT = CAPS.EVENT.ID_EVENT
+            And CAPS.EVENT.ID_EVENT = CAPS.EVENT_PERSON_LINK.ID_EVENT
+            And CAPS.EVENT.ID_CASE = CAPS.EVENT_PERSON_LINK.ID_CASE
+ And ADO_INFO00.ID_EVENT_CHILD_REGISTRATION = #P1_ID_EVENT_CHILD_REGISTRATION
+ And ID_PERSON = #P2_ID_PERSON
+ And ADO_INFO00.ID_EVENT = (SELECT  (max(  ADO_INFO01.ID_EVENT ))  FROM  CAPS.ADO_INFO ADO_INFO01 WHERE ADO_INFO01.ID_EVENT_CHILD_REGISTRATION
+     = ADO_INFO00.ID_EVENT_CHILD_REGISTRATION)
+End-Select
+End-Procedure
+
+Begin-Procedure FC_Entry (#P1_ID_VICTIM, #P2_ID_CASE)
+Begin-Select Loops=1
+(max( CNSRVTRSHP_REMOVAL.DT_REMOVAL )) &_max_dt_removal
+From  CAPS.CNSRVTRSHP_REMOVAL
+Where ID_VICTIM = #P1_ID_VICTIM
+ And ID_CASE = #P2_ID_CASE
+End-Select
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=gender_lookup
+      Table=CAPS.CSEX
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+   Load-Lookup
+      Name=no_avail_lookup
+      Table=CAPS.CODES_TABLES
+      Key=CODE
+      Return_Value=DECODE Where=CODE_TYPE='CANONAV'
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+End-Procedure
+
+Begin-Heading 12 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (14,274,0)
+ Print 'Produced On: ' (14,585,0)
+ Print $current-date (14,651) edit 'MM/DD/YYYY'
+ Let $header_dsp=$header
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $header_dsp (63,313,13) Bold 
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Monthly Child Management' (42,255,24) Bold 
+ Alter-Printer Font=4 Point-Size=1    ! [SQR.INI] 4=Arial,proportional
+ Print '    ' (89,12,2) Bold 
+ Else   ! put a non combined page header
+ Print '    ' (2,12,2) Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 36 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (14,632) '' ' of '
+ Last-Page (14,666) 
+ Alter-Printer Font=901 Point-Size=10
+! Alter-Printer Font=4 Point-Size=10
+
+End-Footing
+

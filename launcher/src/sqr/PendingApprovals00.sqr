@@ -1,0 +1,413 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Feb 08 10:24:40 2012 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\StatewideModify\PendingApprovals\Feb8\PendingApprovals00.sqr
+! Format  : Tabular
+! Username: JPOTTAMMEL
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=120    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'The report lists outstanding approval requests across region, county and unit as of today. ' (25,6,100) Wrap 100 3 line-height=12 Keep-Top
+ Print 'Date Requested:' (125,6,0) Bold 
+ Print 'Requestor:' (143,6,0) Bold 
+ Print 'Approver:' (162,6,0) Bold 
+ Print 'Description:' (181,6,0) Bold 
+ Print 'The person who created the request.' (143,64,0)
+ Print 'The assigned approver of the request.' (162,64,0)
+ Print 'The request''s target and purpose. ' (181,69,0)
+ Print 'The date the request was submitted.' (125,92,0)
+ Page-Number (359,656) '' ' of '
+ Last-Page (359,695) 
+ Print 'The pending approval requests in the report are based on the tasks listed on the Staff To-Do page. It is not based on the security profile of the staff members.' (43,6,127) Wrap 127 2 line-height=12 Keep-Top on= 
+ Print 'The reporting region and county are the unit region and unit county of the primary case manager. ' (71,6,0)
+ Print 'Report runs statewide when no values are given for Region, County and Unit parameters.' (90,6,0)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Region-County
+ Do Get-Unit-Input
+ Position (1,1)
+ Do County_Unit
+End-Program
+Begin-Procedure Get-Region-County
+Input $_I401_CD_UNIT_REGION 'Enter a value for CD_UNIT_REGION' MaxLen=2  Type=Char
+If IsNull($_I401_CD_UNIT_REGION) or IsBlank($_I401_CD_UNIT_REGION) or ($_I401_CD_UNIT_REGION) = '0'
+  Let $where_clause401 = 'CD_UNIT_REGION is not null'
+  Let $region_selected = 'N'
+Else
+  Let $_region = $_I401_CD_UNIT_REGION
+  Let $_I401_CD_UNIT_REGION = '0' ||  $_I401_CD_UNIT_REGION 
+  Let $_I401_CD_UNIT_REGION = '''' ||  $_I401_CD_UNIT_REGION || ''''
+  Let $brb_tmp = 'CD_UNIT_REGION'
+  Let $where_clause401 = $brb_tmp  || ' = ' ||  $_I401_CD_UNIT_REGION
+  Let $region_selected = 'Y'
+End-if
+
+Input $_I402_CD_COUNTY 'Enter a value for CD_CNTY' MaxLen=3  Type=Char
+If IsNull($_I402_CD_COUNTY) or IsBlank($_I402_CD_COUNTY) or ($_I402_CD_COUNTY) = '0'
+ Let $where_clause402 = 'CD_COUNTY is not null'
+  Let $county_selected = 'N'
+Else
+  Let $_I402_CD_COUNTY = '''' || $_I402_CD_COUNTY || ''''
+  Let $brb_tmp = 'CD_COUNTY'
+  Let $where_clause402 = $brb_tmp  || ' = ' || $_I402_CD_COUNTY
+  Let $county_selected = 'Y'
+End-If
+If $county_selected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From  CCOUNT
+Where CCOUNT.CODE = [$_I402_CD_COUNTY]
+End-Select
+  Move &_County_Decode to $_header_disp
+Else
+  If $region_selected = 'Y'
+    Let $_header_disp = 'Region ' || $_region
+  Else 
+    Let $_header_disp = 'Statewide'
+  End-If
+
+End-If
+
+End-Procedure
+Begin-Procedure Get-Unit-Input
+Input $_I102_NBR_UNIT 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If ($_I102_NBR_UNIT = '0')
+!If IsNull($_I102_NBR_UNIT) or IsBlank($_I102_NBR_UNIT)
+  Let $brb_tmp = 'NBR_UNIT'
+  Let $where_clause102 = $brb_tmp  || ' is not null '
+  Let $unit_selected = 'N'
+Else
+  Let $unit_selected = 'Y'
+  If SubStr($_I102_NBR_UNIT, 1, 1) != ''''
+    Let $_I102_NBR_UNIT = '''' || $_I102_NBR_UNIT || ''''
+  End-If
+  ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+  ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+  Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+  If (instr($_I102_NBR_UNIT,'''',0) = 0 and instr($_I102_NBR_UNIT,',',0) = 0 and $BRBSkipThis = 'F')
+    ! no quotes, no commas - add quotes
+    Let $brb_tmp = 'NBR_UNIT'
+    Let $where_clause102 = $brb_tmp  || ' = ' ||  '''' || $_I102_NBR_UNIT || '''' 
+  Else
+    If (instr($_I102_NBR_UNIT,'''',0) = 0 and instr($_I102_NBR_UNIT,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+    Else
+      ! quotes, no commas - process variable as-is
+      Let $brb_tmp = 'NBR_UNIT'
+      Let $where_clause102 = $brb_tmp  || ' = ' || $_I102_NBR_UNIT
+    End-If
+  End-If
+End-If
+End-Procedure
+
+
+Begin-Procedure County_Unit
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select Distinct
+DECODE &County_Unit_DECODE
+CAPS.UNIT.ID_PERSON &UnitSupervisor
+CAPS.UNIT.ID_UNIT &County_Unit_CAPS.UNIT.ID_UNIT
+PERSON_Supervisor.NM_PERSON_FULL &SupName
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+CD_UNIT_REGION &County_Unit_CD_UNIT_REGION () On-Break Set=1 Level=1 Print=Never Before=County_UnitCD_UNIT_REGION_BeforeProc101 After=County_UnitCD_UNIT_REGION_AfterProc101
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_COUNTY &County_Unit_CD_COUNTY () On-Break Set=1 Level=2 Print=Never Before=County_UnitCD_COUNTY_BeforeProc102 After=County_UnitCD_COUNTY_AfterProc102
+NBR_UNIT &Unit_Number () On-Break Set=1 Level=3 Print=Never Before=County_UnitNBR_UNIT_BeforeProc103 After=County_UnitNBR_UNIT_AfterProc103
+PERSON_ASSIGNED.NM_PERSON_FULL &Approver () On-Break Set=1 Level=4 Print=Never Before=County_UnitNM_PERSON_FULL_BeforeProc104 After=County_UnitNM_PERSON_FULL_AfterProc104
+DT_TODO_CREATED &Date_Requested (15,10) Edit MM/DD/YYYY
+NM_STAGE &Stage_Name (15,211,14)
+ID_STAGE &Stage_ID (15,293) Edit 999999999na
+TXT_TODO_DESC &Description (15,347,44) Wrap 44 3 line-height=12 Keep-Top
+PERSON_REQUESTOR.NM_PERSON_FULL &Requestor (15,599,21) Wrap 21 3 line-height=12 Keep-Top
+NM_CASE &Case_Name (15,94,20)
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Add 1 To #103ROW_COUNT
+ Add 1 To #104ROW_COUNT
+ Next-Listing  Need=22
+From  CAPS.UNIT, CAPS.UNIT_EMP_LINK
+,      CAPS.APPROVAL, CAPS.APPROVERS, CAPS.EVENT
+,      CAPS.PERSON PERSON_REQUESTOR, CAPS.TODO, CAPS.STAGE
+,      CAPS.CAPS_CASE, CAPS.PERSON PERSON_ASSIGNED, CAPS.CCOUNT
+,      CAPS.PERSON PERSON_Supervisor
+      Where CAPS.UNIT.ID_UNIT = CAPS.UNIT_EMP_LINK.ID_UNIT
+            And CAPS.UNIT_EMP_LINK.ID_PERSON = PERSON_REQUESTOR.ID_PERSON
+            And CAPS.EVENT.ID_EVENT = CAPS.APPROVAL.ID_APPROVAL
+            And CAPS.APPROVERS.ID_APPROVAL = CAPS.APPROVAL.ID_APPROVAL
+            And CAPS.APPROVERS.ID_TODO = CAPS.TODO.ID_TODO
+            And CAPS.TODO.ID_TODO_STAGE = CAPS.STAGE.ID_STAGE
+            And CAPS.TODO.ID_TODO_PERS_ASSIGNED = PERSON_ASSIGNED.ID_PERSON
+            And CAPS.STAGE.ID_CASE = CAPS.CAPS_CASE.ID_CASE
+            And PERSON_REQUESTOR.ID_PERSON = CAPS.TODO.ID_TODO_PERS_WORKER
+            And CAPS.UNIT.CD_COUNTY = CAPS.CCOUNT.CODE
+            And CAPS.UNIT.ID_PERSON = PERSON_Supervisor.ID_PERSON
+ And CD_EVENT_TYPE = 'APP'
+ And CD_UNIT_MEMBER_IN_OUT = 'IN'
+ And CD_TODO_TYPE = 'T'
+ And CD_APPROVERS_STATUS = 'PEND'
+ And [$where_clause102]
+ And [$where_clause402]
+ And [$where_clause401]
+Order By CD_UNIT_REGION
+,      DECODE
+,      NBR_UNIT
+,      CAPS.UNIT.ID_UNIT
+,      PERSON_ASSIGNED.NM_PERSON_FULL
+,      DT_TODO_CREATED
+,      NM_CASE
+End-Select
+ Next-Listing
+ Next-Listing  Need=25
+ If #1ROW_COUNT > 0
+ Graphic (3,3,702) Horz-Line 20 
+ Position (5,1)
+ let #ReportTotal = #1ROW_COUNT
+ Alter-Printer Font=4 Point-Size=11    ! [SQR.INI] 4=Arial,proportional
+  Print #ReportTotal (25,89) Bold  Edit 88888888na
+  Print 'Grand Total:'  (25,7) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure County_UnitNM_PERSON_FULL_BeforeProc104
+ Next-Listing  Need=17
+ Graphic (2,2,702) Horz-Line 11 
+ Position (3,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Approver (17,64,25) Bold 
+ Print 'Approver:'  (17,13) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure County_UnitNM_PERSON_FULL_AfterProc104
+ Next-Listing  Need=18
+ Graphic (3,1,702) Horz-Line 10 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Total/Approver:'  (18,11) Bold 
+ let #ApproverLevelTotal_2 = #104ROW_COUNT
+ Print #ApproverLevelTotal_2 (18,93) Bold  Edit 88888888na
+   Position (+12,)
+ Move 0 To #104ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure County_UnitNBR_UNIT_BeforeProc103
+ Next-Listing  Need=18
+ Graphic (1,2,701) Horz-Line 18 
+ Position (2,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit # and Supervisor:'  (18,9) Bold 
+  Print &SupName (18,161,25) Bold 
+  Print &Unit_Number (18,125,5) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure County_UnitNBR_UNIT_AfterProc103
+If $unit_selected = 'Y'
+    ! do nothing
+ Else
+ Next-Listing  Need=16
+ Graphic (2,2,701) Horz-Line 10 
+ Position (3,1)
+ let #UnitLevelTotal = #103ROW_COUNT
+ If $unit_selected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #UnitLevelTotal (16,63) Bold  Edit 88888888na
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Total/Unit:'  (16,9) Bold 
+   Position (+12,)
+ Move 0 To #103ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure County_UnitCD_COUNTY_BeforeProc102
+If $county_selected = 'Y' 
+    ! do nothing
+ Else
+ Next-Listing  Need=18
+ Graphic (2,1,702) Horz-Line 20 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &County_Unit_DECODE (18,5,23) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure County_UnitCD_COUNTY_AfterProc102
+If $county_selected = 'Y' 
+    ! do nothing
+ Else
+ Next-Listing  Need=20
+ Graphic (4,3,702) Horz-Line 18 
+ Position (5,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Total/County:'  (20,1) Bold 
+ let #totCnty = #102ROW_COUNT
+ If $county_selected = 'Y' 
+    ! do nothing
+ Else
+ Print #totCnty (20,69) Bold  Edit 99999999na
+ End-If
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure County_UnitCD_UNIT_REGION_BeforeProc101
+If $region_selected = 'Y' or $county_selected = 'Y'  or ($region_selected = 'Y' and $county_selected = 'Y' )
+    ! do nothing
+ Else
+ Next-Listing  Need=19
+ Graphic (4,1,700) Horz-Line 25 
+ Position (6,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region:'  (19,2) Bold 
+  Let $regionVar=substr( &County_Unit_CD_UNIT_REGION, 2,2)
+ Print $regionVar (19,46,15) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure County_UnitCD_UNIT_REGION_AfterProc101
+If $region_selected = 'Y' or $county_selected = 'Y'  or ($region_selected = 'Y' and $county_selected = 'Y' )
+    ! do nothing
+ Else
+ Next-Listing  Need=20
+ Graphic (4,2,702) Horz-Line 20 
+ Position (6,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Total/Region:'  (20,1) Bold 
+ let #regTot = #101ROW_COUNT
+ If $region_selected = 'Y' or $county_selected = 'Y'  or ($region_selected = 'Y' and $county_selected = 'Y' )
+    ! do nothing
+ Else
+ Print #regTot (20,70) Bold  Edit 99999999na
+ End-If
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Let $DFCSHeader='Division of Family and Children Services'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $DFCSHeader (13,254,40)
+ Print 'Produced On: ' (10,549,0)
+ Print $current-date (10,622) edit 'MM/DD/YYYY'
+ Let $ReportTitle='Pending Approvals'
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print $ReportTitle (44,270,22) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Let $headerDisp=$_header_disp
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $headerDisp (63,312,15) Bold 
+ Print 'Description' (114,347,0) Underline  Bold 
+ Print 'Stage Name' (114,211,0) Underline  Bold 
+ Print 'Requestor' (114,596,0) Underline  Bold 
+ Print 'Case Name' (114,94,0) Underline  Bold 
+ Print 'Stage ID' (114,298,0) Underline  Bold 
+ Print 'Date Requested' (114,8,15) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Description' (27,347,0) Underline  Bold 
+ Print 'Stage Name' (27,211,0) Underline  Bold 
+ Print 'Requestor' (27,596,0) Underline  Bold 
+ Print 'Case Name' (27,94,0) Underline  Bold 
+ Print 'Stage ID' (27,298,0) Underline  Bold 
+ Print 'Date Requested' (27,8,15) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (19,655) '' ' of'
+ Last-Page (19,694) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

@@ -1,0 +1,21 @@
+package gov.georgia.dhr.dfcs.sacwis.service.admin;
+
+/**
+ * Created on July 15, 2008 by Vishala Devarakonda
+ */
+import gov.georgia.dhr.dfcs.sacwis.structs.output.CodesTableDetailRetrieveSO;
+import gov.georgia.dhr.dfcs.sacwis.structs.input.CodesTableDetailRetrieveSI;
+
+import java.util.List;
+
+public interface RetrieveCodesTableDetail {
+
+  /**
+   * This service will retrieve the code, decode and end date values from the codes table given the code type
+   * 
+   * @param CodesTableDetailRetrieveSI
+   * @return CodesTableDetailRetrieveSO
+   */
+  CodesTableDetailRetrieveSO retrieveCodesTableDetail(CodesTableDetailRetrieveSI codesTblDtlRtrvSI);
+
+}

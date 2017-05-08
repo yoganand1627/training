@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.RecordsCheck" table="RECORDS_CHECK" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idRecCheck" type="integer" unsaved-value="0">
+      <column name="ID_REC_CHECK" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_RECORDS_CHECK</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_STAGE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdRecCheckPerson" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_REC_CHECK_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdRecCheckRequestor" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_REC_CHECK_REQUESTOR" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdRecCheckCheckType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_REC_CHECK_CHECK_TYPE" length="2"/>
+    </property>
+    <property name="cdRecCheckEmpType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_REC_CHECK_EMP_TYPE" length="2"/>
+    </property>
+    <property name="cdRecCheckStatus" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_REC_CHECK_STATUS" length="2"/>
+    </property>
+    <property name="dtRecCheckCompleted" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_REC_CHECK_COMPLETED" length="7"/>
+    </property>
+    <property name="dtRecCheckRequest" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REC_CHECK_REQUEST" length="7"/>
+    </property>
+    <property name="txtRecCheckComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_REC_CHECK_COMMENTS" length="500"/>
+    </property>
+    <property name="indReccheckHistory" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RECCHECK_HISTORY" length="1"/>
+    </property>
+    <property name="dtRecCheckCrimRelRec" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_REC_CHECK_CRIM_REL_REC" length="7"/>
+    </property>
+    <property name="indRecchkFpcard" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RECCHK_FPCARD" length="1"/>
+    </property>
+    <property name="indRecchkLiveScan" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RECCHK_LIVE_SCAN" length="1"/>
+    </property>
+    <property name="dtRecchkFpCardGiven" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_RECCHK_FP_CARD_GIVEN" length="7"/>
+    </property>
+    <property name="dtRecchkFpCardReturn" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_RECCHK_FP_CARD_RETURN" length="7"/>
+    </property>
+    <property name="dtRecchkLsPerformed" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_RECCHK_LS_PERFORMED" length="7"/>
+    </property>
+    <property name="dtRecchkLsresultRec" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_RECCHK_LSRESULT_REC" length="7"/>
+    </property>
+    <property name="indRecchkRefuseInvClrnce" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RECCHK_REFUSE_INV_CLRNCE" length="1"/>
+    </property>
+    <property name="indRecchkFpchkResult" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RECCHK_FPCHK_RESULT" length="1"/>
+    </property>
+    <property name="indRecchkRecmndatn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_RECCHK_RECMNDATN" length="1"/>
+    </property>
+    <bag name="criminalHistories" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_REC_CHECK" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CriminalHistory" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

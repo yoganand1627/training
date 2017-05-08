@@ -1,0 +1,465 @@
+!*****************************************************************************
+!  ON DEMAND REPORT                                                          *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         csd06o01.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/heardtd/sqr                              *
+!                                                                            *
+!                                                                            *
+!                                                                            *
+! DATE:                 10/11/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Tony Heard                                           *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The History of Investigation report lists all the    *
+!                       investigations for a CASE                            *
+!                       with the victims, alleged perpertrators, allegations,*
+!                       dispositions, severities, and dates specific to each.*
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 10/17/95   Heard        Initial Programming                                *
+! 05/24/96   K. Cys       SIR 21483 -- Changed format of completion date to  *
+!                                      MM/DD/YYYY                            *
+!                                                                            *
+! 12/14/96   K. Cys       ENH -- Changed occurrences of full name to Name    *
+!                                Person Full Format.                         *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'                 ! control codes for Portrait 
+                                            ! On Demand Reports              
+
+    ask INPUT_ID_CASE                 
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 4 
+
+  #INCLUDE 'header04.sqc'               !Include file with Header Information
+                                        !Specific to portrait on demand reports
+print 'CASE HISTORY OF INVESTIGATIONS'          (+2) center
+                           
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+                                !specific to portrait on demand report.
+
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+  !************************************************
+  ! Variables and Constants                       *
+  !************************************************
+
+   move {INPUT_ID_CASE}     to #input_id_case
+
+   move 'INV'                to $INV
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-CASE-ID                                            *
+!       CALLS      : GET-INFO                                               *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do GET-CASE-NAME-NUMBER
+    do GET-INFO 
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!    GET-CASE-NAME-NUMBER                                                   *
+!                                                                           *
+!       Selects the case name and case id from CAPS_CASE table.             *
+!                                                                           * 
+!       CALLED BY   PROCESS-REPORT                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CASE-NAME-NUMBER 
+
+    move 0                      to #count       !initialize a counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.NM_CASE
+  move &A.NM_CASE               to $Case_Name
+
+A.ID_CASE
+  move &A.ID_CASE               to #Case_Number
+
+FROM CAPS_CASE A
+WHERE A.ID_CASE = #input_id_case
+
+END-SELECT
+
+END-PROCEDURE GET-CASE-NAME-NUMBER 
+
+
+!****************************************************************************
+!                                                                           *
+!    GET-INFO                                                               *
+!                                                                           *
+!       Selects Date Complete, Overall Disposition, and Risk for all        *  
+!       Investigation stages in the CASE from the above SQL                 *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-INVEST-DATE                                      *
+!       CALLS      : GET_ALLEG                                              *
+!       CALLS      : PRINT-DISPO-FIND                                       *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-INFO
+
+    move 0                              to #stage-count    !initialize a counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(CPS.DT_CPS_INVST_DTL_COMPLT, 'MM/DD/YYYY') &date1  !***SIR 21483***
+    move &date1                         to $invst_comp_date                                           
+CCIVALDS.decode
+    move &CCIVALDS.decode               to $overalldis_decode  
+
+CCRSKFND.decode
+    move &CCRSKFND.decode               to $findings_decode
+
+TXT_STAGE_CLOSURE_CMNTS
+    move &TXT_STAGE_CLOSURE_CMNTS       to $txt_stage_closure_cmnts
+    
+S.ID_STAGE
+    move &S.ID_STAGE                    to #id_stage
+
+    add 1 to #stage-count
+    if #stage-count > 1
+        NEW-PAGE
+    end-if 
+    
+    do PRINT-INVEST-DATE 
+    do GET-ALLEG
+    do PRINT-DISPO-FIND
+    
+FROM  CPS_INVST_DETAIL       CPS,
+      RISK_ASSESSMENT       RISK,
+      STAGE                    S,
+      CCIVALDS          CCIVALDS,
+      CCRSKFND          CCRSKFND
+
+WHERE S.ID_STAGE IN 
+    (SELECT ID_STAGE FROM STAGE WHERE ID_CASE = #input_id_case AND S.CD_STAGE = $INV)
+AND   RISK.ID_STAGE(+)      = S.ID_STAGE
+AND   CPS.ID_CPS_INVST_STAGE(+) = S.ID_STAGE
+AND   CCIVALDS.CODE(+)      = CPS.CD_CPS_INVST_DTL_OVRLL_DISPTN
+AND   CCRSKFND.CODE(+)      = RISK.CD_RISK_ASSMT_RISK_FIND
+
+END-SELECT
+!***what about merged INV stages, include or exclude?
+END-PROCEDURE GET-INFO 
+
+!****************************************************************************
+!                                                                           *
+!    GET-ALLEG                                                              *
+!                                                                           *
+!       Gets all the allegations for each individual stage given the        *
+!       stage ID.                                                           *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-ALLEG                                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ALLEG
+
+    move 0                              to #count       !initialize a counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+PERSON1.NM_PERSON_FIRST                 !***ENH***
+    move &PERSON1.NM_PERSON_FIRST       to $victim_first
+    
+PERSON1.NM_PERSON_MIDDLE
+    move &PERSON1.NM_PERSON_MIDDLE      to $victim_middle
+    
+PERSON1.NM_PERSON_LAST
+    move &PERSON1.NM_PERSON_LAST        to $victim_last
+    
+CSUFFIX2A.decode
+    move &CSUFFIX2A.decode              to $victim_suffix            
+
+PERSON2.NM_PERSON_FIRST                 !***ENH***
+    move &PERSON2.NM_PERSON_FIRST       to $ap_first
+    
+PERSON2.NM_PERSON_MIDDLE
+    move &PERSON2.NM_PERSON_MIDDLE      to $ap_middle
+    
+PERSON2.NM_PERSON_LAST
+    move &PERSON2.NM_PERSON_LAST        to $ap_last
+    
+CSUFFIX2B.decode
+    move &CSUFFIX2B.decode              to $ap_suffix      
+
+CABALTYP.decode
+    move &CABALTYP.decode               to $allegation_decode
+
+CDISPSTN.decode      
+    move &CDISPSTN.decode               to $disposition_decode
+
+CSEVERTY.decode
+    move &CSEVERTY.decode               to $severity_decode
+
+    do PRINT-ALLEG
+
+FROM  CABALTYP      CABALTYP,
+      CDISPSTN      CDISPSTN,
+      CSEVERTY      CSEVERTY,
+      CSUFFIX2      CSUFFIX2A,!***ENH***
+      CSUFFIX2      CSUFFIX2B,
+      PERSON        PERSON1,
+      PERSON        PERSON2,
+      ALLEGATION    ALLG 
+
+WHERE ALLG.ID_ALLEGATION_STAGE   = #id_stage   
+AND   PERSON1.ID_PERSON          = ALLG.ID_VICTIM
+AND   PERSON2.ID_PERSON(+)       = ALLG.ID_ALLEGED_PERPETRATOR
+AND   CABALTYP.CODE(+)           = ALLG.CD_ALLEG_TYPE
+AND   CDISPSTN.CODE(+)           = ALLG.CD_ALLEG_DISPOSITION
+AND   CSEVERTY.CODE(+)           = ALLG.CD_ALLEG_SEVERITY
+AND   CSUFFIX2A.CODE(+)          = PERSON1.CD_PERSON_SUFFIX !***ENH***
+AND   CSUFFIX2B.CODE(+)          = PERSON2.CD_PERSON_SUFFIX
+
+END-SELECT
+
+END-PROCEDURE GET-ALLEG 
+
+!****************************************************************************
+!                                                                           *
+!   PROCEDURE-PRINT-INVEST-DATE                                             *
+!                                                                           *
+!       This procedure prints the date of completion.                       *
+!                                                                           * 
+!       CALLED BY  : GET-INFO                                               *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-INVEST-DATE
+
+print 'Investigation Completion Date: ' (+2,1) 
+print $invst_comp_date                  (+0,33)
+print 'Stage Closure Comments:'         (+1,1)
+print $txt_stage_closure_cmnts          (+0,33)
+
+END-PROCEDURE PRINT-INVEST-DATE
+
+!****************************************************************************
+!                                                                           *
+!   PROCEDURE-PRINT-ALLEG                                                   *
+!                                                                           *
+!       This procedure prints the victim information including the          *
+!       allegation, disposition, and severity decodes.                      *
+!                                                                           * 
+!       CALLED BY  : GET-ALLEG                                              *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ALLEG
+
+print 'Victim: '           (+2,1)
+if $victim_suffix <> ''  !***ENH***
+   let $victim_name_suff = ', ' || $victim_suffix
+end-if
+if $victim_middle = ''
+   let $victim_name = $victim_first || ' ' || $victim_last || $victim_name_suff
+else
+   let $victim_name = $victim_first || ' ' || $victim_middle || ' ' || $victim_last || $victim_name_suff
+end-if          
+print $victim_name         (+0,14) wrap 28 4 keep-top !***ENH***
+move '' to $victim_name_suff    !***ENH***
+
+print 'AP: '               (+0,43)
+if $ap_suffix <> '' !***ENH***
+   let $ap_name_suff = ', ' || $ap_suffix
+end-if
+if $ap_middle = ''
+   let $ap_name = $ap_first || ' ' || $ap_last || $ap_name_suff
+else
+   let $ap_name = $ap_first || ' ' || $ap_middle || ' ' || $ap_last || $ap_name_suff
+end-if           
+print $ap_name             (+0,53) wrap 25 4 !***ENH***
+move '' to $ap_name_suff    !***ENH***
+
+print 'Allegation: '       (+1,1)
+print $allegation_decode   (+0,14)
+print 'Disposition: '      (+1,1)
+print $disposition_decode  (+0,14)
+print 'Severity: '         (+0,43)
+print $severity_decode     (+0,53)
+
+END-PROCEDURE PRINT-ALLEG
+
+!****************************************************************************
+!                                                                           *
+!   PROCEDURE-PRINT-DISPO-FIND                                              *
+!                                                                           *
+!       This procedure prints the end of each investigation including the   *
+!       overall disposition and findings decodes.                           *
+!                                                                           * 
+!       CALLED BY  : GET-INFO                                               *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-DISPO-FIND
+
+print 'Overall Disposition: '   (+2,1) 
+print $overalldis_decode        (+0,22)
+print 'Risk Finding: '          (+1,1)
+print $findings_decode          (+0,22)
+
+END-PROCEDURE PRINT-DISPO-FIND
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *     
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  show $sql-error                                       
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+
+#INCLUDE 'cfpstamp.sqc'

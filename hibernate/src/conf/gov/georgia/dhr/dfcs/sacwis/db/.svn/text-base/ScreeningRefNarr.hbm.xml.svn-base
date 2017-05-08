@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.ScreeningRefNarr" table="SCREENING_REF_NARR" >
+        <id name="idEvent" type="integer">
+            <column name="ID_EVENT" precision="16" scale="0" />
+            <generator class="foreign">
+              <param name="property">eventByIdEvent</param>
+            </generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="null" source="vm"/>
+        <many-to-one name="eventByIdEvent" class="gov.georgia.dhr.dfcs.sacwis.db.Event" update="false" insert="false" fetch="select">
+	            <column name="ID_EVENT" precision="16" scale="0" not-null="true" unique="true" />
+        </many-to-one>
+        <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select">
+            <column name="ID_CASE" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="narrative" type="binary">
+            <column name="NARRATIVE" />
+        </property>
+        <property name="idDocumentTemplate" type="java.lang.Integer">
+            <column name="ID_DOCUMENT_TEMPLATE" precision="16" scale="0" />
+        </property>
+    </class>
+</hibernate-mapping>

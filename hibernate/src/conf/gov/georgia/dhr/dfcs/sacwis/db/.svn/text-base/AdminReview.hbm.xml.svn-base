@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.AdminReview" table="ADMIN_REVIEW" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idStage" type="integer" unsaved-value="undefined">
+      <column name="ID_STAGE" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">stage</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" constrained="true"/>
+    <many-to-one name="stageByIdStageRelated" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_STAGE_RELATED" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON_REQUESTOR" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdAdminRvAppealResult" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ADMIN_RV_APPEAL_RESULT" length="3"/>
+    </property>
+    <property name="cdAdminRvAppealType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ADMIN_RV_APPEAL_TYPE" length="3"/>
+    </property>
+    <property name="cdAdminRvAuth" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ADMIN_RV_AUTH" length="3"/>
+    </property>
+    <property name="cdAdminRvStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ADMIN_RV_STATUS" length="3"/>
+    </property>
+    <property name="dtAdminRvAppealNotif" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ADMIN_RV_APPEAL_NOTIF" length="7"/>
+    </property>
+    <property name="dtAdminRvAppealReview" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ADMIN_RV_APPEAL_REVIEW" length="7"/>
+    </property>
+    <property name="dtAdminRvDue" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ADMIN_RV_DUE" length="7"/>
+    </property>
+    <property name="dtAdminRvEmgcyRel" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ADMIN_RV_EMGCY_REL" length="7"/>
+    </property>
+    <property name="dtAdminRvHearing" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ADMIN_RV_HEARING" length="7"/>
+    </property>
+    <property name="dtAdminRvReqAppeal" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ADMIN_RV_REQ_APPEAL" length="7"/>
+    </property>
+    <property name="indAdminRvEmgcyRel" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ADMIN_RV_EMGCY_REL" length="1"/>
+    </property>
+    <property name="cdAdminRvReqBy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_ADMIN_RV_REQ_BY" length="3"/>
+    </property>
+    <property name="nmAdminRvReqBy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_ADMIN_RV_REQ_BY" length="25"/>
+    </property>
+    <property name="dtDeterminationLtr" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_DETERMINATION_LTR" length="7"/>
+    </property>
+    <property name="indSaagNotification" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_SAAG_NOTIFICATION" length="1"/>
+    </property>
+    <property name="indLglRepresentation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_LGL_REPRESENTATION" length="1"/>
+    </property>
+    <property name="txtAppealResult" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_APPEAL_RESULT" length="80"/>
+    </property>
+    <property name="txtRsnApprvDeny" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_RSN_APPRV_DENY" length="4000"/>
+    </property>
+	<property name="indLevel" type="string">
+            <column name="IND_LEVEL" length="1" />
+        </property>
+        <property name="id1lSme" type="java.lang.Integer">
+            <column name="ID_1L_SME" precision="16" scale="0" />
+        </property>
+        <property name="dt1lDeterLrGen" type="date">
+            <column name="DT_1L_DETER_LR_GEN" length="7" />
+        </property>
+        <property name="dt1lRqRec" type="date">
+            <column name="DT_1L_RQ_REC" length="7" />
+        </property>
+        <property name="dt1lRev" type="date">
+            <column name="DT_1L_REV" length="7" />
+        </property>
+        <property name="dt1lRevBy" type="date">
+            <column name="DT_1L_REV_BY" length="7" />
+        </property>
+        <property name="ind1lLegRep" type="string">
+            <column name="IND_1L_LEG_REP" length="1" />
+        </property>
+        <property name="ind1lSaagNoti" type="string">
+            <column name="IND_1L_SAAG_NOTI" length="1" />
+        </property>
+        <property name="cd1lDisp" type="string">
+            <column name="CD_1L_DISP" length="2" />
+        </property>
+        <property name="cd1lRsDisg" type="string">
+            <column name="CD_1L_RS_DISG" length="3" />
+        </property>
+        <property name="txt1lResult" type="string">
+            <column name="TXT_1L_RESULT" length="80" />
+        </property>
+        <property name="dt1lRevPerNoti" type="date">
+            <column name="DT_1L_REV_PER_NOTI" length="7" />
+        </property>
+        <property name="txt1lRsAppDen" type="string">
+            <column name="TXT_1L_RS_APP_DEN" length="4000" />
+        </property>
+        <property name="id2l1lStage" type="java.lang.Integer">
+            <column name="ID_2L_1L_STAGE" precision="16" scale="0" />
+        </property>
+        <property name="ind2l1lStage" type="string">
+            <column name="IND_2L_1L_STAGE" length="1" />
+        </property>
+        <property name="txt2lAarOff" type="string">
+            <column name="TXT_2L_AAR_OFF" length="25" />
+        </property>
+        <property name="id2lShinesPer" type="java.lang.Integer">
+            <column name="ID_2L_SHINES_PER" precision="16" scale="0" />
+        </property>
+        <property name="dt2l1lDlRec" type="date">
+            <column name="DT_2L_1L_DL_REC" length="7" />
+        </property>
+        <property name="dt2lRqRec" type="date">
+            <column name="DT_2L_RQ_REC" length="7" />
+        </property>
+        <property name="cd2lRevType" type="string">
+            <column name="CD_2L_REV_TYPE" length="3" />
+        </property>
+        <property name="dt2lInterview" type="date">
+            <column name="DT_2L_INTERVIEW" length="7" />
+        </property>
+        <property name="dt2lRev" type="date">
+            <column name="DT_2L_REV" length="7" />
+        </property>
+        <property name="dt2lRevBy" type="date">
+            <column name="DT_2L_REV_BY" length="7" />
+        </property>
+        <property name="ind2lLegRep" type="string">
+            <column name="IND_2L_LEG_REP" length="1" />
+        </property>
+        <property name="ind2lSaagNoti" type="string">
+            <column name="IND_2L_SAAG_NOTI" length="1" />
+        </property>
+        <property name="cd2lDisp" type="string">
+            <column name="CD_2L_DISP" length="2" />
+        </property>
+        <property name="cd2lRsDisg" type="string">
+            <column name="CD_2L_RS_DISG" length="3" />
+        </property>
+        <property name="txt2lResult" type="string">
+            <column name="TXT_2L_RESULT" length="80" />
+        </property>
+        <property name="dt2lRevPerNoti" type="date">
+            <column name="DT_2L_REV_PER_NOTI" length="7" />
+        </property>
+        <property name="txt2lRsAppDen" type="string">
+            <column name="TXT_2L_RS_APP_DEN" length="4000" />
+        </property>
+        <property name="ind2lComp" type="string">
+            <column name="IND_2L_COMP" length="1" />
+        </property>
+        <property name="id3lDhsCom" type="java.lang.Integer">
+            <column name="ID_3L_DHS_COM" precision="16" scale="0" />
+        </property>
+        <property name="id3lShinesPer" type="java.lang.Integer">
+            <column name="ID_3L_SHINES_PER" precision="16" scale="0" />
+        </property>
+        <property name="dt3l2lDlRec" type="date">
+            <column name="DT_3L_2L_DL_REC" length="7" />
+        </property>
+        <property name="dt3lRev" type="date">
+            <column name="DT_3L_REV" length="7" />
+        </property>
+        <property name="dt3lRevBy" type="date">
+            <column name="DT_3L_REV_BY" length="7" />
+        </property>
+        <property name="cd3lDisp" type="string">
+            <column name="CD_3L_DISP" length="2" />
+        </property>
+        <property name="cd3lFinDec" type="string">
+            <column name="CD_3L_FIN_DEC" length="2" />
+        </property>
+        <property name="cd3lRsDisg" type="string">
+            <column name="CD_3L_RS_DISG" length="3" />
+        </property>
+        <property name="txt3lResult" type="string">
+            <column name="TXT_3L_RESULT" length="80" />
+        </property>
+        <property name="dt3lRevPerNoti" type="date">
+            <column name="DT_3L_REV_PER_NOTI" length="7" />
+        </property>
+        <property name="txt3lRsAppDen" type="string">
+            <column name="TXT_3L_RS_APP_DEN" length="4000" />
+        </property>
+  </class>
+</hibernate-mapping>

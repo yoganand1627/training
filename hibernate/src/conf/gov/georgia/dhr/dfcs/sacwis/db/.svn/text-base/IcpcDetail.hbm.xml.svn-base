@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.IcpcDetail" table="ICPC_DETAIL" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idIcpcDetail" type="integer" unsaved-value="0">
+            <column name="ID_ICPC_DETAIL" precision="16" scale="0"/>
+            <generator class="sequence">
+<param name="sequence">SEQ_ICPC_DETAIL</param>
+</generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <many-to-one name="employee" class="gov.georgia.dhr.dfcs.sacwis.db.Employee" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_WORKER" precision="16" scale="0"/>
+        </many-to-one>
+        <property name="dtCompleted" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_COMPLETED" length="7"/>
+        </property>
+        <many-to-one name="child" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_CHILD" precision="16" scale="0"/>
+        </many-to-one>
+        <many-to-one name="primaryPerson" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_PRIMARY_PERSON" precision="16" scale="0"/>
+        </many-to-one>
+        <many-to-one name="spouse" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_SPOUSE" precision="16" scale="0"/>
+        </many-to-one>
+        <property name="iveDeterm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IVE_DETERM" length="3"/>
+        </property>
+        <property name="aaFundingDeterm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="AA_FUNDING_DETERM" length="3"/>
+        </property>
+        <property name="cdIcpcFormType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_ICPC_FORM_TYPE" length="4"/>
+        </property>
+        <property name="indIcwaElig" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_ICWA_ELIG" length="1"/>
+        </property>
+        <property name="indCrtOrderAf" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_CRT_ORDER_AF" length="1"/>
+        </property>
+        <property name="indCrtOrderLcrp" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_CRT_ORDER_LCRP" length="1"/>
+        </property>
+        <property name="indCrtOrderLcgr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_CRT_ORDER_LCGR" length="1"/>
+        </property>
+        <property name="txtOtherSpecify" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_OTHER_SPECIFY" length="300"/>
+        </property>
+        <property name="cdTypeCare" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_TYPE_CARE" length="3"/>
+        </property>
+        <property name="cdInitReportReq" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_INIT_REPORT_REQ" length="3"/>
+        </property>
+        <property name="indFinalizedIn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_FINALIZED_IN" length="1"/>
+        </property>
+        <property name="indPlcmtStatus" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_PLCMT_STATUS" length="1"/>
+        </property>
+        <property name="dtChildPlaced" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_CHILD_PLACED" length="7"/>
+        </property>
+        <property name="cdPlcmtTermRsn" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_PLCMT_TERM_RSN" length="3"/>
+        </property>
+        <property name="dtTermination" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_TERMINATION" length="7"/>
+        </property>
+        <bag name="icpcEnclosedDocCbxes" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+            <key on-delete="noaction" update="false">
+                <column name="ID_ICPC_DETAIL" precision="16" scale="0" not-null="true"/>
+            </key>
+            <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.IcpcEnclosedDocCbx" not-found="exception" embed-xml="true"/>
+        </bag>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FceApplication" table="FCE_APPLICATION" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idFceApplication" type="integer" unsaved-value="0">
+      <column name="ID_FCE_APPLICATION" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_FCE_APPLICATION</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_STAGE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdMngngCvsPerson" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_MNGNG_CVS_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdOtherRelativePerson" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_OTHER_RELATIVE_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="fceEligibility" class="gov.georgia.dhr.dfcs.sacwis.db.FceEligibility" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_FCE_ELIGIBILITY" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdPerson" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdLastUpdatePerson" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_LAST_UPDATE_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="addrHealthAddrCity" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_HEALTH_ADDR_CITY" length="20"/>
+    </property>
+    <property name="addrHealthAddrStLn1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_HEALTH_ADDR_ST_LN_1" length="30"/>
+    </property>
+    <property name="addrHealthAddrStLn2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_HEALTH_ADDR_ST_LN_2" length="30"/>
+    </property>
+    <property name="addrHealthAddrZip" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_HEALTH_ADDR_ZIP" length="10"/>
+    </property>
+    <property name="addrRemovalAddrZip" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_REMOVAL_ADDR_ZIP" length="10"/>
+    </property>
+    <property name="addrRemovalCity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_REMOVAL_CITY" length="20"/>
+    </property>
+    <property name="addrRemovalStLn1" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_REMOVAL_ST_LN_1" length="30"/>
+    </property>
+    <property name="addrRemovalStLn2" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="ADDR_REMOVAL_ST_LN_2" length="30"/>
+    </property>
+    <property name="cdApplication" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_APPLICATION" length="4" not-null="true"/>
+    </property>
+    <property name="cdCountyHospital" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_COUNTY_HOSPITAL" length="3"/>
+    </property>
+    <property name="cdHealthAddrState" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_HEALTH_ADDR_STATE" length="2"/>
+    </property>
+    <property name="cdLivingMonthRemoval" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_LIVING_MONTH_REMOVAL" length="1"/>
+    </property>
+    <property name="cdNotaMostRecent" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_NOTA_MOST_RECENT" length="1"/>
+    </property>
+    <property name="cdRemovalAddrCounty" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_REMOVAL_ADDR_COUNTY" length="3"/>
+    </property>
+    <property name="cdRemovalAddrState" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_REMOVAL_ADDR_STATE" length="2"/>
+    </property>
+    <property name="cdState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STATE" length="2"/>
+    </property>
+    <property name="dtApplicationComplete" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_APPLICATION_COMPLETE" length="7"/>
+    </property>
+    <property name="dtHealthBeginDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_HEALTH_BEGIN_DATE" length="7"/>
+    </property>
+    <property name="dtHealthEndDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_HEALTH_END_DATE" length="7"/>
+    </property>
+    <property name="dtHospitalAdmission" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_HOSPITAL_ADMISSION" length="7"/>
+    </property>
+    <property name="dtHospitalDischarge" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_HOSPITAL_DISCHARGE" length="7"/>
+    </property>
+    <property name="dtLegalDocsSentEs" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_LEGAL_DOCS_SENT_ES" length="7"/>
+    </property>
+    <property name="dtNotifiedWorker" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_NOTIFIED_WORKER" length="7"/>
+    </property>
+    <property name="dtProofAgeSentEs" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PROOF_AGE_SENT_ES" length="7"/>
+    </property>
+    <property name="dtProofChildIdSentEs" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PROOF_CHILD_ID_SENT_ES" length="7"/>
+    </property>
+    <property name="dtProofCitizenshipSentEs" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PROOF_CITIZENSHIP_SENT_ES" length="7"/>
+    </property>
+    <property name="dtProofPregnancySentEs" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_PROOF_PREGNANCY_SENT_ES" length="7"/>
+    </property>
+    <property name="dtRemovalDate" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_REMOVAL_DATE" length="7" />
+    </property>
+    <property name="indAgeVrfdBaptismCert" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_AGE_VRFD_BAPTISM_CERT" length="1"/>
+    </property>
+    <property name="indAgeVrfdForeignCert" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_AGE_VRFD_FOREIGN_CERT" length="1"/>
+    </property>
+    <property name="indAgeVrfdUsBirthCert" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_AGE_VRFD_US_BIRTH_CERT" length="1"/>
+    </property>
+    <property name="indAgeVrfdSaveSystem" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_AGE_VRFD_SAVE_SYSTEM" length="1"/>
+    </property>
+    <property name="indAgeVrfdSuccessSystem" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_AGE_VRFD_SUCCESS_SYSTEM" length="1"/>
+    </property>
+    <property name="indAgeJustifiedEval" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_AGE_JUSTIFIED_EVAL" length="1"/>
+    </property>
+    <property name="indAgeVrfdHospitalCert" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_AGE_VRFD_HOSPITAL_CERT" length="1"/>
+    </property>
+    <property name="indAgeVrfdNtrlztnCert" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_AGE_VRFD_NTRLZTN_CERT" length="1"/>
+    </property>
+    <property name="indAgeVrfdPassport" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_AGE_VRFD_PASSPORT" length="1"/>
+    </property>
+    <property name="indAgeVrfdResidentCard" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_AGE_VRFD_RESIDENT_CARD" length="1"/>
+    </property>
+    <property name="indAmendedApp" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_AMENDED_APP" length="1"/>
+    </property>
+    <property name="indChildSupportOrder" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CHILD_SUPPORT_ORDER" length="1"/>
+    </property>
+    <property name="indEvaluationConclusion" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_EVALUATION_CONCLUSION" length="1"/>
+    </property>
+    <property name="indHospital" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_HOSPITAL" length="1"/>
+    </property>
+    <property name="indIncomeAssistance" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INCOME_ASSISTANCE" length="1"/>
+    </property>
+    <property name="indLegalDocsSentEs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_LEGAL_DOCS_SENT_ES" length="1"/>
+    </property>
+    <property name="indLivingRelativeSixMonth" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_LIVING_RELATIVE_SIX_MONTH" length="1"/>
+    </property>
+    <property name="indManagingCvs" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_MANAGING_CVS" length="1"/>
+    </property>
+    <property name="indMinorParent" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_MINOR_PARENT" length="1"/>
+    </property>
+    <property name="indNotifiedDhsWorker" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_NOTIFIED_DHS_WORKER" length="1"/>
+    </property>
+    <property name="indOtherHealthInsurance" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_OTHER_HEALTH_INSURANCE" length="1"/>
+    </property>
+    <property name="indProofAgeSentEs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PROOF_AGE_SENT_ES" length="1"/>
+    </property>
+    <property name="indProofChildIdSentEs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PROOF_CHILD_ID_SENT_ES" length="1"/>
+    </property>
+    <property name="indProofCitizenshipSentEs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PROOF_CITIZENSHIP_SENT_ES" length="1"/>
+    </property>
+    <property name="nbrCourtMonth" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_COURT_MONTH" precision="2" scale="0"/>
+    </property>
+    <property name="nbrCourtYear" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_COURT_YEAR" precision="4" scale="0"/>
+    </property>
+    <property name="nbrHealthGroup" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_HEALTH_GROUP" length="20"/>
+    </property>
+    <property name="nbrHealthPolicy" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_HEALTH_POLICY" length="20"/>
+    </property>
+    <property name="nbrLivingAtHome" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_LIVING_AT_HOME" precision="3" scale="0"/>
+    </property>
+    <property name="nbrNotifiedDhsWrkrPhn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_NOTIFIED_DHS_WRKR_PHN" length="10"/>
+    </property>
+    <property name="nmHealthCompany" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_HEALTH_COMPANY" length="50"/>
+    </property>
+    <property name="nmHealthEmployeeNm" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_HEALTH_EMPLOYEE_NM" length="50"/>
+    </property>
+    <property name="nmHealthEmployerNm" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_HEALTH_EMPLOYER_NM" length="50"/>
+    </property>
+    <property name="nmHealthPolicyHldrNm" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_HEALTH_POLICY_HLDR_NM" length="50"/>
+    </property>
+    <property name="nmHospital" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_HOSPITAL" length="50"/>
+    </property>
+    <property name="nmHospitalCity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_HOSPITAL_CITY" length="20"/>
+    </property>
+    <property name="nmMotherMaiden" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_MOTHER_MAIDEN" length="22"/>
+    </property>
+    <property name="nmNotifiedDhsWrkrFirst" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_NOTIFIED_DHS_WRKR_FIRST" length="12"/>
+    </property>
+    <property name="nmNotifiedDhsWrkrLast" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_NOTIFIED_DHS_WRKR_LAST" length="22"/>
+    </property>
+    <property name="nmNotifiedDhsWrkrMiddle" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_NOTIFIED_DHS_WRKR_MIDDLE" length="12"/>
+    </property>
+    <property name="txtEmployeeComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_EMPLOYEE_COMMENTS" length="300"/>
+    </property>
+    <property name="txtIncomeDtrmntnComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_INCOME_DTRMNTN_COMMENTS" length="300"/>
+    </property>
+    <property name="txtLegalDocsSentEs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_LEGAL_DOCS_SENT_ES" length="300"/>
+    </property>
+    <property name="txtMeetsDdOrNotComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_MEETS_DD_OR_NOT_COMMENTS" length="300"/>
+    </property>
+    <property name="txtNoIncomeExplanation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_NO_INCOME_EXPLANATION" length="300"/>
+    </property>
+    <property name="txtProofAgeSentEs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PROOF_AGE_SENT_ES" length="300"/>
+    </property>
+    <property name="txtProofChildIdSentEs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PROOF_CHILD_ID_SENT_ES" length="300"/>
+    </property>
+    <property name="txtProofCitizenshipSentEs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PROOF_CITIZENSHIP_SENT_ES" length="300"/>
+    </property>
+    <property name="indEvalReveiewEcEs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_EVAL_REVIEW_EC_ES" length="1"/>
+    </property>
+    <property name="indMedicalAssistance" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_MEDICAL_ASSISTANCE" length="1"/>
+    </property>
+    <property name="txtMonthMedicalAssistance" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_MONTH_MEDICAL_ASSISTANCE" length="50"/>
+    </property>
+    <property name="txtPriorRemovalMonths" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PRIOR_REMOVAL_MONTHS" length="100"/>
+    </property>
+    <property name="txtProofPregnancySentEs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_PRF_PREGNANCY_SENT_ES" length="300"/>
+    </property>
+    <property name="indProofPregnancySentEs" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PRF_PREGNANCY_SENT_ES" length="1"/>
+    </property>
+    <property name="indSpecifiedRelative" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_SPECIFIED_RELATIVE" length="1" />
+    </property>
+    <bag name="fceReviews" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FCE_APPLICATION" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceReview" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="fceEligibilities" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_FCE_APPLICATION" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.FceEligibility" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

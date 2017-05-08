@@ -1,0 +1,879 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Jul 08 17:49:10 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\Invoice\InvoiceList00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.200 
+  Right-Margin  = 0.200 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Text $Motodate 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=192    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (15,3,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'VWI - Valid w/ R L I' (525,217,0)
+ Print 'VWO - Valid w/o R L I' (539,217,0)
+ Print 'APV - Approved' (397,363,0)
+ Print 'DPV - Disapproved' (411,363,0)
+ Print 'PAP - Pending Approval' (425,363,0)
+ Print 'RJA - Rejected Approval' (439,363,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Invoice ID:' (84,6,0) Bold 
+ Print 'Unique identifier for each Invoice.' (84,79,0)
+ Print 'Phase:' (120,6,0) Bold 
+ Print 'The different phases through which the Invoice goes until the phase ends in ''Paid''' (120,79,0)
+ Print 'Invce Type:' (102,6,0) Bold 
+ Print 'Types of the invoice depending on the service provided in the area of service.' (102,79,0)
+ Print 'Cntrct ID:' (138,6,0) Bold 
+ Print 'Contract ID in the Region.' (138,79,0)
+ Print 'Rcvd Dt:' (156,6,0) Bold 
+ Print 'The date on which the claim for a payment for a service provided by a provider is received by SHINES.' (156,79,0)
+ Print 'Sbmt Dt:' (175,6,0) Bold 
+ Print 'The date SMILE gets the invoice details to be processed for the payment. ' (174,79,0)
+ Print 'Check Dt:' (193,6,0) Bold 
+ Print 'Check Nbr:' (211,6,0) Bold 
+ Print 'Check Amnt:' (229,6,0) Bold 
+ Print 'The Check Date returned from SMILE for the amount to be paid out of SMILE.' (192,79,0)
+ Print 'The Check number returned from SMILE for the amount to be paid out of SMILE.' (211,79,0)
+ Print 'The amount to be paid out of SMILE.' (228,79,0)
+ Page-Number (539,704) '' ' of '
+ Last-Page (539,733) 
+ Print 'Item Total:' (265,6,0) Bold 
+ Print 'The total amount for the service delivered. It is calculated by multiplying  the number of units of service delivered by the unit rate applied to the line item.' (265,79,0)
+ Print 'Detailed view of the invoices of clients within the date range specified. Generated for either Person ID, Resource ID or Region with optional County, UAS program code, Type and Phase parameters.' (32,6,134) Wrap 134 3 line-height=12 Keep-Top on= 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Invce Type' (381,5,11) Underline  Bold 
+ Print 'EDS - Emergency Payment - Delivered Service' (428,8,0)
+ Print 'EFC - Emergency Payment - Foster Care' (443,8,0)
+ Print 'EAA - Emergency Payment - Adoption Assistance' (459,8,0)
+ Print 'ADS - Adoption Assistance' (398,8,0)
+ Print 'DUR - Delivered Service' (413,8,0)
+ Print 'FSC - Foster Care' (474,8,0)
+ Print 'Phase' (381,217,0) Underline  Bold 
+ Print 'REJ - Rejected' (468,217,0)
+ Print 'ALL - All' (397,217,0)
+ Print 'NSB - Not Submitted' (426,217,0)
+ Print 'PAD - Paid' (440,217,0)
+ Print 'PRB - Pre-Bill' (454,217,0)
+ Print 'SBT - Submitted' (482,217,0)
+ Print 'VLP - Validation Pending' (497,217,0)
+ Print 'Aprvl Status' (381,362,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Keys' (365,4,0) Underline  Bold 
+ Print 'Client Total:' (312,6,0) Bold 
+ Print 'County Total:' (329,6,0) Bold 
+ Print 'Total:' (345,6,0) Bold 
+ Print 'Total number of invoices for the client in the specified time period.' (312,79,0)
+ Print 'Total number of invoices for the county in the specified time period.' (329,79,0)
+ Print 'Total number of invoices for the client or in the region or for the resource specified in the specified time period.' (345,79,0)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'VOD - Void' (511,217,13)
+ Print 'CAN - Cancelled' (411,217,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'From:' (281,6,0) Bold 
+ Print 'To:' (295,6,0) Bold 
+ Print 'The day on which the foster care per diem service started within the invoice month. All per diem line items for the same invoice will have the same From and To days.' (282,79,0)
+ Print 'The day on which the per diem service ended for the invoice month. It depends on the placement of the child.' (296,79,0)
+ Print 'Inv Sp Adjust:' (247,7,0) Bold 
+ Print 'Indicator for adjustment invoices.' (247,79,61)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+
+ Do LoadLookupTables
+ Do GetMonthYearFrom
+ Do GetMonthYearTo
+ Do Get-Input-Person
+ Do GetCounty
+ Do GetServiceCode
+ Do Get-Input-Type
+ Do Get-Input-Phase
+ Position (1,1)
+!Let $anySelected = 'N'
+!Let $TextWhere = $where_clause101
+if $anySelected= 'Y'
+ Do Master_Query
+Else
+ Let $noDataText = 'Please enter Client ID, Resource ID or Region in addition to the Date parameter'
+End-If
+End-Program
+Begin-Procedure Get-Input-Person
+! -----------------------------
+Input $_I101_ID_SVC_DTL_PERSON 'Enter a value for ID_SVC_DTL_PERSON' MaxLen=16  Type=Number
+If IsNull($_I101_ID_SVC_DTL_PERSON) or IsBlank($_I101_ID_SVC_DTL_PERSON) or ($_I101_ID_SVC_DTL_PERSON) = '0'
+  Let $anySelected = 'N' 
+  Let $oneSelected = 'N'   
+  Let $clientParam = 'All'
+ Let $where_clause101 = 'ID_SVC_DTL_PERSON is not null' 
+  Do GetSecondParam 
+Else
+  Let $anySelected = 'Y'
+  Let $oneSelected = 'Y'
+ 
+ !Let $anyText = 'Client ID:'
+ Let $clientParam = $_I101_ID_SVC_DTL_PERSON
+ Let $anyParam = $_I101_ID_SVC_DTL_PERSON
+ Let $brb_tmp = 'ID_SVC_DTL_PERSON'
+ Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_ID_SVC_DTL_PERSON
+ Do GetSecondParam
+
+End-If
+End-Procedure
+
+Begin-Procedure GetSecondParam
+! -----------------------------
+Input $_I102_CAPS_RESOURCE_ID_RESOURCE 'Enter a value for ID_RESOURCE' MaxLen=16  Type=Number
+If IsNull($_I102_CAPS_RESOURCE_ID_RESOURCE) or IsBlank($_I102_CAPS_RESOURCE_ID_RESOURCE) or ($_I102_CAPS_RESOURCE_ID_RESOURCE) = '0'
+  Let $ResParam = 'All'
+  if $oneSelected = 'N'
+   Let $anySelected = 'N' 
+   Let $twoSelected = 'N' 
+   Let $where_clause101 = 'ID_SVC_DTL_PERSON is not null and CAPS_RESOURCE.ID_RESOURCE is not null'
+   Let $where_clause101_invvcntReg = 'ID_SVC_DTL_PERSON is not null and CAPS_RESOURCE_3.ID_RESOURCE is not null'  
+   Let $where_clause101_newCountDtl = 'ID_SVC_DTL_PERSON is not null and CAPS_RESOURCE_1.ID_RESOURCE is not null'
+   Let $where_clause101_CountyTot = 'ID_SVC_DTL_PERSON is not null and CAPS_RESOURCE_2.ID_RESOURCE is not null'
+
+   Do GetThirdParam 
+  Else 
+   Let $anySelected = 'Y'
+   Let $twoSelected = 'N'
+   Let $where_clause101 = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || 'and CAPS_RESOURCE.ID_RESOURCE is not null'
+   Let $where_clause101_invvcntReg = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || 'and CAPS_RESOURCE_3.ID_RESOURCE is not null'
+
+
+   Let $where_clause101_newCountDtl = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || 'and CAPS_RESOURCE_1.ID_RESOURCE is not null'
+   Let $where_clause101_CountyTot = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || 'and CAPS_RESOURCE_2.ID_RESOURCE is not null'
+   Do GetThirdParam
+  End-If 
+
+Else
+ Let $anySelected = 'Y'
+ Let $twoSelected = 'Y'
+ Let $resParam = $_I102_CAPS_RESOURCE_ID_RESOURCE
+
+ If $oneSelected = 'Y'
+   Let $where_clause101 = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE
+   Let $where_clause101_invvcntReg ='ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_3.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE
+
+   Let $where_clause101_newCountDtl = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_1.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE
+   Let $where_clause101_CountyTot = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_2.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE
+
+ else
+   Let $where_clause101 = 'ID_SVC_DTL_PERSON is not null' || ' and CAPS_RESOURCE.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE
+   Let $where_clause101_invvcntReg ='ID_SVC_DTL_PERSON is not null' || ' and CAPS_RESOURCE_3.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE
+
+
+   Let $where_clause101_newCountDtl = 'ID_SVC_DTL_PERSON is not null' || ' and CAPS_RESOURCE_1.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE
+
+  Let $where_clause101_CountyTot = 'ID_SVC_DTL_PERSON is not null' || ' and CAPS_RESOURCE_2.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE
+ end-if
+Do GetThirdParam
+ 
+End-If
+End-Procedure
+
+Begin-Procedure GetThirdParam
+! -----------------------------
+Input $_I103_CD_INVO_REGION 'Enter a value for CD_INVO_REGION' MaxLen=2  Type=Char
+If IsNull($_I103_CD_INVO_REGION) or IsBlank($_I103_CD_INVO_REGION) or ($_I103_CD_INVO_REGION) = '0'
+ Let $regParam = 'All'
+ Let $threeSelected = 'N'
+  if ($oneSelected = 'Y' or $twoSelected = 'Y')
+      Let $anySelected = 'Y'
+       If ($oneSelected = 'Y' and $twoSelected = 'N') 
+         Let $where_clause101 = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE.ID_RESOURCE is not null'|| ' and CD_INVO_REGION is not null'
+         Let $where_clause101_invvcntReg ='ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_3.ID_RESOURCE is not null'|| ' and INVOICE_3.CD_INVO_REGION is not null'
+         Let $where_clause101_newCountDtl  = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_1.ID_RESOURCE is not null' || ' and INVOICE_1.CD_INVO_REGION is not null'
+         Let $where_clause101_CountyTot  = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_2.ID_RESOURCE is not null'|| ' and INVOICE_2.CD_INVO_REGION is not null'
+       end-if
+       If ($oneSelected = 'N' and $twoSelected = 'Y') 
+         Let $where_clause101 ='ID_SVC_DTL_PERSON is not null' || ' and CAPS_RESOURCE.ID_RESOURCE'  || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and CD_INVO_REGION is not null'
+
+         Let $where_clause101_invvcntReg ='ID_SVC_DTL_PERSON is not null' || ' and CAPS_RESOURCE_3.ID_RESOURCE'  || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and INVOICE_3.CD_INVO_REGION is not null'
+
+         Let $where_clause101_newCountDtl ='ID_SVC_DTL_PERSON is not null' || ' and CAPS_RESOURCE_1.ID_RESOURCE'  || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and INVOICE_1.CD_INVO_REGION is not null'
+
+         Let $where_clause101_CountyTot = 'ID_SVC_DTL_PERSON is not null' || ' and CAPS_RESOURCE_2.ID_RESOURCE'  || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and INVOICE_2.CD_INVO_REGION is not null'
+
+
+       end-if
+       If ($oneSelected = 'Y' and $twoSelected = 'Y') 
+         Let $where_clause101 = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and CD_INVO_REGION is not null'
+
+         Let $where_clause101_invvcntReg ='ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_3.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and INVOICE_3.CD_INVO_REGION is not null'
+
+
+        Let $where_clause101_newCountDtl = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_1.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and INVOICE_1.CD_INVO_REGION is not null'
+
+        Let $where_clause101_CountyTot = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_2.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and INVOICE_2.CD_INVO_REGION is not null'
+
+
+       end-if
+  else
+   Let $anySelected = 'N'
+  !Do CheckOnThree
+  end-if
+Else
+ Let $anySelected = 'Y'
+ Let $threeSelected = 'Y' 
+ Let $regParam = $_I103_CD_INVO_REGION
+ If SubStr($_I103_CD_INVO_REGION, 1, 1) != ''''
+  Let $_I103_CD_INVO_REGION = '''' || $_I103_CD_INVO_REGION || ''''
+ End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I103_CD_INVO_REGION,'''',0) = 0 and instr($_I103_CD_INVO_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_INVO_REGION'
+   Let $where_clause103 = $brb_tmp  || ' = ' ||  '''' || $_I103_CD_INVO_REGION || '''' 
+ Else
+   If (instr($_I103_CD_INVO_REGION,'''',0) = 0 and instr($_I103_CD_INVO_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_INVO_REGION'
+     Let $where_clause101 = $brb_tmp  || ' = ' || $_I103_CD_INVO_REGION  
+   End-If
+ End-If 
+      If ($oneSelected = 'Y' and $twoSelected = 'N') 
+         Let $where_clause101 = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE.ID_RESOURCE is not null' || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+         Let $where_clause101_invvcntReg ='ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_3.ID_RESOURCE is not null' || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+         Let $where_clause101_newCountDtl  = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_1.ID_RESOURCE is not null' || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+         Let $where_clause101_CountyTot = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_2.ID_RESOURCE is not null' || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+      end-if
+      If ($oneSelected = 'N' and $twoSelected = 'Y') 
+         Let $where_clause101 = 'ID_SVC_DTL_PERSON is not null and ' ||'CAPS_RESOURCE.ID_RESOURCE'  || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+         Let $where_clause101_invvcntReg ='ID_SVC_DTL_PERSON is not null and ' ||'CAPS_RESOURCE_3.ID_RESOURCE'  || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+         Let $where_clause101_newCountDtl  = 'ID_SVC_DTL_PERSON is not null and ' ||'CAPS_RESOURCE_1.ID_RESOURCE'  || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+         Let $where_clause101_CountyTot = 'ID_SVC_DTL_PERSON is not null and ' ||'CAPS_RESOURCE_2.ID_RESOURCE'  || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+      end-if
+      If ($oneSelected = 'Y' and $twoSelected = 'Y') 
+         Let $where_clause101 = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+         Let $where_clause101_invvcntReg ='ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_3.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+         Let $where_clause101_newCountDtl  = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_1.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+         Let $where_clause101_CountyTot = 'ID_SVC_DTL_PERSON'  || ' = ' || $_I101_ID_SVC_DTL_PERSON || ' and CAPS_RESOURCE_2.ID_RESOURCE' || ' = ' || $_I102_CAPS_RESOURCE_ID_RESOURCE || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+      end-if
+      If ($oneSelected = 'N' and $twoSelected = 'N') 
+         Let $where_clause101 = 'ID_SVC_DTL_PERSON is not null and ' ||'CAPS_RESOURCE.ID_RESOURCE is not null' || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+         Let $where_clause101_invvcntReg ='ID_SVC_DTL_PERSON is not null and ' ||'CAPS_RESOURCE_3.ID_RESOURCE is not null' || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+         Let $where_clause101_newCountDtl  = 'ID_SVC_DTL_PERSON is not null and ' ||'CAPS_RESOURCE_1.ID_RESOURCE is not null' || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+         Let $where_clause101_CountyTot = 'ID_SVC_DTL_PERSON is not null and ' ||'CAPS_RESOURCE_2.ID_RESOURCE is not null' || ' and CD_INVO_REGION' || ' = ' || $_I103_CD_INVO_REGION
+      end-if     
+End-If
+End-Procedure
+
+
+Begin-Procedure GetMonthYearFrom
+Input $dt_report 'Enter From Date (MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+If IsNull($dt_report) or IsBlank($dt_report)
+ Show 'Input Error (7734): No value was enterred. A value is required.'
+ Let #return-status = 7734
+ Stop
+End-If
+End-Procedure
+
+
+Begin-Procedure GetMonthYearTo
+Input $dt_report_to 'Enter To Date (MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+If IsNull($dt_report_to) or IsBlank($dt_report_to)
+ Show 'Input Error (7734): No value was enterred. A value is required.'
+ Let #return-status = 7734
+ Stop
+End-If
+End-Procedure
+
+Begin-Procedure GetServiceCode
+Input $svc_code 'Enter the first 3 digits of the UAS Program Code' MaxLen=3 Type=Char
+If IsNull($svc_code) or IsBlank($svc_code)or ($svc_code) = '0'
+ Let $where_clause103 = 'CD_SVC_DTL_SERVICE is not null' 
+ Let $_servicetext = 'All'
+else
+   Let $trimsvccode = ltrim($svc_code, ' ')
+   Let $ressvccode = substr($trimsvccode,1,3)
+   Let $svccode = $ressvccode || '%'
+   Let $where_clause103 = 'CD_SVC_DTL_SERVICE like ' || '''' || $svccode || ''''   
+   Let $_servicetext = $ressvccode
+
+End-If
+End-Procedure
+Begin-Procedure Get-Input-Type
+! -----------------------------
+Input $_I101_CD_INVO_TYPE 'Enter a value for CD_INVO_TYPE' MaxLen=3  Type=Char
+If IsNull($_I101_CD_INVO_TYPE) or IsBlank($_I101_CD_INVO_TYPE) or ($_I101_CD_INVO_TYPE) = '0' or ($_I101_CD_INVO_TYPE) = 'ALL'
+  Let $where_clause_Type = 'CD_INVO_TYPE is not null'
+  Let $where_clause_Type_invvcntReg = 'INVOICE_3.CD_INVO_TYPE is not null'
+  Let $where_clause_Type_CountDtl = 'INVOICE_1.CD_INVO_TYPE is not null'
+  Let $where_clause_Type_CountyTot = 'INVOICE_2.CD_INVO_TYPE is not null'
+
+  Let $_TypeString = 'All'
+Else 
+  Let $_TypeString = $_I101_CD_INVO_TYPE
+If SubStr($_I101_CD_INVO_TYPE, 1, 1) != ''''
+  Let $_I101_CD_INVO_TYPE = '''' || $_I101_CD_INVO_TYPE || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CD_INVO_TYPE,'''',0) = 0 and instr($_I101_CD_INVO_TYPE,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_INVO_TYPE'
+   Let $where_clause_Type = $brb_tmp  || ' = ' ||  '''' || $_I101_CD_INVO_TYPE || '''' 
+ Else
+   If (instr($_I101_CD_INVO_TYPE,'''',0) = 0 and instr($_I101_CD_INVO_TYPE,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_INVO_TYPE'
+     Let $where_clause_Type = $brb_tmp  || ' = ' || $_I101_CD_INVO_TYPE
+    Let $where_clause_Type_invvcntReg = $brb_tmp  || ' = ' || $_I101_CD_INVO_TYPE
+
+     Let $where_clause_Type_CountDtl = $brb_tmp  || ' = ' || $_I101_CD_INVO_TYPE
+     Let $where_clause_Type_CountyTot = $brb_tmp  || ' = ' || $_I101_CD_INVO_TYPE
+
+   End-If
+ End-If
+ Do Get-TypeName
+End-If
+End-Procedure
+
+!  ----------------------------
+Begin-Procedure Get-TypeName
+Begin-Select
+CINVTYPE.DECODE &InvType
+from CINVTYPE
+where CINVTYPE.CODE = [$_I101_CD_INVO_TYPE] 
+End-Select
+Move &InvType to $_TypeString
+End-Procedure
+
+
+
+Begin-Procedure Get-Input-Phase
+! -----------------------------
+Input $_I102_CD_INVO_PHASE 'Enter a value for CD_INVO_PHASE' MaxLen=3  Type=Char
+If IsNull($_I102_CD_INVO_PHASE) or IsBlank($_I102_CD_INVO_PHASE) or ($_I102_CD_INVO_PHASE) = '0' or ($_I102_CD_INVO_PHASE) = 'ALL'
+    Let $where_clause_Phase = 'CD_INVO_PHASE is not null'
+    Let $where_clause_Phase_invvcntReg = 'INVOICE_3.CD_INVO_PHASE is not null'
+    Let $where_clause_Phase_CountDtl = 'INVOICE_1.CD_INVO_PHASE is not null'
+     Let $where_clause_Phase_CountyTot = 'INVOICE_2.CD_INVO_PHASE is not null'
+
+    Let $_PhaseString = 'All'
+Else 
+ Let $_PhaseString = $_I102_CD_INVO_PHASE
+If SubStr($_I102_CD_INVO_PHASE, 1, 1) != ''''
+  Let $_I102_CD_INVO_PHASE = '''' || $_I102_CD_INVO_PHASE || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I102_CD_INVO_PHASE,'''',0) = 0 and instr($_I102_CD_INVO_PHASE,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_INVO_PHASE'
+   Let $where_clause_Phase = $brb_tmp  || ' = ' ||  '''' || $_I102_CD_INVO_PHASE || '''' 
+ Else
+   If (instr($_I102_CD_INVO_PHASE,'''',0) = 0 and instr($_I102_CD_INVO_PHASE,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_INVO_PHASE'
+     Let $where_clause_Phase = $brb_tmp  || ' = ' || $_I102_CD_INVO_PHASE
+     Let $where_clause_Phase_invvcntReg = $brb_tmp  || ' = ' || $_I102_CD_INVO_PHASE
+     Let $where_clause_Phase_CountDtl = $brb_tmp  || ' = ' || $_I102_CD_INVO_PHASE
+     Let $where_clause_Phase_CountyTot = $brb_tmp  || ' = ' || $_I102_CD_INVO_PHASE
+
+   End-If
+ End-If 
+ Do Get-PhaseName
+End-If
+End-Procedure
+
+
+!-------------------
+Begin-Procedure Get-PhaseName
+Begin-Select
+CINVPHSE.DECODE &InvPhase
+from CINVPHSE
+where CINVPHSE.CODE = [$_I102_CD_INVO_PHASE] 
+End-Select
+Move &InvPhase to $_PhaseString
+End-Procedure
+
+!--------------------------
+
+Begin-Procedure GetCounty
+Input $_I102_CD_INVO_COUNTY 'Enter a value for CD_INVO_COUNTY' MaxLen=3  Type=Char
+If IsNull($_I102_CD_INVO_COUNTY) or IsBlank($_I102_CD_INVO_COUNTY) or ($_I102_CD_INVO_COUNTY) = '0'
+   Let $where_clause102 = 'CD_INVO_COUNTY is not null' 
+
+   Let $_CountyText = 'All'
+Else
+!Do GetCountyName
+ Let $varCnty = $_I102_CD_INVO_COUNTY
+ If SubStr($_I102_CD_INVO_COUNTY, 1, 1) != ''''
+  Let $_I102_CD_INVO_COUNTY = '''' || $_I102_CD_INVO_COUNTY || ''''
+ End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I102_CD_INVO_COUNTY,'''',0) = 0 and instr($_I102_CD_INVO_COUNTY,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_INVO_COUNTY'
+   Let $where_clause102 = $brb_tmp  || ' = ' ||  '''' || $_I102_CD_INVO_COUNTY || '''' 
+ Else
+   If (instr($_I102_CD_INVO_COUNTY,'''',0) = 0 and instr($_I102_CD_INVO_COUNTY,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_INVO_COUNTY'
+     Let $where_clause102 = $brb_tmp  || ' = ' || $_I102_CD_INVO_COUNTY
+   End-If
+ End-If
+Do GetCountyName
+If $threeSelected = 'N'
+ Do GetRegion
+End-If
+End-If
+End-Procedure
+
+
+Begin-Procedure GetCountyName
+Begin-Select
+CCOUNT.DECODE &CountyName
+from CCOUNT
+where CCOUNT.CODE = [$_I102_CD_INVO_COUNTY] 
+End-Select
+Move &CountyName to $_CountyText
+ !Let $_CountyText = &CountyName
+End-Procedure
+
+Begin-Procedure GetRegion
+Begin-Select
+CCNTYREG.DECODE &RegName
+from CCNTYREG
+where CCNTYREG.CODE = [$_I102_CD_INVO_COUNTY] 
+End-Select
+Move &RegName to $regParam
+ !Let $_CountyText = &CountyName
+End-Procedure
+
+
+Begin-Procedure invvcntReg ($P1_CD_INVO_REGION)
+Begin-Select 
+(count(distinct DELVRD_SVC_DTL_3.ID_INVOICE )) &_invRegTotal
+From  CAPS_RESOURCE CAPS_RESOURCE_3, CCOUNT CCOUNT_3
+,      CSVCCODE CSVCCODE_3, DELVRD_SVC_DTL DELVRD_SVC_DTL_3, INVOICE INVOICE_3
+,      PERSON PERSON_3, CONTRACT CONTRACT_3
+      Where INVOICE_3.ID_INVOICE = DELVRD_SVC_DTL_3.ID_INVOICE(+)
+            And CONTRACT_3.ID_CONTRACT = INVOICE_3.ID_CONTRACT
+            And CAPS_RESOURCE_3.ID_RESOURCE(+) = DELVRD_SVC_DTL_3.ID_RESOURCE
+            And INVOICE_3.CD_INVO_COUNTY = CCOUNT_3.CODE
+            And trim(DELVRD_SVC_DTL_3.CD_SVC_DTL_SERVICE) = CSVCCODE_3.CODE(+)
+            And DELVRD_SVC_DTL_3.ID_SVC_DTL_PERSON = PERSON_3.ID_PERSON(+)
+ And INVOICE_3.CD_INVO_REGION = $P1_CD_INVO_REGION
+ !And [$_where_clause101]
+ And [$_where_clause101_invvcntReg]
+ And [$_where_clause102]
+ And [$_where_clause103]
+ And [$_where_clause_Type_invvcntReg]
+ And [$_where_clause_Phase_invvcntReg]
+ And (((to_date((to_char(INVOICE_3.MO_INVO_MONTH) || '/' ||  to_char(INVOICE_3.YR_INVO_YEAR)),'MM/YYYY'))  >=  to_date($_dt_report,'MM/YYYY'))
+
+ And (to_date((to_char(INVOICE_3.MO_INVO_MONTH) || '/' ||  to_char(INVOICE_3.YR_INVO_YEAR)),'MM/YYYY')) < last_day(to_date($_dt_report_to,'MM/YYYY'))
+    +1)
+End-Select
+ !Move &_invRegTotal to $RegTotCnt
+ !Let $RegTotCnt = $RegTotCnt + &_invRegTotal
+End-Procedure
+
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select
+(DELVRD_SVC_DTL.AMT_SVC_DTL_UNIT_RATE  *  DELVRD_SVC_DTL.NBR_SVC_DTL_UNIT_QTY) &TotalAmt
+CAPS_RESOURCE.ID_RESOURCE &Master_Query_CAPS_RESOURCE.ID_RESOURCE
+CD_INVO_TYPE &Master_Query_CD_INVO_TYPE
+NM_RESOURCE &Master_Query_NM_RESOURCE
+CONTRACT.ID_CONTRACT &Master_Query_CONTRACT.ID_CONTRACT
+CD_INVO_ADJUSTMENT_RB &Master_Query_CD_INVO_ADJUSTMENT_RB
+DT_INVO_RECEIVED_DATE &Master_Query_DT_INVO_RECEIVED_DATE
+AMT_INVO_CLAIMED_AMOUNT &Master_Query_AMT_INVO_CLAIMED_AMOUNT
+DT_INVO_SUBMIT_DATE &Master_Query_DT_INVO_SUBMIT_DATE
+DT_INVO_WARRANT_DATE &Master_Query_DT_INVO_WARRANT_DATE
+NBR_INVO_WARRANT &Master_Query_NBR_INVO_WARRANT
+AMT_INVO_WARRANT &Master_Query_AMT_INVO_WARRANT
+CD_INVO_APPROVED &Master_Query_CD_INVO_APPROVED
+TXT_INVO_CONTACT &Master_Query_TXT_INVO_CONTACT
+NM_PERSON_FULL &ClientName
+CD_SVC_DTL_SERVICE &Master_Query_CD_SVC_DTL_SERVICE
+(to_date((to_char(INVOICE.MO_INVO_MONTH) || '/' ||  to_char(INVOICE.YR_INVO_YEAR)),'MM/YYYY')) &InvDate
+AMT_SVC_DTL_UNIT_RATE &Rate
+NBR_SVC_DTL_UNIT_QTY &Qty
+CD_INVO_REGION &Region
+CD_INVO_COUNTY &County
+CD_INVO_PHASE &Phase
+NBR_INVO_VID &Vendr_ID
+CSVCCODE.CODE &SvcCode
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CCOUNT.DECODE &CountyNm () On-Break Set=1 Level=1 Print=Never Before=Master_QueryDECODE_BeforeProc101 After=Master_QueryDECODE_AfterProc101
+ID_SVC_DTL_PERSON &ClientID () On-Break Set=1 Level=2 Print=Never Before=Master_QueryID_SVC_DTL_PERSON_BeforeProc102 After=Master_QueryID_SVC_DTL_PERSON_AfterProc102
+DELVRD_SVC_DTL.ID_INVOICE &svcdtlinvoice () On-Break Set=1 Level=3 Print=Never Before=Master_QueryID_INVOICE_BeforeProc103
+ Graphic (3,177,548) Box 17 0 12 
+ Do invvcntReg(&Region)
+MO_SVC_DTL_SVC_MONTH &Master_Query_MO_SVC_DTL_SVC_MONTH (15,180) Edit 88na
+YR_SVC_DTL_SVC_YEAR &Master_Query_YR_SVC_DTL_SVC_YEAR (15,212) Edit 8888na
+NBR_SVC_DTL_FROM_DAY &Master_Query_NBR_SVC_DTL_FROM_DAY (15,244) Edit 888na
+NBR_SVC_DTL_TO_DAY &Master_Query_NBR_SVC_DTL_TO_DAY (15,278) Edit 888na
+CSVCCODE.DECODE &Master_Query_CSVCCODE.DECODE (15,303,66)
+ Print &TotalAmt (15,659) Edit 999999999.99na
+ Do newCountDtl(&ClientID)
+ Do CountyTot(&County)
+  Let $dtlInvcntLast = &dtlInvcnt
+  Let $invcntCntyLast = &invcntCnty
+ Add 1 To #1ROW_COUNT
+ Next-Listing  SkipLines=4 Need=19
+From  CONTRACT, DELVRD_SVC_DTL
+,      INVOICE, PERSON, CAPS_RESOURCE
+,      CSVCCODE, CCOUNT
+      Where CONTRACT.ID_CONTRACT = INVOICE.ID_CONTRACT
+            And INVOICE.ID_INVOICE = DELVRD_SVC_DTL.ID_INVOICE(+)
+            And DELVRD_SVC_DTL.ID_SVC_DTL_PERSON = PERSON.ID_PERSON(+)
+            And CONTRACT.ID_RESOURCE = CAPS_RESOURCE.ID_RESOURCE
+            And INVOICE.CD_INVO_COUNTY = CCOUNT.CODE
+ And [$where_clause101]
+ And ((to_date((to_char(INVOICE.MO_INVO_MONTH) || '/' ||  to_char(INVOICE.YR_INVO_YEAR)),'MM/YYYY')) >= to_date($dt_report,'MM/YYYY')
+ And (to_date((to_char(INVOICE.MO_INVO_MONTH) || '/' ||  to_char(INVOICE.YR_INVO_YEAR)),'MM/YYYY')) < last_day(to_date($dt_report_to,'MM/YYYY'))
+    +1)
+ And [$where_clause102]
+ And [$where_clause103]
+ And [$where_clause_Type]
+ And [$where_clause_Phase]
+ And trim( DELVRD_SVC_DTL.CD_SVC_DTL_SERVICE ) =  CSVCCODE.CODE (+)
+Order By CCOUNT.DECODE
+,      NM_PERSON_FULL
+,      CD_INVO_TYPE
+,      CD_INVO_PHASE
+,      CAPS_RESOURCE.ID_RESOURCE
+,      DELVRD_SVC_DTL.ID_INVOICE
+End-Select
+ Next-Listing
+ Next-Listing  Need=18
+ If #1ROW_COUNT > 0
+ Graphic (2,1,760) Horz-Line 20 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Report Total:'  (18,1) Bold 
+   Let #RegTotCnt=&invRegTotal
+ Print #RegTotCnt (18,80) Edit 888888
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryID_SVC_DTL_PERSON_BeforeProc102
+ Next-Listing  Need=22
+ Graphic (2,1,760) Horz-Line 10 
+ Position (3,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Client ID/Name:'  (22,1) Bold 
+  Print 'Region:'  (22,310) Bold 
+    Print &ClientID (22,78) Edit 8888888888888888na
+  Print &ClientName (22,167,25)
+  Print &Region (22,353,4)
+   Position (+12,)
+ Next-Listing  Need=19
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_SVC_DTL_PERSON_AfterProc102
+ Next-Listing  Need=19
+ Graphic (5,77,684) Horz-Line 5 
+ Position (5,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $dtlInvcntLast (19,142) Edit 8888na
+ Print 'Client Total:'  (19,77) Bold 
+   Position (+12,)
+ Next-Listing  Need=19
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_BeforeProc101
+ Next-Listing  Need=21
+ Graphic (2,1,760) Horz-Line 20 
+ Position (4,1)
+   Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'County:'  (21,1) Bold 
+   Print &CountyNm (21,51,25)
+   Position (+12,)
+ Next-Listing  Need=19
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc101
+ Next-Listing  Need=17
+ Graphic (2,1,760) Horz-Line 15 
+ Position (3,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'County Total:'  (17,1) Bold 
+  Print $invcntCntyLast (17,80) Edit 88888na
+   Position (+12,)
+ Next-Listing  Need=19
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_INVOICE_BeforeProc103
+ Next-Listing  Need=28
+   Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CD_INVO_TYPE (12,62,3)
+  Print &Phase (12,94,4)
+  Print &Master_Query_CONTRACT.ID_CONTRACT (12,129) Edit 8888888888na
+  Print &Master_Query_CAPS_RESOURCE.ID_RESOURCE (12,177) Edit 888888888na
+  Print &Vendr_ID (12,223,10)
+  Print &Master_Query_DT_INVO_SUBMIT_DATE (12,280) Edit MM/DD/YYYY
+  Print &Master_Query_DT_INVO_RECEIVED_DATE (12,337) Edit MM/DD/YYYY
+ Print 'Month'  (28,176) Underline  Bold 
+ Print 'Year'  (28,212) Underline  Bold 
+ Print 'From'  (28,244) Underline  Bold 
+ Print 'To'  (28,277) Underline  Bold 
+ Print 'Service'  (28,302) Underline  Bold 
+  Print &Master_Query_AMT_INVO_CLAIMED_AMOUNT (12,390) Edit 88888888.88na
+  Print &Master_Query_DT_INVO_WARRANT_DATE (12,449) Edit MM/DD/YYYY
+  Print &Master_Query_NBR_INVO_WARRANT (12,506,10)
+  Print &Master_Query_AMT_INVO_WARRANT (12,564) Edit 8888888.88na
+  Print &Master_Query_TXT_INVO_CONTACT (12,618,13) Wrap 13 2 line-height=12 Keep-Top on= 
+  Print &Master_Query_CD_INVO_APPROVED (12,694,3)
+ Print 'Item Total'  (28,670) Underline  Bold 
+  Print &Master_Query_CD_INVO_ADJUSTMENT_RB (12,727,3)
+  Print &svcdtlinvoice (12,3) Edit 9999999999na
+   Position (+12,)
+ Next-Listing  Need=19
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure newCountDtl (#P1_ID_SVC_DTL_PERSON)
+Begin-Select Loops=1
+(count(distinct  DELVRD_SVC_DTL_1.ID_INVOICE )) &_dtlInvcnt
+From  DELVRD_SVC_DTL DELVRD_SVC_DTL_1, INVOICE INVOICE_1
+,      CONTRACT CONTRACT_1, CAPS_RESOURCE CAPS_RESOURCE_1, PERSON PERSON_1
+,      CSVCCODE CSVCCODE_1, CCOUNT CCOUNT_1
+      Where DELVRD_SVC_DTL_1.ID_RESOURCE = CAPS_RESOURCE_1.ID_RESOURCE(+)
+            And CONTRACT_1.ID_RESOURCE = CAPS_RESOURCE_1.ID_RESOURCE
+            And INVOICE_1.CD_INVO_COUNTY = CCOUNT_1.CODE
+            And DELVRD_SVC_DTL_1.ID_SVC_DTL_PERSON = PERSON_1.ID_PERSON(+)
+            And INVOICE_1.ID_INVOICE = DELVRD_SVC_DTL_1.ID_INVOICE(+)
+ And DELVRD_SVC_DTL_1.ID_SVC_DTL_PERSON = #P1_ID_SVC_DTL_PERSON
+ And [$_where_clause101_newCountDtl]
+ And [$_where_clause102]
+ And (((to_date((to_char(INVOICE_1.MO_INVO_MONTH) || '/' ||  to_char(INVOICE_1.YR_INVO_YEAR)),'MM/YYYY'))  >=  to_date($_dt_report,'MM/YYYY')
+     )
+ And (to_date((to_char(INVOICE_1.MO_INVO_MONTH) || '/' ||  to_char(INVOICE_1.YR_INVO_YEAR)),'MM/YYYY')) < last_day(to_date($_dt_report_to,'MM/YYYY'))
+    +1)
+ And [$_where_clause103]
+ And [$_where_clause_Type_CountDtl]
+ And [$_where_clause_Phase_CountDtl]
+ And trim( DELVRD_SVC_DTL_1.CD_SVC_DTL_SERVICE ) =  CSVCCODE_1.CODE (+)
+End-Select
+End-Procedure
+
+Begin-Procedure CountyTot ($P1_CD_INVO_COUNTY)
+Begin-Select Loops=1
+(count( distinct DELVRD_SVC_DTL_2.ID_INVOICE )) &_invcntCnty
+From  CCOUNT CCOUNT_2, CSVCCODE CSVCCODE_2
+,      DELVRD_SVC_DTL DELVRD_SVC_DTL_2, CAPS_RESOURCE CAPS_RESOURCE_2, INVOICE INVOICE_2
+,      CONTRACT CONTRACT_2, PERSON PERSON_2
+      Where INVOICE_2.ID_INVOICE = DELVRD_SVC_DTL_2.ID_INVOICE(+)
+            And CAPS_RESOURCE_2.ID_RESOURCE = CONTRACT_2.ID_RESOURCE
+            And DELVRD_SVC_DTL_2.ID_RESOURCE = CAPS_RESOURCE_2.ID_RESOURCE(+)
+            And DELVRD_SVC_DTL_2.ID_SVC_DTL_PERSON = PERSON_2.ID_PERSON(+)
+            And INVOICE_2.CD_INVO_COUNTY = CCOUNT_2.CODE
+ And INVOICE_2.CD_INVO_COUNTY = $P1_CD_INVO_COUNTY
+ And [$_where_clause101_CountyTot]
+ And [$_where_clause102]
+ And [$_where_clause103]
+ And (((to_date((to_char(INVOICE_2.MO_INVO_MONTH) || '/' ||  to_char(INVOICE_2.YR_INVO_YEAR)),'MM/YYYY'))  >=  to_date($_dt_report,'MM/YYYY'))
+
+ And (to_date((to_char(INVOICE_2.MO_INVO_MONTH) || '/' ||  to_char(INVOICE_2.YR_INVO_YEAR)),'MM/YYYY')) < last_day(to_date($_dt_report_to,'MM/YYYY'))
+    +1)
+ And [$_where_clause_Type_CountyTot]
+ And [$_where_clause_Phase_CountyTot]
+ And trim( DELVRD_SVC_DTL_2.CD_SVC_DTL_SERVICE ) =  CSVCCODE_2.CODE (+)
+End-Select
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=CountyLookUp
+      Table=CCOUNT
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SC
+      Quiet
+
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (11,695) edit 'MM/DD/YYYY'
+ Print 'pageheader' (62,135,0) Bold  Foreground=(255,255,255)
+ Print 'Produced On:' (11,631,0)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Invoice Details' (45,331,0) Bold 
+ Let $FromDt=$dt_report
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $FromDt (95,81,15)
+ Let $ToDt=$dt_report_to
+ Print $ToDt (95,320,15)
+ Print 'Month From:' (94,3,0) Bold 
+ Print 'Month To:' (94,198,0) Bold 
+ Print 'County:' (132,3,0) Bold 
+ Let $CountyVar=$_CountyText
+ Print $CountyVar (133,81,15)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (12,296,0)
+ Let $clientParam=$clientParam
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $clientParam (113,81,15)
+ Let $noDataText=$noDataText
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $noDataText (65,150,80) Bold  Foreground=(255,0,0)
+ Let $UAScode=$_servicetext
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $UAScode (133,320,9)
+ Print 'UAS Program Code:' (132,198,0) Bold 
+ Let $resParam=$resParam
+ Print $resParam (113,320,18)
+ Print 'Resource ID:' (113,198,0) Bold 
+ Let $regParam=$regParam
+ Print $regParam (113,514,15)
+ Print 'Region:' (113,461,0) Bold 
+ Print 'Client ID:' (113,3,0) Bold 
+ Let $TypeVar=$_TypeString
+ Print $TypeVar (152,81,55)
+ Print 'Type: ' (152,3,0) Bold 
+ Print 'Phase: ' (132,461,0) Bold 
+ Let $PhaseVar=$_PhaseString
+ Print $PhaseVar (133,514,15)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Invce' (172,62,5) Underline  Bold  Wrap 5 4 line-height=12 Keep-Top on= 
+ Print 'Cntrct ID' (172,129,0) Underline  Bold 
+ Print 'Aprvl Status' (172,690,6) Underline  Bold  Wrap 6 3 line-height=12 Keep-Top on= 
+ Print 'Contact' (172,619,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top on= 
+ Print 'Check $' (172,565,12) Underline  Bold 
+ Print 'Check Nbr' (172,502,9) Underline  Bold 
+ Print 'Check Dt' (172,445,8) Underline  Bold 
+ Print 'Claimed $' (172,387,11) Underline  Bold 
+ Print 'Sbmt Dt' (172,280,7) Underline  Bold 
+ Print 'Invoice ID' (172,3,0) Underline  Bold 
+ Print 'Res ID' (172,177,0) Underline  Bold 
+ Print 'Type' (182,62,0) Underline  Bold 
+ Print 'Inv Sp' (172,728,0) Underline  Bold 
+ Print 'Adjust' (182,728,0) Underline  Bold 
+ Print 'Phase' (172,94,0) Underline  Bold 
+ Print 'Vndr ID' (172,223,7) Underline  Bold 
+ Print 'Rcvd Dt' (172,337,7) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Invce' (13,62,5) Underline  Bold  Wrap 5 4 line-height=12 Keep-Top on= 
+ Print 'Cntrct ID' (13,129,0) Underline  Bold 
+ Print 'Aprvl Status' (13,690,6) Underline  Bold  Wrap 6 3 line-height=12 Keep-Top on= 
+ Print 'Contact' (13,619,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top on= 
+ Print 'Check $' (13,565,12) Underline  Bold 
+ Print 'Check Nbr' (13,502,9) Underline  Bold 
+ Print 'Check Dt' (13,445,8) Underline  Bold 
+ Print 'Claimed $' (13,387,11) Underline  Bold 
+ Print 'Sbmt Dt' (13,280,7) Underline  Bold 
+ Print 'Invoice ID' (13,3,0) Underline  Bold 
+ Print 'Res ID' (13,177,0) Underline  Bold 
+ Print 'Type' (23,62,0) Underline  Bold 
+ Print 'Inv Sp' (13,728,0) Underline  Bold 
+ Print 'Adjust' (23,728,0) Underline  Bold 
+ Print 'Phase' (13,94,0) Underline  Bold 
+ Print 'Vndr ID' (13,223,7) Underline  Bold 
+ Print 'Rcvd Dt' (13,337,7) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (18,709) '' ' of '
+ Last-Page (18,738) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

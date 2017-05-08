@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.CIntakeResp" table="CINTAKERESP" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+        <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.CIntakeRespId">
+            <meta attribute="implement-equals">true</meta>
+            <key-property name="intakeid" type="string">
+                <meta attribute="use-in-equals">true</meta>
+                <column name="INTAKEID" length="10" />
+            </key-property>
+            <key-property name="employeeid" type="string">
+                <meta attribute="use-in-equals">true</meta>
+                <column name="EMPLOYEEID" length="16" />
+            </key-property>
+            <key-property name="sarouser" type="string">
+                <meta attribute="use-in-equals">true</meta>
+                <column name="SAROUSER" length="1" />
+            </key-property>
+        </composite-id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="cintake" class="gov.georgia.dhr.dfcs.sacwis.db.CIntake" update="false" insert="false" fetch="select"
+                 unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="INTAKEID" length="10" not-null="true"/>
+        </many-to-one>
+        <property name="staffnm" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="STAFFNM" length="40" />
+        </property>
+        <property name="msgid" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="MSGID" precision="10" scale="0" />
+        </property>
+        <property name="mytaskcompletedt" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="MYTASKCOMPLETEDT" length="7" />
+        </property>
+        <property name="isprimary" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="ISPRIMARY" precision="1" scale="0" />
+        </property>
+        <property name="eventtype" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="EVENTTYPE" length="2" />
+        </property>
+    </class>
+</hibernate-mapping>

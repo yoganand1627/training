@@ -1,0 +1,424 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Tue Dec 02 12:05:56 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\PendRecent\OverduePendingStatewide00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=192    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (15,2,0) Underline  Bold 
+ Print 'This report displays the total number of investigations in the state. Investigations are considered pending until the investigation findings have been documented, submitted to a supervisor, approved and closed. Policy allows 45 calendar days to complete an investigation. Investigations pending 46 days or more are considered overdue. The reporting region is determined by the region of the stage.' (35,5,126) Wrap 126 4 line-height=12 Keep-Top on=   
+ Print 'Total cases pending by Region' (130,5,0) Underline  Bold 
+ Print '46 days or more:' (146,9,0) Bold 
+ Print '46 to 59 days:' (166,9,0) Bold 
+ Print '60 to 89 days:' (184,9,0) Bold 
+ Print 'Total number of investigations that have elapsed 46 days or more from the intake date in the region.' (146,100,0)
+ Print 'Total number of investigations that are pending 46 to 59 days from the intake date in the region.' (166,100,0)
+ Print 'Total number of investigations that are pending 60 to 89 days from the intake date in the region.' (184,100,0)
+ Print 'Total number of investigations that are pending 90 days or more from the intake date in the region.' (205,100,0)
+ Print '(Region Total / Statewide Total ) * 100 for 46 Days or More' (233,31,61)
+ Print '(Region Total for each Category / Region Total for 46 Days or More) * 100' (251,31,111)
+ Print '(State Total for each Category / State Total for 46 days or More) * 100' (269,31,76)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print '1' (231,16,1) Bold 
+ Print '2' (249,16,2) Bold 
+ Print '3' (268,16,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Statewide View / Region View' (113,5,32) Underline  Bold 
+ Print '90 days or more:' (205,9,0) Bold 
+ Page-Number (399,669) '' ' of '
+ Last-Page (399,692) 
+ Print '(Region Total for each Category / Region Total for 46 Days or More) * 100' (411,31,111)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print '4 ' (410,16,1) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Total cases pending by County' (303,5,0) Underline  Bold 
+ Print '46 days or more:' (320,9,0) Bold 
+ Print 'Total number of investigations that have elapsed 46 days or more from the intake date in each county in the region.' (320,93,0)
+ Print '46 to 59 days:' (339,9,0) Bold 
+ Print 'Total number of investigations that are pending 46 to 59 days from the intake date in each county in the region.' (339,93,0)
+ Print '60 to 89 days:' (358,9,0) Bold 
+ Print 'Total number of investigations that are pending 60 to 89 days from the intake date in each county in the region.' (358,93,0)
+ Print '90 days or more:' (378,9,0) Bold 
+ Print 'Total number of investigations that are pending 90 days or more from the intake date in each county in the region.' (378,93,0)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+Do Get-Input-Region
+ Position (1,1)
+ Do Master_Query
+!Do Get-All-Percentage
+ Do Mstr_Qry_County
+End-Program
+Begin-Procedure Get-Input-Region
+Input $_I1601_STAGE_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If ($_I1601_STAGE_CD_STAGE_REGION) ='0'
+ Let $where_clause1601 = 'Inv_Stage00.CD_STAGE_REGION is not null'
+Let $header2 = 'Statewide View'
+Let $statevar = 'Statewide Totals'
+else 
+Let $statevar = 'Region Totals'
+Let $header2 = 'Region ' || $_I1601_STAGE_CD_STAGE_REGION ||  ' View'
+If SubStr($_I1601_STAGE_CD_STAGE_REGION, 1, 1) != ''''
+  Let $_I1601_STAGE_CD_STAGE_REGION = '''' || $_I1601_STAGE_CD_STAGE_REGION || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I1601_STAGE_CD_STAGE_REGION,'''',0) = 0 and instr($_I1601_STAGE_CD_STAGE_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'Inv_Stage00.CD_STAGE_REGION'
+   Let $where_clause1601 = $brb_tmp  || ' = ' ||  '''' || $_I1601_STAGE_CD_STAGE_REGION || '''' 
+ Else
+   If (instr($_I1601_STAGE_CD_STAGE_REGION,'''',0) = 0 and instr($_I1601_STAGE_CD_STAGE_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'Inv_Stage00.CD_STAGE_REGION'
+     Let $where_clause1601 = $brb_tmp  || ' = ' || $_I1601_STAGE_CD_STAGE_REGION
+   End-If
+end-if
+End-If
+End-Procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #16ROW_COUNT
+ Move 0 To #sumSub4659Two
+ Move 0 To #sumSub6089Two
+ Move 0 To #sumSub90MoreTwo
+ Move 0 To #sumSub46MoreTwo
+Begin-Select
+(SELECT  (count( Inv_Stage.ID_STAGE ))  FROM  INCOMING_DETAIL INCOMING_DETAIL00,  STAGE Inv_Stage,  STAGE_LINK STAGE_LINK00,  CPS_INVST_DETAIL,  STAGE Prior_Stage WHERE CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = Inv_Stage.ID_STAGE
+  AND  CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK00.ID_STAGE
+  AND  STAGE_LINK00.ID_PRIOR_STAGE = Prior_Stage.ID_STAGE
+ AND  Inv_Stage.CD_STAGE = 'INV' AND  Inv_Stage.DT_STAGE_CLOSE IS NULL  AND  trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE)) ) >=46 AND  Prior_Stage.ID_STAGE =  INCOMING_DETAIL00.ID_STAGE(+) AND  Inv_Stage.CD_STAGE_REGION = Inv_Stage00.CD_STAGE_REGION) &Master_Query_Sub46MoreTwo
+(SELECT  (count( Inv_Stage.ID_STAGE ))  FROM  INCOMING_DETAIL INCOMING_DETAIL00,  STAGE Inv_Stage,  STAGE_LINK,  CPS_INVST_DETAIL,  STAGE Prior_Stage WHERE CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = Inv_Stage.ID_STAGE
+  AND  CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK.ID_STAGE
+  AND  STAGE_LINK.ID_PRIOR_STAGE = Prior_Stage.ID_STAGE
+ AND  Inv_Stage.CD_STAGE = 'INV' AND  Inv_Stage.DT_STAGE_CLOSE IS NULL  AND  trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE)) ) >=46 and trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE))) <=59 AND  Prior_Stage.ID_STAGE = INCOMING_DETAIL00.ID_STAGE (+) AND  Inv_Stage.CD_STAGE_REGION = Inv_Stage00.CD_STAGE_REGION) &Master_Query_Sub4659Two
+(SELECT  (count( Inv_Stage.ID_STAGE ))  FROM  INCOMING_DETAIL INCOMING_DETAIL00,  STAGE Inv_Stage,  STAGE_LINK STAGE_LINK00,  CPS_INVST_DETAIL,  STAGE Prior_Stage WHERE CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = Inv_Stage.ID_STAGE
+  AND  CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK00.ID_STAGE
+  AND  STAGE_LINK00.ID_PRIOR_STAGE = Prior_Stage.ID_STAGE
+ AND  Inv_Stage.CD_STAGE = 'INV' AND  Inv_Stage.DT_STAGE_CLOSE IS NULL  AND  trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE)) ) >=60 and trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE)) ) <=89 AND  Prior_Stage.ID_STAGE =  INCOMING_DETAIL00.ID_STAGE(+) AND  Inv_Stage.CD_STAGE_REGION = Inv_Stage00.CD_STAGE_REGION) &Master_Query_Sub6089Two
+(SELECT  (count( Inv_Stage.ID_STAGE ))  FROM  INCOMING_DETAIL INCOMING_DETAIL00,  STAGE Inv_Stage,  STAGE_LINK STAGE_LINK00,  CPS_INVST_DETAIL,  STAGE Prior_Stage WHERE CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = Inv_Stage.ID_STAGE
+  AND  CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK00.ID_STAGE
+  AND  STAGE_LINK00.ID_PRIOR_STAGE = Prior_Stage.ID_STAGE
+ AND  Inv_Stage.CD_STAGE = 'INV' AND  Inv_Stage.DT_STAGE_CLOSE IS NULL  AND  trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE))) >=90 AND  Prior_Stage.ID_STAGE = INCOMING_DETAIL00.ID_STAGE(+) AND  Inv_Stage.CD_STAGE_REGION = Inv_Stage00.CD_STAGE_REGION) &Master_Query_Sub90MoreTwo
+(count( Inv_Stage00.ID_STAGE )) &totalCases
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_Sub46MoreTwo (21,175) Edit 9999999999na
+ Print &Master_Query_Sub4659Two (21,297) Edit 9999999999na
+ Print &Master_Query_Sub6089Two (21,430) Edit 9999999999na
+ Print &Master_Query_Sub90MoreTwo (21,567) Edit 9999999999na
+ Let #SR1=( &Master_Query_Sub4659Two  /  &Master_Query_Sub46MoreTwo )  *  100
+ Print #SR1 (21,360) Edit 8888
+ Print '%)' (21,380,0)
+ Print '(' (21,355,1)
+ Print '(' (21,487,1)
+ Print '(' (21,623,0)
+ Print '%)' (21,510,0)
+ Print '%)' (21,647,0)
+ Let #SR2=( &Master_Query_Sub6089Two /  &Master_Query_Sub46MoreTwo ) * 100
+ Print #SR2 (21,491) Edit 8888
+ Let #SR3=( &Master_Query_Sub90MoreTwo /  &Master_Query_Sub46MoreTwo ) * 100
+ Print #SR3 (21,628) Edit 8888
+ Print '(  ' (21,233,0)
+ Print '%)' (21,257,0)
+ Let #totalCasesPercent=( &totalCases /  &Master_Query_Sub46MoreTwo ) * 100
+ Print #totalCasesPercent (21,237) Edit 8888
+Inv_Stage00.CD_STAGE_REGION &Master_Query_Inv_Stage00.CD_STAGE_REGION (23,65,5)
+ Add &Master_Query_Sub4659Two To #sumSub4659Two
+ Add &Master_Query_Sub6089Two To #sumSub6089Two
+ Add &Master_Query_Sub90MoreTwo To #sumSub90MoreTwo
+ Add &Master_Query_Sub46MoreTwo To #sumSub46MoreTwo
+ Add 1 To #16ROW_COUNT
+ Next-Listing  Need=23
+From  STAGE Inv_Stage00, STAGE_LINK STAGE_LINK00
+,      INCOMING_DETAIL INCOMING_DETAIL00, CPS_INVST_DETAIL, STAGE Prior_Stage
+      Where Inv_Stage00.ID_STAGE = CPS_INVST_DETAIL.ID_CPS_INVST_STAGE
+            And CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK00.ID_STAGE
+            And STAGE_LINK00.ID_PRIOR_STAGE = Prior_Stage.ID_STAGE
+ And Inv_Stage00.CD_STAGE = 'INV'
+ And Inv_Stage00.DT_STAGE_CLOSE IS NULL 
+ And [$where_clause1601]
+ And trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL
+    ,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE))
+     ) >=46
+ And Prior_Stage.ID_STAGE =  INCOMING_DETAIL00.ID_STAGE(+)
+Group By Inv_Stage00.CD_STAGE_REGION
+Order By Inv_Stage00.CD_STAGE_REGION
+End-Select
+ Next-Listing
+ Next-Listing  Need=46
+ If #16ROW_COUNT > 0
+ Graphic (10,62,611) Horz-Line 20 
+ Position (12,1)
+ Graphic (48,62,611) Horz-Line 20 
+ Position (50,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #sumSub4659Two (34,297) Edit 9999999999na
+  Print #sumSub6089Two (34,430) Edit 9999999999na
+  Print #sumSub90MoreTwo (34,567) Edit 9999999999na
+  Print #sumSub46MoreTwo (34,175) Edit 9999999999na
+   Let #per4659=( #sumSub4659Two /  #sumSub46MoreTwo)  * 100
+ Print #per4659 (34,361) Edit 8888
+   Let #per6089=( #sumSub6089Two /  #sumSub46MoreTwo)  * 100
+ Print #per6089 (34,491) Edit 8888
+   Let #per90More=( #sumSub90MoreTwo /  #sumSub46MoreTwo)  * 100
+ Print #per90More (34,628) Edit 8888
+  Print '%)'  (34,382)
+  Print '%)'  (34,509)
+  Print '%)'  (34,647)
+  Print '('  (34,356)
+  Print '('  (34,487)
+  Print '('  (34,623)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+  Print '3'  (26,398) Bold 
+  Print '3'  (26,522) Bold 
+  Print '3'  (26,660) Bold 
+   Let $statevar=$statevar
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $statevar (34,62,16) Bold 
+ End-If
+ Next-Listing
+!Do Get-All-Percentage
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+Begin-Procedure Get-All-Percentage
+! Print #sumSub46MoreTwo (22,249) Edit 9999
+Move #sumSub46MoreTwo to #All 
+Let #SRAll=( ( &Master_Query_Sub46MoreTwo ) / #All ) * 100
+Move #SRAll to #all_var
+ Print #all_var (20,185) Edit 9999
+End-Procedure
+
+Begin-Procedure Mstr_Qry_County
+!Do Get-All-Percentage
+Begin-Select
+(SELECT  (count( Inv_Stage.ID_STAGE ))  FROM  INCOMING_DETAIL INCOMING_DETAIL00,  STAGE Inv_Stage,  STAGE_LINK STAGE_LINK00,  CPS_INVST_DETAIL,  STAGE Prior_Stage WHERE CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = Inv_Stage.ID_STAGE
+  AND  CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK00.ID_STAGE
+  AND  STAGE_LINK00.ID_PRIOR_STAGE = Prior_Stage.ID_STAGE
+ AND  Inv_Stage.CD_STAGE = 'INV' AND  Inv_Stage.DT_STAGE_CLOSE IS NULL  AND  trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE)) ) >= 46 and  trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE)) ) <= 59 AND  Prior_Stage.ID_STAGE =  INCOMING_DETAIL00.ID_STAGE(+) AND  Inv_Stage.CD_STAGE_CNTY = Inv_Stage00.CD_STAGE_CNTY AND  Inv_Stage.CD_STAGE_REGION = Inv_Stage00.CD_STAGE_REGION) &Mstr_Qry_County_M2Sub4659
+(SELECT  (count( Inv_Stage.ID_STAGE ))  FROM  INCOMING_DETAIL INCOMING_DETAIL00,  STAGE Inv_Stage,  STAGE_LINK STAGE_LINK00,  CPS_INVST_DETAIL,  STAGE Prior_Stage WHERE CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK00.ID_STAGE
+  AND  CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = Inv_Stage.ID_STAGE
+  AND  STAGE_LINK00.ID_PRIOR_STAGE = Prior_Stage.ID_STAGE
+ AND  Inv_Stage.CD_STAGE = 'INV' AND  Inv_Stage.DT_STAGE_CLOSE IS NULL  AND  trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE))) >= 46 AND  Prior_Stage.ID_STAGE =  INCOMING_DETAIL00.ID_STAGE(+) AND  Inv_Stage.CD_STAGE_CNTY = Inv_Stage00.CD_STAGE_CNTY AND  Inv_Stage.CD_STAGE_REGION = Inv_Stage00.CD_STAGE_REGION) &Mstr_Qry_County_M2Sub46More
+(SELECT  (count( Inv_Stage.ID_STAGE ))  FROM  INCOMING_DETAIL INCOMING_DETAIL00,  STAGE Inv_Stage,  STAGE_LINK STAGE_LINK00,  CPS_INVST_DETAIL,  STAGE Prior_Stage WHERE CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK00.ID_STAGE
+  AND  CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = Inv_Stage.ID_STAGE
+  AND  STAGE_LINK00.ID_PRIOR_STAGE = Prior_Stage.ID_STAGE
+ AND  Inv_Stage.CD_STAGE = 'INV' AND  Inv_Stage.DT_STAGE_CLOSE IS NULL  AND  trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE))) >= 60  and trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE)) ) <= 89 AND  Prior_Stage.ID_STAGE =  INCOMING_DETAIL00.ID_STAGE(+) AND  Inv_Stage.CD_STAGE_CNTY = Inv_Stage00.CD_STAGE_CNTY AND  Inv_Stage.CD_STAGE_REGION = Inv_Stage00.CD_STAGE_REGION) &Mstr_Qry_County_M2Sub6089
+(SELECT  (count( Inv_Stage.ID_STAGE ))  FROM  INCOMING_DETAIL INCOMING_DETAIL00,  STAGE Inv_Stage,  STAGE_LINK STAGE_LINK00,  CPS_INVST_DETAIL,  STAGE Prior_Stage WHERE CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK00.ID_STAGE
+  AND  CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = Inv_Stage.ID_STAGE
+  AND  STAGE_LINK00.ID_PRIOR_STAGE = Prior_Stage.ID_STAGE
+ AND  Inv_Stage.CD_STAGE = 'INV' AND  Inv_Stage.DT_STAGE_CLOSE IS NULL  AND  trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE))) >= 90 AND  Prior_Stage.ID_STAGE =  INCOMING_DETAIL00.ID_STAGE(+) AND  Inv_Stage.CD_STAGE_CNTY = Inv_Stage00.CD_STAGE_CNTY AND  Inv_Stage.CD_STAGE_REGION = Inv_Stage00.CD_STAGE_REGION) &Mstr_Qry_County_M2Sub90More
+Inv_Stage00.CD_STAGE_CNTY &Mstr_Qry_County_Inv_Stage00.CD_STAGE_CNTY
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+Inv_Stage00.CD_STAGE_REGION &Mstr_Qry_County_Inv_Stage00.CD_STAGE_REGION () On-Break Set=28 Level=1 Print=Never Before=Mstr_Qry_CountyCD_STAGE_REGION_BeforeProc2801 After=Mstr_Qry_CountyCD_STAGE_REGION_AfterProc2801
+ Print &Mstr_Qry_County_M2Sub4659 (16,299) Edit 9999999999na
+DECODE &Mstr_Qry_County_DECODE (17,108,12)
+ Print &Mstr_Qry_County_M2Sub46More (17,184) Edit 9999999999na
+ Print &Mstr_Qry_County_M2Sub6089 (17,433) Edit 9999999999na
+ Print &Mstr_Qry_County_M2Sub90More (17,575) Edit 9999999999na
+ Add &Mstr_Qry_County_M2Sub46More To #sumM2Sub46More
+ Add &Mstr_Qry_County_M2Sub4659 To #sumM2Sub4659
+ Add &Mstr_Qry_County_M2Sub6089 To #sumM2Sub6089
+ Add &Mstr_Qry_County_M2Sub90More To #sumM2Sub90More
+ Next-Listing  Need=17
+From  CCOUNT, INCOMING_DETAIL INCOMING_DETAIL00
+,      STAGE Inv_Stage00, STAGE_LINK STAGE_LINK00, CPS_INVST_DETAIL
+,      STAGE Prior_Stage
+      Where Inv_Stage00.ID_STAGE = CPS_INVST_DETAIL.ID_CPS_INVST_STAGE
+            And STAGE_LINK00.ID_PRIOR_STAGE = Prior_Stage.ID_STAGE
+            And CPS_INVST_DETAIL.ID_CPS_INVST_STAGE = STAGE_LINK00.ID_STAGE
+            And Inv_Stage00.CD_STAGE_CNTY = CCOUNT.CODE
+ And Inv_Stage00.CD_STAGE = 'INV'
+ And Inv_Stage00.DT_STAGE_CLOSE IS NULL 
+ And [$where_clause1601]
+ And trunc(sysdate- NVL(INCOMING_DETAIL00.dt_incoming_call,(SELECT  (Div_INCOMING_DETAIL.DT_INCOMING_CALL) FROM  INCOMING_DETAIL Div_INCOMING_DETAIL
+    ,STAGE_LINK Div_STAGE_LINK WHERE Div_STAGE_LINK.ID_PRIOR_STAGE = Div_INCOMING_DETAIL.ID_STAGE AND  Div_STAGE_LINK.ID_STAGE = Prior_Stage.ID_STAGE))
+     ) >=46
+ And Prior_Stage.ID_STAGE =  INCOMING_DETAIL00.ID_STAGE(+)
+Group By Inv_Stage00.CD_STAGE_REGION
+,      Inv_Stage00.CD_STAGE_CNTY
+,      DECODE
+Order By Inv_Stage00.CD_STAGE_REGION
+,      Inv_Stage00.CD_STAGE_CNTY
+,      DECODE
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Mstr_Qry_CountyCD_STAGE_REGION_BeforeProc2801
+ Next-Listing  Need=64
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Mstr_Qry_County_Inv_Stage00.CD_STAGE_REGION (64,61,3)
+ Print 'Region'  (19,57) Underline  Bold 
+ Print 'County'  (19,107) Underline  Bold 
+ Print 'Total Cases Pending'  (40,175) Underline  Bold 
+ Print '46 Days or More'  (53,186) Underline  Bold 
+ Print 'TOTAL CASES PENDING BY COUNTY'  (16,273) Underline  Bold 
+ Print 'Total Cases Pending'  (40,306) Underline  Bold 
+ Print '46 To 59 Days'  (55,316) Underline  Bold 
+ Print 'Total Cases Pending'  (40,438) Underline  Bold 
+ Print '60 To 89 Days '  (57,452) Underline  Bold 
+ Print 'Total Cases Pending'  (40,568) Underline  Bold 
+ Print '90 Days or More'  (57,579) Underline  Bold 
+   Position (+12,)
+ Next-Listing  Need=17
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Mstr_Qry_CountyCD_STAGE_REGION_AfterProc2801
+ Next-Listing  Need=53
+ Graphic (10,58,623) Horz-Line 20 
+ Position (12,1)
+ Graphic (55,58,624) Horz-Line 20 
+ Position (57,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region Totals'  (35,64) Bold 
+ Print #sumM2Sub46More (35,184) Edit 9999999999na
+ Print #sumM2Sub4659 (35,298) Edit 9999999999na
+ Print '('  (35,357)
+  Let #_perM24659=( #sumM2Sub4659 / #sumM2Sub46More ) * 100
+ Let #_P1=#_perM24659
+ Print #_P1 (35,362) Edit 8888
+ Print '%)'  (35,385)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print '4'  (30,403) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #sumM2Sub6089 (35,435) Edit 9999999999na
+ Print '(             '  (35,493)
+  Let #_perM26089=(#sumM2Sub6089 / #sumM2Sub46More) * 100
+ Let #_P3=#_perM26089
+ Print #_P3 (35,498) Edit 8888
+ Print '%)'  (35,520)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print '4'  (31,537) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #sumM2Sub90More (35,573) Edit 9999999999na
+ Print '(      '  (35,635)
+  Let #_perM290More=(#sumM2Sub90More / #sumM2Sub46More) * 100
+ Let #_P4=#_perM290More
+ Print #_P4 (35,642) Edit 8888
+ Print '%)'  (35,663)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print '4'  (31,679) Bold 
+   Position (+10,)
+ Move 0 To #sumM2Sub46More
+ Move 0 To #sumM2Sub4659
+ Move 0 To #sumM2Sub6089
+ Move 0 To #sumM2Sub90More
+ Next-Listing  Need=17
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (14,652) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (14,583,12)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='C:\SQRNewReports\SHINES.bmp'
+	Image-size=(102,73)
+ Print 'Division of Family and Children Services' (16,277,40)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Overdue Investigations Statewide Report' (54,219,0) Bold 
+ Let $header2=$header2
+ Alter-Printer Font=4 Point-Size=11    ! [SQR.INI] 4=Arial,proportional
+ Print $header2 (73,314,14) Bold  Wrap 14 2 line-height=13 Keep-Top on= 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'TOTAL CASES PENDING OVERDUE BY REGION ' (107,249,0) Underline  Bold 
+ Print 'Region' (132,62,0) Underline  Bold 
+ Print 'Total Cases Pending' (132,177,0) Underline  Bold 
+ Print '46 Days or More' (147,187,0) Underline  Bold 
+ Print 'Total Cases Pending' (132,306,0) Underline  Bold 
+ Print '46 To 59 Days' (147,317,13) Underline  Bold 
+ Print 'Total Cases Pending' (132,438,0) Underline  Bold 
+ Print '60 To 89 Days ' (147,455,0) Underline  Bold 
+ Print 'Total Cases Pending' (132,568,0) Underline  Bold 
+ Print '90 Days or More' (147,581,0) Underline  Bold 
+ Print '( %)' (147,267,4)
+ Print '( %)' (147,387,4)
+ Print '( %)' (147,524,4)
+ Print '( %)' (147,661,4)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print '1' (139,286,1) Bold 
+ Print '2' (139,409,1) Bold 
+ Print '2' (139,545,1) Bold 
+ Print '2' (139,684,1) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'wwww' (187,10,0) Underline  Bold  Foreground=(255,255,255)
+ Else   ! put a non combined page header
+ Print 'wwww' (16,10,0) Underline  Bold  Foreground=(255,255,255)
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 36 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (16,673) '' ' of '
+ Last-Page (16,696) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

@@ -1,0 +1,455 @@
+!***************************************************************************
+!  Person Match Data                                                         *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccf19o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/dicufftw/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 1/12/98                                              *
+!                                                                            *
+! PROGRAMMER NAME:      Tony DiCuffa                                         *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The Person Match Report allows the user to           *
+!           produce a hardcopy of the person match information               *
+!           for each person.  The information is sorted by request           *
+!           code and request ID, and then all info is printed.               *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ------------   -----------------------------------------------  *
+! 12/22/97   Tony DiCuffa   Coded original report.                           *
+! 02/07/00   Susie Miller   SIR 15443 Copied ccf18o00.sqr - Hard coded the   *
+!                           entity and request type then named the file      *
+!                           ccf19o00.sqr which will produce the person match *
+!                           report for Licensing only. Because ccfc18o00.sqr *
+!                           ran for more that 6 hours the new report runs in *
+!                           30 seconds.                                      *
+! 04/02/01   Susie Miller   SIR 15682.  Report will be pulled by employee ssn*
+!                           and not employee id.                             *
+! 02/12/02   Susie Miller   SIR 15647 Report should display CAPS employee id *
+!                           and not employee ssn.                            *
+!                                                                            *
+! 0
+! 06/02/04   Susie Miller   SIR 22894 increase facility field size to 10.    *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+    let #page_count = 1
+    let #new_page_count = 1
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup01a.sqc'            ! control codes for landscape
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. 4 lines are reserved to print the heading at the     *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called header01.sqc for landscape reports.          *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 6
+
+    move 'CCF19O'                     to $ReportID
+    move 'PERSON MATCH REPORT'           to $ReportTitle
+
+ !  SIR 15443 - commented out this (do GET-ENTITY-REQUESTING-DATA)
+ !  because this sql was taking up to 6 hours to run. This information
+ !  can be hard coded into the sqr.
+
+    #INCLUDE 'header01.sqc'
+    print 'Requesting Entity:'               (+0,2)
+    print 'Reporting '                      (+0,22)
+
+    do PRINT-REQUEST-CODE-A
+    do PRINT-COLUMN-NAMES
+
+    let #page_count = #page_count + 1
+    let #new_page_count = #page_count
+
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                             !Set printer environment
+
+    move '****END OF REPORT****' to $end_of_report   ! Initialize Working
+                                                     ! Storage constants
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : REPORT-PROCESSING-SECTION                              *
+!       CALLS      : GET-MATCH-DATA                                         *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT
+
+    do GET-MATCH-DATA
+
+
+END-PROCEDURE PROCESS-REPORT
+
+!****************************************************************************
+!   GET-MATCH-DATA                                                          *
+!                                                                           *
+!      This procedure pulls the proper Match info from                      *
+!      PERSON_MATCH_REPORT                                                  *
+!                                                                           *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-COLUMN-NAMES, PRINT-REQUEST-CODE-B, PRINT-DATA   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-MATCH-DATA
+
+!************ Initialize vars *************************************
+    let #count = 1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+P.ID_REQUEST
+   move &P.ID_REQUEST                    to $id_request
+   
+CPERSREQ.decode
+   move &CPERSREQ.decode               to $pers_req_code_dec
+
+P.CD_PERS_MATCH_REQ_RSLT_CODE
+   move &P.cd_pers_match_req_rslt_code   to $pers_req_rslt_code
+
+P.ID_PERS_MATCH_REQ_PERSON
+   move &P.ID_PERS_MATCH_REQ_PERSON      to $id_person
+
+P.NM_PERS_MATCH_REQ_FIRST
+   move &P.NM_PERS_MATCH_REQ_FIRST       to $first_name
+
+P.NM_PERS_MATCH_REQ_MIDDLE
+   move &P.NM_PERS_MATCH_REQ_MIDDLE      to $middle_name
+
+P.NM_PERS_MATCH_REQ_LAST
+   move &P.NM_PERS_MATCH_REQ_LAST        to $last_name
+
+P.NM_PERS_MATCH_REQ_SUFFIX
+   move &P.NM_PERS_MATCH_REQ_SUFFIX      to $suffix
+
+P.DT_PERS_MATCH_REQ_BIRTH
+   move &P.DT_PERS_MATCH_REQ_BIRTH       to $birthdate
+
+P.CD_PERS_MATCH_REQ_SEX
+   move &P.CD_PERS_MATCH_REQ_SEX         to $sex
+
+P.NBR_PERS_MATCH_REQ_TDHS
+   move &P.NBR_PERS_MATCH_REQ_TDHS       to $tdhs_client
+
+P.NBR_PERS_MATCH_REQ_SSN
+   move &P.NBR_PERS_MATCH_REQ_SSN        to $ssn
+
+C.ID_EMPLYEE
+    move &C.ID_EMPLYEE                   to $emp_ssn
+    
+  
+
+! changed to get CLASS employee id.
+!P.ID_PERSON
+!   move &P.ID_PERSON              to $emp_ssn
+!
+!***** Prints new header mid-page when new request code is found
+    if $request_code <> $pers_req_code_dec
+        if #count <> 1
+        do PRINT-REQUEST-CODE-B
+        do PRINT-COLUMN-NAMES
+        let #new_page_count = #new_page_count + 1
+    end-if
+    end-if
+
+!************ Print all data just found ****************************
+
+   do PRINT-DATA
+
+   let $request_code = $pers_req_code_dec
+   let #count = #count + 1
+
+
+FROM    PERSON_MATCH_REQUEST P, CLASS_EMPLOYEE_VIEW C,
+        CPERSREQ                CPERSREQ
+
+WHERE   CPERSREQ.CODE(+)   = CD_PERS_MATCH_REQ_CODE
+AND     P.NBR_EMPLOYEE_SSN   = C.NBR_SSN 
+ORDER BY P.CD_PERS_MATCH_REQ_CODE, C.ID_EMPLYEE
+
+END-SELECT
+END-PROCEDURE GET-MATCH-DATA
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-COLUMN-NAMES                                                      *
+!                                                                           *
+!       This procedure will print the report column names.                  *
+!                                                                           *
+!       CALLED BY  : GET-MATCH-DATA                                         *
+!       CALLS      : None                                                   *
+!****************************************************************************
+BEGIN-PROCEDURE PRINT-COLUMN-NAMES
+
+    position (+2)
+    print 'Request'              (,2)
+    print 'Result'               (,19)
+    print 'Person ID'            (,29)
+    print 'First Name'           (,40)
+    print 'Middle Name'          (,55)
+    print 'Last Name'            (,70)
+    print 'Suffix'               (,87)
+    print 'DOB'                  (,100)
+    print 'Sex'                  (,110)
+    print 'TDHS #'               (,117)
+    print 'SSN'                  (,132)
+    position                     (+1)
+    print '--------------'       (,2)
+    print '------'               (,19)
+    print '--------'             (,29)
+    print '---------'            (,40)
+    print '----------'           (,55)
+    print '--------'             (,70)
+    print '------'               (,87)
+    print '---'                  (,100)
+    print '---'                  (,110)
+    print '------'               (,117)
+    print '---'                  (,132)
+        let #header_count = #header_count
+
+END-PROCEDURE PRINT-COLUMN-NAMES
+
+!*************************************************************************
+!   PRINT-DATA
+!   Prints all data found in the SQL query
+!
+!   CALLED BY:  GET-MATCH-DATA
+!   CALLS:  NONE
+!*************************************************************************
+BEGIN-PROCEDURE PRINT-DATA
+
+    if $emp_ssn = $new_emp_ssn
+        position (+1)
+    else
+        position (+2)
+    end-if
+
+    print $emp_ssn                        (,2)
+    print $pers_req_rslt_code            (,19)
+    print $id_person                     (,29)
+    print $first_name                    (,40)
+    print $middle_name                   (,55)
+    print $last_name                     (,70)
+    print $suffix                        (,87)
+    print $birthdate                     (,97)
+    print $sex                           (,109)
+    print $tdhs_client                   (,117)
+    print $ssn                           (,129)
+
+
+
+    let $new_emp_ssn = $emp_ssn
+
+END-PROCEDURE PRINT-DATA
+
+!**************************************************************************
+!       PRINT-REQUEST-CODE-A
+!       Called when request code is printed at the top of a page.
+!       Is different from P-R-C-B because it prints the request code when
+!       the code doesn't change in the current page OR it prints the
+!   PRECEDING PAGE'S request code when a change is made in the current
+!   page.  This is done because the page header prints the information
+!   from the bottom of the page and does not recognize any changes in
+!   the current page.
+!
+!       CALLED BY: GET-MATCH-DATA
+!       CALLS: NONE
+!
+!*************************************************************************
+BEGIN-PROCEDURE PRINT-REQUEST-CODE-A
+    position (+1)
+    print 'Request Code:'               (,2)
+
+        if #page_count = #new_page_count
+        print $pers_req_code_dec        (,17)
+        else
+        print $fix_req_code_dec     (,17)
+        end-if
+
+END-PROCEDURE PRINT-REQUEST-CODE-A
+
+!**************************************************************************
+!   PRINT-REQUEST-CODE-B
+!   Called when request code type changes in the middle of a page.
+!   Is different from P-R-C-A because it sets the request code back
+!   to what it was before this function is called.
+!
+!   CALLED BY: GET-MATCH-DATA
+!   CALLS: NONE
+!
+!*************************************************************************
+
+BEGIN-PROCEDURE PRINT-REQUEST-CODE-B
+
+!********** fixes old request code at top of page where req code changes
+        let $fix_req_code_dec = $request_code
+    position (+3)
+        print 'Request Code:'           (,2)
+        print $pers_req_code_dec    (,17)
+
+END-PROCEDURE PRINT-REQUEST-CODE-B
+
+!****************************************************************************
+!                                                                           *
+!   GET-SYSDATE                                                             *
+!                                                                           *
+!       This procedure will select the system date in order to replace the  *
+!       closed date when it is equal to NULL                                *
+!                                                                           *
+!       CALLED BY  : HEADING                                                *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-SYSDATE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_char(SYSDATE,'MM/DD/YYYY') &sysdate
+     move &sysdate                      to $sysdate
+
+to_char(SYSDATE,'HH:MI AM') &systime
+     move &systime          to $systime
+
+to_char(SYSDATE,'MM/DD') &sys_month_day
+     move &sys_month_day        to $sysmonthday
+
+to_char(SYSDATE,'YYYY') &sysyear
+     move &sysyear          to $sysyear
+
+FROM DUAL
+
+END-SELECT
+
+END-PROCEDURE GET-SYSDATE
+
+
+!****************************************************************************
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+
+
+

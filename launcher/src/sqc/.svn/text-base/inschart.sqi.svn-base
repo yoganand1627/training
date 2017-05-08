@@ -1,0 +1,3564 @@
+!
+! INSCHART.SQI
+!
+! This include file provides a library of SQR procedures for the purpose
+! of easily creating Charts, Graphs and simple Cross Tabular reports.
+!
+! *** DO NOT MODIFY THIS FILE ***
+! This file should not be modified as changes may adversely effect
+! the proper execution of SQR Developer.
+!
+!
+! Usage:
+! -----
+!
+! This file is normally included using a "#include 'inschart.sqi" command
+! in your SQR program, after your setup section. The reason for placing this
+! include after the setup section is because it requires that chart templates
+! (declare-chart InstantChart..) will be defined before.
+! Defines for INSTANT_CHART_COUNT, INSTANT_CHART_TEMPLATES,
+! INSTANT_CHART_NUM_FORMAT, INSTANT_CHART_MAX... must, of course be placed
+! in the program before this file is included.
+!
+! Interface:
+!
+! This file declares the following procedures. Names and arguments are
+! shown here. Description can be found close to the code.
+!
+! Public Interface: (Defines and procedures to be used by your program)
+!
+! Defines:                             Default value
+!
+!    INSTANT_CHART_MAX_PIE_SEGMENTS    12
+!    INSTANT_CHART_MAX_ROWS            72
+!    INSTANT_CHART_MAX_COLS            12
+!    INSTANT_CHART_COUNT               1
+!    INSTANT_CHART_TEMPLATES           1
+!    INSTANT_CHART_NUM_FORMAT          999999999999.99
+!
+! Procedures:
+!
+!  Define type of aggregation
+!
+!    InstantChartSetAggregationFunction
+!                                 Defined the aggregation function for pie
+!                                 and bar charts. If many values fall within
+!                                 the same pie-slice or same bar, then the
+!                                 aggregation function is applied. The default
+!                                 is "sum" and the cell will have the total.
+!                                 Other valid functions are "avg","count","min",
+!                                 and "max".
+!    InstantChartSetAggregationFunctionCombo
+!                                 Defined the aggregation function for combo
+!                                 chart. If many values fall within
+!                                 the same pie-slice or same bar, then the
+!                                 aggregation function is applied. The default
+!                                 is "sum" and the cell will have the total.
+!                                 Other valid functions are "avg","count","min",
+!                                 and "max".
+!
+!  Accumulating data records
+!
+!    InstantChartInit             Initializes one chart
+!    InstantChartPie              Process one data record for a Pie Chart
+!    InstantChartBar1             Process one data record for a single
+!                                 dimensional Bar Chart
+!    InstantChartCombo            Process two data record for a single
+!                                 dimensional Combo Chart
+!    InstantChartBar12            Process one data record for a 3d Bar Chart
+!                                 with up to 12 columns (layers)
+!    InstantChartFloat            Process one data record for a floating-bar
+!                                 chart
+!    InstantChartHLC              Process one data record for a high-low-close
+!                                 chart
+!    InstantChartScatter3XY       Process one data record for an XY Scatter
+!                                 plot chart with up to 3 XY lines
+!
+!  Accumulating data records -- pivoting
+!
+!    InstantChartBarPivot         Process one data record for a 3d Bar Chart
+!                                 by pivoting the second selector which
+!                                 becomes the name of a column.
+!    InstantChartHLCPivot         Process one data record for a high-low-close
+!                                 Chart. Pivoting is done by taking max, min,
+!                                 last, and first (as the opening value).
+!                                 records must be ordered chronologically
+!    InstantChartScatterPivot     Process one data record for an xy-scatter-
+!                                 plot with up to 3 lines
+!
+!  Printing charts
+!
+!    InstantChartPiePrint         Prints a Pie Chart
+!    InstantChartBarPrint         Prints a Bar Chart (BAR, STACKED-BAR,
+!                                 100%-BAR, OVERLAPPED-BAR, HISTOGRAM,
+!                                 AREA, STACKED-AREA, 100%-AREA)
+!    InstantChartComboPrint       Prints a Combo chart
+!    InstantChartFloatPrint       Prints a floating-bar chart
+!    InstantChartHLCPrint         Prints a High-Low-Close Chart
+!    InstantChartScatterPrint     Prints an XY Scatter plot chart
+!    InstantChartCrossTab         Print the chart's data as a cross tab
+!
+!  Setting options
+!
+!    InstantChartPieExplode       Sets one pie segment to be exploded
+!    InstantChartSetColumns12     Sets the number of columns of the chart and
+!                                 their names
+!    InstantChartSort             Sort the chart by the selector
+!    InstantChartSortByValue1     Sort the chart by "value1" descending
+!
+!
+! Private Interface: (helper procedures used here)
+!
+!  Create the arrays
+!
+!    InstantChartCreateArrays     holds the create-array commands
+!
+!  Lookup the data array
+!
+!    InstantChartLocateEntry      locates a selector in the data array
+!    InstantChartLocateColumn     locate column selector in
+!                                 the InstantChartColCount array  
+!
+!  Update the data array
+!
+!    InstantChartInitEntry        Resets a row in the array
+!    InstantChartAggregate        Adds a number to a cell in the array
+!    InstantChartAggregateY2      Adds a number to a cell in the array
+!    InstantChartAggregateHelper  Helper function for InstantChartAggregate
+!    InstantChartAggregateFinal   After all the chart data is in, set the 
+!                                 value fields to the count or average if needed.
+!
+!  Copy data between arrays
+!
+!    InstantChartBarBuild         Copies Bar chart data from
+!                                 InstantChartDataArray to
+!                                 InstantChartBarArray
+!    InstantChartScatterBuild     Copies Bar chart data from
+!                                 InstantChartDataArray to
+!                                 InstantChartXYArray
+!
+!  Print array's data as a Cross Tab
+!
+!    InstantChartCTPrintLine      Prints one line for a cross tab
+!    InstantChartCTParseStyle     Parses the style argument of Instant-
+!                                 ChartCrossTab
+!    InstantChartCTGetNextStyle   Extracts one element from a style string
+!
+!  Quick Sort the array
+!
+!    InstantChartQuickSort          Implement sorting of the chart's data.
+!                                   Uses InstantChartQSort to implement the
+!                                   recursive calls.
+!    InstantChartQuickSortByValue1  Same as above, but sorts by "value1" descending
+!                                   instead of "selector" ascending.
+!    InstantChartQSortInterchange   Swaps records in the array. Used by
+!                                   InstantChartQuickSort
+!
+!
+! General Comments:
+!
+! Chart number (#num): A Chart is a collection of data that can be printed
+!                      using a chart template or as a cross-tab.
+!                      In this library, charts are numbered starting with 1.
+!                      However, array subscripts start with zero. Most
+!                      procedures start off by validating the chart number
+!                      argument and then subtracting one to make it an
+!                      array subscript.
+!
+! Error messages:      If an error occurred (argument validation fails), an
+!                      error message is given using the SQR DISPLAY command.
+!                      The errors (in English) are in the format 'Error: ..'
+!                      to change this behavior, you'll need to modify this
+!                      file.
+!
+! Naming conventions:
+!                      All procedure names are prefixed with InstantChart
+!                      All (global) array names are prefixed with InstantChart
+!                      All global variables are prefixed with IC. For example
+!                      #ICCurrentRow #ICCurrentCol
+!                      Chart templates must be predefined using declare-chart
+!                      they must be named InstantChart1, InstantChart2,...
+!                      Procedures where the number of arguments is based on
+!                      the limit of maximum number of columns are named with
+!                      the limit value suffixed, e.g. InstantChartBar12
+!                      If in the future a version is created with, let's say
+!                      12 columns, the new procedure would be named
+!                      InstantChartBar12 and compatibility with existing
+!                      programs can be maintained.
+!
+! Charts and Chart Templates:
+!                      A chart template is a "DECLARE CHART" command that
+!                      defines attribute for printing a chart.
+!                      There is a many-to-many relationship between Charts and
+!                      Chart templates. For example, you may be accumulating
+!                      data for one chart and then presenting is in different
+!                      ways using different templates. Also, you could have
+!                      multiple charts print using the same templates.
+!                      Moreover, charts may be reused. After the chart is
+!                      printed, you can Initialize it and start accumulating
+!                      new data. You can then print it using the same or
+!                      different templates.
+!                      If you use more than one chart or templates, you must
+!                      define the number using INSTANT_CHART_COUNT and
+!                      INSTANT_CHART_TEMPLATES.
+!
+! Pivoting:            Pivoting is a general name for the process of using
+!                      the value of one column as a selector for the columns.
+!                      For example, say that you are presenting data for
+!                      product sales in 1994 vs. 1995. Each row in the chart
+!                      is a product. There are two columns: 1994 and 1995.
+!                      If your data already has a column for 1994 and a column
+!                      for 1995, then you don't need pivoting. However, if
+!                      your data has the year as value stored in one column
+!                      and the sales amount in another, then you'll need to
+!                      use the year column as a selector.
+!                      In the above example, here are some procedure calls
+!                      for accumulating data with and without pivoting:
+!                      Without pivoting:
+!                        do InstantChartSetColumns12(1,2,'1994','1995','',...)
+!                        do InstantChartBar12(1,'ABC', 1230, 345, 0, 0, 0, 0,...)
+!                        do InstantChartBar12(1,'XYZ', 450, 8970, 0, 0, 0, 0,...)
+!                      With pivoting:
+!                        do InstantChartSetColumns12(1,2,'1994','1995','',...)
+!                        do InstantChartBarPivot(1,'ABC', '1994', 1230)
+!                        do InstantChartBarPivot(1,'ABC', '1995', 345)
+!                        do InstantChartBarPivot(1,'XYZ', '1994', 450)
+!                        do InstantChartBarPivot(1,'XYZ', '1995', 8970)
+!                      In the latter example, with pivoting, the SetColumns is
+!                      not necessary. It is here to ensure that '1994' is
+!                      assigned to the first column and '1995' is assigned to
+!                      the second column. Otherwise, it depends on the way that
+!                      the data is ordered.
+!
+! Data Ordering Requirements:
+!                      This library was designed not to require that the data
+!                      will be ordered in any way. With the exception of
+!                      InstantChartHLCPivot where the ordering is assumed to
+!                      be the chronological order of the values, the data does
+!                      not need to be ordered.
+!                      Each time a procedure is called to accumulate data, the
+!                      array is looked up for the correct entry. When you use
+!                      pivoting, the same holds true. A search is made to find
+!                      the correct column.
+!                      The ordering of the records does affect the order of the
+!                      items in the chart when it is printed. To control the
+!                      orders of the items, you may use the InstantChartSort
+!                      procedure. To control the order of the columns, you may
+!                      use the InstantChartSetColumns12 procedure before
+!                      starting to accumulate the data.
+!                      Accumulating data which is already ordered may improve
+!                      performance and ensure the desired ordering of the items
+!                      in the chart when it is printed.
+!
+! Copyright (C) 1994-2004 Hyperion Solutions Coporation. All Rights Reserved.
+!
+!----------------------------------------------------------------------------
+!
+! Modification History
+!
+! Date      Name Description
+! ========= ==== ==========================================================
+! (_V3.5_)
+! 06-06-95  GY   Inception
+! (_V8.0.2_)
+! 10-29-02  NEL  InstantChartComboPrint. Uncommented out the Y2 data array info,
+!                which had been commented for some unknown reason. CQ5368.
+! (_V8.1_) 
+! 01-07-03  RV	 CQ 10100 inschart adding a warning line to not modify this file
+! (_EOH_)
+!----------------------------------------------------------------------------
+!
+! Defines:
+!
+! You may override these values by using a #define in your program before
+! including inschart.sqi
+!
+! INSTANT_CHART_MAX_PIE_SEGMENTS
+!
+! Define the maximum number of pie segments. This is currently the
+! maximum that SQR allows so there's no point changing this value.
+!
+#ifndef INSTANT_CHART_MAX_PIE_SEGMENTS
+#define INSTANT_CHART_MAX_PIE_SEGMENTS 12
+#endif
+!
+!
+! INSTANT_CHART_MAX_ROWS
+!
+! Define the maximum number of items for any chart. This is the maximum
+! number of distinct selector values. On 3d charts, INSTANT_CHART_MAX_ROWS
+! sets the maximum number of items for each layer (or line)
+!
+#ifndef INSTANT_CHART_MAX_ROWS
+#define INSTANT_CHART_MAX_ROWS 72
+#endif
+!
+!
+! INSTANT_CHART_MAX_COLS
+!
+! Define the maximum number of columns for any chart (# of layers or lines)
+! This corresponds to value1, value2,... Value12
+#ifndef INSTANT_CHART_MAX_COLS
+#define INSTANT_CHART_MAX_COLS 12
+#endif
+!
+!
+! INSTANT_CHART_COUNT
+!
+! If you use more than one chart in your report, you must override this
+! definition in your program before including inschart.sqi
+!
+! Define the maximum number charts used
+! Chart numbers (#num) are independent of
+!  charts' declarations. This allows two charts to use the same
+!  template or one chart to be printed twice under two templates
+#ifndef INSTANT_CHART_COUNT
+#define INSTANT_CHART_COUNT 1
+#endif
+!
+!
+! INSTANT_CHART_TEMPLATES
+!
+! If you use more than one chart templates in your report, you must override
+! this definition in your program before including inschart.sqi
+!
+! Define the maximum number of declare-chart templates
+! Chart declarations (templates) must be named InstantChart1,
+! InstantChart2, InstantChart3 ...
+#ifndef INSTANT_CHART_TEMPLATES
+#define INSTANT_CHART_TEMPLATES 1
+#endif
+!
+!
+! INSTANT_CHART_CT_NUM_FORMAT
+!
+! Define the format in which the numbers in the cross-tab are printed
+#ifndef INSTANT_CHART_CT_NUM_FORMAT
+#define INSTANT_CHART_CT_NUM_FORMAT  999999999999.99
+#endif
+!
+!----------------------------------------------------------------------------
+!
+! Procedures:
+!
+! InstantChartCreateArrays
+!
+! This procedure is nevel called. It's simply a place holder
+! for the create-array commands.
+! This implementation supports up to 12 series for any chart
+! to increase the number of series, add more "value" fields
+! to the array and throughout the program...
+!
+! Data is collected in the InstantChartDataArray. This array uses
+! the field occurrances to index the chart. When the chart is to
+! be printed, the data must be copied into another array that is
+! organized the way that PRINT-CHART expects.
+!
+!
+! InstantChartDataArray     Holds the data for all the charts
+! InstantChartPieArray      Holds a copy of the data for a pie chart just
+!                           before it's printed
+! InstantChartBarArray      Holds a copy of the data for a bar, floating-bar
+!                           or high-low-close chart just before it's printed
+! InstantChartXYArray       Holds a copy of the data for an XY scatter plot
+!                           chart just before it's printed
+! InstantChartRowCount      Holds the number of rows in each charts (in "n").
+!                           When XY scatter has more than one line, n2 and n3
+!                           hold the number of points on the second and third
+!                           lines respectively
+! InstantChartColCount      Holds the number of columns and their names for
+!                           each chart. The names are normally used for the
+!                           legend
+! InstantChartQSort         This helper array helps us to implement the
+!                           recursive calls in quick sort since all SQR
+!                           variables are static in nature
+!
+begin-procedure InstantChartCreateArrays
+!
+   create-array name=InstantChartDataArray
+      size={INSTANT_CHART_MAX_ROWS}
+      field=selector:char:{INSTANT_CHART_COUNT}
+      field=value1:number:{INSTANT_CHART_COUNT}
+      field=value2:number:{INSTANT_CHART_COUNT}
+      field=value3:number:{INSTANT_CHART_COUNT}
+      field=value4:number:{INSTANT_CHART_COUNT}
+      field=value5:number:{INSTANT_CHART_COUNT}
+      field=value6:number:{INSTANT_CHART_COUNT}
+      field=value7:number:{INSTANT_CHART_COUNT}
+      field=value8:number:{INSTANT_CHART_COUNT}
+      field=value9:number:{INSTANT_CHART_COUNT}
+      field=value10:number:{INSTANT_CHART_COUNT}
+      field=value11:number:{INSTANT_CHART_COUNT}
+      field=value12:number:{INSTANT_CHART_COUNT}
+      field=count1:number:{INSTANT_CHART_COUNT}
+      field=count2:number:{INSTANT_CHART_COUNT}
+      field=count3:number:{INSTANT_CHART_COUNT}
+      field=count4:number:{INSTANT_CHART_COUNT}
+      field=count5:number:{INSTANT_CHART_COUNT}
+      field=count6:number:{INSTANT_CHART_COUNT}
+      field=count7:number:{INSTANT_CHART_COUNT}
+      field=count8:number:{INSTANT_CHART_COUNT}
+      field=count9:number:{INSTANT_CHART_COUNT}
+      field=count10:number:{INSTANT_CHART_COUNT}
+      field=count11:number:{INSTANT_CHART_COUNT}
+      field=count12:number:{INSTANT_CHART_COUNT}
+      field=explode:char:{INSTANT_CHART_COUNT}
+!
+   create-array name=InstantChartDataArrayY2
+      size={INSTANT_CHART_MAX_ROWS}
+      field=selector:char:{INSTANT_CHART_COUNT}
+      field=value1:number:{INSTANT_CHART_COUNT}
+      field=value2:number:{INSTANT_CHART_COUNT}
+      field=value3:number:{INSTANT_CHART_COUNT}
+      field=value4:number:{INSTANT_CHART_COUNT}
+      field=value5:number:{INSTANT_CHART_COUNT}
+      field=value6:number:{INSTANT_CHART_COUNT}
+      field=value7:number:{INSTANT_CHART_COUNT}
+      field=value8:number:{INSTANT_CHART_COUNT}
+      field=value9:number:{INSTANT_CHART_COUNT}
+      field=value10:number:{INSTANT_CHART_COUNT}
+      field=value11:number:{INSTANT_CHART_COUNT}
+      field=value12:number:{INSTANT_CHART_COUNT}
+      field=count1:number:{INSTANT_CHART_COUNT}
+      field=count2:number:{INSTANT_CHART_COUNT}
+      field=count3:number:{INSTANT_CHART_COUNT}
+      field=count4:number:{INSTANT_CHART_COUNT}
+      field=count5:number:{INSTANT_CHART_COUNT}
+      field=count6:number:{INSTANT_CHART_COUNT}
+      field=count7:number:{INSTANT_CHART_COUNT}
+      field=count8:number:{INSTANT_CHART_COUNT}
+      field=count9:number:{INSTANT_CHART_COUNT}
+      field=count10:number:{INSTANT_CHART_COUNT}
+      field=count11:number:{INSTANT_CHART_COUNT}
+      field=count12:number:{INSTANT_CHART_COUNT}
+      field=explode:char:{INSTANT_CHART_COUNT}
+!
+   create-array name=InstantChartPieArray
+      size={INSTANT_CHART_MAX_PIE_SEGMENTS}
+      field=selector:char
+      field=value:number
+      field=explode:char
+!
+   create-array name=InstantChartBarArray
+      size={INSTANT_CHART_MAX_ROWS}
+      field=selector:char
+      field=value1:number
+      field=value2:number
+      field=value3:number
+      field=value4:number
+      field=value5:number
+      field=value6:number
+      field=value7:number
+      field=value8:number
+      field=value9:number
+      field=value10:number
+      field=value11:number
+      field=value12:number
+!
+   create-array name=InstantChartBarArrayY2
+      size={INSTANT_CHART_MAX_ROWS}
+      field=selector:char
+      field=value1:number
+      field=value2:number
+      field=value3:number
+      field=value4:number
+      field=value5:number
+      field=value6:number
+      field=value7:number
+      field=value8:number
+      field=value9:number
+      field=value10:number
+      field=value11:number
+      field=value12:number
+!
+   create-array name=InstantChartXYArray
+      size={INSTANT_CHART_MAX_ROWS}
+      field=value1:number
+      field=value2:number
+      field=value3:number
+      field=value4:number
+      field=value5:number
+      field=value6:number
+      field=value7:number
+      field=value8:number
+      field=value9:number
+      field=value10:number
+      field=value11:number
+      field=value12:number
+!
+   create-array name=InstantChartRowCount
+      size={INSTANT_CHART_COUNT}
+      field=n:number
+      field=n2:number ! used for XY Scatter
+      field=n3:number ! used for XY Scatter
+      field=n4:number ! used for XY Scatter
+      field=n5:number ! used for XY Scatter
+      field=n6:number ! used for XY Scatter
+      field=err:number ! used for error reporting
+      field=current_row:number ! used for optimization
+      field=aggregation:char   ! aggregate function, default is sum.
+                               ! valid values: "sum","avg","count","min","max"
+      field=aggregationY2:char  ! aggregate function, default is sum.
+                               ! valid values: "sum","avg","count","min","max"
+!
+   create-array name=InstantChartColCount
+      size={INSTANT_CHART_COUNT}
+      field=n:number         ! number of columns
+      field=colname:char:12  ! name of columns 1-12
+      field=err:number       ! used for error reporting
+!
+   create-array name=InstantChartQSort
+      size={INSTANT_CHART_MAX_ROWS}
+      field=n:number
+      field=j:number
+!
+end-procedure ! InstantChartCreateArrays
+!
+!----------------------------------------------------------------------------
+!
+! InstantChartInit
+!
+! Purpose: Reset the data for a chart.
+!
+! #num      - Chart number
+!
+begin-procedure InstantChartInit(#num)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   let InstantChartRowCount.n(#num)    = 0
+   let InstantChartRowCount.n2(#num)   = 0
+   let InstantChartRowCount.n3(#num)   = 0
+   let InstantChartRowCount.n4(#num)   = 0
+   let InstantChartRowCount.n5(#num)   = 0
+   let InstantChartRowCount.n6(#num)   = 0
+   let InstantChartRowCount.err(#num)  = 0 ! no errors reported
+   let InstantChartRowCount.aggregation(#num) = 'sum'
+   let InstantChartRowCount.aggregationY2(#num) = 'sum'
+   let InstantChartColCount.n(#num)  = 0
+   let InstantChartColCount.err(#num)  = 0 ! no errors
+   ! Need to stuff the array with blanks otherwise it crashes
+   ! could be a problem with reallocation of space (Gadi)
+   ! unused colnames need to be trimmed of spaces later (see Print)
+   ! The following lines may be removed after the problem is fixed
+   let $blanks = lpad(' ',240,' ')
+   let #i = 0
+   while #i < 12
+      let InstantChartColCount.colname(#num,#i) = $blanks
+      add 1 to #i
+   end-while
+   let #i = 0
+   while #i < {INSTANT_CHART_MAX_ROWS}
+      let InstantChartBarArray.selector(#i) = $blanks
+      let InstantChartBarArrayY2.selector(#i) = $blanks
+      let InstantChartDataArray.selector(#i) = $blanks
+      let InstantChartDataArrayY2.selector(#i) = $blanks
+      if #i < {INSTANT_CHART_MAX_PIE_SEGMENTS}
+         let InstantChartPieArray.selector(#i) = $blanks
+      end-if
+      add 1 to #i
+   end-while
+   ! end of the code that stuffs blanks
+endlabel:
+end-procedure ! InstantChartInit
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartSetAggregationFunction
+!
+! Purpose: Sets the pie or bar chart's aggregate function. This procedure
+!          must be called after "InstantChartInit" and before any data
+!          is put into the chart.
+!
+! #num      - Chart number
+!
+begin-procedure InstantChartSetAggregationFunction(#num,$function)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   let $function = lower($function)
+   evaluate $function
+   when = 'sum'
+      let InstantChartRowCount.aggregation(#num) = 'sum'
+      break
+   when = 'min'
+      let InstantChartRowCount.aggregation(#num) = 'min'
+      break
+   when = 'max'
+      let InstantChartRowCount.aggregation(#num) = 'max'
+      break
+   when = 'count'
+      let InstantChartRowCount.aggregation(#num) = 'count'
+      break
+   when = 'avg'
+      let InstantChartRowCount.aggregation(#num) = 'avg'
+      break
+   when-other
+      display 'Error: Invalid aggregate function'
+      goto endlabel
+      break
+   end-evaluate
+endlabel:
+end-procedure ! InstantChartSetAggregationFunction
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartSetAggregationFunctionCombo
+!
+! Purpose: Sets the pie or bar chart's aggregate function. This procedure
+!          must be called after "InstantChartInit" and before any data
+!          is put into the chart.
+!
+! #num      - Chart number
+!
+begin-procedure InstantChartSetAggregationFunctionCombo(#num,$function,$function2)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   let $function = lower($function)
+   evaluate $function
+   when = 'sum'
+      let InstantChartRowCount.aggregation(#num) = 'sum'
+      break
+   when = 'min'
+      let InstantChartRowCount.aggregation(#num) = 'min'
+      break
+   when = 'max'
+      let InstantChartRowCount.aggregation(#num) = 'max'
+      break
+   when = 'count'
+      let InstantChartRowCount.aggregation(#num) = 'count'
+      break
+   when = 'avg'
+      let InstantChartRowCount.aggregation(#num) = 'avg'
+      break
+   when-other
+      display 'Error: Invalid aggregate function'
+      goto endlabel
+      break
+   end-evaluate
+   ! function for Y2 axis
+   let $function2 = lower($function2)
+   evaluate $function2
+   when = 'sum'
+      let InstantChartRowCount.aggregationY2(#num) = 'sum'
+      break
+   when = 'min'
+      let InstantChartRowCount.aggregationY2(#num) = 'min'
+      break
+   when = 'max'
+      let InstantChartRowCount.aggregationY2(#num) = 'max'
+      break
+   when = 'count'
+      let InstantChartRowCount.aggregationY2(#num) = 'count'
+      break
+   when = 'avg'
+      let InstantChartRowCount.aggregationY2(#num) = 'avg'
+      break
+   when-other
+      display 'Error: Invalid aggregate function - Y2'
+      goto endlabel
+      break
+   end-evaluate
+endlabel:
+end-procedure ! InstantChartSetAggregationFunctionCombo
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartPie
+!
+! Purpose: Accumulate data for a Pie Chart. The data for the same selector
+!          is accumulated (see array-add below).
+!
+! #num      - Chart number
+! $selector - Pie segment name
+! #value    - Pie segment value
+!
+begin-procedure InstantChartPie(#num, $selector, #value)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   !
+   ! Search for $selector in the data array. If not found, create a new entry.
+   ! The variable #_ICCurrentRow is set to the subscript of the entry or to
+   ! -1 if there's an error.
+   !
+   do InstantChartLocateEntry(#num, $selector, 'ADD')
+   if #_ICCurrentRow >= 0 and #_ICCurrentRow < {INSTANT_CHART_MAX_ROWS}
+      do InstantChartAggregate(#num,1,#value)
+      ! array-add #value to InstantChartDataArray(#_ICCurrentRow) value1(#num)
+   end-if
+endlabel:
+end-procedure ! InstantChartPie
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartCombo
+!
+! Purpose: Accumulate data for a Combo Chart. The data for the same selector
+!          is accumulated (see array-add below).
+!
+! #num      - Chart number
+! $selector - x segment name
+! #value    - y segment value
+! #valuey2    - y2 segment value
+!
+begin-procedure InstantChartCombo(#num, $selector, #value, #valuey2)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   !
+   ! Search for $selector in the data array. If not found, create a new entry.
+   ! The variable #_ICCurrentRow is set to the subscript of the entry or to
+   ! -1 if there's an error.
+   !
+   do InstantChartLocateEntry(#num, $selector, 'ADD')
+   if #_ICCurrentRow >= 0 and #_ICCurrentRow < {INSTANT_CHART_MAX_ROWS}
+      do InstantChartAggregate(#num,1,#value)
+      do InstantChartAggregateY2(#num,1,#valuey2)	
+      ! array-add #value to InstantChartDataArray(#_ICCurrentRow) value1(#num)
+   end-if
+endlabel:
+end-procedure ! InstantChartCombo
+!
+! InstantChartBar1
+!
+! Purpose: Accumulate data for a Single Dimension Bar Chart. The data for the
+!          same selector is accumulated.
+!
+! #num      - Chart number
+! $selector - Bar name
+! #value    - Bar value
+!
+begin-procedure InstantChartBar1(#num, $selector, #value)
+   !
+   ! Since the data for both Pie chart and 2d Bar chart is accumulated
+   ! in the same way, the following is equivalent so the code is reused.
+   !
+   do InstantChartPie(#num, $selector, #value)
+end-procedure ! InstantChartBar1
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartBar12
+!
+! Purpose: Accumulate data for a Bar Chart with up to 12 columns
+!          (columns are the 3-rd dimension of the chart -- up to
+!           six layers of bars)
+!          You should pass zero for unused columns for example:
+!          do InstantChartBar12(1, 'ABC', #a, #b, 0, 0, 0, 0, 0,...)
+!          Data for the same selector is accumulated (see array-add)
+!          No pivoting is performed
+!
+! #num      - Chart number
+! $selactor - Bar name
+! #value1   - Bar value for column 1
+! #value2   - Bar value for column 2
+! #value3   - Bar value for column 3
+! #value4   - Bar value for column 4
+! #value5   - Bar value for column 5
+! #value6   - Bar value for column 6
+! #value7   - Bar value for column 7
+! #value8   - Bar value for column 8
+! #value9   - Bar value for column 9
+! #value10  - Bar value for column 10
+! #value11  - Bar value for column 11
+! #value12  - Bar value for column 12
+!
+begin-procedure InstantChartBar12(#num, $selector, #value1, #value2,
+        #value3, #value4, #value5, #value6, #value7, #value8, #value9, #value10
+        #value11, #value12)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   !
+   ! Search for $selector in the data array. If not found, create a new entry.
+   ! The variable #_ICCurrentRow is set to the subscript of the entry or to
+   ! -1 if there's an error.
+   !
+   do InstantChartLocateEntry(#num, $selector, 'ADD')
+   if #_ICCurrentRow >= 0 and #_ICCurrentRow < {INSTANT_CHART_MAX_ROWS}
+      do InstantChartAggregate(#num,1,#value1)
+      do InstantChartAggregate(#num,2,#value2)
+      do InstantChartAggregate(#num,3,#value3)
+      do InstantChartAggregate(#num,4,#value4)
+      do InstantChartAggregate(#num,5,#value5)
+      do InstantChartAggregate(#num,6,#value6)
+      do InstantChartAggregate(#num,7,#value7)
+      do InstantChartAggregate(#num,8,#value8)
+      do InstantChartAggregate(#num,9,#value9)
+      do InstantChartAggregate(#num,10,#value10)
+      do InstantChartAggregate(#num,11,#value11)
+      do InstantChartAggregate(#num,12,#value12)
+   end-if
+endlabel:
+end-procedure ! InstantChartBar12
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartBarPivot
+!
+! Purpose: Accumulate data for a 3D Bar Chart by pivoting
+!          the second selector becomes the name of a column
+!          up to INSTANT_CHART_MAX_COLS is supported.
+!
+!          When a column selector is first encountered, a new column is
+!          allocated. You can predefine the column names be using
+!          InstantChartSetColumns12 before processing the data.
+!          You can rename the columns by using InstantChartSetColumns12 after
+!          processing the data.
+!
+! #num      - Chart number
+! $selector - Bar name
+! $selector2 - Column selector
+! #value    - Bar value
+!
+begin-procedure InstantChartBarPivot(#num, $selector, $selector2, #value)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   !
+   ! Search for $selector in the data array. If not found, create a new entry.
+   ! The variable #_ICCurrentRow is set to the subscript of the entry or to
+   ! -1 if there's an error.
+   !
+   do InstantChartLocateEntry(#num, $selector, 'ADD')
+   if #_ICCurrentRow >= 0 and #_ICCurrentRow < {INSTANT_CHART_MAX_ROWS}
+      !
+      ! Search for the column name in the InstantChartColCount array.
+      ! If not found an entry is added. If the number of columns exceeds
+      ! the maximum, #_ICCurrentCol is set to -1. #_ICCurrentCol will
+      ! have the column subscript.
+      !
+      do InstantChartLocateColumn(#num, $selector2)
+      let #col_num = #_ICCurrentCol + 1
+      do InstantChartAggregate(#num,#col_num,#value)
+   end-if
+endlabel:
+end-procedure ! InstantChartBarPivot
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartLocateEntry
+!
+! Purpose: Locate the row in the array for a given name (selector)
+!          If not found, a new entry may be created
+!          If found or added, the current row is set to the entry
+!
+! #num      - Chart number
+! $selector - selector name
+! $add      - 'ADD' will create a new entry if not found
+!           - 'LOCATE-ONLY' will not create a new entry when not found
+!                           current row is set to -1 to signal failure
+!
+begin-procedure InstantChartLocateEntry(#num, $selector, $add)
+   if InstantChartRowCount.n(#num) = 0  ! No data for this chart
+      if $add = 'ADD'
+         ! First selector is inserted
+         let InstantChartRowCount.n(#num) = 1
+         let InstantChartRowCount.current_row(#num) = 0
+         let #_ICCurrentRow = 0
+         ! All the columns must be initialized
+         do InstantChartInitEntry(#num,0,$selector)
+      else
+         ! Not found (the array has no data for this chart)
+         let #_ICCurrentRow = -1
+         goto endlabel
+      end-if
+   end-if
+   !
+   ! First we restore #_ICCurrentRow from the value saved last time to see
+   ! if it happens to still point to the right entry. In such case, the search
+   ! is avoided and performance is improved.
+   !
+   let #_ICCurrentRow = InstantChartRowCount.current_row(#num)
+   !
+   if InstantChartDataArray.selector(#_ICCurrentRow, #num) = $selector
+      ! Found
+      ! Save the current Row for optimization
+      let InstantChartRowCount.current_row(#num) = #_ICCurrentRow
+      goto endlabel
+   end-if
+   !
+   ! We start a search. The search is sequential.
+   !
+   let #_ICCurrentRow = 0
+   while #_ICCurrentRow < InstantChartRowCount.n(#num) and
+          InstantChartDataArray.selector(#_ICCurrentRow,#num) != $selector
+      add 1 to #_ICCurrentRow
+   end-while
+   !
+   ! At this point, we either located the entry or reached the end.
+   !
+   if #_ICCurrentRow = InstantChartRowCount.n(#num)  ! not found (end reached)
+      !
+      ! check if size exceeded
+      !
+      if InstantChartRowCount.n(#num) = ({INSTANT_CHART_MAX_ROWS} - 1) 
+            and $add = 'ADD'
+         array-add 1 to InstantChartRowCount(#num) err ! count of overflow
+         if InstantChartRowCount.err(#num) = 1
+            display 'Error: Maximum number of segments has been exceeded'
+         end-if
+         let #_ICCurrentRow = -1
+         goto endlabel
+      end-if
+      !
+      ! End is reached and the selector wasn't found
+      !
+      if $add = 'LOCATE-ONLY'
+         let #_ICCurrentRow = -1 ! not found
+      end-if
+      !
+      ! Add the entry
+      !
+      if $add = 'ADD'
+         array-add 1 to InstantChartRowCount(#num) n ! adding a new entry
+         ! Save the current Row for optimization
+         let InstantChartRowCount.current_row(#num) = #_ICCurrentRow
+         ! all the columns must be initialized
+         do InstantChartInitEntry(#num,#_ICCurrentRow,$selector)
+      end-if
+   end-if
+endlabel:
+end-procedure ! InstantChartLocateEntry
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartInitEntry
+!
+! Purpose: Initializes a newly allocated entry in the data array.
+!          Selector is set to #selector and all other values are
+!          initialized.
+!
+! #num      - Chart number
+! #cur_row  - entry being initialized
+! $selector - selector value for this entry
+!
+begin-procedure InstantChartInitEntry(#num,#cur_row,$selector)
+   let InstantChartDataArray.selector(#cur_row,#num) = $selector
+   let InstantChartDataArray.value1(#cur_row,#num) = 0
+   let InstantChartDataArray.value2(#cur_row,#num) = 0
+   let InstantChartDataArray.value3(#cur_row,#num) = 0
+   let InstantChartDataArray.value4(#cur_row,#num) = 0
+   let InstantChartDataArray.value5(#cur_row,#num) = 0
+   let InstantChartDataArray.value6(#cur_row,#num) = 0
+   let InstantChartDataArray.value7(#cur_row,#num) = 0
+   let InstantChartDataArray.value8(#cur_row,#num) = 0
+   let InstantChartDataArray.value9(#cur_row,#num) = 0
+   let InstantChartDataArray.value10(#cur_row,#num) = 0
+   let InstantChartDataArray.value11(#cur_row,#num) = 0
+   let InstantChartDataArray.value12(#cur_row,#num) = 0
+   let InstantChartDataArray.count1(#cur_row,#num) = 0
+   let InstantChartDataArray.count2(#cur_row,#num) = 0
+   let InstantChartDataArray.count3(#cur_row,#num) = 0
+   let InstantChartDataArray.count4(#cur_row,#num) = 0
+   let InstantChartDataArray.count5(#cur_row,#num) = 0
+   let InstantChartDataArray.count6(#cur_row,#num) = 0
+   let InstantChartDataArray.count7(#cur_row,#num) = 0
+   let InstantChartDataArray.count8(#cur_row,#num) = 0
+   let InstantChartDataArray.count9(#cur_row,#num) = 0
+   let InstantChartDataArray.count10(#cur_row,#num) = 0
+   let InstantChartDataArray.count11(#cur_row,#num) = 0
+   let InstantChartDataArray.count12(#cur_row,#num) = 0
+   let InstantChartDataArray.explode(#cur_row,#num) = 'N'
+   let InstantChartDataArrayY2.selector(#cur_row,#num) = $selector
+   let InstantChartDataArrayY2.value1(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.value2(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.value3(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.value4(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.value5(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.value6(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.value7(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.value8(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.value9(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.value10(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.value11(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.value12(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.count1(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.count2(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.count3(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.count4(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.count5(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.count6(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.count7(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.count8(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.count9(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.count10(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.count11(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.count12(#cur_row,#num) = 0
+   let InstantChartDataArrayY2.explode(#cur_row,#num) = 'N'
+end-procedure ! InstantChartInitEntry
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartLocateColumn
+!
+! Purpose: Locate the column number for a chart's third dimension
+!          If not found it is set to -1. The variable #_ICCurrentCol
+!          is set to the column subscript (0,1,2,...)
+!
+! #num      - Chart number
+! $col_name - column name
+!
+begin-procedure InstantChartLocateColumn(#num, $col_name)
+   if InstantChartColCount.n(#num) = 0  ! No column names for this chart
+      ! First column
+      let InstantChartColCount.n(#num) = 1
+      let #_ICCurrentCol = 0
+      let InstantChartColCount.colname(#num,0) = $col_name
+      goto endlabel
+   end-if
+   !
+   ! Check if #_ICCurrentCol is valid and already points to the right place
+   ! this is an optimization. If it does not, a search is performed
+   !
+   if #_ICCurrentCol >= 0 and #_ICCurrentCol < {INSTANT_CHART_MAX_COLS}
+      if InstantChartColCount.colname(#num,#_ICCurrentCol) = $col_name
+         ! Found
+         goto endlabel
+      end-if
+   end-if
+   let #_ICCurrentCol = 0
+   while #_ICCurrentCol < InstantChartColCount.n(#num) and
+          InstantChartColCount.colname(#num,#_ICCurrentCol) != $col_name
+      add 1 to #_ICCurrentCol
+   end-while
+   if #_ICCurrentCol = InstantChartColCount.n(#num)  ! not found
+      if InstantChartColCount.n(#num) = ({INSTANT_CHART_MAX_COLS} - 1)
+         array-add 1 to InstantChartColCount(#num) err ! count of overflow
+         if InstantChartColCount.err(#num) = 1
+             display 'Error: Maximum number of columns has been exceeded'
+         end-if
+         let #_ICCurrentCol = -1
+         goto endlabel
+      end-if
+      array-add 1 to InstantChartColCount(#num) n ! adding a new entry
+      let InstantChartColCount.colname(#num,#_ICCurrentCol) = $col_name
+   end-if
+endlabel:
+end-procedure ! InstantChartLocateColumn
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartPieExplode
+!
+! Purpose: Set the specified pie segment to be exploded
+!          requires pie-segment-explode=use-3rd-data-column
+!          in the declare-chart
+!
+! #num      - Chart number
+! $selector - selector name
+!
+begin-procedure InstantChartPieExplode(#num, $selector)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   do InstantChartLocateEntry(#num, $selector, 'LOCATE-ONLY')
+   if #_ICCurrentRow >= 0 ! found
+      let InstantChartDataArray.explode(#_ICCurrentRow,#num) = 'Y'
+   end-if
+endlabel:
+end-procedure ! InstantChartPieExplode
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartPiePrint
+!
+! Purpose: Prints the pie chart to the current position
+!          size of the chart must be defined in the declare-chart
+!
+! #num      - Chart number
+! #tmpl     - Template number (InstantChart1, InstantChart2,...)
+!
+begin-procedure InstantChartPiePrint(#num, #tmpl)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   if #tmpl < 1 or #tmpl > {INSTANT_CHART_TEMPLATES}
+      display 'Error: Maximum number of chart templates exceeded'
+      goto endlabel
+   end-if
+   let #RowCount = InstantChartRowCount.n(#num)
+
+   ! Set the value fields to the count or average if needed.
+   do InstantChartAggregateFinal(#num)
+   
+   if #RowCount > {INSTANT_CHART_MAX_PIE_SEGMENTS}
+      ! SQR only supports up to 12 slices on a pie.
+      ! We will sort the array, take the 11 highest values, and
+      ! add up the rest into a selector called "Other".
+      Add 1 to #num
+      do InstantChartSortByValue1(#num)
+      subtract 1 from #num
+      let InstantChartPieArray.selector({INSTANT_CHART_MAX_PIE_SEGMENTS} - 1) = 'Other'
+      let InstantChartPieArray.value({INSTANT_CHART_MAX_PIE_SEGMENTS} - 1) = 0
+   end-if
+   
+   let #_ICCurrentRow = 0
+   while #_ICCurrentRow < #RowCount
+      if #_ICCurrentRow >= {INSTANT_CHART_MAX_PIE_SEGMENTS} - 1
+        let InstantChartPieArray.value({INSTANT_CHART_MAX_PIE_SEGMENTS} - 1) = InstantChartPieArray.value({INSTANT_CHART_MAX_PIE_SEGMENTS} - 1) + InstantChartDataArray.value1(#_ICCurrentRow,#num)
+      else
+         let InstantChartPieArray.selector(#_ICCurrentRow) = InstantChartDataArray.selector(#_ICCurrentRow,#num)
+         let InstantChartPieArray.value(#_ICCurrentRow) = InstantChartDataArray.value1(#_ICCurrentRow,#num)
+         let InstantChartPieArray.explode(#_ICCurrentRow) = InstantChartDataArray.explode(#_ICCurrentRow,#num)
+      end-if
+      add 1 to #_ICCurrentRow
+   end-while
+   if #RowCount > {INSTANT_CHART_MAX_PIE_SEGMENTS}
+      let #RowCount = {INSTANT_CHART_MAX_PIE_SEGMENTS}
+   end-if
+   evaluate #tmpl
+      when = 1
+         print-chart InstantChart1 ()
+            data-array = InstantChartPieArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+      break
+#if {INSTANT_CHART_TEMPLATES} > 1
+      when = 2
+         print-chart InstantChart2 ()
+            data-array = InstantChartPieArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 2
+      when = 3
+         print-chart InstantChart3 ()
+            data-array = InstantChartPieArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 3
+      when = 4
+         print-chart InstantChart4 ()
+            data-array = InstantChartPieArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 4
+      when = 5
+         print-chart InstantChart5 ()
+            data-array = InstantChartPieArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 5
+      when = 6
+         print-chart InstantChart6 ()
+            data-array = InstantChartPieArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 6
+      when = 7
+         print-chart InstantChart7 ()
+            data-array = InstantChartPieArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 7
+      when = 8
+         print-chart InstantChart8 ()
+            data-array = InstantChartPieArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 8
+      when = 9
+         print-chart InstantChart9 ()
+            data-array = InstantChartPieArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 9
+      when = 10
+         print-chart InstantChart10 ()
+            data-array = InstantChartPieArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+      break
+#endif
+   end-evaluate
+endlabel:
+end-procedure ! InstantChartPiePrint
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartBarPrint
+!
+! Purpose: Prints the bar chart to the current position
+!          size of the chart must be defined in the declare-chart
+!
+! #num      - Chart number
+! #tmpl     - Template number (InstantChart1, InstantChart2,...)
+!
+begin-procedure InstantChartBarPrint(#num, #tmpl)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   if #tmpl < 1 or #tmpl > {INSTANT_CHART_TEMPLATES}
+      display 'Error: Maximum number of chart templates exceeded'
+      goto endlabel
+   end-if
+   let #ColCount = InstantChartColCount.n(#num) + 1  ! add one for the selector column
+   if #ColCount = 1
+      let #ColCount = 2
+   end-if
+   !
+   ! Set the value fields to the count or average if needed.
+   do InstantChartAggregateFinal(#num)
+   !
+   do InstantChartBarBuild(#num)
+   let $colname1 = ltrim(InstantChartColCount.colname(#num,0),' ')
+   let $colname2 = ltrim(InstantChartColCount.colname(#num,1),' ')
+   let $colname3 = ltrim(InstantChartColCount.colname(#num,2),' ')
+   let $colname4 = ltrim(InstantChartColCount.colname(#num,3),' ')
+   let $colname5 = ltrim(InstantChartColCount.colname(#num,4),' ')
+   let $colname6 = ltrim(InstantChartColCount.colname(#num,5),' ')
+   let $colname7 = ltrim(InstantChartColCount.colname(#num,6),' ')
+   let $colname8 = ltrim(InstantChartColCount.colname(#num,7),' ')
+   let $colname9 = ltrim(InstantChartColCount.colname(#num,8),' ')
+   let $colname10 = ltrim(InstantChartColCount.colname(#num,9),' ')
+   let $colname11 = ltrim(InstantChartColCount.colname(#num,10),' ')
+   let $colname12 = ltrim(InstantChartColCount.colname(#num,11),' ')
+   let #RowCount = InstantChartRowCount.n(#num)
+   evaluate #tmpl
+      when = 1
+         print-chart InstantChart1 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#if {INSTANT_CHART_TEMPLATES} > 1
+      when = 2
+         print-chart InstantChart2 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 2
+      when = 3
+         print-chart InstantChart3 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 3
+      when = 4
+         print-chart InstantChart4 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 4
+      when = 5
+         print-chart InstantChart5 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 5
+      when = 6
+         print-chart InstantChart6 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 6
+      when = 7
+         print-chart InstantChart7 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 7
+      when = 8
+         print-chart InstantChart8 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 8
+      when = 9
+         print-chart InstantChart9 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 9
+      when = 10
+         print-chart InstantChart10 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+   end-evaluate
+endlabel:
+end-procedure ! InstantChartBarPrint
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartComboPrint
+!
+! Purpose: Prints the Combo chart to the current position
+!          size of the chart must be defined in the declare-chart
+!
+! #num      - Chart number
+! #tmpl     - Template number (InstantChart1, InstantChart2,...)
+!
+begin-procedure InstantChartComboPrint(#num, #tmpl)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   if #tmpl < 1 or #tmpl > {INSTANT_CHART_TEMPLATES}
+      display 'Error: Maximum number of chart templates exceeded'
+      goto endlabel
+   end-if
+   let #ColCount = InstantChartColCount.n(#num) + 1  ! add one for the selector column
+   if #ColCount = 1
+      let #ColCount = 2
+   end-if
+   !
+   ! Set the value fields to the count or average if needed.
+   do InstantChartAggregateFinal(#num)
+   do InstantChartAggregateFinalY2(#num)
+   !
+   do InstantChartBarBuild(#num)
+   do InstantChartBarBuildY2(#num)
+   let $colname1 = ltrim(InstantChartColCount.colname(#num,0),' ')
+   let $colname2 = ltrim(InstantChartColCount.colname(#num,1),' ')
+   let $colname3 = ltrim(InstantChartColCount.colname(#num,2),' ')
+   let $colname4 = ltrim(InstantChartColCount.colname(#num,3),' ')
+   let $colname5 = ltrim(InstantChartColCount.colname(#num,4),' ')
+   let $colname6 = ltrim(InstantChartColCount.colname(#num,5),' ')
+   let $colname7 = ltrim(InstantChartColCount.colname(#num,6),' ')
+   let $colname8 = ltrim(InstantChartColCount.colname(#num,7),' ')
+   let $colname9 = ltrim(InstantChartColCount.colname(#num,8),' ')
+   let $colname10 = ltrim(InstantChartColCount.colname(#num,9),' ')
+   let $colname11 = ltrim(InstantChartColCount.colname(#num,10),' ')
+   let $colname12 = ltrim(InstantChartColCount.colname(#num,11),' ')
+   let #RowCount = InstantChartRowCount.n(#num)
+   evaluate #tmpl
+      when = 1
+         print-chart InstantChart1 ()
+         data-array = InstantChartBarArray
+         data-array-row-count = #RowCount
+         data-array-column-count = #ColCount
+         data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+	 ! For Y2 Axis data-arrray...	  ! NEL CQ5368 (and following Y2-data-array info)
+         Y2-data-array = InstantChartBarArrayY2
+         Y2-data-array-row-count = #RowCount
+         Y2-data-array-column-count = #ColCount
+         Y2-data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+      break
+#if {INSTANT_CHART_TEMPLATES} > 1
+      when = 2
+         print-chart InstantChart2 ()
+         data-array = InstantChartBarArray
+         data-array-row-count = #RowCount
+         data-array-column-count = #ColCount
+         data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+	 ! For Y2 Axis data-arrray...	
+         Y2-data-array = InstantChartBarArrayY2
+         Y2-data-array-row-count = #RowCount
+         Y2-data-array-column-count = #ColCount
+         Y2-data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 2
+      when = 3
+         print-chart InstantChart3 ()
+         data-array = InstantChartBarArray
+         data-array-row-count = #RowCount
+         data-array-column-count = #ColCount
+         data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+	 ! For Y2 Axis data-arrray...	
+         Y2-data-array = InstantChartBarArrayY2
+         Y2-data-array-row-count = #RowCount
+         Y2-data-array-column-count = #ColCount
+         Y2-data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 3
+      when = 4
+         print-chart InstantChart4 ()
+         data-array = InstantChartBarArray
+         data-array-row-count = #RowCount
+         data-array-column-count = #ColCount
+         data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+	 ! For Y2 Axis data-arrray...	
+         Y2-data-array = InstantChartBarArrayY2
+         Y2-data-array-row-count = #RowCount
+         Y2-data-array-column-count = #ColCount
+         Y2-data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 4
+      when = 5
+         print-chart InstantChart5 ()
+         data-array = InstantChartBarArray
+         data-array-row-count = #RowCount
+         data-array-column-count = #ColCount
+         data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+	 ! For Y2 Axis data-arrray...	
+         Y2-data-array = InstantChartBarArrayY2
+         Y2-data-array-row-count = #RowCount
+         Y2-data-array-column-count = #ColCount
+         Y2-data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 5
+      when = 6
+         print-chart InstantChart6 ()
+         data-array = InstantChartBarArray
+         data-array-row-count = #RowCount
+         data-array-column-count = #ColCount
+         data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+	 ! For Y2 Axis data-arrray...	
+         Y2-data-array = InstantChartBarArrayY2
+         Y2-data-array-row-count = #RowCount
+         Y2-data-array-column-count = #ColCount
+         Y2-data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 6
+      when = 7
+         print-chart InstantChart7 ()
+         data-array = InstantChartBarArray
+         data-array-row-count = #RowCount
+         data-array-column-count = #ColCount
+         data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+	 ! For Y2 Axis data-arrray...	
+         Y2-data-array = InstantChartBarArrayY2
+         Y2-data-array-row-count = #RowCount
+         Y2-data-array-column-count = #ColCount
+         Y2-data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 7
+      when = 8
+         print-chart InstantChart8 ()
+         data-array = InstantChartBarArray
+         data-array-row-count = #RowCount
+         data-array-column-count = #ColCount
+         data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+	 ! For Y2 Axis data-arrray...	
+         Y2-data-array = InstantChartBarArrayY2
+         Y2-data-array-row-count = #RowCount
+         Y2-data-array-column-count = #ColCount
+         Y2-data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 8
+      when = 9
+         print-chart InstantChart9 ()
+         data-array = InstantChartBarArray
+         data-array-row-count = #RowCount
+         data-array-column-count = #ColCount
+         data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+	 ! For Y2 Axis data-arrray...	
+         Y2-data-array = InstantChartBarArrayY2
+         Y2-data-array-row-count = #RowCount
+         Y2-data-array-column-count = #ColCount
+         Y2-data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 9
+      when = 10
+         print-chart InstantChart10 ()
+         data-array = InstantChartBarArray
+         data-array-row-count = #RowCount
+         data-array-column-count = #ColCount
+         data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+	 ! For Y2 Axis data-arrray...	
+         Y2-data-array = InstantChartBarArrayY2
+         Y2-data-array-row-count = #RowCount
+         Y2-data-array-column-count = #ColCount
+         Y2-data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                     $colname4, $colname5, $colname6,
+                                                     $colname7, $colname8, $colname9,
+                                                     $colname10, $colname11, $colname12)
+      break
+#endif
+   end-evaluate
+endlabel:
+end-procedure ! InstantChartComboPrint
+!
+!----------------------------------------------------------------------------
+!
+! InstantChartBarBuild
+!
+! Purpose:         Copies Bar chart data from InstantChartDataArray to
+!                  InstantChartBarArray
+!
+! #num      - Chart number
+!
+begin-procedure InstantChartBarBuild(#num)
+   let #RowCount = InstantChartRowCount.n(#num)
+   let #CurRow = 0
+   while #CurRow < #RowCount
+      let InstantChartBarArray.selector(#CurRow) = InstantChartDataArray.selector(#CurRow,#num)
+      let InstantChartBarArray.value1(#CurRow) = InstantChartDataArray.value1(#CurRow,#num)
+      let InstantChartBarArray.value2(#CurRow) = InstantChartDataArray.value2(#CurRow,#num)
+      let InstantChartBarArray.value3(#CurRow) = InstantChartDataArray.value3(#CurRow,#num)
+      let InstantChartBarArray.value4(#CurRow) = InstantChartDataArray.value4(#CurRow,#num)
+      let InstantChartBarArray.value5(#CurRow) = InstantChartDataArray.value5(#CurRow,#num)
+      let InstantChartBarArray.value6(#CurRow) = InstantChartDataArray.value6(#CurRow,#num)
+      let InstantChartBarArray.value7(#CurRow) = InstantChartDataArray.value7(#CurRow,#num)
+      let InstantChartBarArray.value8(#CurRow) = InstantChartDataArray.value8(#CurRow,#num)
+      let InstantChartBarArray.value9(#CurRow) = InstantChartDataArray.value9(#CurRow,#num)
+      let InstantChartBarArray.value10(#CurRow) = InstantChartDataArray.value10(#CurRow,#num)
+      let InstantChartBarArray.value11(#CurRow) = InstantChartDataArray.value11(#CurRow,#num)
+      let InstantChartBarArray.value12(#CurRow) = InstantChartDataArray.value12(#CurRow,#num)
+      add 1 to #CurRow
+   end-while
+end-procedure ! InstantChartBarBuild
+!
+!----------------------------------------------------------------------------
+!
+! InstantChartBarBuildY2
+!
+! Purpose:         Copies Bar chart data from InstantChartDataArray to
+!                  InstantChartBarArray
+!
+! #num      - Chart number
+!
+begin-procedure InstantChartBarBuildY2(#num)
+   let #RowCount = InstantChartRowCount.n(#num)
+   let #CurRow = 0
+   while #CurRow < #RowCount
+      let InstantChartBarArrayY2.selector(#CurRow) = InstantChartDataArrayY2.selector(#CurRow,#num)
+      let InstantChartBarArrayY2.value1(#CurRow) = InstantChartDataArrayY2.value1(#CurRow,#num)
+      let InstantChartBarArrayY2.value2(#CurRow) = InstantChartDataArrayY2.value2(#CurRow,#num)
+      let InstantChartBarArrayY2.value3(#CurRow) = InstantChartDataArrayY2.value3(#CurRow,#num)
+      let InstantChartBarArrayY2.value4(#CurRow) = InstantChartDataArrayY2.value4(#CurRow,#num)
+      let InstantChartBarArrayY2.value5(#CurRow) = InstantChartDataArrayY2.value5(#CurRow,#num)
+      let InstantChartBarArrayY2.value6(#CurRow) = InstantChartDataArrayY2.value6(#CurRow,#num)
+      let InstantChartBarArrayY2.value7(#CurRow) = InstantChartDataArrayY2.value7(#CurRow,#num)
+      let InstantChartBarArrayY2.value8(#CurRow) = InstantChartDataArrayY2.value8(#CurRow,#num)
+      let InstantChartBarArrayY2.value9(#CurRow) = InstantChartDataArrayY2.value9(#CurRow,#num)
+      let InstantChartBarArrayY2.value10(#CurRow) = InstantChartDataArrayY2.value10(#CurRow,#num)
+      let InstantChartBarArrayY2.value11(#CurRow) = InstantChartDataArrayY2.value11(#CurRow,#num)
+      let InstantChartBarArrayY2.value12(#CurRow) = InstantChartDataArrayY2.value12(#CurRow,#num)
+     add 1 to #CurRow
+   end-while
+end-procedure ! InstantChartBarBuildY2
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartSetColumns12
+!
+! Purpose: Sets the number of columns of the chart and their names
+!
+! #num      - Chart number
+! $cname1   - Name for column 1
+! $cname2   - Name for column 2
+! $cname3   - Name for column 3
+! $cname4   - Name for column 4
+! $cname5   - Name for column 5
+! $cname6   - Name for column 6
+! $cname7   - Name for column 7
+! $cname8   - Name for column 8
+! $cname9   - Name for column 9
+! $cname10   - Name for column 10
+! $cname11   - Name for column 11
+! $cname12   - Name for column 12
+!
+begin-procedure InstantChartSetColumns12(#num, #count, $cname1, $cname2,
+         $cname3, $cname4, $cname5, $cname6, $cname7, $cname8, $cname9, $cname10,
+         $cname11, $cname12)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   if #count < 1 or #count > {INSTANT_CHART_MAX_COLS}
+      display 'Error: Invalid number of columns columns'
+      goto endlabel
+   end-if
+   put #count $cname1 $cname2 $cname3 $cname4
+       $cname5 $cname6 $cname7 $cname8 $cname9 $cname10
+       $cname11 $cname12 into InstantChartColCount(#num) n colname(0)
+         colname(1) colname(2) colname(3) colname(4) colname(5) colname(6)
+         colname(7) colname(8) colname(9) colname(10) colname(11)
+endlabel:
+end-procedure ! InstantChartSetColumns12
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartSort
+!
+! Purpose: Sort a chart's data to the order of the selector
+!
+! Notice: Key comparison does not support NLS. For NLS sort, use
+!         an ORDER BY clause in your begin-select and pass the
+!         data to the chart in that order.
+!
+! #num      - Chart number
+!
+begin-procedure InstantChartSort(#num)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   let #rows = InstantChartRowCount.n(#num) - 1
+   do InstantChartQuickSort(#num, 0, 0, #rows)
+endlabel:
+end-procedure ! InstantChartSort
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartQuickSort
+!
+! Purpose: Implement Sort a chart's data to the order of the selector
+!          this is a recusive function. Since SQR does not allocate
+!          local variables on the stack (they are all static, the
+!          recursive behavior employs a helper array)
+!
+! #num      - Chart number array subscript (starts with 0)
+! #level    - Recursion level (used as a subscript to the helper array)
+! #m        - The "m" argument of the classical Quick Sort
+! #n        - The "n" argument of the classical Quick Sort
+!
+begin-procedure InstantChartQuickSort(#num, #level, #m, #n)
+   if #m < #n
+      let #i = #m
+      let #j = #n + 1
+      let $key = InstantChartDataArray.selector(#m,#num)
+      while 1
+         add 1 to #i
+         while #i <= #j and InstantChartDataArray.selector(#i,#num) < $key
+             add 1 to #i
+         end-while
+         subtract 1 from #j
+         while #j >= 0 and InstantChartDataArray.selector(#j,#num) > $key
+            subtract 1 from #j
+         end-while
+         if #i < #j
+            do InstantChartQSortInterchange(#num, #i, #j)
+         else
+            break
+         end-if
+      end-while
+      do InstantChartQSortInterchange(#num, #m, #j)
+      add 1 to #level
+      ! Save #j and #n
+      let InstantChartQSort.j(#level - 1) = #j
+      let InstantChartQSort.n(#level - 1) = #n
+      subtract 1 from #j
+      do InstantChartQuickSort(#num, #level, #m, #j)
+      ! restore #j and #n
+      let #j = InstantChartQSort.j(#level - 1)
+      let #n = InstantChartQSort.n(#level - 1)
+      add 1 to #j
+      do InstantChartQuickSort(#num, #level, #j, #n)
+      subtract 1 from #level
+   end-if
+end-procedure ! InstantChartQuickSort
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartQSortInterchange
+!
+! Purpose: Swaps records #i and #j for chart subscript #num
+!
+! #num      - Chart number array subscript (starts with 0)
+! #i        - Array subscript
+! #j        - Array subscript
+!
+begin-procedure InstantChartQSortInterchange(#num, #i, #j)
+   get $selector #value1 #value2 #value3
+        #value4  #value5 #value6 #value7 #value8 #value9
+        #value10 #value11 #value12 $explode
+      from InstantChartDataArray(#i) selector(#num) value1(#num) value2(#num)
+           value3(#num) value4(#num) value5(#num) value6(#num) value7(#num) value8(#num)
+           value9(#num) value10(#num) value11(#num) value12(#num) explode(#num)
+   let InstantChartDataArray.selector(#i,#num) = InstantChartDataArray.selector(#j,#num)
+   let InstantChartDataArray.value1(#i,#num)   = InstantChartDataArray.value1(#j,#num)
+   let InstantChartDataArray.value2(#i,#num)   = InstantChartDataArray.value2(#j,#num)
+   let InstantChartDataArray.value3(#i,#num)   = InstantChartDataArray.value3(#j,#num)
+   let InstantChartDataArray.value4(#i,#num)   = InstantChartDataArray.value4(#j,#num)
+   let InstantChartDataArray.value5(#i,#num)   = InstantChartDataArray.value5(#j,#num)
+   let InstantChartDataArray.value6(#i,#num)   = InstantChartDataArray.value6(#j,#num)
+   let InstantChartDataArray.value7(#i,#num)   = InstantChartDataArray.value7(#j,#num)
+   let InstantChartDataArray.value8(#i,#num)   = InstantChartDataArray.value8(#j,#num)
+   let InstantChartDataArray.value9(#i,#num)   = InstantChartDataArray.value9(#j,#num)
+   let InstantChartDataArray.value10(#i,#num)   = InstantChartDataArray.value10(#j,#num)
+   let InstantChartDataArray.value11(#i,#num)   = InstantChartDataArray.value11(#j,#num)
+   let InstantChartDataArray.value12(#i,#num)   = InstantChartDataArray.value12(#j,#num)
+   let InstantChartDataArray.explode(#i,#num)  = InstantChartDataArray.explode(#j,#num)
+   put $selector #value1 #value2 #value3
+        #value4  #value5 #value6 #value7 #value8 #value9
+        #value10 #value11 #value12 $explode
+      into InstantChartDataArray(#j) selector(#num) value1(#num) value2(#num)
+           value3(#num) value4(#num) value5(#num) value6(#num) value7(#num) value8(#num)
+           value9(#num) value10(#num) value11(#num) value12(#num) explode(#num)
+end-procedure ! InstantChartQSortInterchange
+!
+! InstantChartCrossTab
+!
+! Purpose: Print that chart's data as a cross tab.
+!
+! #num      - Chart number
+! #max_cols - Maximum number of columns to display (1st and 'total' 
+!             columns not included). This number should be at most 
+!             N-2, where N is "columns x1 x2 .. xN"
+! $style    - Style attribute (see InstantChartCTParseStyle)
+!
+begin-procedure InstantChartCrossTab(#num, #max_cols, $style)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   do InstantChartCTParseStyle($style, #box, #skip, 
+                               #no_col_totals, #col_totals_only, 
+                               #no_line_totals, #no_col_titles, 
+                               $row_title_mask, $cell_mask, $col_title_mask, $totals_mask,
+                               $row_title, $col_title,
+                               #shade, #row_bold, #last_col_bold)
+   ! currently we set the totals_mask to the cell_mask since we can't draw
+   ! the lines that seperate the rows if this is not the case
+   let $totals_mask = $cell_mask
+   let #cols = InstantChartColCount.n(#num)
+   let #colstoprint = #cols
+   let #adddotcolumn = 0
+   if #max_cols < #colstoprint
+      display 'Warning: Limit of 12 columns exceeded. Not all columns will be displayed'
+      let #colstoprint = #max_cols - 2
+      let #adddotcolumn = 1
+   end-if
+   let #col1_total = 0
+   let #col2_total = 0
+   let #col3_total = 0
+   let #col4_total = 0
+   let #col5_total = 0
+   let #col6_total = 0
+   let #col7_total = 0
+   let #col8_total = 0
+   let #col9_total = 0
+   let #col10_total = 0
+   let #col11_total = 0
+   let #col12_total = 0
+   let #_ICCurrentRow = 0
+   !
+   ! Print the column titles if required
+   !
+   if #no_col_titles < 1
+      let #_ICCurrentCol = 0
+      let #line_down = round(#skip,0) - (#skip/8)
+      let #line_up = -#line_down
+      let #line_height = #skip+1
+      ! print the shading first
+      if #shade > 0
+         use-column 1        
+         let #line_start = #_current-column
+         let #use_col = #colstoprint + 3 + #adddotcolumn ! skip row and total columns
+         use-column #use_col
+         let #line_length = #_current-column - #line_start 
+         use-column 1
+         graphic (+#line_up,, #line_length) box #skip 0 #shade
+         position (+#line_down)
+      end-if
+      use-column 2
+      while #_ICCurrentCol < #colstoprint
+         let $name = InstantChartColCount.colname(#num,#_ICCurrentCol)
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+         let $name = lpad(substr($name, 1, length($col_title_mask)), length($col_title_mask), '  ') ! 2 spaces
+         print $name ()
+         next-column
+         add 1 to #_ICCurrentCol
+      end-while
+      if (#adddotcolumn = 1)
+          graphic (+#line_up, -2, #line_height) vert-line 
+          position (+#line_down,+2)
+          next-column
+      end-if
+      graphic (+#line_up, -2, #line_height) vert-line 
+      position (+#line_down,+2)
+      let $col_title = lpad(substr($col_title, 1, length($col_title_mask)), length($col_title_mask), '  ') ! 2 spaces
+      if #last_col_bold = 1
+         print $col_title () bold 
+      else
+         print $col_title ()
+      end-if
+      next-listing skiplines=#skip need=#skip
+   end-if
+   !
+   while #_ICCurrentRow < InstantChartRowCount.n(#num)
+      let $selector = InstantChartDataArray.selector(#_ICCurrentRow,#num)
+      let #val1 = InstantChartDataArray.value1(#_ICCurrentRow,#num)
+      add #val1 to #col1_total
+      let #val2 = InstantChartDataArray.value2(#_ICCurrentRow,#num)
+      add #val2 to #col2_total
+      let #val3 = InstantChartDataArray.value3(#_ICCurrentRow,#num)
+      add #val3 to #col3_total
+      let #val4 = InstantChartDataArray.value4(#_ICCurrentRow,#num)
+      add #val4 to #col4_total
+      let #val5 = InstantChartDataArray.value5(#_ICCurrentRow,#num)
+      add #val5 to #col5_total
+      let #val6 = InstantChartDataArray.value6(#_ICCurrentRow,#num)
+      add #val6 to #col6_total
+      let #val7 = InstantChartDataArray.value7(#_ICCurrentRow,#num)
+      add #val7 to #col7_total
+      let #val8 = InstantChartDataArray.value8(#_ICCurrentRow,#num)
+      add #val8 to #col8_total
+      let #val9 = InstantChartDataArray.value9(#_ICCurrentRow,#num)
+      add #val9 to #col9_total
+      let #val10 = InstantChartDataArray.value10(#_ICCurrentRow,#num)
+      add #val10 to #col10_total
+      let #val11 = InstantChartDataArray.value11(#_ICCurrentRow,#num)
+      add #val11 to #col11_total
+      let #val12 = InstantChartDataArray.value12(#_ICCurrentRow,#num)
+      add #val12 to #col12_total
+      if not #col_totals_only
+         do InstantChartCTPrintLine($selector,#colstoprint,#cols,#adddotcolumn,
+                        #val1,#val2,#val3, #val4,#val5,
+                        #val6,#val7,#val8,#val9, #val10,
+                        #val11,#val12,#box,#skip,#no_line_totals,
+                        $row_title_mask, $cell_mask, $totals_mask, 0, #last_col_bold)
+      end-if
+      add 1 to #_ICCurrentRow
+   end-while
+   if not #no_col_totals
+      let $tmp_mask = lpad($tmp_mask, length($row_title), 'x')
+      do InstantChartCTPrintLine($row_title,#colstoprint,#cols,#adddotcolumn,
+                     #col1_total,#col2_total,#col3_total, #col4_total,#col5_total,
+                     #col6_total,#col7_total,#col8_total,#col9_total, #col10_total,
+                     #col11_total,#col12_total,#box,#skip,#no_line_totals,
+                     $tmp_mask, $cell_mask, $totals_mask, #row_bold, #last_col_bold)
+   end-if
+endlabel:
+end-procedure ! InstantChartCrossTab
+!
+!----------------------------------------------------------------------------
+!
+! InstantChartCTPrintLine
+!
+! Purpose: Print one line for a cross tab
+!
+! $selector        - The first column with the name of the selector
+! #colstoprint     - The number of numeric columns to print. If there's more than
+!                    one column. A total column will also be printed.
+! #cols            - The number of columns in the crosstab array
+! #adddotcolumn    - 1 = print a dotted column just before the total column
+! #val1,...12      - The value to be printed in the numeric columns.
+! #box             - Box style attribute
+! #skip            - The number of "lines" to skip in the next-listing statement
+! #no_line_totals  - 1 = Don't print line totals
+! $first_cell_mask - The mask used for the first value
+! $cell_mask       - The mask used for printing the cells (everything but first and last)
+! $last_cell_mask  - The mask used for the last value
+! #bold_row        - 1 = bold the entire row (except last cell)
+! #bold_last_col   - 1 = bold the last cell of the line
+!
+begin-procedure InstantChartCTPrintLine($selector, #colstoprint, #cols, #adddotcolumn,
+                                 #val1, #val2, #val3, #val4, #val5, 
+                                 #val6, #val7, #val8, #val9, #val10,
+                                 #val11,#val12, #box, #skip, #no_line_totals,
+                                 $first_cell_mask, $cell_mask, $last_cell_mask, 
+                                 #bold_row, #bold_last_col)
+   ! clear the line up
+   let #line_total  = 0
+   ! calcs for the horz and vert lines
+   use-column 1
+   let #line_start  = #_current-column
+   let #line_down   = round(#skip,0) - (#skip/8)
+   let #line_up     = -#line_down
+   let #line_height = #skip+1
+   ! Row title (first cell)
+   do InstantChartCTPrintLineString($selector, $first_cell_mask, #bold_row)
+   if #cols > 0
+      add #val1 to #line_total
+      if #colstoprint > 0
+         next-column
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+         do InstantChartCTPrintLineValue(#val1, $cell_mask, #bold_row)
+      end-if
+   end-if
+   if #cols > 1
+      add #val2 to #line_total
+      if #colstoprint > 1
+         next-column
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+         do InstantChartCTPrintLineValue(#val2, $cell_mask, #bold_row)
+      end-if
+   end-if
+   if #cols > 2
+      add #val3 to #line_total
+      if #colstoprint > 2
+         next-column
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+         do InstantChartCTPrintLineValue(#val3, $cell_mask, #bold_row)
+      end-if
+   end-if
+   if #cols > 3
+      add #val4 to #line_total
+      if #colstoprint > 3
+         next-column
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+         do InstantChartCTPrintLineValue(#val4, $cell_mask, #bold_row)
+      end-if
+   end-if
+   if #cols > 4
+      add #val5 to #line_total
+      if #colstoprint > 4
+         next-column
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+         do InstantChartCTPrintLineValue(#val5, $cell_mask, #bold_row)
+      end-if
+   end-if
+   if #cols > 5
+      add #val6 to #line_total
+      if #colstoprint > 5
+         next-column
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+         do InstantChartCTPrintLineValue(#val6, $cell_mask, #bold_row)
+      end-if
+   end-if
+   if #cols > 6
+      add #val7 to #line_total
+      if #colstoprint > 6
+         next-column
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+         do InstantChartCTPrintLineValue(#val7, $cell_mask, #bold_row)
+      end-if
+   end-if
+   if #cols > 7
+      add #val8 to #line_total
+      if #colstoprint > 7
+         next-column
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+         do InstantChartCTPrintLineValue(#val8, $cell_mask, #bold_row)
+      end-if
+   end-if
+   if #cols > 8
+      add #val9 to #line_total
+      if #colstoprint > 8
+         next-column
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+         do InstantChartCTPrintLineValue(#val9, $cell_mask, #bold_row)
+      end-if
+   end-if
+   if #cols > 9
+      add #val10 to #line_total
+      if #colstoprint > 9
+         next-column
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+         do InstantChartCTPrintLineValue(#val10, $cell_mask, #bold_row)
+      end-if
+   end-if
+   if #cols > 10
+      add #val11 to #line_total
+      if #colstoprint > 10
+         next-column
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+         do InstantChartCTPrintLineValue(#val11, $cell_mask, #bold_row)
+      end-if
+   end-if
+   if #cols > 11
+      add #val12 to #line_total
+      if #colstoprint > 11
+         next-column
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+         do InstantChartCTPrintLineValue(#val12, $cell_mask, #bold_row)
+      end-if
+   end-if
+   if #colstoprint > 1 and not #no_line_totals
+      next-column
+      graphic (+#line_up, -2, #line_height) vert-line 
+      position (+#line_down,+2)
+      if (#adddotcolumn = 1)
+         next-column
+         graphic (+#line_up, -2, #line_height) vert-line 
+         position (+#line_down,+2)
+      end-if
+      do InstantChartCTPrintLineValue(#line_total, $last_cell_mask, #bold_last_col)
+   end-if
+   ! finally print the horizontal line for the entire row (need a dotted column?)
+   let #use_col = #colstoprint + 3 - #adddotcolumn ! skip row and total columns
+   use-column #use_col
+   let #line_length = #_current-column - #line_start 
+   use-column 1
+   graphic (+#line_up,, #line_length) horz-line
+!   graphic (+#line_down, #line_start, #line_length) horz-line  ??? doesn't work why???
+   if ( #adddotcolumn = 1)
+        let #segments = 32
+        let #last_col = #use_col + 1
+        use-column #last_col
+        let #last_pos = #_current-column
+        use-column #use_col
+        let #line_length = #last_pos - #_current-column
+        let #line_length_skip =  #line_length / #segments
+        let #line_length_skip2 = #line_length_skip * 2
+        position (,+#line_length_skip)
+        graphic (,,#line_length_skip) horz-line
+        let #segments = #segments - 1
+        while #segments > 0
+           position (,+#line_length_skip2)
+           graphic (,,#line_length_skip) horz-line
+           let #segments = #segments - 1
+        end-while
+        ! lastly print the totals column graphic if required
+        if #colstoprint > 1 and not #no_line_totals
+           use-column #last_col
+           graphic (,,#line_length) horz-line
+        end-if
+    end-if
+   position (+#line_down)
+   next-listing skiplines=#skip need=#skip
+end-procedure ! InstantChartCTPrintLine
+!
+!----------------------------------------------------------------------------
+!
+! InstantChartCTPrintLineValue
+!
+! Purpose: Prints the value of one cell of the crosstab
+!
+! $value - The value to be printed
+! $mask  - The mask to use for printing
+! #bold  - 1 = the value should be printed in bold
+!
+begin-procedure InstantChartCTPrintLineValue(#value, $mask, #bold)
+   if #bold = 1
+      print #value () bold edit :$mask
+   else
+      print #value () edit :$mask
+   end-if
+end-procedure ! InstantChartCTPrintLineValue
+!
+!----------------------------------------------------------------------------
+!
+! InstantChartCTPrintLineString
+!
+! Purpose: Prints the value of one cell of the crosstab
+!
+! $value - The value to be printed
+! $mask  - The mask to use for printing
+! #bold  - 1 = the value should be printed in bold
+!
+begin-procedure InstantChartCTPrintLineString($value, $mask, #bold)
+   if #bold = 1
+      print $value () bold edit :$mask
+   else
+      print $value () edit :$mask
+   end-if
+end-procedure ! InstantChartCTPrintLineString
+!
+!----------------------------------------------------------------------------
+!
+! InstantChartCTParseStyle
+!
+! Purpose: Parse the style string for a cross tab
+!          and set appropriate flags
+!
+! $style    - Style string. May contain the following keywords separated
+!             by a blank.
+!             "BOX"             - Each row is srounded by a box
+!             "NO-COL-TOTALS"   - Totals for the columns will not be displayed
+!             "COL-TOTALS-ONLY" - Only the totals for the columns will be displayed
+!             "NO-LINE-TOTALS"  - Totals for the lines will not be displayed
+!             "NO-COL-TITLES"   - Titles for the columns will not be displayed
+! :#box             - Returns the box attribute, if any
+! :#skip            - Returns the lines to skip after each print, if any
+! :#no_col_totals   - Returns the no-col-totals attribute, if any
+! :#col_totals_only - Returns the col-totals-only attribute, if any
+! :#no_line_totals  - Returns the no-line-totals attribute, if any
+! :#no_col_titles   - Returns the no-column-titles attribute, if any
+! :$row_mask        - Returns the mask to use for the row titles
+! :$cell_mask       - Returns the mask to use for all of the cells
+! :$col_mask        - Returns the mask to use for the col titles (last column of CT)
+! :$total_mask      - Returns the mask to use for the totals (last column & row of CT)
+! :#shade           - Returns the % to shade
+! :#rowbold         - Returns bolding attribute for the row titles, if any
+! :#colbold         - Returns bolding attribute for the column totals, if any
+!
+begin-procedure InstantChartCTParseStyle($style, :#box, :#skip, 
+                               :#no_col_totals, :#col_totals_only, 
+                               :#no_line_totals, :#no_col_titles, 
+                               :$row_mask, :$cell_mask, :$col_mask, :$total_mask
+                               :$row_string, :$col_string, 
+                               :#shade, :#rowbold, :#colbold)
+   let #box             = 0
+   let #no_col_totals   = 0
+   let #col_totals_only = 0
+   let #no_line_totals  = 0
+   let #skip            = 1
+   let #shade           = 0
+   let #rowbold         = 0
+   let #colbold         = 0
+   let $row_mask        = {INSTANT_CHART_CT_NUM_FORMAT}
+   let $col_mask        = {INSTANT_CHART_CT_NUM_FORMAT}
+   let $cell_mask       = {INSTANT_CHART_CT_NUM_FORMAT}
+   let $total_mask      = {INSTANT_CHART_CT_NUM_FORMAT}
+   let $row_string      = 'Total'
+   let $col_string      = 'Total'
+   while $style != ''
+      do InstantChartCTGetNextStyle($next,$style)
+      ! check for BOX
+      if substr($next,1,4) = 'BOX-'
+         let #box = to_number(substr($next,5,length($next) - 4))
+         goto next_interation
+      end-if
+      if substr($next,1,7) = 'ROWTXT-'
+         let $row_string = substr($next,8,length($next) - 7)
+         goto next_interation
+      end-if
+      if substr($next,1,7) = 'ROWBOLD'
+         let #rowbold = 1
+         goto next_interation
+      end-if
+      if substr($next,1,7) = 'COLTXT-'
+         let $col_string = substr($next,8,length($next) - 7)
+         goto next_interation
+      end-if
+      if substr($next,1,7) = 'COLBOLD'
+         let #colbold = 1
+         goto next_interation
+      end-if
+      if substr($next,1,8) = 'ROWMASK-'
+         let $row_mask = substr($next,9,length($next) - 8)
+         goto next_interation
+      end-if
+      if substr($next,1,8) = 'COLMASK-'
+         let $col_mask = substr($next,9,length($next) - 8)
+         goto next_interation
+      end-if
+      if substr($next,1,9) = 'CELLMASK-'
+          let $cell_mask = substr($next,10,length($next) - 9)
+         goto next_interation
+      end-if
+      if substr($next,1,10) = 'TOTALMASK-'
+         let $total_mask = substr($next,11,length($next) - 10)
+         goto next_interation
+      end-if
+      if substr($next,1,5) = 'SKIP-'
+         let #skip = to_number(substr($next,6,length($next) - 5))
+         goto next_interation
+      end-if
+      if substr($next,1,6) = 'SHADE-'
+         let #shade = to_number(substr($next,7,length($next) - 6))
+         goto next_interation
+      end-if
+      if $next = 'NO-COL-TOTALS'
+         let #no_col_totals = 1
+         goto next_interation
+      end-if
+      if $next = 'COL-TOTALS-ONLY'
+         let #col_totals_only = 1
+         goto next_interation
+      end-if
+      if $next = 'NO-LINE-TOTALS'
+         let #no_line_totals = 1
+         goto next_interation
+      end-if
+      if $next = 'NO-COL-TITLES'
+         let #no_col_titles = 1
+         goto next_interation
+      end-if
+   next_interation:
+   end-while
+end-procedure ! InstantChartCTParseStyle
+!
+!----------------------------------------------------------------------------
+!
+! InstantChartCTGetNextStyle
+!
+! Purpose: Extracts one element from a style string (using the semi-colon
+!          separator).
+!
+! :$next     - Return the next element here.
+! :$style    - Style string. We take the first element and return the remains here.
+!
+begin-procedure InstantChartCTGetNextStyle(:$next,:$style)
+   let #mid = instr($style,';',1)
+   if #mid = 0
+      ! Not found -- last element
+      let $next = $style
+      let $style = ''
+      goto almost_endlabel
+   end-if
+   let $next = substr($style,1,#mid - 1)
+   let $style = substr($style,#mid + 1, length($style) - #mid)
+almost_endlabel:
+   let $next = upper(rtrim(ltrim($next,' '),' '))
+end-procedure ! InstantChartCTGetNextStyle
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartHLCPivot
+!
+! Purpose: Accumulate data for a high-low-close Chart by using 4 columns
+!          the first holds the maximum value in the series -- the high
+!          the second holds the minimum value in the series -- the low
+!          the third holds the last value in the series -- the closing value
+!          the fourth holds the first value in the series -- the opening value
+!
+! #num      - Chart number
+! $selector - The name of the item (stock, etc.)
+! #value    - value
+!
+begin-procedure InstantChartHLCPivot(#num,$selector,#value)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   let #i_before = InstantChartRowCount.n(#num)
+   do InstantChartLocateEntry(#num, $selector, 'ADD')
+   if #_ICCurrentRow < 0 or #_ICCurrentRow >= {INSTANT_CHART_MAX_ROWS}
+      goto endlabel
+   end-if
+   let #i_after = InstantChartRowCount.n(#num)
+   if #i_after > #i_before
+      ! new entry (new stock)
+      let InstantChartDataArray.value1(#_ICCurrentRow,#num) = #value  ! high
+      let InstantChartDataArray.value2(#_ICCurrentRow,#num) = #value  ! low
+      let InstantChartDataArray.value4(#_ICCurrentRow,#num) = #value  ! open
+   else
+      if #value > InstantChartDataArray.value1(#_ICCurrentRow,#num)
+         let InstantChartDataArray.value1(#_ICCurrentRow,#num) = #value  ! new high
+      end-if
+      if #value < InstantChartDataArray.value2(#_ICCurrentRow,#num)
+         let InstantChartDataArray.value2(#_ICCurrentRow,#num) = #value  ! new low
+      end-if
+   end-if
+   let InstantChartDataArray.value3(#_ICCurrentRow,#num) = #value  ! close
+endlabel:
+end-procedure ! InstantChartHLCPivot
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartHLCPrint
+!
+! Purpose: Prints the High-Low-Close chart to the current position
+!          size of the chart must be defined in the declare-chart
+!
+! #num      - Chart number
+! #tmpl     - Template number (InstantChart1, InstantChart2,...)
+! $style    - if 'DISPLAY-OPENING-VALUE' will display also the Opening value
+!
+begin-procedure InstantChartHLCPrint(#num,#tmpl,$style)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   if #tmpl < 1 or #tmpl > {INSTANT_CHART_TEMPLATES}
+      display 'Error: Maximum number of chart templates exceeded'
+      goto endlabel
+   end-if
+   do InstantChartBarBuild(#num)
+   let #RowCount = InstantChartRowCount.n(#num)
+   if upper($style) = 'DISPLAY-OPENING-VALUE'
+      let #ColCount = 5
+   else
+      let #ColCount = 4
+   end-if
+   evaluate #tmpl
+      when = 1
+         print-chart InstantChart1 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ('High', 'Low', 'Close', 'Open')
+      break
+#if {INSTANT_CHART_TEMPLATES} > 1
+      when = 2
+         print-chart InstantChart2 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ('High', 'Low', 'Close', 'Open')
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 2
+      when = 3
+         print-chart InstantChart3 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ('High', 'Low', 'Close', 'Open')
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 3
+      when = 4
+         print-chart InstantChart4 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ('High', 'Low', 'Close', 'Open')
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 4
+      when = 5
+         print-chart InstantChart5 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ('High', 'Low', 'Close', 'Open')
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 5
+      when = 6
+         print-chart InstantChart6 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ('High', 'Low', 'Close', 'Open')
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 6
+      when = 7
+         print-chart InstantChart7 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ('High', 'Low', 'Close', 'Open')
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 7
+      when = 8
+         print-chart InstantChart8 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ('High', 'Low', 'Close', 'Open')
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 8
+      when = 9
+         print-chart InstantChart9 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ('High', 'Low', 'Close', 'Open')
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 9
+      when = 10
+         print-chart InstantChart10 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ('High', 'Low', 'Close', 'Open')
+      break
+#endif
+   end-evaluate
+endlabel:
+end-procedure ! InstantChartHLCPrint
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartHLC
+!
+! Purpose: Accumulate data for a high-low-close Chart
+!          No pivoting is performed
+!
+! #num      - Chart number
+! $selector - Bar name
+! #value1   - High
+! #value2   - Low
+! #value3   - Close
+! #value4   - Open (pass 0 if not applicable)
+!
+begin-procedure InstantChartHLC(#num,$selector,#value1,#value2,#value3,#value4)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   do InstantChartLocateEntry(#num, $selector, 'ADD')
+   if #_ICCurrentRow >= 0 and #_ICCurrentRow < {INSTANT_CHART_MAX_ROWS}
+      put #value1 into InstantChartDataArray(#_ICCurrentRow) value1(#num)
+      put #value2 into InstantChartDataArray(#_ICCurrentRow) value2(#num)
+      put #value3 into InstantChartDataArray(#_ICCurrentRow) value3(#num)
+      put #value4 into InstantChartDataArray(#_ICCurrentRow) value4(#num)
+   end-if
+endlabel:
+end-procedure ! InstantChartHLC
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartFloat
+!
+! Purpose: Accumulate data for a floating bar Chart
+!          No pivoting is performed
+!
+! #num      - Chart number
+! $selector - Bar name
+! #value1   - base of the bar
+! #value2   - height of the bar
+!
+begin-procedure InstantChartFloat(#num,$selector,#value1,#value2)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   do InstantChartLocateEntry(#num, $selector, 'ADD')
+   if #_ICCurrentRow >= 0 and #_ICCurrentRow < {INSTANT_CHART_MAX_ROWS}
+      put #value1 into InstantChartDataArray(#_ICCurrentRow) value1(#num)
+      put #value2 into InstantChartDataArray(#_ICCurrentRow) value2(#num)
+   end-if
+endlabel:
+end-procedure ! InstantChartFloat
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartFloatPrint
+!
+! Purpose: Prints the floating bar chart to the current position
+!          size of the chart must be defined in the declare-chart
+!
+! #num      - Chart number
+! #tmpl     - Template number (InstantChart1, InstantChart2,...)
+!
+begin-procedure InstantChartFloatPrint(#num,#tmpl)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   if #tmpl < 1 or #tmpl > {INSTANT_CHART_TEMPLATES}
+      display 'Error: Maximum number of chart templates exceeded'
+      goto endlabel
+   end-if
+   do InstantChartBarBuild(#num)
+   let #RowCount = InstantChartRowCount.n(#num)
+   evaluate #tmpl
+      when = 1
+         print-chart InstantChart1 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+            legend = no
+      break
+#if {INSTANT_CHART_TEMPLATES} > 1
+      when = 2
+         print-chart InstantChart2 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+            legend = no
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 2
+      when = 3
+         print-chart InstantChart3 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+            legend = no
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 3
+      when = 4
+         print-chart InstantChart4 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+            legend = no
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 4
+      when = 5
+         print-chart InstantChart5 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+            legend = no
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 5
+      when = 6
+         print-chart InstantChart6 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+            legend = no
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 6
+      when = 7
+         print-chart InstantChart7 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+            legend = no
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 7
+      when = 8
+         print-chart InstantChart8 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+            legend = no
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 8
+      when = 9
+         print-chart InstantChart9 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+            legend = no
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 9
+      when = 10
+         print-chart InstantChart10 ()
+            data-array = InstantChartBarArray
+            data-array-row-count = #RowCount
+            data-array-column-count = 3
+            legend = no
+      break
+#endif
+   end-evaluate
+endlabel:
+end-procedure ! InstantChartFloatPrint
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartScatter3XY
+!
+! Purpose: Accumulate data for a xy-scatter-plot with up to 6 lines
+!          You should pass zero for unused columns for example:
+!          each pair of X,Y occupies two columns
+!          do InstantChartScatter3XY(1, #a, #b, 0, 0, 0, 0,...)
+!
+!          No pivoting is performed
+!
+! #num      - Chart number
+! #value1   - X value for column 1
+! #value2   - Y value for column 2
+! #value3   - X2 value for column 3
+! #value4   - Y2 value for column 4
+! #value5   - X3 value for column 5
+! #value6   - Y3 value for column 6
+! #value7   - X4 value for column 7
+! #value8   - Y4 value for column 8
+! #value9   - X5 value for column 9
+! #value10  - Y5 value for column 10
+! #value11  - X6 value for column 11
+! #value12  - Y6 value for column 12
+!
+begin-procedure InstantChartScatter3XY(#num, #value1, #value2,
+        #value3, #value4, #value5, #value6, #value7, #value8,
+        #value9, #value10, #value11, #value12)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   let #_ICCurrentRow = InstantChartRowCount.n(#num)
+   if #_ICCurrentRow >= 0 and #_ICCurrentRow < {INSTANT_CHART_MAX_ROWS}
+      put #value1 into InstantChartDataArray(#_ICCurrentRow) value1(#num)
+      put #value2 into InstantChartDataArray(#_ICCurrentRow) value2(#num)
+      put #value3 into InstantChartDataArray(#_ICCurrentRow) value3(#num)
+      put #value4 into InstantChartDataArray(#_ICCurrentRow) value4(#num)
+      put #value5 into InstantChartDataArray(#_ICCurrentRow) value5(#num)
+      put #value6 into InstantChartDataArray(#_ICCurrentRow) value6(#num)
+      put #value7 into InstantChartDataArray(#_ICCurrentRow) value7(#num)
+      put #value8 into InstantChartDataArray(#_ICCurrentRow) value8(#num)
+      put #value9 into InstantChartDataArray(#_ICCurrentRow) value9(#num)
+      put #value10 into InstantChartDataArray(#_ICCurrentRow) value10(#num)
+      put #value11 into InstantChartDataArray(#_ICCurrentRow) value11(#num)
+      put #value12 into InstantChartDataArray(#_ICCurrentRow) value12(#num)
+      array-add 1 to InstantChartRowCount(#num) n
+!      array-add 1 to InstantChartRowCount(#num) n2
+!      array-add 1 to InstantChartRowCount(#num) n3
+   end-if
+endlabel:
+end-procedure ! InstantChartScatter3XY
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartScatterPrint
+!
+! Purpose: Prints the xy scatter plot to the current position
+!          size of the chart must be defined in the declare-chart
+!
+! #num      - Chart number
+! #tmpl     - Template number (InstantChart1, InstantChart2,...)
+!
+begin-procedure InstantChartScatterPrint(#num,#tmpl)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   if #tmpl < 1 or #tmpl > {INSTANT_CHART_TEMPLATES}
+      display 'Error: Maximum number of chart templates exceeded'
+      goto endlabel
+   end-if
+   let #ColCount = InstantChartColCount.n(#num) * 2 ! values are xy pairs
+   if #ColCount < 2
+      let #ColCount = 2
+   end-if
+   !
+   ! Copy the data into the InstantChartXYArray
+   !
+   do InstantChartScatterBuild(#num)
+   !
+   ! Get the column labels
+   !
+   let $colname1 = ltrim(InstantChartColCount.colname(#num,0),' ')
+   let $colname2 = ltrim(InstantChartColCount.colname(#num,1),' ')
+   let $colname3 = ltrim(InstantChartColCount.colname(#num,2),' ')
+   let $colname4 = ltrim(InstantChartColCount.colname(#num,3),' ')
+   let $colname5 = ltrim(InstantChartColCount.colname(#num,4),' ')
+   let $colname6 = ltrim(InstantChartColCount.colname(#num,5),' ')
+   let $colname7 = ltrim(InstantChartColCount.colname(#num,6),' ')
+   let $colname8 = ltrim(InstantChartColCount.colname(#num,7),' ')
+   let $colname9 = ltrim(InstantChartColCount.colname(#num,8),' ')
+   let $colname10 = ltrim(InstantChartColCount.colname(#num,9),' ')
+   let $colname11 = ltrim(InstantChartColCount.colname(#num,10),' ')
+   let $colname12 = ltrim(InstantChartColCount.colname(#num,11),' ')
+   let #RowCount = InstantChartRowCount.n(#num)
+   evaluate #tmpl
+      when = 1
+         print-chart InstantChart1 ()
+            data-array = InstantChartXYArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#if {INSTANT_CHART_TEMPLATES} > 1
+      when = 2
+         print-chart InstantChart2 ()
+            data-array = InstantChartXYArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 2
+      when = 3
+         print-chart InstantChart3 ()
+            data-array = InstantChartXYArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 3
+      when = 4
+         print-chart InstantChart4 ()
+            data-array = InstantChartXYArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 4
+      when = 5
+         print-chart InstantChart5 ()
+            data-array = InstantChartXYArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 5
+      when = 6
+         print-chart InstantChart6 ()
+            data-array = InstantChartXYArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 6
+      when = 7
+         print-chart InstantChart7 ()
+            data-array = InstantChartXYArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 7
+      when = 8
+         print-chart InstantChart8 ()
+            data-array = InstantChartXYArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 8
+      when = 9
+         print-chart InstantChart9 ()
+            data-array = InstantChartXYArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+#if {INSTANT_CHART_TEMPLATES} > 9
+      when = 10
+         print-chart InstantChart10 ()
+            data-array = InstantChartXYArray
+            data-array-row-count = #RowCount
+            data-array-column-count = #ColCount
+            data-array-column-labels = ($colname1, $colname2, $colname3,
+                                                         $colname4, $colname5, $colname6,
+                                                         $colname7, $colname8, $colname9,
+                                                         $colname10, $colname11, $colname12)
+      break
+#endif
+   end-evaluate
+endlabel:
+end-procedure ! InstantChartScatterPrint
+!
+!----------------------------------------------------------------------------
+!
+! InstantChartScatterBuild
+!
+! Purpose:         Copies xy scatter plot data from InstantChartDataArray to
+!                  InstantChartXYArray.
+!
+! #num      - Chart number
+!
+begin-procedure InstantChartScatterBuild(#num)
+   !
+   ! Separate row counts were maintained for the different lines
+   !
+   let #RowCount = InstantChartRowCount.n(#num)
+   let #RowCount2 = InstantChartRowCount.n2(#num)
+   let #RowCount3 = InstantChartRowCount.n3(#num)
+   let #RowCount4 = InstantChartRowCount.n4(#num)
+   let #RowCount5 = InstantChartRowCount.n5(#num)
+   let #RowCount6 = InstantChartRowCount.n6(#num)
+   !
+   ! Calculate the maximum row
+   !
+   let #MaxRowCount = cond(#RowCount > #RowCount2, #RowCount, #RowCount2)
+   let #MaxRowCount = cond(#MaxRowCount > #RowCount3, #MaxRowCount, #RowCount3)
+   !
+   ! Copy the data
+   !
+   let #CurRow = 0
+   while #CurRow < #MaxRowCount
+      let InstantChartXYArray.value1(#CurRow) = InstantChartDataArray.value1(#CurRow,#num)
+      let InstantChartXYArray.value2(#CurRow) = InstantChartDataArray.value2(#CurRow,#num)
+      let InstantChartXYArray.value3(#CurRow) = InstantChartDataArray.value3(#CurRow,#num)
+      let InstantChartXYArray.value4(#CurRow) = InstantChartDataArray.value4(#CurRow,#num)
+      let InstantChartXYArray.value5(#CurRow) = InstantChartDataArray.value5(#CurRow,#num)
+      let InstantChartXYArray.value6(#CurRow) = InstantChartDataArray.value6(#CurRow,#num)
+      let InstantChartXYArray.value7(#CurRow) = InstantChartDataArray.value7(#CurRow,#num)
+      let InstantChartXYArray.value8(#CurRow) = InstantChartDataArray.value8(#CurRow,#num)
+      let InstantChartXYArray.value9(#CurRow) = InstantChartDataArray.value9(#CurRow,#num)
+      let InstantChartXYArray.value10(#CurRow) = InstantChartDataArray.value10(#CurRow,#num)
+      let InstantChartXYArray.value11(#CurRow) = InstantChartDataArray.value11(#CurRow,#num)
+      let InstantChartXYArray.value12(#CurRow) = InstantChartDataArray.value12(#CurRow,#num)
+      add 1 to #CurRow
+   end-while
+   !
+   ! Fill zeros in unused rows
+   !
+   while #RowCount < #MaxRowCount
+      put 0 0 into InstantChartXYArray(#RowCount) value1 value2
+      add 1 to #RowCount
+   end-while
+   while #RowCount2 < #MaxRowCount and #ColCount > 2
+      put 0 0 into InstantChartXYArray(#RowCount2) value3 value4
+      add 1 to #RowCount2
+   end-while
+   while #RowCount3 < #MaxRowCount and #ColCount > 4
+      put 0 0 into InstantChartXYArray(#RowCount3) value5 value6
+      add 1 to #RowCount3
+   end-while
+   while #RowCount4 < #MaxRowCount and #ColCount > 6
+      put 0 0 into InstantChartXYArray(#RowCount3) value7 value8
+      add 1 to #RowCount4
+   end-while
+   while #RowCount5 < #MaxRowCount and #ColCount > 8
+      put 0 0 into InstantChartXYArray(#RowCount3) value9 value10
+      add 1 to #RowCount5
+   end-while
+   while #RowCount6 < #MaxRowCount and #ColCount > 10
+      put 0 0 into InstantChartXYArray(#RowCount3) value11 value12
+      add 1 to #RowCount6
+   end-while
+   !
+   ! Sets "n" to the maximum count so that the printing rountine only needs to
+   ! look at "n"
+   !
+   let InstantChartRowCount.n(#num) = #MaxRowCount
+   !
+end-procedure ! InstantChartScatterBuild
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartScatterPivot
+!
+! Purpose: Accumulate data for a xy-scatter-plot by pivoting
+!          Each selector names a pair of XY values.
+!          Since the values are a pair per selector, the number of columns
+!          that are used is 2 times the number of distinct selectors.
+!          You must have the same number of point on each line (each selector)
+!
+!          We maintain a separate row count for each selector (each line).
+!
+! #num      - Chart number
+! $selector - The line selector
+! #valueX   - X value
+! #valueY   - Y value
+!
+begin-procedure InstantChartScatterPivot(#num, $selector, #valueX, #valueY)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   !
+   ! Search for the column name in the InstantChartColCount array.
+   ! If not found a pair of entries are added. If the number of columns
+   ! exceeds the maximum, #_ICCurrentCol is set to -1. #_ICCurrentCol will
+   ! have 0,1,2,3,4,5 that translate to the pairs 1,2, 3,4, 5,6 7,8 9,10 11,12
+   !
+   do InstantChartLocateColumn(#num, $selector)
+   evaluate #_ICCurrentCol
+      when = 0
+         let #_ICCurrentRow = InstantChartRowCount.n(#num)
+         if #_ICCurrentRow >= 0 and #_ICCurrentRow < {INSTANT_CHART_MAX_ROWS}
+            put #valueX into InstantChartDataArray(#_ICCurrentRow) value1(#num)
+            put #valueY into InstantChartDataArray(#_ICCurrentRow) value2(#num)
+            array-add 1 to InstantChartRowCount(#num) n
+         end-if
+         break
+      when = 1
+         let #_ICCurrentRow = InstantChartRowCount.n2(#num)
+         if #_ICCurrentRow >= 0 and #_ICCurrentRow < {INSTANT_CHART_MAX_ROWS}
+            put #valueX into InstantChartDataArray(#_ICCurrentRow) value3(#num)
+            put #valueY into InstantChartDataArray(#_ICCurrentRow) value4(#num)
+            array-add 1 to InstantChartRowCount(#num) n2
+         end-if
+         break
+      when = 2
+         let #_ICCurrentRow = InstantChartRowCount.n3(#num)
+         if #_ICCurrentRow >= 0 and #_ICCurrentRow < {INSTANT_CHART_MAX_ROWS}
+            put #valueX into InstantChartDataArray(#_ICCurrentRow) value5(#num)
+            put #valueY into InstantChartDataArray(#_ICCurrentRow) value6(#num)
+            array-add 1 to InstantChartRowCount(#num) n3
+         end-if
+         break
+      when = 3
+         let #_ICCurrentRow = InstantChartRowCount.n4(#num)
+         if #_ICCurrentRow >= 0 and #_ICCurrentRow < {INSTANT_CHART_MAX_ROWS}
+            put #valueX into InstantChartDataArray(#_ICCurrentRow) value7(#num)
+            put #valueY into InstantChartDataArray(#_ICCurrentRow) value8(#num)
+            array-add 1 to InstantChartRowCount(#num) n4
+         end-if
+         break
+      when = 4
+         let #_ICCurrentRow = InstantChartRowCount.n5(#num)
+         if #_ICCurrentRow >= 0 and #_ICCurrentRow < {INSTANT_CHART_MAX_ROWS}
+            put #valueX into InstantChartDataArray(#_ICCurrentRow) value9(#num)
+            put #valueY into InstantChartDataArray(#_ICCurrentRow) value10(#num)
+            array-add 1 to InstantChartRowCount(#num) n5
+         end-if
+         break
+      when = 5
+         let #_ICCurrentRow = InstantChartRowCount.n6(#num)
+         if #_ICCurrentRow >= 0 and #_ICCurrentRow < {INSTANT_CHART_MAX_ROWS}
+            put #valueX into InstantChartDataArray(#_ICCurrentRow) value11(#num)
+            put #valueY into InstantChartDataArray(#_ICCurrentRow) value12(#num)
+            array-add 1 to InstantChartRowCount(#num) n6
+         end-if
+         break
+      when-other
+         display 'Error: The maximum number of lines on the XY Scatter Plot exceeded'
+         goto endlabel
+         break
+   end-evaluate
+endlabel:
+end-procedure ! InstantChartScatterPivot
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartSortByValue1
+!
+! Purpose: Sort a chart's data by "value1". Sort is in
+!          descending order with the highest value1 first.
+!
+! #num      - Chart number
+!
+begin-procedure InstantChartSortByValue1(#num)
+   if #num < 1 or #num > {INSTANT_CHART_COUNT}
+      display 'Error: Maximum number of charts exceeded'
+      goto endlabel
+   end-if
+   subtract 1 from #num
+   let #rows = InstantChartRowCount.n(#num) - 1
+   do InstantChartQuickSortByValue1(#num, 0, 0, #rows)
+endlabel:
+end-procedure ! InstantChartSortByValue1
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartQuickSortByValue1
+!
+! Purpose: Implement Sort a chart's data to the order of "value1" descending.
+!          this is a recusive function. Since SQR does not allocate
+!          local variables on the stack (they are all static, the
+!          recursive behavior employs a helper array)
+!
+! #num      - Chart number array subscript (starts with 0)
+! #level    - Recursion level (used as a subscript to the helper array)
+! #m        - The "m" argument of the classical Quick Sort
+! #n        - The "n" argument of the classical Quick Sort
+!
+begin-procedure InstantChartQuickSortByValue1(#num, #level, #m, #n)
+   if #m < #n
+      let #i = #m
+      let #j = #n + 1
+      let #val = InstantChartDataArray.value1(#m,#num)
+      while 1
+         add 1 to #i
+         while #i <= #j and InstantChartDataArray.value1(#i,#num) > #val
+             add 1 to #i
+         end-while
+         subtract 1 from #j
+         while #j >= 0 and InstantChartDataArray.value1(#j,#num) < #val
+            subtract 1 from #j
+         end-while
+         if #i < #j
+            do InstantChartQSortInterchange(#num, #i, #j)
+         else
+            break
+         end-if
+      end-while
+      do InstantChartQSortInterchange(#num, #m, #j)
+      add 1 to #level
+      ! Save #j and #n
+      let InstantChartQSort.j(#level - 1) = #j
+      let InstantChartQSort.n(#level - 1) = #n
+      subtract 1 from #j
+      do InstantChartQuickSortByValue1(#num, #level, #m, #j)
+      ! restore #j and #n
+      let #j = InstantChartQSort.j(#level - 1)
+      let #n = InstantChartQSort.n(#level - 1)
+      add 1 to #j
+      do InstantChartQuickSortByValue1(#num, #level, #j, #n)
+      subtract 1 from #level
+   end-if
+end-procedure ! InstantChartQuickSortByValue1
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartAggregate
+!
+! Purpose: Based on the set aggregate function, this procedure
+!          applies a value to an element of the array.
+!          It adds one to the count for this element and
+!          adds, or compares the value to the current value
+!          of the cell.
+!          We always maintain the count, regardless of the aggregate function.
+!          For 'sum', 'avg', and 'count' we always calculate the sum.
+!
+! #num      - Chart number
+! #col_num  - Together with #_ICCurrentRow identified the cell
+! #value    - the value to apply (add or compare)
+!
+begin-procedure InstantChartAggregate(#num,#col_num,#value)
+!
+   let $function = InstantChartRowCount.aggregation(#num)
+!
+   evaluate #col_num
+      when = 1
+         let #oldval = InstantChartDataArray.value1(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArray.count1(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArray.value1(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArray.count1(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 2
+         let #oldval = InstantChartDataArray.value2(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArray.count2(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArray.value2(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArray.count2(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 3
+         let #oldval = InstantChartDataArray.value3(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArray.count3(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArray.value3(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArray.count3(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 4
+         let #oldval = InstantChartDataArray.value4(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArray.count4(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArray.value4(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArray.count4(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 5
+         let #oldval = InstantChartDataArray.value5(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArray.count5(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArray.value5(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArray.count5(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 6
+         let #oldval = InstantChartDataArray.value6(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArray.count6(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArray.value6(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArray.count6(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 7
+         let #oldval = InstantChartDataArray.value7(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArray.count7(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArray.value7(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArray.count7(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 8
+         let #oldval = InstantChartDataArray.value8(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArray.count8(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArray.value8(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArray.count8(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 9
+         let #oldval = InstantChartDataArray.value9(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArray.count9(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArray.value9(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArray.count9(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 10
+         let #oldval = InstantChartDataArray.value10(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArray.count10(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArray.value10(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArray.count10(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 11
+         let #oldval = InstantChartDataArray.value11(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArray.count11(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArray.value11(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArray.count11(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 12
+         let #oldval = InstantChartDataArray.value12(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArray.count12(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArray.value12(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArray.count12(#_ICCurrentRow,#num) = #count + 1
+         break
+   end-evaluate
+end-procedure ! InstantChartAggregate
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartAggregateY2
+!
+! Purpose: Based on the set aggregate function, this procedure
+!          applies a value to an element of the array.
+!          It adds one to the count for this element and
+!          adds, or compares the value to the current value
+!          of the cell.
+!          We always maintain the count, regardless of the aggregate function.
+!          For 'sum', 'avg', and 'count' we always calculate the sum.
+!
+! #num      - Chart number
+! #col_num  - Together with #_ICCurrentRow identified the cell
+! #value    - the value to apply (add or compare)
+!
+begin-procedure InstantChartAggregateY2(#num,#col_num,#value)
+!
+   let $function = InstantChartRowCount.aggregation(#num)
+!
+   evaluate #col_num
+      when = 1
+         let #oldval = InstantChartDataArrayY2.value1(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArrayY2.count1(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArrayY2.value1(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArrayY2.count1(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 2
+         let #oldval = InstantChartDataArrayY2.value2(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArrayY2.count2(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArrayY2.value2(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArrayY2.count2(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 3
+         let #oldval = InstantChartDataArrayY2.value3(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArrayY2.count3(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArrayY2.value3(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArrayY2.count3(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 4
+         let #oldval = InstantChartDataArrayY2.value4(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArrayY2.count4(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArrayY2.value4(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArrayY2.count4(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 5
+         let #oldval = InstantChartDataArrayY2.value5(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArrayY2.count5(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArrayY2.value5(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArrayY2.count5(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 6
+         let #oldval = InstantChartDataArrayY2.value6(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArrayY2.count6(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArrayY2.value6(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArrayY2.count6(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 7
+         let #oldval = InstantChartDataArrayY2.value7(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArrayY2.count7(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArrayY2.value7(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArrayY2.count7(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 8
+         let #oldval = InstantChartDataArrayY2.value8(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArrayY2.count8(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArrayY2.value8(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArrayY2.count8(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 9
+         let #oldval = InstantChartDataArrayY2.value9(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArrayY2.count9(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArrayY2.value9(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArrayY2.count9(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 10
+         let #oldval = InstantChartDataArrayY2.value10(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArrayY2.count10(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArrayY2.value10(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArrayY2.count10(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 11
+         let #oldval = InstantChartDataArrayY2.value11(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArrayY2.count11(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArrayY2.value11(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArrayY2.count11(#_ICCurrentRow,#num) = #count + 1
+         break
+      when = 12
+         let #oldval = InstantChartDataArrayY2.value12(#_ICCurrentRow,#num)
+         let #count  = InstantChartDataArrayY2.count12(#_ICCurrentRow,#num)
+         do  InstantChartAggregateHelper($function,#value,#oldval,#count,#newval)
+         let InstantChartDataArrayY2.value12(#_ICCurrentRow,#num) = #newval
+         let InstantChartDataArrayY2.count12(#_ICCurrentRow,#num) = #count + 1
+         break
+   end-evaluate
+end-procedure ! InstantChartAggregateY2
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartAggregateHelper
+!
+! Purpose: Based on the set aggregate function, this procedure
+!          applies a value to a given value.
+!          It adds, or compares the value to the current value.
+!
+! $function - the aggregation function 'avg','max','min','count','sum'
+! #value    - the value to apply (add or compare)
+! #oldval   - the old value to compare with or add to
+! #count    - number of items. Used for min/max to determine if this is the first.
+! #newval   - the return value of this procedure.
+!
+begin-procedure InstantChartAggregateHelper($function,#value,#oldval,#count,:#newval)
+   let #newval = #oldval
+   if $function = 'max' and #count > 0
+      if #value > #oldval
+         let #newval = #value
+      end-if
+   else
+      if $function = 'min' and #count > 0
+        if #value < #oldval
+           let #newval = #value
+        end-if
+      else
+         add #value to #newval
+      end-if
+   end-if
+end-procedure ! InstantChartAggregateHelper
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartAggregateFinal
+!
+! Purpose: Set the value fields to the count or average if needed. 
+!          This function should be called when we're done entering data into the
+!          array and we are ready to print. After then, we cannot continue to
+!          accumumate data. The chart must be initialized before it can be used
+!          again. This is because we replace the totals with counts or averages and
+!          loose the totals.
+!
+! #num      - Chart number
+!
+! 
+begin-procedure InstantChartAggregateFinal(#num)
+   let $function = InstantChartRowCount.aggregation(#num)
+   let #RowCount = InstantChartRowCount.n(#num)
+   let #CurRow = 0
+   if $function = 'count'
+      while #CurRow < #RowCount
+         let InstantChartDataArray.value1(#CurRow,#num) = InstantChartDataArray.count1(#CurRow,#num)
+         let InstantChartDataArray.value2(#CurRow,#num) = InstantChartDataArray.count2(#CurRow,#num)
+         let InstantChartDataArray.value3(#CurRow,#num) = InstantChartDataArray.count3(#CurRow,#num)
+         let InstantChartDataArray.value4(#CurRow,#num) = InstantChartDataArray.count4(#CurRow,#num)
+         let InstantChartDataArray.value5(#CurRow,#num) = InstantChartDataArray.count5(#CurRow,#num)
+         let InstantChartDataArray.value6(#CurRow,#num) = InstantChartDataArray.count6(#CurRow,#num)
+         let InstantChartDataArray.value7(#CurRow,#num) = InstantChartDataArray.count7(#CurRow,#num)
+         let InstantChartDataArray.value8(#CurRow,#num) = InstantChartDataArray.count8(#CurRow,#num)
+         let InstantChartDataArray.value9(#CurRow,#num) = InstantChartDataArray.count9(#CurRow,#num)
+         let InstantChartDataArray.value10(#CurRow,#num) = InstantChartDataArray.count10(#CurRow,#num)
+         let InstantChartDataArray.value11(#CurRow,#num) = InstantChartDataArray.count11(#CurRow,#num)
+         let InstantChartDataArray.value12(#CurRow,#num) = InstantChartDataArray.count12(#CurRow,#num)
+         add 1 to #CurRow
+      end-while
+   end-if
+   if $function = 'avg'
+      while #CurRow < #RowCount
+         if InstantChartDataArray.count1(#CurRow,#num) > 0
+            let InstantChartDataArray.value1(#CurRow,#num) = InstantChartDataArray.value1(#CurRow,#num) / InstantChartDataArray.count1(#CurRow,#num)
+         end-if
+         if InstantChartDataArray.count2(#CurRow,#num) > 0
+            let InstantChartDataArray.value2(#CurRow,#num) = InstantChartDataArray.value2(#CurRow,#num) / InstantChartDataArray.count2(#CurRow,#num)
+         end-if
+         if InstantChartDataArray.count3(#CurRow,#num) > 0
+            let InstantChartDataArray.value3(#CurRow,#num) = InstantChartDataArray.value3(#CurRow,#num) / InstantChartDataArray.count3(#CurRow,#num)
+         end-if
+         if InstantChartDataArray.count4(#CurRow,#num) > 0
+            let InstantChartDataArray.value4(#CurRow,#num) = InstantChartDataArray.value4(#CurRow,#num) / InstantChartDataArray.count4(#CurRow,#num)
+         end-if
+         if InstantChartDataArray.count5(#CurRow,#num) > 0
+            let InstantChartDataArray.value5(#CurRow,#num) = InstantChartDataArray.value5(#CurRow,#num) / InstantChartDataArray.count5(#CurRow,#num)
+         end-if
+         if InstantChartDataArray.count6(#CurRow,#num) > 0
+            let InstantChartDataArray.value6(#CurRow,#num) = InstantChartDataArray.value6(#CurRow,#num) / InstantChartDataArray.count6(#CurRow,#num)
+         end-if
+         if InstantChartDataArray.count7(#CurRow,#num) > 0
+            let InstantChartDataArray.value7(#CurRow,#num) = InstantChartDataArray.value7(#CurRow,#num) / InstantChartDataArray.count7(#CurRow,#num)
+         end-if
+         if InstantChartDataArray.count8(#CurRow,#num) > 0
+            let InstantChartDataArray.value8(#CurRow,#num) = InstantChartDataArray.value8(#CurRow,#num) / InstantChartDataArray.count8(#CurRow,#num)
+         end-if
+         if InstantChartDataArray.count9(#CurRow,#num) > 0
+            let InstantChartDataArray.value9(#CurRow,#num) = InstantChartDataArray.value9(#CurRow,#num) / InstantChartDataArray.count9(#CurRow,#num)
+         end-if
+         if InstantChartDataArray.count10(#CurRow,#num) > 0
+            let InstantChartDataArray.value10(#CurRow,#num) = InstantChartDataArray.value10(#CurRow,#num) / InstantChartDataArray.count10(#CurRow,#num)
+         end-if
+         if InstantChartDataArray.count11(#CurRow,#num) > 0
+            let InstantChartDataArray.value11(#CurRow,#num) = InstantChartDataArray.value11(#CurRow,#num) / InstantChartDataArray.count11(#CurRow,#num)
+         end-if
+         if InstantChartDataArray.count12(#CurRow,#num) > 0
+            let InstantChartDataArray.value12(#CurRow,#num) = InstantChartDataArray.value12(#CurRow,#num) / InstantChartDataArray.count12(#CurRow,#num)
+         end-if
+         add 1 to #CurRow
+      end-while
+   end-if
+end-procedure ! InstantChartAggregateFinal
+!
+!----------------------------------------------------------------------------
+!
+!
+! InstantChartAggregateFinalY2
+!
+! Purpose: Set the value fields to the count or average if needed. 
+!          This function should be called when we're done entering data into the
+!          array and we are ready to print. After then, we cannot continue to
+!          accumumate data. The chart must be initialized before it can be used
+!          again. This is because we replace the totals with counts or averages and
+!          loose the totals.
+!
+! #num      - Chart number
+!
+! 
+begin-procedure InstantChartAggregateFinalY2(#num)
+   let $function = InstantChartRowCount.aggregationY2(#num)
+   let #RowCount = InstantChartRowCount.n(#num)
+   let #CurRow = 0
+   if $function = 'count'
+      while #CurRow < #RowCount
+         let InstantChartDataArrayY2.value1(#CurRow,#num) = InstantChartDataArrayY2.count1(#CurRow,#num)
+         let InstantChartDataArrayY2.value2(#CurRow,#num) = InstantChartDataArrayY2.count2(#CurRow,#num)
+         let InstantChartDataArrayY2.value3(#CurRow,#num) = InstantChartDataArrayY2.count3(#CurRow,#num)
+         let InstantChartDataArrayY2.value4(#CurRow,#num) = InstantChartDataArrayY2.count4(#CurRow,#num)
+         let InstantChartDataArrayY2.value5(#CurRow,#num) = InstantChartDataArrayY2.count5(#CurRow,#num)
+         let InstantChartDataArrayY2.value6(#CurRow,#num) = InstantChartDataArrayY2.count6(#CurRow,#num)
+         let InstantChartDataArrayY2.value7(#CurRow,#num) = InstantChartDataArrayY2.count7(#CurRow,#num)
+         let InstantChartDataArrayY2.value8(#CurRow,#num) = InstantChartDataArrayY2.count8(#CurRow,#num)
+         let InstantChartDataArrayY2.value9(#CurRow,#num) = InstantChartDataArrayY2.count9(#CurRow,#num)
+         let InstantChartDataArrayY2.value10(#CurRow,#num) = InstantChartDataArrayY2.count10(#CurRow,#num)
+         let InstantChartDataArrayY2.value11(#CurRow,#num) = InstantChartDataArrayY2.count11(#CurRow,#num)
+         let InstantChartDataArrayY2.value12(#CurRow,#num) = InstantChartDataArrayY2.count12(#CurRow,#num)
+         add 1 to #CurRow
+      end-while
+   end-if
+   if $function = 'avg'
+      while #CurRow < #RowCount
+         if InstantChartDataArrayY2.count1(#CurRow,#num) > 0
+            let InstantChartDataArrayY2.value1(#CurRow,#num) = InstantChartDataArrayY2.value1(#CurRow,#num) / InstantChartDataArrayY2.count1(#CurRow,#num)
+         end-if
+         if InstantChartDataArrayY2.count2(#CurRow,#num) > 0
+            let InstantChartDataArrayY2.value2(#CurRow,#num) = InstantChartDataArrayY2.value2(#CurRow,#num) / InstantChartDataArrayY2.count2(#CurRow,#num)
+         end-if
+         if InstantChartDataArrayY2.count3(#CurRow,#num) > 0
+            let InstantChartDataArrayY2.value3(#CurRow,#num) = InstantChartDataArrayY2.value3(#CurRow,#num) / InstantChartDataArrayY2.count3(#CurRow,#num)
+         end-if
+         if InstantChartDataArrayY2.count4(#CurRow,#num) > 0
+            let InstantChartDataArrayY2.value4(#CurRow,#num) = InstantChartDataArrayY2.value4(#CurRow,#num) / InstantChartDataArrayY2.count4(#CurRow,#num)
+         end-if
+         if InstantChartDataArrayY2.count5(#CurRow,#num) > 0
+            let InstantChartDataArrayY2.value5(#CurRow,#num) = InstantChartDataArrayY2.value5(#CurRow,#num) / InstantChartDataArrayY2.count5(#CurRow,#num)
+         end-if
+         if InstantChartDataArrayY2.count6(#CurRow,#num) > 0
+            let InstantChartDataArrayY2.value6(#CurRow,#num) = InstantChartDataArrayY2.value6(#CurRow,#num) / InstantChartDataArrayY2.count6(#CurRow,#num)
+         end-if
+         if InstantChartDataArrayY2.count7(#CurRow,#num) > 0
+            let InstantChartDataArrayY2.value7(#CurRow,#num) = InstantChartDataArrayY2.value7(#CurRow,#num) / InstantChartDataArrayY2.count7(#CurRow,#num)
+         end-if
+         if InstantChartDataArrayY2.count8(#CurRow,#num) > 0
+            let InstantChartDataArrayY2.value8(#CurRow,#num) = InstantChartDataArrayY2.value8(#CurRow,#num) / InstantChartDataArrayY2.count8(#CurRow,#num)
+         end-if
+         if InstantChartDataArrayY2.count9(#CurRow,#num) > 0
+            let InstantChartDataArrayY2.value9(#CurRow,#num) = InstantChartDataArrayY2.value9(#CurRow,#num) / InstantChartDataArrayY2.count9(#CurRow,#num)
+         end-if
+         if InstantChartDataArrayY2.count10(#CurRow,#num) > 0
+            let InstantChartDataArrayY2.value10(#CurRow,#num) = InstantChartDataArrayY2.value10(#CurRow,#num) / InstantChartDataArrayY2.count10(#CurRow,#num)
+         end-if
+         if InstantChartDataArrayY2.count11(#CurRow,#num) > 0
+            let InstantChartDataArrayY2.value11(#CurRow,#num) = InstantChartDataArrayY2.value11(#CurRow,#num) / InstantChartDataArrayY2.count11(#CurRow,#num)
+         end-if
+         if InstantChartDataArrayY2.count12(#CurRow,#num) > 0
+            let InstantChartDataArrayY2.value12(#CurRow,#num) = InstantChartDataArrayY2.value12(#CurRow,#num) / InstantChartDataArrayY2.count12(#CurRow,#num)
+         end-if
+         add 1 to #CurRow
+      end-while
+   end-if
+end-procedure ! InstantChartAggregateFinalY2
+!
+

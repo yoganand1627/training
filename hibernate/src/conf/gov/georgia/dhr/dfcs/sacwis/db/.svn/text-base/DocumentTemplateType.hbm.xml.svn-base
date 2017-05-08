@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.DocumentTemplateType" table="DOCUMENT_TEMPLATE_TYPE" mutable="false"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idDocumentTemplateType" type="integer" unsaved-value="0">
+      <column name="ID_DOCUMENT_TEMPLATE_TYPE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_DOCUMENT_TEMPLATE_TYPE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="txtName" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_NAME" not-null="true"/>
+    </property>
+    <property name="nmDocument" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_DOCUMENT" not-null="true"/>
+    </property>
+    <bag name="documentTemplates" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_DOCUMENT_TEMPLATE_TYPE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.DocumentTemplate" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

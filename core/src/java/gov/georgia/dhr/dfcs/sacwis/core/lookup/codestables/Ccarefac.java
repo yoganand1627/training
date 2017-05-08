@@ -1,0 +1,64 @@
+package gov.georgia.dhr.dfcs.sacwis.core.lookup.codestables;
+
+public interface Ccarefac {
+
+  public static final String CCAREFAC = "CCAREFAC";
+  public static final String CCAREFAC_FF1 = "FF1";
+  public static final String CCAREFAC_FF2 = "FF2";
+  public static final String CCAREFAC_FF3 = "FF3";
+  public static final String CCAREFAC_FF4 = "FF4";
+  public static final String CCAREFAC_FI1 = "FI1";
+  public static final String CCAREFAC_FI2 = "FI2";
+  public static final String CCAREFAC_LA1 = "LA1";
+  public static final String CCAREFAC_LA2 = "LA2";
+  public static final String CCAREFAC_LG1 = "LG1";
+  public static final String CCAREFAC_LG2 = "LG2";
+  public static final String CCAREFAC_LG3 = "LG3";
+  public static final String CCAREFAC_LH1 = "LH1";
+  public static final String CCAREFAC_LH2 = "LH2";
+  public static final String CCAREFAC_LH3 = "LH3";
+  public static final String CCAREFAC_LH4 = "LH4";
+  public static final String CCAREFAC_LH5 = "LH5";
+  public static final String CCAREFAC_LN1 = "LN1";
+  public static final String CCAREFAC_LN2 = "LN2";
+  public static final String CCAREFAC_LN3 = "LN3";
+  public static final String CCAREFAC_LS1 = "LS1";
+  public static final String CCAREFAC_LS2 = "LS2";
+  public static final String CCAREFAC_LS3 = "LS3";
+  public static final String CCAREFAC_LS4 = "LS4";
+  public static final String CCAREFAC_LS5 = "LS5";
+  public static final String CCAREFAC_LS6 = "LS6";
+  public static final String CCAREFAC_MC0 = "MC0";
+  public static final String CCAREFAC_MC1 = "MC1";
+  public static final String CCAREFAC_MC2 = "MC2";
+  public static final String CCAREFAC_MC3 = "MC3";
+  public static final String CCAREFAC_MC4 = "MC4";
+  public static final String CCAREFAC_MC5 = "MC5";
+  public static final String CCAREFAC_MC6 = "MC6";
+  public static final String CCAREFAC_MC7 = "MC7";
+  public static final String CCAREFAC_MC8 = "MC8";
+  public static final String CCAREFAC_MC9 = "MC9";
+  public static final String CCAREFAC_MP1 = "MP1";
+  public static final String CCAREFAC_PI1 = "PI1";
+  public static final String CCAREFAC_PI2 = "PI2";
+  public static final String CCAREFAC_PI3 = "PI3";
+  public static final String CCAREFAC_PP1 = "PP1";
+  public static final String CCAREFAC_PP2 = "PP2";
+  public static final String CCAREFAC_PP3 = "PP3";
+  public static final String CCAREFAC_PP5 = "PP5";
+  public static final String CCAREFAC_PP6 = "PP6";
+  public static final String CCAREFAC_SA1 = "SA1";
+  public static final String CCAREFAC_SA2 = "SA2";
+  public static final String CCAREFAC_SC1 = "SC1";
+  public static final String CCAREFAC_SC2 = "SC2";
+  public static final String CCAREFAC_SC3 = "SC3";
+  public static final String CCAREFAC_SC4 = "SC4";
+  public static final String CCAREFAC_SI1 = "SI1";
+  public static final String CCAREFAC_SI2 = "SI2";
+  public static final String CCAREFAC_SI3 = "SI3";
+  public static final String CCAREFAC_SI4 = "SI4";
+  public static final String CCAREFAC_SI5 = "SI5";
+  public static final String CCAREFAC_SR1 = "SR1";
+  public static final String CCAREFAC_SR2 = "SR2";
+
+}

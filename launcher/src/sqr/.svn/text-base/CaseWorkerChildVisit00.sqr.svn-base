@@ -1,0 +1,526 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Jan 13 13:26:25 2010 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\StatewideNew\CWChildVisit\CaseWorkerChildVisit00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=156    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Plcmt Type: Placement Type' (287,7,0) Underline  Bold 
+ Print 'ADH - Adoptive Home ' (302,7,0)
+ Print 'CCI - Child Care Institution ' (316,7,0)
+ Print 'CFH - CPA Family Foster Home ' (331,7,0)
+ Print 'DFH - DFCS Family Foster Home' (345,7,0)
+ Print 'EMS - Emergency Shelter ' (360,7,0)
+ Print 'GRH - Group Home ' (374,7,0)
+ Print 'HOS - Hospital' (389,7,18)
+ Print 'ICA - ICPC - Adoptive' (403,7,0)
+ Print 'ICF - ICPC - Foster' (418,7,0)
+ Print 'ICR - ICPC - Relative' (432,7,0)
+ Print 'IFH - CCI Family Foster Home ' (447,7,0)
+ Print 'LAF - ILP/AfterCare' (300,137,20)
+ Print 'NRP - Non-Relative Paid' (315,137,0)
+ Print 'OTP - Other Person' (329,137,0)
+ Print 'OTR - Other Resource' (344,137,0)
+ Print 'PRN - Parent' (358,137,16)
+ Print 'RFH - Relative Foster Home' (373,137,0)
+ Print 'REP - Relative - Paid' (387,137,0)
+ Print 'REU - Relative - Unpaid' (402,137,0)
+ Print 'RNA - Runaway' (416,137,0)
+ Print 'SFH - Specialized Foster Home' (431,137,0)
+ Print 'YDC - YDC/RYDC' (445,137,14)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (486,660) '' ' of '
+ Last-Page (486,690) 
+ Print 'This report displays all foster care cases active at any point during the reporting month that had face to face contacts made with the primary child on the case during the same period. The reporting county is determined by the county of the stage, not the unit county of the primary case manager. When the county of the primary case manager differs from the stage county, the unit county displays in parentheses to the right of the unit supervisor''s name. Case manager is the last case manager assigned on the most recent FosterCare (Foster Care Child (FCC) or Adoption (ADO)) stage.' (33,2,140) Wrap 140 5 line-height=12 Keep-Top
+ Print 'Definitions' (15,2,13) Underline  Bold 
+ Print 'Plcmt Type:' (101,4,0) Bold 
+ Print 'Displays the most recent approved placement for the child on the case during the reporting month. Plcmt Type will be blank if there is  ''No Approved Placement'' during the Reporting Month.' (101,157,100) Wrap 100 2 line-height=12 Keep-Top on=  
+ Print 'Location:' (127,4,0) Bold 
+ Print 'The location where the contact with the child had taken place. It can be null as the location is not a mandatory field.' (127,157,0)
+ Print 'Method:' (143,4,0) Bold 
+ Print 'The method of contact should be either ''Announced Face to Face'' or ''Unannounced Face to Face''.' (143,157,0)
+ Print 'Contacts made in the Home during reporting month:' (160,4,25) Bold  Wrap 25 2 line-height=12 Keep-Top
+ Print 'The total number of contacts with the child occured in the home during the reporting month in the County. The contact location must be Foster Home, Adoptive Home, Residence, or Facility for a contact to be considered made in the home.' (160,157,116) Wrap 116 4 line-height=12 Keep-Top on=  
+ Print 'Contacts Made During Reporting Month:' (201,4,25) Bold  Wrap 25 2 line-height=12 Keep-Top
+ Print 'The total number of contacts with the child during the reporting month in the County irrespective of the location of contact.' (201,157,116) Wrap 116 2 line-height=12 Keep-Top on=  
+ Print 'Percentage of Contacts Made in the Home:' (232,4,25) Bold  Wrap 25 2 line-height=12 Keep-Top
+ Print 'This is calculated as (The total number of contacts with the child occured in the home during the reporting month in the County / The total number of contacts with the child during the reporting month in the County irrespective of the location of contact) * 100' (231,157,116) Wrap 116 3 line-height=12 Keep-Top on=  
+ Print 'Key' (271,7,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Multi-County:' (287,280,0) Underline  Bold 
+ Print 'These are cases when the primary case manager assigned is in a non-county specific unit.' (287,343,0)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input-MonthYear
+ Do Get-Input-Region
+ Do Get-Input-County
+ Do Get-Unit-Input
+ Position (1,1)
+ Do Master_Query
+End-Program
+Begin-Procedure Get-Input-MonthYear
+Input $dt_report 'Enter a value for Month and Year(MM/YYYY)' MaxLen=7 Type=Date Format='MM/YYYY'
+End-Procedure
+
+Begin-Procedure Get-Input-Region
+Input $_I102_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I102_CD_STAGE_REGION) or IsBlank($_I102_CD_STAGE_REGION) or ($_I102_CD_STAGE_REGION) = '0'
+ Let $where_clause102 = 'STAGE00.CD_STAGE_REGION is not null'
+ Let $regVar = 'All'
+ Let $regSelected = 'N'
+Else
+ Let $regSelected = 'Y'
+ Let $regVar = $_I102_CD_STAGE_REGION
+ Let $_region = $_I102_CD_STAGE_REGION
+
+If SubStr($_I102_CD_STAGE_REGION, 1, 1) != ''''
+  Let $_I102_CD_STAGE_REGION = '''' || $_I102_CD_STAGE_REGION || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I102_CD_STAGE_REGION,'''',0) = 0 and instr($_I102_CD_STAGE_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'STAGE00.CD_STAGE_REGION'
+   Let $where_clause102 = $brb_tmp  || ' = ' ||  '''' || $_I102_CD_STAGE_REGION || '''' 
+ Else
+   If (instr($_I102_CD_STAGE_REGION,'''',0) = 0 and instr($_I102_CD_STAGE_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'STAGE00.CD_STAGE_REGION'
+     Let $where_clause102 = $brb_tmp  || ' = ' || $_I102_CD_STAGE_REGION
+   End-If
+ End-If
+End-If
+End-Procedure
+
+Begin-Procedure Get-Input-County
+Input $_I101_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_I101_CD_STAGE_CNTY) or IsBlank($_I101_CD_STAGE_CNTY) or ($_I101_CD_STAGE_CNTY) = '0'
+  Let $where_clause101= 'STAGE00.CD_STAGE_CNTY is not null'
+  Let $countyVar = 'All'
+  Let $cntySelected = 'N'
+
+Else
+ Let $cntySelected = 'Y'
+If SubStr($_I101_CD_STAGE_CNTY, 1, 1) != ''''
+  Let $_I101_CD_STAGE_CNTY = '''' || $_I101_CD_STAGE_CNTY || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CD_STAGE_CNTY,'''',0) = 0 and instr($_I101_CD_STAGE_CNTY,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'STAGE00.CD_STAGE_CNTY'
+   Let $where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I101_CD_STAGE_CNTY || '''' 
+ Else
+   If (instr($_I101_CD_STAGE_CNTY,'''',0) = 0 and instr($_I101_CD_STAGE_CNTY,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'STAGE00.CD_STAGE_CNTY'
+     Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_CD_STAGE_CNTY
+   End-If
+ End-If
+End-If
+If $cntySelected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From  CCOUNT
+Where CCOUNT.CODE = [$_I101_CD_STAGE_CNTY]
+End-Select
+  Move &_County_Decode to $_header_disp
+Else
+  If $regSelected = 'Y'
+    Let $_header_disp = 'Region ' || $_region
+  Else 
+    Let $_header_disp = 'Statewide'
+  End-If
+End-If
+
+End-Procedure
+
+Begin-Procedure Get-Unit-Input
+Input $_I102_NBR_UNIT 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If ($_I102_NBR_UNIT = '0')
+    Let $where_clause103 = 'NBR_UNIT IS NOT NULL'
+   Let $unitSelected = 'N'
+    Let $unitVar = 'All'
+Else 
+ Let $unitSelected = 'Y'
+ Let $unitVar = $_I102_NBR_UNIT
+If SubStr($_I102_NBR_UNIT, 1, 1) != ''''
+  Let $_I102_NBR_UNIT = '''' || $_I102_NBR_UNIT || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I102_NBR_UNIT,'''',0) = 0 and instr($_I102_NBR_UNIT,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'NBR_UNIT'
+   Let $where_clause103 = $brb_tmp  || ' = ' ||  '''' || $_I102_NBR_UNIT || '''' 
+ Else
+   If (instr($_I102_NBR_UNIT,'''',0) = 0 and instr($_I102_NBR_UNIT,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'NBR_UNIT'
+     Let $where_clause103 = $brb_tmp  || ' = ' || $_I102_NBR_UNIT
+   End-If
+ End-If
+End-If
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+ Move 0 To #sumSubHomeVisit
+Begin-Select Distinct
+STAGE00.NM_STAGE &Master_Query_STAGE00.NM_STAGE
+PersonUnitSup.NM_PERSON_FULL &UnitSup
+STAGE00.ID_CASE &Master_Query_STAGE00.ID_CASE
+NBR_UNIT &Master_Query_NBR_UNIT
+(decode( CCOUNT_UNIT.DECODE, '-None-', 'Multi-County',  CCOUNT_UNIT.DECODE  )) &unit_county_decode_masked
+CD_COUNTY &Master_Query_CD_COUNTY
+PERSON.NM_PERSON_FULL &CaseWorkerName
+(SELECT DISTINCT  PLACEMENT_PL.CD_PLCMT_TYPE  FROM  EVENT EVENT_PL,  PLACEMENT PLACEMENT_PL WHERE EVENT_PL.ID_EVENT = PLACEMENT_PL.ID_PLCMT_EVENT
+  AND  EVENT_PL.ID_CASE = PLACEMENT_PL.ID_CASE
+ AND  EVENT_PL.CD_EVENT_STATUS = 'APRV' AND  (PLACEMENT_PL.CD_TEMP_TYPE IS NULL  OR  PLACEMENT_PL.CD_TEMP_TYPE  NOT IN ('COR','RED','REN')) AND  PLACEMENT_PL.DT_PLCMT_START = (select max(Placement_2.dt_plcmt_start) from event Event_2, placement Placement_2 where Event_2.ID_EVENT = Placement_2.ID_PLCMT_EVENT and Event_2.cd_event_status='APRV' and (Placement_2.CD_TEMP_TYPE IS NULL  OR  Placement_2.CD_TEMP_TYPE  NOT IN ('COR','RED','REN')) and Placement_2.CD_PLCMT_ACT_PLANNED = 'A' AND  Placement_2.DT_PLCMT_START < (last_day(to_date($dt_report,'MM/YYYY')) + 1) AND  Placement_2.DT_PLCMT_END >= to_date($dt_report,'MM/YYYY') and  PLACEMENT_PL.ID_CASE  = Placement_2.id_case and  PLACEMENT_PL.ID_PLCMT_CHILD = Placement_2.id_plcmt_child) AND  PLACEMENT_PL.CD_PLCMT_ACT_PLANNED = 'A' AND  PLACEMENT_PL.DT_PLCMT_START < last_day(to_date($dt_report,'MM/YYYY')) + 1 AND  PLACEMENT_PL.DT_PLCMT_END >= to_date($dt_report,'MM/YYYY') AND  EVENT_PL.ID_CASE = STAGE00.ID_CASE AND  PLACEMENT_PL.ID_PLCMT_CHILD = STAGE_PERSON_LINK00.ID_PERSON) &Master_Query_PlQry
+(case when  CONTACT00.CD_CONTACT_LOCATION IN ('FHO','ADO','RES','FAC') then 1 else 0 end) &HomeVisitQuery2
+CCOUNT_Stage.DECODE &Master_Query_CCOUNT_Stage.DECODE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+STAGE00.CD_STAGE_REGION &Master_Query_STAGE00.CD_STAGE_REGION () On-Break Set=1 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc101 After=Master_QueryCD_STAGE_REGION_AfterProc101
+STAGE00.CD_STAGE_CNTY &Master_Query_STAGE00.CD_STAGE_CNTY () On-Break Set=1 Level=2 Print=Never Before=Master_QueryCD_STAGE_CNTY_BeforeProc102 After=Master_QueryCD_STAGE_CNTY_AfterProc102
+UNIT.ID_UNIT &Master_Query_UNIT.ID_UNIT () On-Break Set=1 Level=3 Print=Never Before=Master_QueryID_UNIT_BeforeProc103 After=Master_QueryID_UNIT_AfterProc103
+PERSON.ID_PERSON &CaseWorkerPerson () On-Break Set=1 Level=4 Print=Never Before=Master_QueryID_PERSON_BeforeProc104 After=Master_QueryID_PERSON_AfterProc104
+STAGE_PERSON_LINK00.ID_PERSON &Person () On-Break Set=1 Level=5 Print=Never Before=Master_QueryID_PERSON_BeforeProc105
+CONTACT00.DT_CONTACT_OCCURRED &Master_Query_CONTACT00.DT_CONTACT_OCCURRED (13,268) Edit MM/DD/YYYY
+CCNTMETH.DECODE &Master_Query_CCNTMETH.DECODE (13,542,31)
+CCNTCTYP.DECODE &Master_Query_CCNTCTYP.DECODE (13,339,19) Wrap 19 3 line-height=12 Keep-Top on= 
+CCNCTLOC.DECODE &Master_Query_CCNCTLOC.DECODE (13,451,15) Wrap 15 2 line-height=12 Keep-Top on= 
+ Add 1 To #1ROW_COUNT
+ Add &HomeVisitQuery2 To #sumSubHomeVisit
+ Add &HomeVisitQuery2 To #regHomecnt
+ Add &HomeVisitQuery2 To #cntyHomecnt_2
+ Add &HomeVisitQuery2 To #unitsum
+ Next-Listing  Need=22
+From  STAGE STAGE00, STAGE_PERSON_LINK STAGE_PERSON_LINK00
+,      UNIT, PERSON, CONTACT CONTACT00
+,      PERSON PersonUnitSup, CCNTMETH, CCNCTLOC
+,      EVENT_PERSON_LINK, CCNTCTYP, STAGE_PERSON_LINK STAGE_PERSON_LINK_CaseWorker
+,      CCOUNT CCOUNT_UNIT, CCOUNT CCOUNT_Stage
+      Where PersonUnitSup.ID_PERSON = UNIT.ID_PERSON
+            And CONTACT00.CD_CONTACT_METHOD = CCNTMETH.CODE
+            And CONTACT00.ID_EVENT = EVENT_PERSON_LINK.ID_EVENT
+            And EVENT_PERSON_LINK.ID_PERSON = STAGE_PERSON_LINK00.ID_PERSON
+            And STAGE00.ID_STAGE = STAGE_PERSON_LINK00.ID_STAGE
+            And CONTACT00.CD_CONTACT_TYPE = CCNTCTYP.CODE
+            And PERSON.ID_PERSON = STAGE_PERSON_LINK_CaseWorker.ID_PERSON
+            And STAGE00.ID_UNIT = UNIT.ID_UNIT
+            And STAGE_PERSON_LINK_CaseWorker.ID_STAGE = STAGE00.ID_STAGE
+            And UNIT.CD_COUNTY = CCOUNT_UNIT.CODE
+            And CONTACT00.ID_CASE = STAGE00.ID_CASE
+            And STAGE00.CD_STAGE_CNTY = CCOUNT_Stage.CODE
+ And STAGE00.CD_STAGE IN ('SUB','ADO')
+ And STAGE_PERSON_LINK00.CD_STAGE_PERS_ROLE = 'PC'
+ And CONTACT00.DT_CONTACT_OCCURRED >= to_date($dt_report, 'MM/YYYY')
+ And CONTACT00.DT_CONTACT_OCCURRED  <  (last_day(to_date($dt_report, 'MM/YYYY'))+1)
+ And [$where_clause103]
+ And CONTACT00.CD_CONTACT_METHOD IN ('ATF','UTF')
+ And STAGE_PERSON_LINK_CaseWorker.CD_STAGE_PERS_ROLE IN ('PR','HP')
+ And CCNCTLOC.CODE(+) =  CONTACT00.CD_CONTACT_LOCATION
+ And STAGE00.DT_STAGE_START < (last_day(to_date($dt_report, 'MM/YYYY'))+1)
+ And (STAGE00.DT_STAGE_CLOSE >= to_date($dt_report, 'MM/YYYY') Or STAGE00.DT_STAGE_CLOSE IS NULL )
+ And [$where_clause102]
+ And [$where_clause101]
+ And STAGE00.ID_STAGE = (SELECT MAX (stage2.ID_STAGE) FROM STAGE_PERSON_LINK stage_person_link2, STAGE stage2 WHERE stage_person_link2.CD_STAGE_PERS_ROLE
+      = 'PC' AND stage_person_link2.id_stage = stage2.id_stage AND stage2.CD_STAGE IN ('SUB','ADO') AND  STAGE_PERSON_LINK00.ID_CASE  = stage_person_link2.ID_CASE
+      AND  STAGE_PERSON_LINK00.ID_PERSON  = stage_person_link2.ID_PERSON AND (stage2.dt_stage_start < LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))
+     + 1)  and (stage2.dt_stage_close is null or stage2.dt_stage_close >= TO_DATE($dt_report,'mm/yyyy')) )
+Order By STAGE00.CD_STAGE_REGION
+,      CCOUNT_Stage.DECODE
+,      NBR_UNIT
+,      PERSON.ID_PERSON
+,      STAGE00.ID_CASE
+,      STAGE00.NM_STAGE
+,      CONTACT00.DT_CONTACT_OCCURRED
+End-Select
+ Next-Listing
+ Next-Listing  Need=64
+ If #1ROW_COUNT > 0
+ Graphic (4,1,716) Horz-Line 13 
+ Position (5,1)
+ let #cntcontacts = #1ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print #cntcontacts (47,257) Bold  Edit 88888888na
+  Print #sumSubHomeVisit (27,257) Bold  Edit 888888na
+   Let #varcontacts=(#sumSubHomeVisit/#cntcontacts) * 100
+ Print #varcontacts (64,257) Edit 8888 Bold 
+  Print 'Contacts Made in the Home During Reporting Month:'  (27,1) Bold 
+  Print 'Contacts Made During Reporting Month:'  (47,1) Bold 
+  Print 'Percentage of Contacts Made in the Home:'  (64,2) Bold 
+  Print '%'  (64,282) Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_BeforeProc103
+ Next-Listing  Need=19
+ Graphic (4,1,716) Horz-Line 10 
+ Position (5,1)
+    If &Master_Query_STAGE00.CD_STAGE_CNTY=&Master_Query_CD_COUNTY
+    ! do nothing
+ Else
+ Let $unit_county_dsp='( ' ||  &unit_county_decode_masked || ' )'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $unit_county_dsp (19,216,20) Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit # and Supervisor:'  (19,1) Bold 
+  Print &Master_Query_UNIT.ID_UNIT (19,369) Edit 9999999999999999na Foreground=(255,255,255)
+  Print &Master_Query_NBR_UNIT (19,111,3) Bold 
+  Print &UnitSup (19,137,18) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_AfterProc103
+ Next-Listing  Need=15
+ If $unitSelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #unitsum (15,70) Bold  Edit 888888888888na
+ End-If
+  If $unitSelected = 'Y'
+    ! do nothing
+ Else
+ Let $unitLbl='Unit Total: '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $unitLbl (15,1,15) Bold 
+ End-If
+   Position (+12,)
+ Move 0 To #unitsum
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_PERSON_BeforeProc104
+ Next-Listing  Need=15
+   Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Worker:'  (15,1) Bold 
+  Print &CaseWorkerPerson (15,69) Edit 88888888888na
+  Print &CaseWorkerName (15,136,25)
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_PERSON_AfterProc104
+ Next-Listing  Need=2
+ Graphic (3,1,716) Horz-Line 7 
+ Position (3,1)
+   Position (+0,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_PERSON_BeforeProc105
+ Next-Listing  Need=13
+    Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_PlQry (13,207,10)
+  Print &Master_Query_STAGE00.ID_CASE (13,29) Edit 88888888888na
+  Print &Master_Query_STAGE00.NM_STAGE (13,97,21)
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc101
+ Next-Listing  Need=17
+ Graphic (2,2,715) Horz-Line 13 
+ Position (3,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region:'  (17,2) Bold 
+  Print &Master_Query_STAGE00.CD_STAGE_REGION (17,44,6) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc101
+ Next-Listing  Need=15
+  If $cntySelected = 'Y' or $regSelected = 'Y'
+    ! do nothing
+ Else
+ Let $regLbl='Region Total : '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $regLbl (15,1,15) Bold 
+ End-If
+ If $cntySelected = 'Y' or $regSelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #regHomecnt (15,70) Bold  Edit 88888888888na
+ End-If
+   Position (+12,)
+ Move 0 To #regHomecnt
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_BeforeProc102
+ Next-Listing  Need=18
+ Graphic (2,1,716) Horz-Line 12 
+ Position (3,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CCOUNT_Stage.DECODE (18,2,40) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_AfterProc102
+ Next-Listing  Need=15
+  If $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Let $cntyLbl='County Total: '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $cntyLbl (15,1,15) Bold 
+ End-If
+ If $cntySelected = 'Y'
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #cntyHomecnt_2 (15,70) Bold  Edit 888888888888na
+ End-If
+   Position (+12,)
+ Move 0 To #cntyHomecnt_2
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (13,652) edit 'MM/DD/YYYY'
+ Print 'Division of Family and Children Services' (14,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Worker Child Visit' (51,279,35) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (13,586,0)
+ Let $Month_Parameter=$dt_report
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $Month_Parameter (96,75,15)
+ Print 'Month/Year:' (95,1,17) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Let $headerDisp=$_header_disp
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $headerDisp (67,332,15) Bold 
+ Let $unitVar=$unitVar
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $unitVar (115,75,15)
+ Let $unitLbl='Unit: '
+ Print $unitLbl (115,1,15) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Stage Name' (148,91,0) Underline  Bold 
+ Print 'Location' (148,451,0) Underline  Bold 
+ Print 'Method' (148,542,0) Underline  Bold 
+ Print 'Contact Date' (148,268,0) Underline  Bold 
+ Print 'Contact Type' (148,339,0) Underline  Bold 
+ Print 'Plcmt Type' (148,207,0) Underline  Bold 
+ Print 'Case ID' (148,29,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Stage Name' (14,91,0) Underline  Bold 
+ Print 'Location' (14,451,0) Underline  Bold 
+ Print 'Method' (14,542,0) Underline  Bold 
+ Print 'Contact Date' (14,268,0) Underline  Bold 
+ Print 'Contact Type' (14,339,0) Underline  Bold 
+ Print 'Plcmt Type' (14,207,0) Underline  Bold 
+ Print 'Case ID' (14,29,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (16,665) '' ' of'
+ Last-Page (16,692) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

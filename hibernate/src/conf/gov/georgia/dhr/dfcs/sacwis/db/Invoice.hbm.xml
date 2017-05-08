@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Invoice" table="INVOICE" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idInvoice" type="integer" unsaved-value="0">
+      <column name="ID_INVOICE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_INVOICE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="contract" class="gov.georgia.dhr.dfcs.sacwis.db.Contract" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CONTRACT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdInvoAdjustmentRb" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INVO_ADJUSTMENT_RB" length="2"/>
+    </property>
+    <property name="cdInvoApproved" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INVO_APPROVED" length="3"/>
+    </property>
+    <property name="cdInvoFcDistCode" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INVO_FC_DIST_CODE" length="3"/>
+    </property>
+    <property name="cdInvoGeneration" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_INVO_GENERATION" length="2"/>
+    </property>
+    <property name="cdInvoPhase" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INVO_PHASE" length="3"/>
+    </property>
+    <property name="cdInvoRegion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INVO_REGION" length="2"/>
+    </property>
+    <property name="cdInvoType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INVO_TYPE" length="3"/>
+    </property>
+    <property name="dtAdjInvoPaidCheck" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ADJ_INVO_PAID_CHECK" length="7"/>
+    </property>
+    <property name="dtInvoApprovalDate" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_INVO_APPROVAL_DATE" length="7"/>
+    </property>
+    <property name="dtInvoCreateDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INVO_CREATE_DATE" length="7"/>
+    </property>
+    <property name="dtInvoEntryCompleted" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_INVO_ENTRY_COMPLETED" length="7"/>
+    </property>
+    <property name="dtInvoEntryStarted" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_INVO_ENTRY_STARTED" length="7"/>
+    </property>
+    <property name="dtInvoReceivedDate" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_INVO_RECEIVED_DATE" length="7"/>
+    </property>
+    <property name="dtInvoSubmitDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INVO_SUBMIT_DATE" length="7"/>
+    </property>
+    <property name="dtInvoWarrantDate" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INVO_WARRANT_DATE" length="7"/>
+    </property>
+    <property name="amtInvoClaimedAmount" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_INVO_CLAIMED_AMOUNT" precision="13"/>
+    </property>
+    <property name="amtInvoValidAmount" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_INVO_VALID_AMOUNT" precision="13"/>
+    </property>
+    <property name="amtInvoWarrant" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_INVO_WARRANT" precision="13"/>
+    </property>
+    <property name="idOrigReversalInv" type="integer" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ID_ORIG_REVERSAL_INV" precision="16" scale="0" not-null="false"/>
+    </property>
+    <property name="indInvoReadyForValid" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INVO_READY_FOR_VALID" length="1"/>
+    </property>
+    <property name="indInvoRejItems" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_INVO_REJ_ITEMS" length="1"/>
+    </property>
+    <property name="indInvoFcDistType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INVO_FC_DIST_TYPE" length="1"/>
+    </property>
+    <property name="moInvoMonth" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="MO_INVO_MONTH" precision="2" scale="0"/>
+    </property>
+    <property name="nbrAdjInvoPaidCheck" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_ADJ_INVO_PAID_CHECK" precision="10" scale="0"/>
+    </property>
+    <property name="nbrInvoDln" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_INVO_DLN" precision="11" scale="0"/>
+    </property>
+    <property name="nbrInvoVid" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_INVO_VID" length="14"/>
+    </property>
+    <property name="nbrInvoWarrant" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_INVO_WARRANT" length="10"/>
+    </property>
+    <property name="yrInvoYear" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="YR_INVO_YEAR" precision="4" scale="0"/>
+    </property>
+    <property name="amtInvoInterestPaid" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_INVO_INTEREST_PAID" precision="13"/>
+    </property>
+    <property name="dtInvoPymntDue" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INVO_PYMNT_DUE" length="7"/>
+    </property>
+    <property name="indInvoBlncDelay" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INVO_BLNC_DELAY" length="1"/>
+    </property>
+    <property name="cdInvoCounty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_INVO_COUNTY" length="3"/>
+    </property>
+    <property name="txtInvoContact" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_INVO_CONTACT" length="27"/>
+    </property>
+    <property name="nbrInvProvider" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NBR_INV_PROVIDER" length="30"/>
+    </property>
+    <bag name="delvrdSvcDtls" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_INVOICE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.DelvrdSvcDtl" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="adminDtls" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_INVOICE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdminDtl" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="rejectionReasons" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_INVOICE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.RejectionReason" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="costReimDtls" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_INVOICE" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CostReimDtl" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

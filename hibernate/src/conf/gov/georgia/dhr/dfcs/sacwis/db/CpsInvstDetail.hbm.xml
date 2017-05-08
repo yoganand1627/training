@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CpsInvstDetail" table="CPS_INVST_DETAIL" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CPS_INVST_STAGE" precision="16" scale="0" unique="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="dtDetermLetterSent" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_DETERM_LETTER_SENT" length="7"/>
+    </property>
+    <property name="dtCpsInvstDtlComplt" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CPS_INVST_DTL_COMPLT" length="7"/>
+    </property>
+    <property name="dtCpsInvstDtlBegun" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CPS_INVST_DTL_BEGUN" length="7"/>
+    </property>
+    <property name="indCpsInvstSafetyPln" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CPS_INVST_SAFETY_PLN" length="1"/>
+    </property>
+    <property name="indCpsInvstDtlRaNa" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CPS_INVST_DTL_RA_NA" length="1"/>
+    </property>
+    <property name="indInvMaltreatInCare" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_INV_MALTREAT_IN_CARE" length="1"/>
+    </property>
+    <property name="indPolicyViolation" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_POLICY_VIOLATION" length="1"/>
+    </property>
+    <property name="dtCpsInvstDtlAssigned" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CPS_INVST_DTL_ASSIGNED" length="7"/>
+    </property>
+    <property name="dtCpsInvstDtlIntake" type="timestamp" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_CPS_INVST_DTL_INTAKE" length="7"/>
+    </property>
+    <property name="cdCpsInvstDtlFamIncm" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CPS_INVST_DTL_FAM_INCM" length="2"/>
+    </property>
+    <property name="indCpsInvstDtlEaConcl" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CPS_INVST_DTL_EA_CONCL" length="2"/>
+    </property>
+    <property name="cdCpsInvstDtlOvrllDisptn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CPS_INVST_DTL_OVRLL_DISPTN" length="3"/>
+    </property>
+    <property name="indCpsInvstDtlAbbrv" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CPS_INVST_DTL_ABBRV" length="1"/>
+    </property>
+    <property name="indCpsLeJntCntct" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CPS_LE_JNT_CNTCT" length="1"/>
+    </property>
+    <property name="cdReasonNoJntCntct" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_REASON_NO_JNT_CNTCT" length="3"/>
+    </property>
+    <property name="txtReasonNoJntCntct" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_REASON_NO_JNT_CNTCT" length="300"/>
+    </property>
+    <property name="indVictimTaped" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_VICTIM_TAPED" length="1"/>
+    </property>
+    <property name="cdVictimTaped" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_VICTIM_TAPED" length="4"/>
+    </property>
+    <property name="txtVictimTaped" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_VICTIM_TAPED" length="300"/>
+    </property>
+    <property name="cdCnclsnRiskFnd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CNCLSN_RISK_FND" length="2"/>
+    </property>
+    <property name="cdCnclsnRiskLvl" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CNCLSN_RISK_LVL" length="3"/>
+    </property>
+    <property name="txtOvrllCaseDisptn" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_OVRLL_CASE_DISPTN" length="4000"/>
+    </property>
+    <property name="dtOverride" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_OVERRIDE" length="7"/>
+    </property>
+    <property name="cdOverrideOverllFind" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_OVERRIDE_OVERLL_FIND" length="2"/>
+    </property>
+    <property name="cdOverrideRiskLvl" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_OVERRIDE_RISK_LVL" length="3"/>
+    </property>
+    <property name="txtOverrideComments" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_OVERRIDE_COMMENTS" length="300"/>
+    </property>
+    <property name="cdFamviol01" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FAMVIOL_01" length="1"/>
+    </property>
+    <property name="cdFamviol02" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FAMVIOL_02" length="1"/>
+    </property>
+    <property name="cdFamviol03" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FAMVIOL_03" length="1"/>
+    </property>
+    <property name="cdFamviol04" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FAMVIOL_04" length="1"/>
+    </property>
+    <property name="cdFamviol05" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FAMVIOL_05" length="1"/>
+    </property>
+    <property name="cdAbuseStatus" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ABUSE_STATUS" length="3"/>
+    </property>
+    <property name="cdAbuseType01" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ABUSE_TYPE_01" length="1"/>
+    </property>
+    <property name="cdAbuseType02" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ABUSE_TYPE_02" length="1"/>
+    </property>
+    <property name="cdAbuseType03" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ABUSE_TYPE_03" length="1"/>
+    </property>
+    <property name="cdAbuseType04" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ABUSE_TYPE_04" length="1"/>
+    </property>
+    <property name="cdAbuseType05" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ABUSE_TYPE_05" length="1"/>
+    </property>
+    <property name="cdAbuseType06" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ABUSE_TYPE_06" length="1"/>
+    </property>
+    <property name="cdAbuseType07" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_ABUSE_TYPE_07" length="1"/>
+    </property>
+    <property name="cdMaltreatLoc" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_MALTREAT_LOC" length="3"/>
+    </property>
+    <property name="indSpeInvstPlaceProv" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_SPE_INVST_PLACE_PROV" length="1"/>
+    </property>
+    <property name="dtFostPrntNotified" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_FOST_PRNT_NOTIFIED" length="7"/>
+    </property>
+    <property name="indFostPrntNotified" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_FOST_PRNT_NOTIFIED" length="1"/>
+    </property>
+    <property name="dtStOffNotifyRmvChild" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ST_OFF_NOTIFY_RMV_CHILD" length="7"/>
+    </property>
+    <property name="indStOffNotifyRmvChild" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_ST_OFF_NOTIFY_RMV_CHILD" length="1"/>
+    </property>
+    <property name="dtStOffAdviceRmvChild" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_ST_OFF_ADVICE_RMV_CHILD" length="7"/>
+    </property>
+    <property name="indUnSubMaltreatInCare" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_UNSUB_MIC" length="1"/>
+    </property>
+    <property name="txtFostPrntNotifyCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_FOST_PRNT_NOTIFY_CMNTS" length="1000"/>
+    </property>
+  </class>
+</hibernate-mapping>

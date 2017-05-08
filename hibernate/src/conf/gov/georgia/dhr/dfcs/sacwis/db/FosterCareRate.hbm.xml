@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.FosterCareRate" table="FOSTER_CARE_RATE" mutable="false"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idFcareRate" type="integer" unsaved-value="0">
+      <column name="ID_FCARE_RATE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_FOSTER_CARE_RATE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <property name="amtFcareRtUnitRate" type="double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_FCARE_RT_UNIT_RATE" precision="6" not-null="true"/>
+    </property>
+    <property name="cdFcareRateService" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FCARE_RATE_SERVICE" length="6" not-null="true"/>
+    </property>
+    <property name="dtFcareRtEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_FCARE_RT_END" length="7" not-null="true"/>
+    </property>
+    <property name="dtFcareRtStart" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_FCARE_RT_START" length="7" not-null="true"/>
+    </property>
+    <property name="cdAgeRange" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_AGE_RANGE" length="3" not-null="true"/>
+    </property>
+  </class>
+</hibernate-mapping>

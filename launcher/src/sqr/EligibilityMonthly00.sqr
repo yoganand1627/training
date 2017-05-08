@@ -1,0 +1,599 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Mon Feb 27 14:06:57 2012 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\EligMonthly\EligibilityMonthly00.sqr
+! Format  : Tabular
+! Username: JPOTTAMMEL
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Text $RptMonth 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'This report displays the approved, active eligibility records for the reporting month. The reporting county is determined by the county of the stage, not the unit county of the primary case manager. ' (28,7,130) Wrap 130 2 line-height=12 Keep-Top
+ Print 'Totals by Actual Eligibility:' (69,4,0) Bold 
+ Print 'The total number of children in each actual eligibility type for the reporting month. A child will be counted only once if the child has multiple eligibility records in the same eligibility type for the reporting month.' (69,137,97) Wrap 97 3 line-height=12 Keep-Top on=   
+ Page-Number (491,662) '' ' of '
+ Last-Page (491,691) 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input-Month
+ Do Get-Region
+ Do Get-County
+ Do LoadLookupTables
+ Position (1,1)
+Do GetECount
+Do GetBCount
+Do GetNECount
+Do GetNECCount
+ Do Master_Query
+ !Do MasterQuery2
+ 
+End-Program
+Begin-Procedure Get-Input-Month
+ Input $RptMonth 'Enter Month and Year (MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+End-Procedure
+
+Begin-Procedure Get-Region
+Input $_I201_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I201_CD_STAGE_REGION) or IsBlank($_I201_CD_STAGE_REGION) or ($_I201_CD_STAGE_REGION) = '0' 
+  Let $where_clause201 = 'CD_STAGE_REGION is not null'
+  Let $regVar = 'All'
+  Let $regSelected = 'N'
+Else
+  Let $regSelected = 'Y'
+
+Let $regVar = $_I201_CD_STAGE_REGION
+Let $_region = $_I201_CD_STAGE_REGION
+ 
+If SubStr($_I201_CD_STAGE_REGION, 1, 1) != ''''
+  Let $_I201_CD_STAGE_REGION = '''' || $_I201_CD_STAGE_REGION || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I201_CD_STAGE_REGION,'''',0) = 0 and instr($_I201_CD_STAGE_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_STAGE_REGION'
+   Let $where_clause201 = $brb_tmp  || ' = ' ||  '''' || $_I201_CD_STAGE_REGION || '''' 
+ Else
+   If (instr($_I201_CD_STAGE_REGION,'''',0) = 0 and instr($_I201_CD_STAGE_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_STAGE_REGION'
+     Let $where_clause201 = $brb_tmp  || ' = ' || $_I201_CD_STAGE_REGION
+   End-If
+ End-If
+End-If
+End-Procedure
+
+Begin-Procedure Get-County 
+! County Code Parameter
+Input $_I101_CD_COUNTY 'Enter a value for CD_COUNTY' MaxLen=3  Type=Text
+If IsNull($_I101_CD_COUNTY) or IsBlank($_I101_CD_COUNTY) or ($_I101_CD_COUNTY) = '0' 
+  Let $where_clause101 = 'CD_STAGE_CNTY is not null'
+  Let $countyVar = 'All'
+  Let $cntySelected = 'N'
+Else
+ Let $cntySelected = 'Y'
+
+If SubStr($_I101_CD_COUNTY, 1, 1) != ''''
+  Let $_I101_CD_COUNTY = '''' || $_I101_CD_COUNTY || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CD_COUNTY,'''',0) = 0 and instr($_I101_CD_COUNTY,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_STAGE_CNTY'
+   Let $where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I101_CD_COUNTY || '''' 
+ Else
+   If (instr($_I101_CD_COUNTY,'''',0) = 0 and instr($_I101_CD_COUNTY,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_STAGE_CNTY'
+     Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_CD_COUNTY
+   End-If
+ End-If
+End-If
+!--------------------------------------------------------------------
+!create where-clause for region and county output
+Let $where_clause_region_county = $where_clause201 || ' and '|| $where_clause101
+!-------------------------------------------------------------------
+
+If $cntySelected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From  CCOUNT
+Where CCOUNT.CODE = [$_I101_CD_COUNTY]
+End-Select
+  Move &_County_Decode to $_header_disp
+Else
+  If $regSelected = 'Y'
+    Let $_header_disp = 'Region ' || $_region
+  Else 
+    Let $_header_disp = 'Statewide'
+  End-If
+End-If
+
+End-Procedure
+
+
+Begin-Procedure Master_Query
+Let #cntE = 0
+Let #cntB = 0
+Let #cntNE = 0
+Let #cntNECPd = 0
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select
+(count(STAGE.ID_STAGE)) &Stagecount
+ELIGIBILITY00.CD_ELIG_ACTUAL &ActualEligibility
+ELIGIBILITY00.CD_ELIG_SELECTED &SelectedEligibility
+(case when  CELIGIBI_Actual.DECODE = 'Title IV-E' then 'E' end) &EligCountE
+(case when  CELIGIBI_Actual.DECODE = 'Title IV-B' then 'B' end) &EligCountB
+(case when  CELIGIBI_Actual.DECODE = 'Not Eligible' then 'NE' end) &EligCountNE
+(case when  CELIGIBI_Actual.DECODE = 'Not Elig - County Pd' then 'NECPd' end) &EligCountNECPd
+CD_COUNTY &Master_Query_CD_COUNTY
+ID_STAGE &Master_Query_ID_STAGE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_STAGE_REGION &Master_Query_CD_STAGE_REGION () On-Break Set=1 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc101 After=Master_QueryCD_STAGE_REGION_AfterProc101
+CAPS.CCOUNT.DECODE &Master_Query_CAPS.CCOUNT.DECODE () On-Break Set=1 Level=2 Print=Never Before=Master_QueryDECODE_BeforeProc102 After=Master_QueryDECODE_AfterProc102
+CELIGIBI_Actual.DECODE &Master_Query_CELIGIBI_Actual.DECODE () On-Break Set=1 Level=3 Print=Never Before=Master_QueryDECODE_BeforeProc103
+NM_STAGE &Master_Query_NM_STAGE (14,20,24) Wrap 24 2 line-height=12 Keep-Top
+CAPS.STAGE.ID_CASE &Master_Query_CAPS.STAGE.ID_CASE (14,157) Edit 88888888na
+FCD_Event.ID_EVENT_PERSON &RMS_ID (14,209) Edit 88888888na
+NM_PERSON_FULL &RMS_Approver (14,258,19) Wrap 19 2 line-height=12 Keep-Top
+FCD_Event.DT_EVENT_OCCURRED &Approval_Date (14,365) Edit MM/DD/YYYY
+ELIGIBILITY00.DT_ELIG_END &End (14,625) Edit MM/DD/YYYY
+CELIGIBI_Selected.DECODE &Master_Query_CELIGIBI_Selected.DECODE (14,442,21)
+ELIGIBILITY00.DT_ELIG_START &Start (14,566) Edit MM/DD/YYYY
+ Next-Listing   ! Close up the wrapped columns
+  Let $StagecountLast = &Stagecount
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Next-Listing  Need=22
+From  CAPS.ELIGIBILITY ELIGIBILITY00, CAPS.EVENT FCD_Event
+,      CAPS.STAGE, CAPS.UNIT, CAPS.PERSON
+,      CAPS.CELIGIBI CELIGIBI_Actual, CAPS.CELIGIBI CELIGIBI_Selected, CAPS.CCOUNT
+      Where ELIGIBILITY00.ID_ELIG_EVENT = FCD_Event.ID_EVENT
+            And FCD_Event.ID_EVENT_STAGE = CAPS.STAGE.ID_STAGE
+            And CAPS.STAGE.ID_UNIT = CAPS.UNIT.ID_UNIT
+            And FCD_Event.ID_EVENT_PERSON = CAPS.PERSON.ID_PERSON
+            And ELIGIBILITY00.CD_ELIG_SELECTED = CELIGIBI_Selected.CODE
+            And ELIGIBILITY00.CD_ELIG_ACTUAL = CELIGIBI_Actual.CODE
+            And CAPS.STAGE.CD_STAGE_CNTY = CAPS.CCOUNT.CODE
+ And (ELIGIBILITY00.DT_ELIG_START < last_day(to_date($RptMonth,'MM/YYYY'))+1
+ And ELIGIBILITY00.DT_ELIG_END >= to_date($RptMonth,'MM/YYYY'))
+ And [$where_clause_region_county]
+Group By ELIGIBILITY00.CD_ELIG_ACTUAL
+,      ELIGIBILITY00.CD_ELIG_SELECTED
+,      (case when  CELIGIBI_Actual.DECODE = 'Title IV-E' then 'E' end)
+,      (case when  CELIGIBI_Actual.DECODE = 'Title IV-B' then 'B' end)
+,      (case when  CELIGIBI_Actual.DECODE = 'Not Eligible' then 'NE' end)
+,      (case when  CELIGIBI_Actual.DECODE = 'Not Elig - County Pd' then 'NECPd' end)
+,      CD_COUNTY
+,      ID_STAGE
+,      CD_STAGE_REGION
+,      CAPS.CCOUNT.DECODE
+,      CELIGIBI_Actual.DECODE
+,      NM_STAGE
+,      CAPS.STAGE.ID_CASE
+,      FCD_Event.ID_EVENT_PERSON
+,      NM_PERSON_FULL
+,      FCD_Event.DT_EVENT_OCCURRED
+,      ELIGIBILITY00.DT_ELIG_END
+,      CELIGIBI_Selected.DECODE
+,      ELIGIBILITY00.DT_ELIG_START
+Order By CD_STAGE_REGION
+,      CAPS.CCOUNT.DECODE
+,      CELIGIBI_Actual.DECODE
+,      NM_STAGE
+End-Select
+ Next-Listing
+ Next-Listing  Need=116
+ If #1ROW_COUNT > 0
+ Graphic (5,1,682) Horz-Line 20 
+ Position (7,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'IV-E:'  (68,103) Bold 
+  Print 'IV-B:'  (86,102) Bold 
+  Print 'Not Eligible:'  (101,66) Bold 
+  Print 'Not Eligible-County Pd:'  (116,15) Bold 
+  Print 'Totals by Actual Eligibility'  (50,5) Underline  Bold 
+   Let #StgCountVar=#StgCountVar
+ Print #StgCountVar (68,130) Edit 9999999999
+   Let #StgCountVarB=#StgCountVarB
+ Print #StgCountVarB (86,131) Edit 9999999999
+   Let #StgCountVarNE=#StgCountVarNE
+ Print #StgCountVarNE (101,131) Edit 9999999999
+   Let #StgCountVarNEC=#StgCountVarNEC
+ Print #StgCountVarNEC (116,131) Edit 9999999999
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+! !Do Calculate-EligCounts
+End-Procedure
+Begin-Procedure MasterQuery2
+Begin-Select
+(count(distinct STAGE_M2.ID_STAGE )) &M2StageCount
+ELIGIBILITY_M2.CD_ELIG_ACTUAL &Master_Query_2_ELIGIBILITY_M2.CD_ELIG_ACTUAL
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &M2StageCount (18,34) Edit 9999999999999999na
+ Next-Listing  Need=18
+From  ELIGIBILITY ELIGIBILITY_M2, EVENT EVENT_M2
+,      STAGE STAGE_M2, UNIT UNIT_M2, PERSON PERSON_M2
+,      CELIGIBI CELIGIBI_M2Actual, CELIGIBI CELIGIBI_M2Selected, CCNTYREG CCNTYREG_M2
+      Where ELIGIBILITY_M2.ID_ELIG_EVENT = EVENT_M2.ID_EVENT
+            And ELIGIBILITY_M2.CD_ELIG_ACTUAL = CELIGIBI_M2Actual.CODE
+            And ELIGIBILITY_M2.CD_ELIG_SELECTED = CELIGIBI_M2Selected.CODE
+            And EVENT_M2.ID_EVENT_STAGE = STAGE_M2.ID_STAGE
+            And STAGE_M2.ID_UNIT = UNIT_M2.ID_UNIT
+            And UNIT_M2.CD_COUNTY = CCNTYREG_M2.CODE
+            And EVENT_M2.ID_EVENT_PERSON = PERSON_M2.ID_PERSON
+ And (ELIGIBILITY_M2.DT_ELIG_START < last_day(to_date($RptMonth,'MM/YYYY')) + 1
+ And ELIGIBILITY_M2.DT_ELIG_END >= to_date($RptMonth,'MM/YYYY'))
+ And [$where_clause101]
+Group By ELIGIBILITY_M2.CD_ELIG_ACTUAL
+End-Select
+Move &M2StageCount to $_M2Count
+Next-Listing
+End-Procedure
+
+Begin-Procedure Calculate-EligCounts
+ Move &EligCountE to $EligcntE
+ Move &EligCountB to $EligcntB
+ Move &EligCountNE to $EligcntNE
+ Move &EligCountNECPd to $EligcntNECPd
+ If $EligcntE = 'E'
+   Let #cntE = #cntE + 1
+ End-If
+ If $EligcntB = 'B'
+   Let #cntB = #cntB + 1
+ End-If
+ If $EligcntNE = 'NE'
+   Let #cntNE = #cntNE + 1
+ End-If
+ If $EligcntNECPd = 'NECPd'
+   Let #cntNECPd = #cntNECPd + 1
+ End-If
+End-Procedure
+!-----
+begin-procedure GetECount
+Let #StgCountVar = 0
+begin-select 
+(count(distinct STAGE.ID_STAGE)) &StgCount
+FROM 
+  ELIGIBILITY ELIGIBILITY00, 
+  EVENT FCD_Event, 
+  STAGE, 
+  UNIT, 
+  PERSON, 
+  CELIGIBI CELIGIBI_Actual, 
+  CELIGIBI CELIGIBI_Selected, 
+  CCNTYREG
+WHERE
+  ELIGIBILITY00.ID_ELIG_EVENT = FCD_Event.ID_EVENT
+  AND FCD_Event.ID_EVENT_STAGE = STAGE.ID_STAGE
+  AND STAGE.ID_UNIT = UNIT.ID_UNIT
+  AND FCD_Event.ID_EVENT_PERSON = PERSON.ID_PERSON
+  AND ELIGIBILITY00.CD_ELIG_SELECTED = CELIGIBI_Selected.CODE
+  AND ELIGIBILITY00.CD_ELIG_ACTUAL = CELIGIBI_Actual.CODE
+  AND UNIT.CD_COUNTY = CCNTYREG.CODE
+  AND (ELIGIBILITY00.DT_ELIG_START < last_day(to_date($RptMonth,'MM/YYYY'))+1 AND 
+    ELIGIBILITY00.DT_ELIG_END >= to_date($RptMonth,'MM/YYYY')) AND 
+     [$where_clause_region_county]
+!    [$where_clause101] 
+ and ELIGIBILITY00.CD_ELIG_ACTUAL = '010'
+end-select
+Move &StgCount to #StgCountVar
+End-procedure
+
+!-----
+begin-procedure GetBCount
+Let #StgCountVarB = 0
+begin-select 
+(count(distinct STAGE.ID_STAGE)) &StgCountB
+FROM 
+  ELIGIBILITY ELIGIBILITY00, 
+  EVENT FCD_Event, 
+  STAGE, 
+  UNIT, 
+  PERSON, 
+  CELIGIBI CELIGIBI_Actual, 
+  CELIGIBI CELIGIBI_Selected, 
+  CCNTYREG
+WHERE
+  ELIGIBILITY00.ID_ELIG_EVENT = FCD_Event.ID_EVENT
+  AND FCD_Event.ID_EVENT_STAGE = STAGE.ID_STAGE
+  AND STAGE.ID_UNIT = UNIT.ID_UNIT
+  AND FCD_Event.ID_EVENT_PERSON = PERSON.ID_PERSON
+  AND ELIGIBILITY00.CD_ELIG_SELECTED = CELIGIBI_Selected.CODE
+  AND ELIGIBILITY00.CD_ELIG_ACTUAL = CELIGIBI_Actual.CODE
+  AND UNIT.CD_COUNTY = CCNTYREG.CODE
+  AND (ELIGIBILITY00.DT_ELIG_START < last_day(to_date($RptMonth,'MM/YYYY'))+1 AND 
+    ELIGIBILITY00.DT_ELIG_END >= to_date($RptMonth,'MM/YYYY')) AND 
+   [$where_clause_region_county]
+!    [$where_clause101] 
+ and ELIGIBILITY00.CD_ELIG_ACTUAL = '020'
+end-select
+Move &StgCountB to #StgCountVarB
+End-procedure
+
+!-----
+begin-procedure GetNECount
+Let #StgCountVarNE = 0
+begin-select 
+(count(distinct STAGE.ID_STAGE)) &StgCountNE
+FROM 
+  ELIGIBILITY ELIGIBILITY00, 
+  EVENT FCD_Event, 
+  STAGE, 
+  UNIT, 
+  PERSON, 
+  CELIGIBI CELIGIBI_Actual, 
+  CELIGIBI CELIGIBI_Selected, 
+  CCNTYREG
+WHERE
+  ELIGIBILITY00.ID_ELIG_EVENT = FCD_Event.ID_EVENT
+  AND FCD_Event.ID_EVENT_STAGE = STAGE.ID_STAGE
+  AND STAGE.ID_UNIT = UNIT.ID_UNIT
+  AND FCD_Event.ID_EVENT_PERSON = PERSON.ID_PERSON
+  AND ELIGIBILITY00.CD_ELIG_SELECTED = CELIGIBI_Selected.CODE
+  AND ELIGIBILITY00.CD_ELIG_ACTUAL = CELIGIBI_Actual.CODE
+  AND UNIT.CD_COUNTY = CCNTYREG.CODE
+  AND (ELIGIBILITY00.DT_ELIG_START < last_day(to_date($RptMonth,'MM/YYYY'))+1 AND 
+    ELIGIBILITY00.DT_ELIG_END >= to_date($RptMonth,'MM/YYYY')) AND 
+    [$where_clause_region_county]
+!    [$where_clause101] 
+ and ELIGIBILITY00.CD_ELIG_ACTUAL = '040'
+end-select
+Move &StgCountNE to #StgCountVarNE
+End-procedure
+
+!-----
+begin-procedure GetNECCount
+Let #StgCountVarNEC = 0
+begin-select 
+(count(distinct STAGE.ID_STAGE)) &StgCountNEC
+FROM 
+  ELIGIBILITY ELIGIBILITY00, 
+  EVENT FCD_Event, 
+  STAGE, 
+  UNIT, 
+  PERSON, 
+  CELIGIBI CELIGIBI_Actual, 
+  CELIGIBI CELIGIBI_Selected, 
+  CCNTYREG
+WHERE
+  ELIGIBILITY00.ID_ELIG_EVENT = FCD_Event.ID_EVENT
+  AND FCD_Event.ID_EVENT_STAGE = STAGE.ID_STAGE
+  AND STAGE.ID_UNIT = UNIT.ID_UNIT
+  AND FCD_Event.ID_EVENT_PERSON = PERSON.ID_PERSON
+  AND ELIGIBILITY00.CD_ELIG_SELECTED = CELIGIBI_Selected.CODE
+  AND ELIGIBILITY00.CD_ELIG_ACTUAL = CELIGIBI_Actual.CODE
+  AND UNIT.CD_COUNTY = CCNTYREG.CODE
+  AND (ELIGIBILITY00.DT_ELIG_START < last_day(to_date($RptMonth,'MM/YYYY'))+1 AND 
+    ELIGIBILITY00.DT_ELIG_END >= to_date($RptMonth,'MM/YYYY')) AND 
+    [$where_clause_region_county]
+ !   [$where_clause101] 
+ and ELIGIBILITY00.CD_ELIG_ACTUAL = '050'
+end-select
+Move &StgCountNEC to #StgCountVarNEC
+End-procedure
+
+
+Begin-Procedure Master_QueryDECODE_BeforeProc103
+ Next-Listing  Need=22
+ Graphic (1,1,682) Horz-Line 10 
+ Position (2,1)
+ Graphic (4,9,291) Box 19 10 11 
+ Graphic (4,9,291) Box 19 10 0 
+ Position (23,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Actual Eligibility:'  (16,25) Bold 
+   Print &Master_Query_CELIGIBI_Actual.DECODE (16,115,30)
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc101
+ If $cntySelected = 'Y' or $regSelected = 'Y'
+!DO NOTHING
+else
+ Next-Listing  Need=19
+ Graphic (2,1,682) Horz-Line 20 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CD_STAGE_REGION (19,64,9) Bold 
+  Let $RegionGroupLabel='Region '
+ Print $RegionGroupLabel (19,1,15) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc101
+ If $cntySelected = 'Y' or $regSelected = 'Y' 
+!DO NOTHING
+else
+ Next-Listing  Need=16
+ Graphic (1,1,682) Horz-Line 10 
+ Position (2,1)
+ let #RegTotal = #101ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #RegTotal (16,91) Bold  Edit 88888888na
+  Let $RegionTotaLLabel='Region Total: '
+ Print $RegionTotaLLabel (16,1,15) Bold 
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_BeforeProc102
+ Next-Listing  Need=15
+ Graphic (1,1,682) Horz-Line 15 
+ Position (2,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CAPS.CCOUNT.DECODE (15,1,12) Bold 
+   Position (+12,)
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc102
+ Next-Listing  Need=22
+ Graphic (1,2,682) Horz-Line 15 
+ Position (2,1)
+ let #CntyTotal = #102ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #CntyTotal (19,91) Bold  Edit 88888888na
+  Let $CntyTotalLabel='$County Total: '
+ Print $CntyTotalLabel (19,1,15) Bold  Wrap 15 2 line-height=12 Keep-Top strip=$
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  Need=22
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=CountyLUP
+      Table=CAPS.CCOUNT
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SC
+      Quiet
+
+   Load-Lookup
+      Name=RegionLKP
+      Table=CAPS.CCNTYREG
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SC
+      Quiet
+
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Let $RptMonth=$RptMonth
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $RptMonth (102,87,15)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (12,652) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (12,587,0)
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'Report Month:' (102,1,0) Bold 
+ Print-Image (3,4)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Eligibility Monthly Report' (57,274,0) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (12,274,0)
+ Let $HeaderDisp=$_header_disp
+ Print $HeaderDisp (77,331,15) Bold 
+ Print 'Stage Name' (129,21,0) Underline  Bold 
+ Print 'Case ID' (129,157,7) Underline  Bold 
+ Print 'RMS ID' (129,209,6) Underline  Bold 
+ Print 'RMS Approver' (129,258,14) Underline  Bold 
+ Print 'Approval Date' (129,365,9) Underline  Bold  Wrap 9 3 line-height=12 Keep-Top on= 
+ Print 'End' (129,625,0) Underline  Bold 
+ Print 'Selected Eligibility' (129,442,12) Underline  Bold  Wrap 12 2 line-height=12 Keep-Top on= 
+ Print 'Start' (129,566,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Stage Name' (18,21,0) Underline  Bold 
+ Print 'Case ID' (18,157,7) Underline  Bold 
+ Print 'RMS ID' (18,209,6) Underline  Bold 
+ Print 'RMS Approver' (18,258,14) Underline  Bold 
+ Print 'Approval Date' (18,365,9) Underline  Bold  Wrap 9 3 line-height=12 Keep-Top on= 
+ Print 'End' (18,625,0) Underline  Bold 
+ Print 'Selected Eligibility' (18,442,12) Underline  Bold  Wrap 12 2 line-height=12 Keep-Top on= 
+ Print 'Start' (18,566,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 48 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (39,667) '' ' of '
+ Last-Page (39,694) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

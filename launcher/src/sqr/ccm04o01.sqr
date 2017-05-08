@@ -1,0 +1,650 @@
+!*****************************************************************************
+!  CENTRAL REGISTRY REJECTION REPORT                                         *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccm04o01.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/millersr/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 05/10/2001                                           *
+!                                                                            *
+! PROGRAMMER NAME:      Susie Miller                                         *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The purpose of this program is to process any        *
+! rejection data on all inquires in child care facilities or for other       *
+! central registry checks.  This report will read a flat file from CCMN01B   *
+! and uses ccmn01a.cpy as the copybook layout.                               *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+! 03/29/99  Millersm  Removed lines 280 - 284 person record not fould        *
+!                                                                            *
+! 12/07/03  Millersr  SIR 18561 Agency name change to "Department of Family  *
+!                     and Protective Services."                              *
+! millersr  SIR 22552   Change the employee function to get information form *
+!                       from the CLASS database instead of IMPACT.           *
+!                       Changed the size of the employee ssn from 11 to 9    *
+!                       As we store the ssn with slashes CLASS does not.     *
+!                       Changed the facility function to get information from*
+!                       the CLASS database instead of IMPACT since CLASS has *
+!                       all Facility ID that are submitting the requests.    *
+!                       Changed the get-facility to get facility nbr not ID. *
+! 06/01/04  Millersr  SIR 22894 change facility field size to 10.            *
+!*****************************************************************************
+!
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+  
+BEGIN-REPORT
+  
+    do HOUSEKEEPING
+  
+    do PROCESS-REPORT  
+
+    do WRAP-UP
+  
+END-REPORT
+  
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                       !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup01a.sqc'            ! control codes for Landscape Batch
+
+    ASK INPUT_FILE                     ! name of the file to be inputed
+				       ! if the SQR report does not reside
+                                       ! in the same directory as the file
+                                       ! to be read then the full path must
+                                       ! be given 
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called setup01a.sqc for landscape reports.          *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 6  
+
+    move 'ccm04o01'                                    to $ReportID
+    move 'CHILD ABUSE/NEGLECT CENTRAL REGISTRY CHECK'  to $ReportTitle
+               
+  print 'DEPARTMENT OF FAMILY AND PROTECTIVE SERVICES' (+1) center
+  print 'REPORT ID: '       (+1,1)
+  uppercase $ReportTitle
+  print $ReportTitle        ()          center
+  print 'PAGE: '            (+0,115)
+  page-number               (+0,121)
+
+  uppercase $ReportId
+  print $ReportId           (+1,1)
+
+  print 'Reject Report for Licensing'    (+0)    center
+!  print 'DATE: '            (+1)    center
+  date-time () 'MM/DD/YY'   &date
+  print &date               (+1)    center
+
+!  print 'TIME: '            (+1)    center
+!  date-time () 'HH12:MI AM'   &time
+!  print &time               (+0)    center
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+!
+!BEGIN-FOOTING 2
+!
+!  #INCLUDE 'footer03.sqc'       ! Include file with footer information
+!
+!END-FOOTING
+!
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS    : OPEN-FILE                                                *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                    !Set printer environment
+    
+    move '{INPUT_FILE}'                     to $input_file
+
+    do 	OPEN-FILE
+
+if $continue_flag = 'Y' 
+
+     move ' ' to $input_id_employee
+     move ' ' to $input_seq_number
+     move ' ' to $output_id_employee
+     move ' ' to $nm_employee_first                       
+     move ' ' to $nm_employee_last                       
+     move ' ' to $emp_office_mail
+     move ' ' to $input_id_facility
+     move ' ' to $output_id_facility
+     move ' ' to $input_id_person
+     move ' ' to $output_id_person
+     move ' ' to $input_person_first                         
+     move ' ' to $input_person_last 
+     move ' ' to $input_person_suffix 
+     move ' ' to $input_request_type
+     move ' ' to $r_message
+ 
+       read 1 into
+                   $input_seq_number:16
+                   $input_request_type:2
+                   $filler:2
+                   $input_id_person:16
+                   $input_person_first:12
+                   $input_person_middle:12
+                   $input_person_last:22
+                   $input_person_suffix:2
+                   $filler:38
+                   $input_id_facility:10
+                   $filler:1
+                   $input_id_employee_ssn:9
+                 
+move $input_request_type        to $hold_request_type
+ 
+if #end-file
+     PRINT 'NO Reject LINES FOUND'          (+5) center
+     move 'N' to $continue_flag
+end-if
+end-if
+
+    move '*** END OF REPORT ***' to $end_of_report    ! Initialize
+ 
+END-PROCEDURE HOUSEKEEPING
+             
+!****************************************************************************
+!                                                                           *
+!   OPEN-FILE                                                               *
+!                                                                           *
+!      This procedure will open the file to be read and if there is a       *
+!      problem it will print it in the report and finish the processing.    *
+!                                                                           *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE OPEN-FILE 
+                 
+OPEN $input_file AS 1 FOR-READING
+    RECORD=145 status=#file_status
+
+if #file_status = 0
+    move 'Y' to $continue_flag
+else
+    PRINT 'ERROR OPENING FILE'              (+4) center
+    let $printout = 'FILE '||$input_file||' DOES NOT EXIST'
+    PRINT $printout                         (+1) center
+    let #return-status = 30
+    move 'N' to $continue_flag
+    move 'N' to $close_file
+end-if
+
+END-PROCEDURE OPEN-FILE
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : CHECK-EMPLOYEE, CHECK-PERSON,                          *
+!                    CHECK-REQUEST-TYPE, GET-FACILITY (if LIC type),        *
+!                    PRINT-TITLE, PRINT-REJECTION-REPORT                    *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    let #count3 = 0
+    move $input_request_type                to $prev_request_type
+    do PRINT-TITLE
+
+    do CHECK-EMPLOYEE
+ if $input_id_employee_ssn = ' ' or $output_id_employee_ssn = ' '
+    move 'EMPLOYEE ID NOT ON RECORD'        to $r_message
+    let #count3 = #count3 + 1
+ end-if
+
+if $r_message <> ' '
+    do PRINT-REJECTION-REPORT
+    move ' ' to $r_message 
+end-if
+ 
+    do CHECK-PERSON
+ if $input_id_person = ' ' or $output_id_person = ' '
+
+    let #count3 = #count3 + 1
+ end-if
+
+if $r_message <> ' '
+    do PRINT-REJECTION-REPORT
+    move ' ' to $r_message
+end-if
+ 
+    do CHECK-REQUEST-TYPE
+
+if $r_message <> ' '
+    do PRINT-REJECTION-REPORT
+    move ' ' to $r_message
+end-if
+ 
+ if $input_request_type = '03'
+    do GET-FACILITY
+    if $input_id_facility = ' ' or $output_id_facility = ' ' 
+       move 'FACILITY ID NOT VALID'            to $r_message
+       let #count3 = #count3 + 1
+    end-if
+ end-if
+
+ if #count3 > 10 or $prev_request_type <> $input_request_type
+    move 0                                  to #count3
+    NEW-PAGE
+    move $input_request_type                to $prev_request_type
+    do PRINT-TITLE
+ end-if  
+
+if $r_message <> ' '
+    do PRINT-REJECTION-REPORT
+    move ' ' to $r_message
+end-if
+ 
+while $continue_flag = 'Y'
+ 
+     move ' ' to $input_id_employee_ssn
+     move ' ' to $input_seq_number
+     move ' ' to $output_id_employee
+     move ' ' to $nm_employee_first                       
+     move ' ' to $nm_employee_last                       
+     move ' ' to $emp_office_mail
+     move ' ' to $input_id_facility
+     move ' ' to $output_id_facility
+     move ' ' to $input_id_person
+     move ' ' to $output_id_person
+     move ' ' to $input_person_first                         
+     move ' ' to $input_person_last 
+     move ' ' to $input_person_suffix 
+     move ' ' to $input_request_type
+     move ' ' to $r_message
+
+       read 1 into
+                   $input_seq_number:16
+                   $input_request_type:2
+                   $filler:2
+                   $input_id_person:16
+                   $input_person_first:12
+                   $input_person_middle:12
+                   $input_person_last:22
+                   $input_person_suffix:2
+                   $filler:38
+                   $input_id_facility:10
+                   $filler:1
+                   $input_id_employee_ssn:9
+
+if $input_id_employee_ssn = '' and $input_id_facility = ''
+   and $input_id_person = '' and $input_request_type = ''
+     NEW-PAGE
+     do PRINT-TITLE
+     PRINT 'NO DATA FOUND'  (+5) center
+     move 'N' to $continue_flag
+     goto next
+end-if
+
+     do CHECK-EMPLOYEE
+ if $input_id_employee_ssn = ' ' or $output_id_employee_ssn = ' '
+    move 'EMPLOYEE ID NOT ON RECORD'        to $r_message
+    let #count3 = #count3 + 1
+ end-if
+
+if $r_message <> ' '
+    do PRINT-REJECTION-REPORT
+    move ' ' to $r_message
+end-if
+
+
+     do CHECK-REQUEST-TYPE
+
+if $r_message <> ' '
+    do PRINT-REJECTION-REPORT
+    move ' ' to $r_message
+end-if
+  
+ if $input_request_type = '03'
+     do GET-FACILITY
+     if $input_id_facility = ' ' or $output_id_facility = ' ' 
+        move 'FACILITY ID NOT VALID'            to $r_message
+        let #count3 = #count3 + 1
+    end-if
+end-if
+ 
+ if #count3 > 10 or $prev_request_type <> $input_request_type
+    move 0                                  to #count3
+    NEW-PAGE
+    move $input_request_type                to $prev_request_type
+    do PRINT-TITLE
+ end-if  
+
+if $r_message <> ' '
+    do PRINT-REJECTION-REPORT
+    move ' ' to $r_message
+end-if
+
+next:
+
+       if #end-file
+           break
+       end-if
+
+if #end-file
+     PRINT 'NO MORE RECORDS FOUND'          (+5) center
+     move 'N' to $continue_flag
+ end-if
+
+end-while
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   CHECK-EMPLOYEE                                                          *
+!                                                                           *
+!       This procedure will retrieve the EMPLOYEE information on the        *
+!       person who requested a Central Registry check.                      *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   * 
+!****************************************************************************
+
+BEGIN-PROCEDURE CHECK-EMPLOYEE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CD_MAIL
+     move &CD_MAIL              to $emp_office_mail
+
+NM_FIRST
+    move &NM_FIRST               to $nm_employee_first
+
+NM_MDDL
+    move &NM_MDDL              to $nm_employee_middle
+
+NM_LAST
+    move &NM_LAST                to $nm_employee_last
+ 
+ID_EMPLYEE
+    move &ID_EMPLYEE             to $id_person
+    
+
+FROM    CLASS_EMPLOYEE_VIEW 
+WHERE   NBR_SSN = $input_id_employee_ssn
+
+END-SELECT
+
+END-PROCEDURE CHECK-EMPLOYEE
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-FACILITY                                                            *
+!                                                                           *
+!       This procedure will retrieve the FACILITY information on the        *
+!       person who the request was run for on a Central Registry check      *
+!       if Licensing (LIC) was the request type.                            *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   * 
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-FACILITY
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+NBR_FCLTY
+    move &NBR_FCLTY         to $nbr_facility
+
+ID_FCLTY
+    move &ID_FCLTY          to $output_id_facility
+
+FROM    CLASS_FACILITY_VIEW 
+
+WHERE ID_FCLTY = $input_id_facility
+
+
+END-SELECT
+
+END-PROCEDURE GET-FACILITY
+
+!****************************************************************************
+!                                                                           *
+!   CHECK-PERSON                                                            *
+!                                                                           *
+!       This procedure will retrieve the most current primary name and      *
+!       information for the input person that a Central Registry check      *
+!       was being done on.                                                  *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE CHECK-PERSON
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+P.ID_PERSON 
+    move &P.ID_PERSON                       to $output_id_person
+
+P.NM_PERSON_FIRST
+    move &P.NM_PERSON_FIRST                 to $nm_person_first
+
+P.NM_PERSON_MIDDLE
+    move &P.NM_PERSON_MIDDLE                to $nm_person_middle
+
+P.NM_PERSON_LAST
+    move &P.NM_PERSON_LAST                  to $nm_person_last
+
+FROM    PERSON P 
+ 
+WHERE   P.ID_PERSON 		= $input_id_person
+
+END-SELECT
+
+END-PROCEDURE CHECK-PERSON
+
+!****************************************************************************
+!                                                                           *
+!   CHECK-REQUEST-TYPE                                                      *
+!                                                                           *
+!       This procedure will check to see if the request type is valid.      *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE CHECK-REQUEST-TYPE
+
+if ($input_request_type = '03')
+
+
+
+
+      move $input_request_type        to $hold_request_type
+      goto next1 
+ else
+    move 'REQUEST TYPE NOT VALID'     to $r_message
+    move $input_request_type          to $hold_request_type
+    let #count3 = #count3 + 1
+ end-if    
+
+ next1:
+
+END-PROCEDURE CHECK-REQUEST-TYPE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-TITLE                                                             *
+!                                                                           *
+!       This procedure prints the title on the report.                      *
+!                                                                           * 
+!       CALLED BY  : CHECK-PERSON                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-TITLE
+
+print 'EMP'                                     (+2,29)
+print 'REQUEST'                                 (+0,88)
+ 
+print 'EMPLOYEE ID'                             (+1,1)
+print 'MAIL CODE'                               (+0,26)
+print 'PERSON ID'                               (+0,48)
+print 'FACILITY NBR'                             (+0,70)
+print 'TYPE'                                    (+0,90)
+print 'MESSAGE'                                 (+0,110)
+print 'SEQUENCE NUMBER'                         (+0,145)
+
+!**** changed from 145 to 170
+print '-'                                       (+1,1,170) fill 
+
+END-PROCEDURE PRINT-TITLE
+                 
+!****************************************************************************
+!                                                                           *
+!   PRINT-REJECTION-REPORT                                                  *
+!                                                                           *
+!       This procedure prints the data for each of the columns on the       *
+!       report.                                                             *
+!                                                                           * 
+!       CALLED BY  : CHECK-PERSON                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-REJECTION-REPORT 
+
+print $id_person                                (+1,1) 
+print $emp_office_mail                          (+0,28)
+print $input_id_person                          (+0,47)
+print $nbr_facility                             (+0,72) 
+print $input_request_type                       (+0,90)
+print $r_message                                (+0,108)
+print $input_seq_number                         (+0,145)
+
+print $nm_employee_first                        (+1,1)
+print $nm_employee_last                         (+0,10)
+print $input_person_first                       (+0,47)
+print $input_person_last                        (+0,57)
+
+print ' '                                       (+1,) 
+
+END-PROCEDURE PRINT-REJECTION-REPORT
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+if $close_file = 'N'
+else
+    CLOSE 1
+end-if
+
+   NEW-PAGE
+
+print $end_of_report                        (+4,) center
+
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      * 
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc'

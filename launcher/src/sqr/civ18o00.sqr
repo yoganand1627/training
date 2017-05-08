@@ -1,0 +1,6589 @@
+!*****************************************************************************
+!                                                                            *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         civ18o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/berryc/work/sqr                          *
+!                                                                            *
+!                                                                            *
+! DATE:                 05/05/1998                                           *
+!                                                                            *
+! PROGRAMMER NAME:      Christy Berry                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  A report which lists for each region in each program *
+!		            	area the number of Investigations Open at the begin- *
+!		            	ning of the month, Investigations Opened During the  *
+!		            	month, Investigations Closed During the month and the*
+!		            	Age of Open Investigations as of the end of the month*
+!		            	in categories of 0-30 days, 31-60 days, 61-90 days,  *
+!			            91-120 days, 121-150 days, 151-180 days, and over    *
+!		            	180 days with a total of Investigations Open at End  *
+!		                of month for each.                                   *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------    -----------------------------------------------   *
+! 5/5/98     C. Berry      Initial Programming                               *
+! 7/7/98     C. Berry      Modify to write totals to STAT_INV                *
+! 8/21/98    C. Berry      SIR #14828 -Modify code to use Investigation      *
+!                             Complete date and stage closure date to get    *
+!                             counts for APS and AFC                         *
+! 9/15/98    C. Berry      SIR #14832: print state totals only for RCCL      *
+!                          SIR #14982: (1)Determine region using             *
+!                             CD_SUPV_STAGE_REGION (not CD_WORKLOAD_REGION), *
+!                             (2)Title changed to add "Workload Report:"     *
+!                                before Status of Investigation Stages       *
+!                                "INV" removed from subheadings              *
+!                             (3)Footers added                               *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+DATE-TIME () HH:MI:SS &run_time
+SHOW &run_time
+date-time () MM/DD/YYYY &currentdt
+do HOUSEKEEPING
+
+do PROCESS-REPORT        
+
+do WRAP-UP
+
+DATE-TIME () HH:MI:SS &run_time
+SHOW &run_time
+
+END-REPORT
+
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+#ifdef ORACLE                           !compiler directive
+    ask dbname 'Database Name'
+    use {dbname}
+#endif
+#INCLUDE 'setup01a.sqc'                 ! control codes for Landscape Batch
+ASK INPUT_DATE
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. 8 lines are reserved to print the heading at the     *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called header01.sqc for landscape or portrait       *
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 8
+
+let $mo_yr = $month_name || ' ' || $year
+move 'civ18o00'                                    	   to $ReportID
+move 'WORKLOAD REPORT: STATUS OF INVESTIGATION STAGES'     to $ReportTitle
+let  $ReportSubHeading = 'THE MONTH OF' || ' ' || $mo_yr   
+
+#INCLUDE 'header01.sqc'     ! Include file with header information
+
+let $load = 'DATA AS OF ' || $load_date
+print $load (+1) center
+
+print 'AGE OF OPEN STAGES AS OF END OF MONTH' 	(+3,100)
+print 'OPEN'                    (+1,23)
+print 'OPENED'                  (+0,37)
+print 'CLOSED'                  (+0,52)
+print '0 TO 30'                 (+0,80)
+print '31 TO 60'                (+0,92)
+print '61 TO 90'                (+0,104)
+print '91 TO 120'               (+0,116)
+print '121 TO 150'              (+0,128)
+print '151 TO 180'              (+0,140)
+print 'OVER 180'                (+0,152)
+print 'OPEN'                    (+0,168)
+print 'AT START'                (+1,21)
+print 'DURING MONTH'            (+0,34)
+print 'DURING MONTH'            (+0,49)
+print 'DAYS'                    (+0,82)  
+print 'DAYS'                    (+0,94)
+print 'DAYS'                    (+0,106)  
+print 'DAYS'		        (+0,118)
+print 'DAYS'                    (+0,130) 
+print 'DAYS'                    (+0,142)  
+print 'DAYS'                    (+0,154)  
+print 'AT END'                  (+0,167) 
+
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!  FOOTER                                                                   * 
+!                                                                           *
+!    This footer will appear every time SQR writes a page.                  *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-FOOTING 5
+
+print 'Counts include stages subsequently closed to merge and closed'
+(+1,1)
+print ' administratively.' (+0)
+
+print 'CLOSED DURING MONTH counts for APS and AFC include both stage closures'
+(+1,1)
+print ' and stages in which investigation complete date has been recorded.'  
+(+0)
+print 'NOT FOR EXTERNAL DISTRIBUTION - THIS REPORT IS FOR PRS INTERNAL USE ONLY'
+                                                                  (+2) center
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS    : GET-PARSE                                                *
+!       CALLS    : GET-TIME-ID                                              *
+!       CALLS    : CONVERT-INPUT-DATE                                       *
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+#INCLUDE 'setenv.sqc'                    !Set printer environment
+
+  
+   move '{INPUT_DATE}'  TO $input_date
+ 
+   do GET-PARSE 
+   do GET-TIME-ID
+   do GET-PROCESS-TIME
+
+move '****END OF REPORT****'            to $end_of_report 
+
+END-PROCEDURE HOUSEKEEPING
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-PARSE                                                               *
+!                                                                           *
+!       This procedure will parse the input month and convert it to the     *
+!       month name for the header.                                          *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PARSE
+
+   let $month = substr($input_date,1,2)
+   let $year = substr($input_date,7,4)
+   let $begin_date = ($month || '/01/' || $year)
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+TO_CHAR(TO_DATE($month, 'MM'), 'MONTH') &month_name
+   move &month_name                  to $month_name
+
+   let $month_name = rtrim($month_name, ' ')
+
+FROM    DUAL
+
+END-SELECT 
+
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+LAST_DAY ($month ||'/01/'|| $year) &last_day_dt
+   move &last_day_dt                  to $last_day_dt
+
+FROM    DUAL
+
+END-SELECT                
+
+
+END-PROCEDURE GET-PARSE
+!****************************************************************************
+!                                                                           *
+!   GET-TIME-ID                                                             *
+!                                                                           *
+!       This procedure will prompt for the month and year to get the ID-TIME*
+!       -LOAD from the time dimension table.                                *
+!                                                                           *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-TIME-ID
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+ID_TIME_LOAD 
+   move &ID_TIME_LOAD     to #id_time
+
+NBR_TIME_FISCAL_YEAR
+    move &NBR_TIME_FISCAL_YEAR   to #fiscalyr
+
+FROM    TIME_DIM
+
+WHERE NBR_TIME_CALENDAR_MONTH = $month
+AND   NBR_TIME_CALENDAR_YEAR  = $year
+
+END-SELECT
+
+END-PROCEDURE GET-TIME-ID    
+
+!****************************************************************************
+!                                                                           *
+!   GET-PROCESS-TIME                                                        *
+!                                                                           *
+!                                                                           *
+!                                                                           *
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PROCESS-TIME
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+ 
+DT_INV_AFC_LOAD_PROCESS
+   move &DT_INV_AFC_LOAD_PROCESS   to  $load_date
+
+FROM  INV_AFC_FACT 
+WHERE ID_TIME_LOAD = #id_time
+
+END-SELECT
+
+END-PROCEDURE GET-PROCESS-TIME   
+
+           
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-APS-OPEN-AT-START                                  *
+!		     GET-AFC-OPEN-AT-START                                  *
+!                    GET-CPS-OPEN-AT-START                                  *
+!                    GET-LIC-OPEN-AT-START                                  *
+!                    GET-APS-OPEN-DURING                                    *
+!                    GET-AFC-OPEN-DURING                                    *
+!                    GET-CPS-OPEN-DURING                                    *
+!                    GET-LIC-OPEN-DURING                                    *
+!		     GET-APS-CLOSE-DURING                                   *
+!                    GET-AFC-CLOSE-DURING                                   *
+!                    GET-CPS-CLOSE-DURING                                   *
+!                    GET-LIC-CLOSE-DURING                                   *
+!                    GET-APS-PENDING                                          *
+!                    GET-AFC-PENDING                                          *
+!                    GET-CPS-PENDING                                          *
+!                    GET-LIC-PENDING                                          *
+!                    PRINT-COUNTS                                           *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+do GET-APS-OPEN-AT-START
+do GET-AFC-OPEN-AT-START
+do GET-CPS-OPEN-AT-START
+do GET-LIC-OPEN-AT-START
+do GET-APS-OPEN-DURING
+do GET-AFC-OPEN-DURING
+do GET-CPS-OPEN-DURING
+do GET-LIC-OPEN-DURING
+do GET-APS-CLOSE-DURING
+do GET-AFC-CLOSE-DURING
+do GET-CPS-CLOSE-DURING
+do GET-LIC-CLOSE-DURING
+do GET-APS-PENDING
+do GET-AFC-PENDING
+do GET-CPS-PENDING
+do GET-LIC-PENDING
+do PRINT-COUNTS
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-APS-OPEN-AT-START                                                   *
+!                                                                           *
+!       This procedure retrieves the region where the case was investigated *                                                       
+!       and the number of APS investigations open at the beginning of the   *
+!       month.                                                              *
+!									    *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-APS-OPEN-AT-START-COUNTS                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-APS-OPEN-AT-START
+
+BEGIN-SELECT DISTINCT  ON-ERROR=SqlErrorHandle
+
+ID_INV_APS_STAGE
+ 
+CD_INV_APS_SUPV_STG_REGION
+   move &CD_INV_APS_SUPV_STG_REGION    to  $aps_region
+
+
+   do GET-APS-OPEN-AT-START-COUNTS
+
+
+FROM  	INV_APS_FACT 
+
+WHERE   ID_TIME_LOAD = #id_time
+
+AND	DT_INV_APS_STAGE_START < $begin_date
+
+AND     ((DT_INV_APS_INV_CMPLT is null
+         or DT_INV_APS_INV_CMPLT >= $begin_date)
+        or  (DT_INV_APS_INV_CMPLT is null
+             and DT_INV_APS_STAGE_CLOSED >= $begin_date)
+        or (DT_INV_APS_INV_CMPLT >= $begin_date
+            AND DT_INV_APS_STAGE_CLOSED >= $begin_date))
+
+AND     CD_INV_APS_STAGE_CLASS = 'APS'
+
+END-SELECT
+
+END-PROCEDURE GET-APS-OPEN-AT-START
+  
+
+!****************************************************************************
+!                                                                           *
+!   GET-APS-OPEN-AT-START-COUNTS                                            *
+!                                                                           *
+!       This procedure counts the number of APS investigations open at the  * 
+!       first of the month.                                                 *
+!       CALLED BY  : GET-APS-OPEN-AT-START                                  *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-APS-OPEN-AT-START-COUNTS
+ 
+evaluate $aps_region
+	when = '001'
+    	   ADD 1 TO #APS01OPEN
+	   ADD 1 TO #APSOPEN
+	break
+	when = '002'
+    	   ADD 1 TO #APS02OPEN
+	   ADD 1 TO #APSOPEN
+	break
+	when = '003'
+   	   ADD 1 TO #APS03OPEN
+	   ADD 1 TO #APSOPEN
+	break
+	when = '004'
+   	   ADD 1 TO #APS04OPEN
+	   ADD 1 TO #APSOPEN
+	break
+	when = '005'
+           ADD 1 TO #APS05OPEN
+	   ADD 1 TO #APSOPEN
+  	break
+	when = '006'
+    	   ADD 1 TO #APS06OPEN
+	   ADD 1 TO #APSOPEN
+  	break
+	when = '007'
+   	   ADD 1 TO #APS07OPEN
+	   ADD 1 TO #APSOPEN
+	break
+	when = '008'
+   	   ADD 1 TO #APS08OPEN
+	   ADD 1 TO #APSOPEN
+	break
+	when = '009'
+    	   ADD 1 TO #APS09OPEN
+	   ADD 1 TO #APSOPEN
+	break
+	when = '010'
+    	   ADD 1 TO #APS10OPEN
+	   ADD 1 TO #APSOPEN
+	break
+	when = '011'
+   	   ADD 1 TO #APS11OPEN
+	   ADD 1 TO #APSOPEN
+	break
+	when-other
+	   ADD 1 TO #APSOTHEROPEN
+	   ADD 1 TO #APSOPEN
+	break
+end-evaluate
+
+END-PROCEDURE GET-APS-OPEN-AT-START-COUNTS
+
+!****************************************************************************
+!                                                                           *
+!   GET-AFC-OPEN-AT-START                                                   *
+!                                                                           *
+!       This procedure retrieves the region where the case was investigated *                                                       * 
+!       and the number of AFC investigations open at the beginning of the   *
+!       month.                                                              *
+!									    *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-AFC-OPEN-AT-START-COUNTS                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-AFC-OPEN-AT-START
+    
+ 
+BEGIN-SELECT DISTINCT  ON-ERROR=SqlErrorHandle
+
+
+ID_INV_AFC_STAGE
+	
+
+CD_INV_AFC_SUPV_STG_REGION
+   move &CD_INV_AFC_SUPV_STG_REGION    to  $afc_region
+
+   do GET-AFC-OPEN-AT-START-COUNTS
+   
+FROM  	INV_AFC_FACT 
+
+WHERE ID_TIME_LOAD = #id_time
+
+AND   DT_INV_AFC_STAGE_START < $begin_date
+
+AND   ((DT_INV_AFC_INV_CMPLT is null
+         or DT_INV_AFC_INV_CMPLT >= $begin_date)
+        or  (DT_INV_AFC_INV_CMPLT is null
+             and DT_INV_AFC_STAGE_CLOSED >= $begin_date)
+        or (DT_INV_AFC_INV_CMPLT >= $begin_date
+            AND DT_INV_AFC_STAGE_CLOSED >= $begin_date))
+
+END-SELECT
+
+END-PROCEDURE GET-AFC-OPEN-AT-START
+  
+
+!****************************************************************************
+!                                                                           *
+!   GET-AFC-OPEN-AT-START-COUNTS                                            *
+!                                                                           *
+!       This procedure counts the number of AFC investigations open at the  * 
+!       first of the month.                                                 *
+!       CALLED BY  : GET-AFC-OPEN-AT-START                                  *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-AFC-OPEN-AT-START-COUNTS
+          
+evaluate $afc_region
+	when = '001'
+    	   ADD 1 TO #AFC01OPEN
+	   ADD 1 TO #AFCOPEN
+	break
+	when = '002'
+    	   ADD 1 TO #AFC02OPEN
+	   ADD 1 TO #AFCOPEN
+	break
+	when = '003'
+   	   ADD 1 TO #AFC03OPEN
+	   ADD 1 TO #AFCOPEN
+	break
+	when = '004'
+   	   ADD 1 TO #AFC04OPEN
+	   ADD 1 TO #AFCOPEN
+	break
+	when = '005'
+           ADD 1 TO #AFC05OPEN
+	   ADD 1 TO #AFCOPEN
+  	break
+	when = '006'
+    	   ADD 1 TO #AFC06OPEN
+	   ADD 1 TO #AFCOPEN
+  	break
+	when = '007'
+   	   ADD 1 TO #AFC07OPEN
+	   ADD 1 TO #AFCOPEN
+	break
+	when = '008'
+   	   ADD 1 TO #AFC08OPEN
+	   ADD 1 TO #AFCOPEN
+	break
+	when = '009'
+    	   ADD 1 TO #AFC09OPEN
+	   ADD 1 TO #AFCOPEN
+	break
+	when = '010'
+    	   ADD 1 TO #AFC10OPEN
+	   ADD 1 TO #AFCOPEN
+	break
+	when = '011'
+   	   ADD 1 TO #AFC11OPEN
+	   ADD 1 TO #AFCOPEN
+	break
+	when-other
+ 	   ADD 1 to #AFCOTHEROPEN
+	   ADD 1 TO #AFCOPEN
+	break
+end-evaluate
+
+
+END-PROCEDURE GET-AFC-OPEN-AT-START-COUNTS
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-CPS-OPEN-AT-START                                                   *
+!                                                                           *
+!       This procedure retrieves the region where the case was investigated *                                                       * 
+!       and the number of CPS investigations open at the beginning of the   *
+!       month.                                                              *
+!									    *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-CPS-OPEN-AT-START-COUNTS                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CPS-OPEN-AT-START
+    
+ 
+BEGIN-SELECT DISTINCT  ON-ERROR=SqlErrorHandle
+
+
+ID_INV_CPS_STAGE
+	
+
+CD_INV_CPS_SUPV_STG_REGION
+   move &CD_INV_CPS_SUPV_STG_REGION    to  $cps_region
+
+   do GET-CPS-OPEN-AT-START-COUNTS
+   
+FROM  	INV_CPS_FACT 
+
+WHERE ID_TIME_LOAD = #id_time
+
+AND   DT_INV_CPS_STAGE_START < $begin_date
+
+AND   CD_INV_CPS_STAGE_CLASS = 'CPS'
+
+
+END-SELECT
+
+END-PROCEDURE GET-CPS-OPEN-AT-START
+  
+
+!****************************************************************************
+!                                                                           *
+!   GET-CPS-OPEN-AT-START-COUNTS                                            *
+!                                                                           *
+!       This procedure counts the number of CPS investigations open at the  * 
+!       first of the month.                                                 *
+!       CALLED BY  : GET-CPS-OPEN-AT-START                                  *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CPS-OPEN-AT-START-COUNTS
+          
+evaluate $cps_region
+	when = '001'
+    	   ADD 1 TO #CPS01OPEN
+	   ADD 1 TO #CPSOPEN
+	break
+	when = '002'
+    	   ADD 1 TO #CPS02OPEN
+	   ADD 1 TO #CPSOPEN
+	break
+	when = '003'
+   	   ADD 1 TO #CPS03OPEN
+	   ADD 1 TO #CPSOPEN
+	break
+	when = '004'
+   	   ADD 1 TO #CPS04OPEN
+	   ADD 1 TO #CPSOPEN
+	break
+	when = '005'
+           ADD 1 TO #CPS05OPEN
+	   ADD 1 TO #CPSOPEN
+  	break
+	when = '006'
+    	   ADD 1 TO #CPS06OPEN
+	   ADD 1 TO #CPSOPEN
+  	break
+	when = '007'
+   	   ADD 1 TO #CPS07OPEN
+	   ADD 1 TO #CPSOPEN
+	break
+	when = '008'
+   	   ADD 1 TO #CPS08OPEN
+	   ADD 1 TO #CPSOPEN
+	break
+	when = '009'
+    	   ADD 1 TO #CPS09OPEN
+	   ADD 1 TO #CPSOPEN
+	break
+	when = '010'
+    	   ADD 1 TO #CPS10OPEN
+	   ADD 1 TO #CPSOPEN
+	break
+	when = '011'
+   	   ADD 1 TO #CPS11OPEN
+	   ADD 1 TO #CPSOPEN
+	break
+	when-other
+	   ADD 1 TO #CPSOTHEROPEN
+	   ADD 1 TO #CPSOPEN
+	break
+end-evaluate
+
+END-PROCEDURE GET-CPS-OPEN-AT-START-COUNTS
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-LIC-OPEN-AT-START                                                   *
+!                                                                           *
+!       This procedure retrieves the region where the case was investigated *                                                       * 
+!       and the number of LIC investigations open at the beginning of the   *
+!       month.                                                              *
+!									    *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-LIC-OPEN-AT-START-COUNTS                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-LIC-OPEN-AT-START
+    
+ 
+BEGIN-SELECT DISTINCT  ON-ERROR=SqlErrorHandle
+
+
+ID_INV_LIC_STAGE
+
+CD_INV_LIC_STAGE_PROGRAM
+   move &CD_INV_LIC_STAGE_PROGRAM  to  $lic_program	
+
+CD_INV_LIC_SUPV_STG_REGION
+   move &CD_INV_LIC_SUPV_STG_REGION    to  $lic_region
+
+   do GET-LIC-OPEN-AT-START-COUNTS
+   
+FROM  	INV_LIC_FACT 
+
+WHERE ID_TIME_LOAD = #id_time
+
+AND   DT_INV_LIC_STAGE_START < $begin_date
+
+END-SELECT
+
+END-PROCEDURE GET-LIC-OPEN-AT-START
+  
+
+!****************************************************************************
+!                                                                           *
+!   GET-LIC-OPEN-AT-START-COUNTS                                            *
+!                                                                           *
+!       This procedure counts the number of LIC investigations open at the  * 
+!       first of the month.                                                 *
+!       CALLED BY  : GET-LIC-OPEN-AT-START                                  *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-LIC-OPEN-AT-START-COUNTS
+
+evaluate $lic_program
+     when = 'RCL'
+        ADD 1 TO #RCCOPEN
+     break
+     when = 'CCL'
+      evaluate $lic_region 
+         when = '001'
+	    ADD 1 TO #CCL01OPEN
+	    ADD 1 TO #CCLOPEN
+    	 break
+         when = '002'
+            ADD 1 TO #CCL02OPEN
+	    ADD 1 TO #CCLOPEN
+         break
+         when = '003'
+            ADD 1 TO #CCL03OPEN
+	    ADD 1 TO #CCLOPEN
+         break
+         when = '004'
+            ADD 1 TO #CCL04OPEN
+	    ADD 1 TO #CCLOPEN
+         break
+         when = '005'
+            ADD 1 TO #CCL05OPEN
+	    ADD 1 TO #CCLOPEN
+         break
+         when = '006'
+            ADD 1 TO #CCL06OPEN
+	    ADD 1 TO #CCLOPEN
+         break
+         when = '007'
+            ADD 1 TO #CCL07OPEN
+	    ADD 1 TO #CCLOPEN
+         break
+         when = '008'
+            ADD 1 TO #CCL08OPEN
+	    ADD 1 TO #CCLOPEN
+         break
+         when = '009'
+            ADD 1 TO #CCL09OPEN
+	    ADD 1 TO #CCLOPEN
+         break
+         when = '010'
+            ADD 1 TO #CCL10OPEN
+	    ADD 1 TO #CCLOPEN
+         break
+         when = '011'
+            ADD 1 TO #CCL11OPEN
+	    ADD 1 TO #CCLOPEN
+         break
+	 when-other
+	    ADD 1 TO #CCLOTHEROPEN
+	    ADD 1 TO #CCLOPEN
+         break
+      end-evaluate
+    break
+ end-evaluate
+
+END-PROCEDURE GET-CCL-OPEN-AT-START-COUNTS
+
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-APS-OPEN-DURING                                                     *
+!                                                                           *
+!       This procedure retrieves the number of APS investigations opened    *
+!       during the month.                                                   * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-APS-OPEN-DURING-COUNTS                                         *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-APS-OPEN-DURING
+
+    
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+aps2.ID_INV_APS_STAGE
+
+aps2.CD_INV_APS_SUPV_STG_REGION
+   move &aps2.CD_INV_APS_SUPV_STG_REGION     to  $aps_region
+
+   do GET-APS-OPEN-DURING-COUNTS
+    
+FROM INV_APS_FACT aps2
+
+WHERE aps2.ID_TIME_LOAD = #id_time
+
+AND   aps2.DT_INV_APS_STAGE_START >= $begin_date
+
+AND   APS2.CD_INV_APS_STAGE_CLASS = 'APS'
+
+END-SELECT
+
+END-PROCEDURE GET-APS-OPEN-DURING
+
+!****************************************************************************
+!                                                                           *
+!   GET-APS-OPEN-DURING-COUNTS                                              *
+!                                                                           *
+!       This procedure counts the number of APS investigations opened       *
+!        during the month.                                                  *
+!       CALLED BY  : GET-APS-OPEN-DURING                                    *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-APS-OPEN-DURING-COUNTS
+
+
+evaluate $aps_region
+   when = '001'
+    	ADD 1 TO #APS01ODM
+    	ADD 1 TO #APSODM
+   break
+   when = '002'
+    	ADD 1 TO #APS02ODM
+	ADD 1 TO #APSODM
+   break
+   when = '003'
+    	ADD 1 TO #APS03ODM
+	ADD 1 TO #APSODM
+   break
+   when = '004'
+    	ADD 1 TO #APS04ODM
+	ADD 1 TO #APSODM
+   break
+   when = '005'
+ 	ADD 1 TO #APS05ODM
+	ADD 1 TO #APSODM
+   break
+   when = '006'
+        ADD 1 TO #APS06ODM
+	ADD 1 TO #APSODM
+   break
+   when = '007'
+        ADD 1 TO #APS07ODM
+	ADD 1 TO #APSODM
+   break
+   when = '008'
+        ADD 1 TO #APS08ODM
+	ADD 1 TO #APSODM
+   break
+   when = '009'
+        ADD 1 TO #APS09ODM
+	ADD 1 TO #APSODM
+   break
+   when = '010'
+        ADD 1 TO #APS10ODM
+	ADD 1 TO #APSODM
+   break
+   when = '011'
+        ADD 1 TO #APS11ODM
+	ADD 1 TO #APSODM
+   break
+   when-other
+	ADD 1 TO #APSOTHERODM
+	ADD 1 TO #APSODM
+   break
+end-evaluate
+
+END-PROCEDURE GET-APS-OPEN-DURING-COUNTS
+
+!****************************************************************************
+!                                                                           *
+!   GET-AFC-OPEN-DURING                                                     *
+!                                                                           *
+!       This procedure retrieves the number of AFC investigations opened    *
+!       during the month.                                                   * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-AFC-OPEN-DURING-COUNTS                                         *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-AFC-OPEN-DURING
+
+    
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+afc2.ID_INV_AFC_STAGE		
+
+afc2.CD_INV_AFC_SUPV_STG_REGION
+   move &afc2.CD_INV_AFC_SUPV_STG_REGION             to  $afc_region
+
+   do GET-AFC-OPEN-DURING-COUNTS
+    
+FROM INV_AFC_FACT afc2
+
+WHERE afc2.ID_TIME_LOAD = #id_time
+
+AND   afc2.DT_INV_AFC_STAGE_START >= $begin_date
+
+END-SELECT
+
+END-PROCEDURE GET-AFC-OPEN-DURING
+
+!****************************************************************************
+!                                                                           *
+!   GET-AFC-OPEN-DURING-COUNTS                                              *
+!                                                                           *
+!       This procedure counts the number of AFC investigations opened       *
+!        during the month.                                                  *
+!       CALLED BY  : GET-AFC-OPEN-DURING                                    *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-AFC-OPEN-DURING-COUNTS
+
+
+evaluate $afc_region
+   when = '001'
+    	ADD 1 TO #AFC01ODM
+    	ADD 1 TO #AFCODM
+   break
+   when = '002'
+    	ADD 1 TO #AFC02ODM
+	ADD 1 TO #AFCODM
+   break
+   when = '003'
+    	ADD 1 TO #AFC03ODM
+	ADD 1 TO #AFCODM
+   break
+   when = '004'
+    	ADD 1 TO #AFC04ODM
+	ADD 1 TO #AFCODM
+   break
+   when = '005'
+ 	ADD 1 TO #AFC05ODM
+	ADD 1 TO #AFCODM
+   break
+   when = '006'
+        ADD 1 TO #AFC06ODM
+	ADD 1 TO #AFCODM
+   break
+   when = '007'
+        ADD 1 TO #AFC07ODM
+	ADD 1 TO #AFCODM
+   break
+   when = '008'
+        ADD 1 TO #AFC08ODM
+	ADD 1 TO #AFCODM
+   break
+   when = '009'
+        ADD 1 TO #AFC09ODM
+	ADD 1 TO #AFCODM
+   break
+   when = '010'
+        ADD 1 TO #AFC10ODM
+	ADD 1 TO #AFCODM
+   break
+   when = '011'
+        ADD 1 TO #AFC11ODM
+	ADD 1 TO #AFCODM
+   break
+   when-other
+	ADD 1 TO #AFCOTHERODM
+	ADD 1 TO #AFCODM
+   break
+end-evaluate
+
+END-PROCEDURE GET-AFC-OPEN-DURING-COUNTS
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-CPS-OPEN-DURING                                                     *
+!                                                                           *
+!       This procedure retrieves the number of CPS investigations opened    *
+!       during the month.                                                   * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-CPS-OPEN-DURING-COUNTS                                         *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CPS-OPEN-DURING
+
+    
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+cps2.ID_INV_CPS_STAGE
+
+cps2.CD_INV_CPS_SUPV_STG_REGION
+   move &cps2.CD_INV_CPS_SUPV_STG_REGION             to  $cps_region
+
+   do GET-CPS-OPEN-DURING-COUNTS
+    
+FROM INV_CPS_FACT cps2
+
+WHERE cps2.ID_TIME_LOAD = #id_time
+
+AND   cps2.DT_INV_CPS_STAGE_START >= $begin_date
+
+AND   CPS2.CD_INV_CPS_STAGE_CLASS = 'CPS'
+
+END-SELECT
+
+END-PROCEDURE GET-CPS-OPEN-DURING
+
+!****************************************************************************
+!                                                                           *
+!   GET-CPS-OPEN-DURING-COUNTS                                              *
+!                                                                           *
+!       This procedure counts the number of CPS investigations opened       *
+!        during the month.                                                  *
+!       CALLED BY  : GET-CPS-OPEN-DURING                                    *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CPS-OPEN-DURING-COUNTS
+
+
+evaluate $cps_region
+   when = '001'
+    	ADD 1 TO #CPS01ODM
+    	ADD 1 TO #CPSODM
+   break
+   when = '002'
+    	ADD 1 TO #CPS02ODM
+	ADD 1 TO #CPSODM
+   break
+   when = '003'
+    	ADD 1 TO #CPS03ODM
+	ADD 1 TO #CPSODM
+   break
+   when = '004'
+    	ADD 1 TO #CPS04ODM
+	ADD 1 TO #CPSODM
+   break
+   when = '005'
+ 	ADD 1 TO #CPS05ODM
+	ADD 1 TO #CPSODM
+   break
+   when = '006'
+        ADD 1 TO #CPS06ODM
+	ADD 1 TO #CPSODM
+   break
+   when = '007'
+        ADD 1 TO #CPS07ODM
+	ADD 1 TO #CPSODM
+   break
+   when = '008'
+        ADD 1 TO #CPS08ODM
+	ADD 1 TO #CPSODM
+   break
+   when = '009'
+        ADD 1 TO #CPS09ODM
+	ADD 1 TO #CPSODM
+   break
+   when = '010'
+        ADD 1 TO #CPS10ODM
+	ADD 1 TO #CPSODM
+   break
+   when = '011'
+        ADD 1 TO #CPS11ODM
+	ADD 1 TO #CPSODM
+   break
+   when-other
+	ADD 1 TO #CPSOTHERODM
+	ADD 1 TO #CPSODM
+   break
+end-evaluate
+
+END-PROCEDURE GET-CPS-OPEN-DURING-COUNTS
+
+!****************************************************************************
+!                                                                           *
+!   GET-LIC-OPEN-DURING                                                     *
+!                                                                           *
+!       This procedure retrieves the number of LIC investigations opened    *
+!       during the month.                                                   * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-LIC-OPEN-DURING-COUNTS                                         *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-LIC-OPEN-DURING
+
+    
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+lic2.ID_INV_LIC_STAGE
+  
+lic2.CD_INV_LIC_STAGE_PROGRAM
+   move &lic2.CD_INV_LIC_STAGE_PROGRAM   to $lic_program
+
+lic2.CD_INV_LIC_SUPV_STG_REGION
+   move &lic2.CD_INV_LIC_SUPV_STG_REGION     to  $lic_region
+
+   do GET-LIC-OPEN-DURING-COUNTS
+    
+FROM INV_LIC_FACT lic2
+
+WHERE lic2.ID_TIME_LOAD = #id_time
+
+AND   lic2.DT_INV_LIC_STAGE_START >= $begin_date
+
+END-SELECT
+
+END-PROCEDURE GET-LIC-OPEN-DURING
+
+!****************************************************************************
+!                                                                           *
+!   GET-LIC-OPEN-DURING-COUNTS                                              *
+!                                                                           *
+!       This procedure counts the number of LIC investigations opened       *
+!        during the month.                                                  *
+!       CALLED BY  : GET-LIC-OPEN-DURING                                    *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-LIC-OPEN-DURING-COUNTS
+
+evaluate $lic_program
+    when = 'RCL'
+        ADD 1 TO #RCCODM
+    break
+    when = 'CCL'
+  evaluate $lic_region
+    when = '001'
+        ADD 1 TO #CCL01ODM
+	ADD 1 TO #CCLODM
+    break
+    when = '002'
+        ADD 1 TO #CCL02ODM
+	ADD 1 TO #CCLODM
+    break
+    when = '003'
+        ADD 1 TO #CCL03ODM
+	ADD 1 TO #CCLODM
+    break
+    when = '004'
+        ADD 1 TO #CCL04ODM
+	ADD 1 TO #CCLODM
+    break
+    when = '005'
+        ADD 1 TO #CCL05ODM
+	ADD 1 TO #CCLODM
+    break
+    when = '006'
+        ADD 1 TO #CCL06ODM
+	ADD 1 TO #CCLODM
+    break
+    when = '007'
+        ADD 1 TO #CCL07ODM
+	ADD 1 TO #CCLODM
+    break
+    when = '008'
+        ADD 1 TO #CCL08ODM
+	ADD 1 TO #CCLODM
+    break
+    when = '009'
+        ADD 1 TO #CCL09ODM
+	ADD 1 TO #CCLODM
+    break
+    when = '010'
+        ADD 1 TO #CCL10ODM
+	ADD 1 TO #CCLODM
+    break
+    when = '011'
+        ADD 1 TO #CCL11ODM
+	ADD 1 TO #CCLODM
+    break
+    when-other
+   	ADD 1 to #CCLOTHERODM
+	ADD 1 TO #CCLODM
+    break
+  end-evaluate
+ break
+end-evaluate
+  
+END-PROCEDURE GET-LIC-OPEN-DURING-COUNTS
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-APS-CLOSE-DURING                                                    *
+!                                                                           *
+!       This procedure retrieves the number of APS investigations closed    *
+!       during the month.                                                   * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-APS-CLOSE-DURING-COUNTS                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-APS-CLOSE-DURING
+
+    
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+aps3.ID_INV_APS_STAGE
+
+aps3.CD_INV_APS_SUPV_STG_REGION
+   move &aps3.CD_INV_APS_SUPV_STG_REGION      to  $aps_region
+
+   do GET-APS-CLOSE-DURING-COUNTS
+    
+FROM INV_APS_FACT aps3
+
+WHERE APS3.ID_TIME_LOAD = #id_time
+
+AND   ((APS3.DT_INV_APS_INV_CMPLT BETWEEN $begin_date 
+       AND $last_day_dt) or
+       (APS3.DT_INV_APS_INV_CMPLT is null and 
+        APS3.DT_INV_APS_STAGE_CLOSED BETWEEN $begin_date 
+       AND $last_day_dt))
+
+AND   APS3.CD_INV_APS_STAGE_CLASS = 'APS'
+
+END-SELECT
+
+END-PROCEDURE GET-APS-CLOSE-DURING
+
+!****************************************************************************
+!                                                                           *
+!   GET-APS-CLOSE-DURING-COUNTS                                             *
+!                                                                           *
+!       This procedure counts the number of APS investigations closed       *
+!        during the month.                                                  *
+!       CALLED BY  : GET-APS-CLOSE-DURING                                   *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-APS-CLOSE-DURING-COUNTS
+
+evaluate $aps_region
+   when = '001' 
+	ADD 1 TO #APS01CDM
+   	ADD 1 TO #APSCDM
+   break
+   when = '002'
+	ADD 1 TO #APS02CDM
+	ADD 1 TO #APSCDM
+   break
+   when = '003'
+        ADD 1 TO #APS03CDM
+	ADD 1 TO #APSCDM
+   break
+   when = '004'
+        ADD 1 TO #APS04CDM
+	ADD 1 TO #APSCDM
+   break
+   when = '005'
+        ADD 1 TO #APS05CDM
+	ADD 1 TO #APSCDM
+   break
+   when = '006'
+        ADD 1 TO #APS06CDM
+	ADD 1 TO #APSCDM
+   break
+   when = '007'
+        ADD 1 TO #APS07CDM
+	ADD 1 TO #APSCDM
+   break
+   when = '008'
+        ADD 1 TO #APS08CDM
+	ADD 1 TO #APSCDM
+   break
+   when = '009'
+        ADD 1 TO #APS09CDM
+	ADD 1 TO #APSCDM
+   break
+   when = '010'
+        ADD 1 TO #APS10CDM
+	ADD 1 TO #APSCDM
+   break
+   when = '011'
+        ADD 1 TO #APS11CDM
+	ADD 1 TO #APSCDM
+   break
+   when-other
+	ADD 1 TO #APSOTHERCDM
+	ADD 1 TO #APSCDM
+   break
+end-evaluate
+
+END-PROCEDURE GET-APS-CLOSE-DURING-COUNTS
+
+!****************************************************************************
+!                                                                           *
+!   GET-AFC-CLOSE-DURING                                                     *
+!                                                                           *
+!       This procedure retrieves the number of AFC investigation closed     *
+!       during the month.                                                   * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-AFC-CLOSE-DURING-COUNTS                                         *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-AFC-CLOSE-DURING
+
+    
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+afc3.ID_INV_AFC_STAGE
+
+afc3.CD_INV_AFC_SUPV_STG_REGION
+   move &afc3.CD_INV_AFC_SUPV_STG_REGION             to  $afc_region
+
+   do GET-AFC-CLOSE-DURING-COUNTS
+    
+FROM INV_AFC_FACT afc3
+
+WHERE afc3.ID_TIME_LOAD = #id_time
+
+AND   ((AFC3.DT_INV_AFC_INV_CMPLT BETWEEN $begin_date 
+       AND $last_day_dt) or
+       (AFC3.DT_INV_AFC_INV_CMPLT is null and 
+        AFC3.DT_INV_AFC_STAGE_CLOSED BETWEEN $begin_date 
+       AND $last_day_dt))
+
+END-SELECT
+
+END-PROCEDURE GET-AFC-CLOSE-DURING
+
+!****************************************************************************
+!                                                                           *
+!   GET-AFC-CLOSE-DURING-COUNTS                                             *
+!                                                                           *
+!       This procedure counts the number of AFC investigations opened       *
+!        during the month.                                                  *
+!       CALLED BY  : GET-AFC-CLOSE-DURING                                    *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-AFC-CLOSE-DURING-COUNTS
+
+
+evaluate $afc_region
+  when = '001' 
+	ADD 1 TO #AFC01CDM
+   	ADD 1 TO #AFCCDM
+  break
+  when = '002'
+	ADD 1 TO #AFC02CDM
+	ADD 1 TO #AFCCDM
+  break
+  when = '003'
+        ADD 1 TO #AFC03CDM
+	ADD 1 TO #AFCCDM
+  break
+  when = '004'
+        ADD 1 TO #AFC04CDM
+	ADD 1 TO #AFCCDM
+  break
+  when = '005'
+        ADD 1 TO #AFC05CDM
+	ADD 1 TO #AFCCDM
+  break
+  when = '006'
+        ADD 1 TO #AFC06CDM
+	ADD 1 TO #AFCCDM
+  break
+  when = '007'
+        ADD 1 TO #AFC07CDM
+	ADD 1 TO #AFCCDM
+  break
+  when = '008'
+        ADD 1 TO #AFC08CDM
+	ADD 1 TO #AFCCDM
+  break
+  when = '009'
+        ADD 1 TO #AFC09CDM
+	ADD 1 TO #AFCCDM
+  break
+  when = '010'
+        ADD 1 TO #AFC10CDM
+	ADD 1 TO #AFCCDM
+  break
+  when = '011'
+        ADD 1 TO #AFC11CDM
+	ADD 1 TO #AFCCDM
+  break
+  when-other
+	ADD 1 TO #AFCOTHERCDM
+	ADD 1 TO #AFCCDM
+  break
+end-evaluate
+
+
+END-PROCEDURE GET-AFC-CLOSE-DURING-COUNTS
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-CPS-CLOSE-DURING                                                    *
+!                                                                           *
+!       This procedure retrieves the number of CPS investigations opened    *
+!       during the month.                                                   * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-CPS-CLOSE-DURING-COUNTS                            *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CPS-CLOSE-DURING
+
+    
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+cps3.ID_INV_CPS_STAGE
+
+cps3.CD_INV_CPS_SUPV_STG_REGION
+   move &cps3.CD_INV_CPS_SUPV_STG_REGION             to  $cps_region
+
+   do GET-CPS-CLOSE-DURING-COUNTS
+    
+FROM INV_CPS_FACT cps3
+
+WHERE cps3.ID_TIME_LOAD = #id_time
+
+AND   cps3.DT_INV_CPS_STAGE_CLOSED >= $begin_date
+
+AND   cps3.DT_INV_CPS_STAGE_CLOSED <= $last_day_dt
+
+AND   cps3.CD_INV_CPS_STAGE_CLASS = 'CPS'
+
+END-SELECT
+
+END-PROCEDURE GET-CPS-CLOSE-DURING
+
+!****************************************************************************
+!                                                                           *
+!   GET-CPS-CLOSE-DURING-COUNTS                                             *
+!                                                                           *
+!       This procedure counts the number of CPS investigations opened       *
+!        during the month.                                                  *
+!       CALLED BY  : GET-CPS-CLOSE-DURING                                    *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CPS-CLOSE-DURING-COUNTS
+
+
+evaluate $cps_region
+  when = '001' 
+	ADD 1 TO #CPS01CDM
+   	ADD 1 TO #CPSCDM
+  break
+  when = '002'
+	ADD 1 TO #CPS02CDM
+	ADD 1 TO #CPSCDM
+  break
+  when = '003'
+        ADD 1 TO #CPS03CDM
+	ADD 1 TO #CPSCDM
+  break
+  when = '004'
+        ADD 1 TO #CPS04CDM
+	ADD 1 TO #CPSCDM
+  break
+  when = '005'
+        ADD 1 TO #CPS05CDM
+	ADD 1 TO #CPSCDM
+  break
+  when = '006'
+        ADD 1 TO #CPS06CDM
+	ADD 1 TO #CPSCDM
+  break
+  when = '007'
+        ADD 1 TO #CPS07CDM
+	ADD 1 TO #CPSCDM
+  break
+  when = '008'
+        ADD 1 TO #CPS08CDM
+	ADD 1 TO #CPSCDM
+  break
+  when = '009'
+        ADD 1 TO #CPS09CDM
+	ADD 1 TO #CPSCDM
+  break
+  when = '010'
+        ADD 1 TO #CPS10CDM
+	ADD 1 TO #CPSCDM
+  break
+  when = '011'
+        ADD 1 TO #CPS11CDM
+	ADD 1 TO #CPSCDM
+  break
+  when-other
+	ADD 1 TO #CPSOTHERCDM
+	ADD 1 TO #CPSCDM
+  break
+end-evaluate
+
+
+
+END-PROCEDURE GET-CPS-CLOSE-DURING-COUNTS
+
+!****************************************************************************
+!                                                                           *
+!   GET-LIC-CLOSE-DURING                                                     *
+!                                                                           *
+!       This procedure retrieves the number of LIC investigations opened    *
+!       during the month.                                                   * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-LIC-CLOSE-DURING-COUNTS                                         *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-LIC-CLOSE-DURING
+
+    
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+lic3.ID_INV_LIC_STAGE
+
+lic3.CD_INV_LIC_STAGE_PROGRAM
+   move &lic3.CD_INV_LIC_STAGE_PROGRAM           to $lic_program
+
+lic3.CD_INV_LIC_SUPV_STG_REGION
+   move &lic3.CD_INV_LIC_SUPV_STG_REGION         to  $lic_region
+
+   do GET-LIC-CLOSE-DURING-COUNTS
+    
+FROM INV_LIC_FACT lic3
+
+WHERE lic3.ID_TIME_LOAD = #id_time
+
+AND   lic3.DT_INV_LIC_STAGE_CLOSED >= $begin_date
+
+AND   lic3.DT_INV_LIC_STAGE_CLOSED <= $last_day_dt
+
+END-SELECT
+
+END-PROCEDURE GET-LIC-CLOSE-DURING
+
+!****************************************************************************
+!                                                                           *
+!   GET-LIC-CLOSE-DURING-COUNTS                                             *
+!                                                                           *
+!       This procedure counts the number of LIC investigations CLOSEed      *
+!        during the month.                                                  *
+!       CALLED BY  : GET-LIC-CLOSE-DURING                                   *
+!       CALLS      :                                                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-LIC-CLOSE-DURING-COUNTS
+
+
+evaluate $lic_program
+   when = 'RCL'
+   	ADD 1 TO #RCCCDM
+   break
+   when = 'CCL'
+     evaluate $lic_region
+        when = '001'
+           ADD 1 TO #CCL01CDM
+	   ADD 1 TO #CCLCDM
+        break
+        when = '002'
+           ADD 1 TO #CCL02CDM
+           ADD 1 TO #CCLCDM
+        break
+        when = '003'
+           ADD 1 TO #CCL03CDM
+           ADD 1 TO #CCLCDM
+        break
+        when = '004'
+           ADD 1 TO #CCL04CDM
+	   ADD 1 TO #CCLCDM
+        break
+        when = '005'
+           ADD 1 TO #CCL05CDM
+	   ADD 1 TO #CCLCDM
+        break
+        when = '006'
+           ADD 1 TO #CCL06CDM
+	   ADD 1 TO #CCLCDM
+        break
+        when = '007'
+           ADD 1 TO #CCL07CDM
+	   ADD 1 TO #CCLCDM
+        break
+        when = '008'
+           ADD 1 TO #CCL08CDM
+	   ADD 1 TO #CCLCDM
+        break
+        when = '009'
+           ADD 1 TO #CCL09CDM
+	   ADD 1 TO #CCLCDM
+        break
+        when = '010'
+           ADD 1 TO #CCL10CDM
+	   ADD 1 TO #CCLCDM
+        break
+        when = '011'
+           ADD 1 TO #CCL11CDM
+	   ADD 1 TO #CCLCDM
+        break
+        when-other
+   	   ADD 1 to #CCLOTHERCDM
+	   ADD 1 TO #CCLCDM
+        break
+     end-evaluate
+  break
+end-evaluate
+
+
+END-PROCEDURE GET-LIC-CLOSE-DURING-COUNTS
+
+!****************************************************************************
+!                                                                           *
+!   GET-APS-PENDING                                                           *
+!                                                                           *
+!       This procedure retrieves the number of days an APS investigation    *
+! 	has been open on CAPS                                               *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-APS-PENDING-COUNTS                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-APS-PENDING
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+aps4.ID_INV_APS_STAGE
+
+
+aps4.CD_INV_APS_SUPV_STG_REGION
+   move &aps4.CD_INV_APS_SUPV_STG_REGION             to  $aps_region
+
+(to_date($last_day_dt) - aps4.DT_INV_APS_STAGE_START) &days
+     move &days 				     to  $age
+
+     let #age = to_number($age)
+     
+   do GET-APS-PENDING-COUNTS
+    
+FROM INV_APS_FACT aps4
+
+WHERE aps4.ID_TIME_LOAD = #id_time
+
+AND  (aps4.DT_INV_APS_INV_CMPLT IS NULL
+      OR aps4.DT_INV_APS_INV_CMPLT > $last_day_dt)
+AND  (aps4.DT_INV_APS_STAGE_CLOSED IS NULL
+      OR aps4.DT_INV_APS_STAGE_CLOSED > $last_day_dt)
+
+AND   aps4.CD_INV_APS_STAGE_CLASS = 'APS'
+
+END-SELECT
+
+END-PROCEDURE GET-APS-PENDING
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-APS-PENDING-COUNTS                                                  *
+!                                                                           *
+!       This procedure places the counts, based on age of investigation     *
+!	into the appropriate categories:  0-30, 31-60, 61-90, 91-120,       *
+!	121-150, 151-180, over 180.                                         *
+!                                                                           *
+!       CALLED BY  : GET-APS-PENDING                                          *
+!       CALLS      :                                                        *
+!****************************************************************************
+BEGIN-PROCEDURE GET-APS-PENDING-COUNTS
+
+EVALUATE #age
+    WHEN <= 30
+    	 EVALUATE $aps_region
+            WHEN  = '001'
+                add 1 to #APS01TO30
+		add 1 to #APS01TOTAL
+		add 1 to #APSTO30
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #APS02TO30
+		add 1 to #APS02TOTAL
+		add 1 to #APSTO30
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #APS03TO30
+		add 1 to #APS03TOTAL
+		add 1 to #APSTO30
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #APS04TO30
+	        add 1 to #APS04TOTAL
+		add 1 to #APSTO30
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #APS05TO30
+	        add 1 to #APS05TOTAL
+		add 1 to #APSTO30
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #APS06TO30
+	        add 1 to #APS06TOTAL
+		add 1 to #APSTO30
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '007'
+                add 1 to #APS07TO30
+	        add 1 to #APS07TOTAL
+		add 1 to #APSTO30
+		add 1 to #APSTOTAL
+	     BREAK
+             WHEN  = '008'
+        	add 1 to #APS08TO30
+	        add 1 to #APS08TOTAL
+		add 1 to #APSTO30
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #APS09TO30
+	        add 1 to #APS09TOTAL
+		add 1 to #APSTO30
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #APS10TO30
+	        add 1 to #APS10TOTAL
+		add 1 to #APSTO30
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #APS11TO30
+	        add 1 to #APS11TOTAL
+		add 1 to #APSTO30
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #APSOTHERTO30
+	        add 1 to #APSOTHERTOTAL
+		add 1 to #APSTO30
+		add 1 to #APSTOTAL
+	     BREAK
+         END-EVALUATE
+    BREAK
+    WHEN <= 60
+     	 EVALUATE $aps_region
+	     WHEN  = '001'
+                add 1 to #APS01TO60
+		add 1 to #APS01TOTAL
+		add 1 to #APSTO60
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #APS02TO60
+		add 1 to #APS02TOTAL
+		add 1 to #APSTO60
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #APS03TO60
+	        add 1 to #APS03TOTAL
+		add 1 to #APSTO60
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #APS04TO60
+	        add 1 to #APS04TOTAL
+		add 1 to #APSTO60
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #APS05TO60
+	        add 1 to #APS05TOTAL
+		add 1 to #APSTO60
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #APS06TO60
+	        add 1 to #APS06TOTAL
+		add 1 to #APSTO60
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #APS07TO60
+	        add 1 to #APS07TOTAL
+		add 1 to #APSTO60
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #APS08TO60
+	        add 1 to #APS08TOTAL
+		add 1 to #APSTO60
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #APS09TO60
+	        add 1 to #APS09TOTAL
+		add 1 to #APSTO60
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #APS10TO60
+	        add 1 to #APS10TOTAL
+		add 1 to #APSTO60
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #APS11TO60
+	        add 1 to #APS11TOTAL
+		add 1 to #APSTO60
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #APSOTHERTO60
+	        add 1 to #APSOTHERTOTAL
+		add 1 to #APSTO60
+		add 1 to #APSTOTAL
+	     BREAK
+         END-EVALUATE
+    BREAK
+    WHEN <= 90
+	 EVALUATE $aps_region
+	     WHEN  = '001'
+                add 1 to #APS01TO90
+		add 1 to #APS01TOTAL
+		add 1 to #APSTO90
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #APS02TO90
+		add 1 to #APS02TOTAL
+		add 1 to #APSTO90
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #APS03TO90
+	        add 1 to #APS03TOTAL
+		add 1 to #APSTO90
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #APS04TO90
+	        add 1 to #APS04TOTAL
+		add 1 to #APSTO90
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #APS05TO90
+	        add 1 to #APS05TOTAL
+		add 1 to #APSTO90
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #APS06TO90
+	        add 1 to #APS06TOTAL
+		add 1 to #APSTO90
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #APS07TO90
+	        add 1 to #APS07TOTAL
+		add 1 to #APSTO90
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #APS08TO90
+	        add 1 to #APS08TOTAL
+		add 1 to #APSTO90
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #APS09TO90
+	        add 1 to #APS09TOTAL
+		add 1 to #APSTO90
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #APS10TO90
+	        add 1 to #APS10TOTAL
+		add 1 to #APSTO90
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #APS11TO90
+	        add 1 to #APS11TOTAL
+		add 1 to #APSTO90
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #APSOTHERTO90
+	        add 1 to #APSOTHERTOTAL
+		add 1 to #APSTO90
+		add 1 to #APSTOTAL
+             BREAK
+         END-EVALUATE
+    BREAK	
+    WHEN <= 120
+	 EVALUATE $aps_region
+	     WHEN  = '001'
+                add 1 to #APS01TO120
+		add 1 to #APS01TOTAL
+		add 1 to #APSTO120
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #APS02TO120
+		add 1 to #APS02TOTAL
+		add 1 to #APSTO120
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #APS03TO120
+	        add 1 to #APS03TOTAL
+		add 1 to #APSTO120
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #APS04TO120
+	        add 1 to #APS04TOTAL
+		add 1 to #APSTO120
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #APS05TO120
+	        add 1 to #APS05TOTAL
+		add 1 to #APSTO120
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #APS06TO120
+	        add 1 to #APS06TOTAL
+		add 1 to #APSTO120
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #APS07TO120
+	        add 1 to #APS07TOTAL
+		add 1 to #APSTO120
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #APS08TO120
+	        add 1 to #APS08TOTAL
+		add 1 to #APSTO120
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #APS09TO120
+	        add 1 to #APS09TOTAL
+		add 1 to #APSTO120
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #APS10TO120
+	        add 1 to #APS10TOTAL
+		add 1 to #APSTO120
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #APS11TO120
+	        add 1 to #APS11TOTAL
+		add 1 to #APSTO120
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #APSOTHERTO120
+	        add 1 to #APSOTHERTOTAL
+		add 1 to #APSTO120
+		add 1 to #APSTOTAL
+	     BREAK
+         END-EVALUATE
+    BREAK	
+    WHEN <= 150
+	 EVALUATE $aps_region
+	     WHEN  = '001'
+                add 1 to #APS01TO150
+		add 1 to #APS01TOTAL
+		add 1 to #APSTO150
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #APS02TO150
+		add 1 to #APS02TOTAL
+		add 1 to #APSTO150
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #APS03TO150
+	        add 1 to #APS03TOTAL
+		add 1 to #APSTO150
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #APS04TO150
+	        add 1 to #APS04TOTAL
+		add 1 to #APSTO150
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #APS05TO150
+	        add 1 to #APS05TOTAL
+		add 1 to #APSTO150
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #APS06TO150
+	        add 1 to #APS06TOTAL
+		add 1 to #APSTO150
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #APS07TO150
+	        add 1 to #APS07TOTAL
+		add 1 to #APSTO150
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #APS08TO150
+	        add 1 to #APS08TOTAL
+		add 1 to #APSTO150
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #APS09TO150
+	        add 1 to #APS09TOTAL
+		add 1 to #APSTO150
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #APS10TO150
+	        add 1 to #APS10TOTAL
+		add 1 to #APSTO150
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #APS11TO150
+	        add 1 to #APS11TOTAL
+		add 1 to #APSTO150
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #APSOTHERTO150
+	        add 1 to #APSOTHERTOTAL
+		add 1 to #APSTO150
+		add 1 to #APSTOTAL
+             BREAK
+         END-EVALUATE
+    BREAK
+    WHEN <= 180
+	 EVALUATE $aps_region
+	     WHEN  = '001'
+                add 1 to #APS01TO180
+		add 1 to #APS01TOTAL
+		add 1 to #APSTO180
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #APS02TO180
+		add 1 to #APS02TOTAL
+		add 1 to #APSTO180
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #APS03TO180
+	        add 1 to #APS03TOTAL
+		add 1 to #APSTO180
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #APS04TO180
+	        add 1 to #APS04TOTAL
+		add 1 to #APSTO180
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #APS05TO180
+	        add 1 to #APS05TOTAL
+		add 1 to #APSTO180
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #APS06TO180
+	        add 1 to #APS06TOTAL
+		add 1 to #APSTO180
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #APS07TO180
+	        add 1 to #APS07TOTAL
+		add 1 to #APSTO180
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #APS08TO180
+	        add 1 to #APS08TOTAL
+		add 1 to #APSTO180
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #APS09TO180
+	        add 1 to #APS09TOTAL
+		add 1 to #APSTO180
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #APS10TO180
+	        add 1 to #APS10TOTAL
+		add 1 to #APSTO180
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #APS11TO180
+	        add 1 to #APS11TOTAL
+		add 1 to #APSTO180
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #APSOTHERTO180
+	        add 1 to #APSOTHERTOTAL
+		add 1 to #APSTO180
+		add 1 to #APSTOTAL
+             BREAK
+	 END-EVALUATE
+    BREAK
+    WHEN > 180
+	 EVALUATE $aps_region
+             WHEN  = '001'
+                add 1 to #APS01180UP
+		add 1 to #APS01TOTAL
+        	add 1 to #APS180UP
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #APS02180UP
+		add 1 to #APS02TOTAL
+        	add 1 to #APS180UP
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #APS03180UP
+	        add 1 to #APS03TOTAL
+        	add 1 to #APS180UP
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #APS04180UP
+	        add 1 to #APS04TOTAL
+        	add 1 to #APS180UP
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #APS05180UP
+	        add 1 to #APS05TOTAL
+        	add 1 to #APS180UP
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #APS06180UP
+	        add 1 to #APS06TOTAL
+        	add 1 to #APS180UP
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #APS07180UP
+	        add 1 to #APS07TOTAL
+        	add 1 to #APS180UP
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #APS08180UP
+	        add 1 to #APS08TOTAL
+        	add 1 to #APS180UP
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #APS09180UP
+	        add 1 to #APS09TOTAL
+        	add 1 to #APS180UP
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #APS10180UP
+	        add 1 to #APS10TOTAL
+        	add 1 to #APS180UP
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #APS11180UP
+	        add 1 to #APS11TOTAL
+        	add 1 to #APS180UP
+		add 1 to #APSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #APSOTHER180UP
+	        add 1 to #APSOTHERTOTAL
+        	add 1 to #APS180UP
+		add 1 to #APSTOTAL
+	     BREAK
+	 END-EVALUATE
+    BREAK
+END-EVALUATE
+			
+END-PROCEDURE GET-APS-PENDING-COUNTS
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-AFC-PENDING                                                           *
+!                                                                           *
+!       This procedure retrieves the number of days an AFC investigation    *
+! 	has been open on CAPS                                               *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-AFC-PENDING-COUNTS                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-AFC-PENDING
+
+    
+    
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+afc4.ID_INV_AFC_STAGE
+
+
+afc4.CD_INV_AFC_SUPV_STG_REGION
+   move &afc4.CD_INV_AFC_SUPV_STG_REGION     to  $afc_region
+
+(to_date($last_day_dt) - afc4.DT_INV_AFC_STAGE_START) &afcdays
+   move &afcdays 			     to  $afcage
+
+   let #afcage = to_number($afcage)
+
+   do GET-AFC-PENDING-COUNTS
+    
+FROM INV_AFC_FACT afc4
+
+WHERE afc4.ID_TIME_LOAD = #id_time
+
+AND  (afc4.DT_INV_AFC_INV_CMPLT IS NULL
+      OR afc4.DT_INV_AFC_INV_CMPLT > $last_day_dt)
+
+AND  (afc4.DT_INV_AFC_STAGE_CLOSED IS NULL
+      OR afc4.DT_INV_AFC_STAGE_CLOSED > $last_day_dt)
+
+END-SELECT
+
+END-PROCEDURE GET-AFC-PENDING
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-AFC-PENDING-COUNTS                                                    *
+!                                                                           *
+!       This procedure places the counts, based on age of investigation     *
+!	into the appropriate categories:  0-30, 31-60, 61-90, 91-120,       *
+!	121-150, 151-180, over 180.                                         *
+!                                                                           *
+!       CALLED BY  : GET-AFC-PENDING                                          *
+!       CALLS      :                                                        *
+!****************************************************************************
+BEGIN-PROCEDURE GET-AFC-PENDING-COUNTS
+
+EVALUATE #afcage
+    WHEN <= 30
+    	 EVALUATE $afc_region
+	     WHEN  = '001'
+                add 1 to #AFC01TO30
+		add 1 to #AFC01TOTAL
+        	add 1 to #AFCTO30
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #AFC02TO30
+		add 1 to #AFC02TOTAL
+        	add 1 to #AFCTO30
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #AFC03TO30
+		add 1 to #AFC03TOTAL
+        	add 1 to #AFCTO30
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #AFC04TO30
+	        add 1 to #AFC04TOTAL
+        	add 1 to #AFCTO30
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #AFC05TO30
+	        add 1 to #AFC05TOTAL
+        	add 1 to #AFCTO30
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #AFC06TO30
+	        add 1 to #AFC06TOTAL
+        	add 1 to #AFCTO30
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #AFC07TO30
+	        add 1 to #AFC07TOTAL
+        	add 1 to #AFCTO30
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #AFC08TO30
+	        add 1 to #AFC08TOTAL
+        	add 1 to #AFCTO30
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #AFC09TO30
+	        add 1 to #AFC09TOTAL
+        	add 1 to #AFCTO30
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #AFC10TO30
+	        add 1 to #AFC10TOTAL
+        	add 1 to #AFCTO30
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #AFC11TO30
+	        add 1 to #AFC11TOTAL
+        	add 1 to #AFCTO30
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #AFCOTHERTO30
+	        add 1 to #AFCOTHERTOTAL
+        	add 1 to #AFCTO30
+		add 1 to #AFCTOTAL
+	     BREAK
+         END-EVALUATE
+    BREAK
+    WHEN <= 60
+	 EVALUATE $afc_region
+	     WHEN  = '001'
+                add 1 to #AFC01TO60
+		add 1 to #AFC01TOTAL
+        	add 1 to #AFCTO60
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #AFC02TO60
+		add 1 to #AFC02TOTAL
+        	add 1 to #AFCTO60
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #AFC03TO60
+	        add 1 to #AFC03TOTAL
+        	add 1 to #AFCTO60
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #AFC04TO60
+	        add 1 to #AFC04TOTAL
+        	add 1 to #AFCTO60
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #AFC05TO60
+	        add 1 to #AFC05TOTAL
+        	add 1 to #AFCTO60
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #AFC06TO60
+	        add 1 to #AFC06TOTAL
+        	add 1 to #AFCTO60
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #AFC07TO60
+	        add 1 to #AFC07TOTAL
+        	add 1 to #AFCTO60
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #AFC08TO60
+	        add 1 to #AFC08TOTAL
+        	add 1 to #AFCTO60
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #AFC09TO60
+	        add 1 to #AFC09TOTAL
+        	add 1 to #AFCTO60
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #AFC10TO60
+	        add 1 to #AFC10TOTAL
+        	add 1 to #AFCTO60
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #AFC11TO60
+	        add 1 to #AFC11TOTAL
+        	add 1 to #AFCTO60
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #AFCOTHERTO60
+	        add 1 to #AFCOTHERTOTAL
+        	add 1 to #AFCTO60
+		add 1 to #AFCTOTAL
+	     BREAK
+         END-EVALUATE
+    BREAK
+    WHEN <= 90
+	 EVALUATE $afc_region
+	     WHEN  = '001'
+                add 1 to #AFC01TO90
+		add 1 to #AFC01TOTAL
+        	add 1 to #AFCTO90
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #AFC02TO90
+		add 1 to #AFC02TOTAL
+        	add 1 to #AFCTO90
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #AFC03TO90
+	        add 1 to #AFC03TOTAL
+        	add 1 to #AFCTO90
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #AFC04TO90
+	        add 1 to #AFC04TOTAL
+        	add 1 to #AFCTO90
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #AFC05TO90
+	        add 1 to #AFC05TOTAL
+        	add 1 to #AFCTO90
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #AFC06TO90
+	        add 1 to #AFC06TOTAL
+        	add 1 to #AFCTO90
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #AFC07TO90
+	        add 1 to #AFC07TOTAL
+        	add 1 to #AFCTO90
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #AFC08TO90
+	        add 1 to #AFC08TOTAL
+        	add 1 to #AFCTO90
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #AFC09TO90
+	        add 1 to #AFC09TOTAL
+        	add 1 to #AFCTO90
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #AFC10TO90
+	        add 1 to #AFC10TOTAL
+        	add 1 to #AFCTO90
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #AFC11TO90
+	        add 1 to #AFC11TOTAL
+        	add 1 to #AFCTO90
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #AFCOTHERTO90
+	        add 1 to #AFCOTHERTOTAL
+        	add 1 to #AFCTO90
+		add 1 to #AFCTOTAL
+             BREAK
+         END-EVALUATE
+    BREAK	
+    WHEN <= 120
+	 EVALUATE $afc_region
+	     WHEN  = '001'
+                add 1 to #AFC01TO120
+		add 1 to #AFC01TOTAL
+        	add 1 to #AFCTO120
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #AFC02TO120
+		add 1 to #AFC02TOTAL
+        	add 1 to #AFCTO120
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #AFC03TO120
+	        add 1 to #AFC03TOTAL
+        	add 1 to #AFCTO120
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #AFC04TO120
+	        add 1 to #AFC04TOTAL
+        	add 1 to #AFCTO120
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #AFC05TO120
+	        add 1 to #AFC05TOTAL
+        	add 1 to #AFCTO120
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #AFC06TO120
+	        add 1 to #AFC06TOTAL
+        	add 1 to #AFCTO120
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #AFC07TO120
+	        add 1 to #AFC07TOTAL
+        	add 1 to #AFCTO120
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #AFC08TO120
+	        add 1 to #AFC08TOTAL
+        	add 1 to #AFCTO120
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #AFC09TO120
+	        add 1 to #AFC09TOTAL
+        	add 1 to #AFCTO120
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #AFC10TO120
+	        add 1 to #AFC10TOTAL
+        	add 1 to #AFCTO120
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #AFC11TO120
+	        add 1 to #AFC11TOTAL
+        	add 1 to #AFCTO120
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #AFCOTHERTO120
+	        add 1 to #AFCOTHERTOTAL
+        	add 1 to #AFCTO120
+		add 1 to #AFCTOTAL
+	     BREAK
+         END-EVALUATE
+    BREAK	
+    WHEN <= 150
+	 EVALUATE $afc_region
+	     WHEN  = '001'
+                add 1 to #AFC01TO150
+		add 1 to #AFC01TOTAL
+        	add 1 to #AFCTO150
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #AFC02TO150
+		add 1 to #AFC02TOTAL
+        	add 1 to #AFCTO150
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #AFC03TO150
+	        add 1 to #AFC03TOTAL
+        	add 1 to #AFCTO150
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #AFC04TO150
+	        add 1 to #AFC04TOTAL
+        	add 1 to #AFCTO150
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #AFC05TO150
+	        add 1 to #AFC05TOTAL
+        	add 1 to #AFCTO150
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #AFC06TO150
+	        add 1 to #AFC06TOTAL
+        	add 1 to #AFCTO150
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #AFC07TO150
+	        add 1 to #AFC07TOTAL
+        	add 1 to #AFCTO150
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #AFC08TO150
+	        add 1 to #AFC08TOTAL
+        	add 1 to #AFCTO150
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #AFC09TO150
+	        add 1 to #AFC09TOTAL
+        	add 1 to #AFCTO150
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #AFC10TO150
+	        add 1 to #AFC10TOTAL
+        	add 1 to #AFCTO150
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #AFC11TO150
+	        add 1 to #AFC11TOTAL
+        	add 1 to #AFCTO150
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #AFCOTHERTO150
+	        add 1 to #AFCOTHERTOTAL
+        	add 1 to #AFCTO150
+		add 1 to #AFCTOTAL
+             BREAK
+         END-EVALUATE
+    BREAK
+    WHEN <= 180
+	 EVALUATE $afc_region
+	     WHEN  = '001'
+                add 1 to #AFC01TO180
+		add 1 to #AFC01TOTAL
+        	add 1 to #AFCTO180
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #AFC02TO180
+		add 1 to #AFC02TOTAL
+        	add 1 to #AFCTO180
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #AFC03TO180
+	        add 1 to #AFC03TOTAL
+        	add 1 to #AFCTO180
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #AFC04TO180
+	        add 1 to #AFC04TOTAL
+        	add 1 to #AFCTO180
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #AFC05TO180
+	        add 1 to #AFC05TOTAL
+        	add 1 to #AFCTO180
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #AFC06TO180
+	        add 1 to #AFC06TOTAL
+        	add 1 to #AFCTO180
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #AFC07TO180
+	        add 1 to #AFC07TOTAL
+        	add 1 to #AFCTO180
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #AFC08TO180
+	        add 1 to #AFC08TOTAL
+        	add 1 to #AFCTO180
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #AFC09TO180
+	        add 1 to #AFC09TOTAL
+        	add 1 to #AFCTO180
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #AFC10TO180
+	        add 1 to #AFC10TOTAL
+        	add 1 to #AFCTO180
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #AFC11TO180
+	        add 1 to #AFC11TOTAL
+        	add 1 to #AFCTO180
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #AFCOTHERTO180
+	        add 1 to #AFCOTHERTOTAL
+        	add 1 to #AFCTO180
+		add 1 to #AFCTOTAL
+             BREAK
+	 END-EVALUATE
+    BREAK
+    WHEN > 180
+	 EVALUATE $afc_region
+	     WHEN  = '001'
+                add 1 to #AFC01180UP
+		add 1 to #AFC01TOTAL
+        	add 1 to #AFC180UP
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #AFC02180UP
+		add 1 to #AFC02TOTAL
+        	add 1 to #AFC180UP
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #AFC03180UP
+	        add 1 to #AFC03TOTAL
+        	add 1 to #AFC180UP
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #AFC04180UP
+	        add 1 to #AFC04TOTAL
+        	add 1 to #AFC180UP
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #AFC05180UP
+	        add 1 to #AFC05TOTAL
+        	add 1 to #AFC180UP
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #AFC06180UP
+	        add 1 to #AFC06TOTAL
+        	add 1 to #AFC180UP
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #AFC07180UP
+	        add 1 to #AFC07TOTAL
+        	add 1 to #AFC180UP
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #AFC08180UP
+	        add 1 to #AFC08TOTAL
+        	add 1 to #AFC180UP
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #AFC09180UP
+	        add 1 to #AFC09TOTAL
+        	add 1 to #AFC180UP
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #AFC10180UP
+	        add 1 to #AFC10TOTAL
+        	add 1 to #AFC180UP
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #AFC11180UP
+	        add 1 to #AFC11TOTAL
+        	add 1 to #AFC180UP
+		add 1 to #AFCTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #AFCOTHER180UP
+	        add 1 to #AFCOTHERTOTAL
+        	add 1 to #AFC180UP
+		add 1 to #AFCTOTAL
+	     BREAK
+	 END-EVALUATE
+    BREAK
+END-EVALUATE
+			
+END-PROCEDURE GET-AFC-PENDING-COUNTS
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-CPS-PENDING                                                         *
+!                                                                           *
+!       This procedure retrieves the number of days an CPS investigation    *
+! 	has been open on CAPS                                               *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-CPS-PENDING-COUNTS                                 *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CPS-PENDING
+
+    
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+cps4.ID_INV_CPS_STAGE
+
+
+cps4.CD_INV_CPS_SUPV_STG_REGION
+   move &cps4.CD_INV_CPS_SUPV_STG_REGION             to  $cps_region
+
+(to_date($last_day_dt) - cps4.DT_INV_CPS_STAGE_START) &cpsdays
+   move &cpsdays 			     to  $cpsage
+
+   let #cpsage = to_number($cpsage)
+
+   do GET-CPS-PENDING-COUNTS
+    
+FROM INV_CPS_FACT cps4
+
+WHERE cps4.ID_TIME_LOAD = #id_time
+
+AND   (cps4.DT_INV_CPS_STAGE_CLOSED IS NULL
+
+OR    CPS4.DT_INV_CPS_STAGE_CLOSED > $last_day_dt)
+
+AND   cps4.CD_INV_CPS_STAGE_CLASS = 'CPS'
+
+END-SELECT
+
+END-PROCEDURE GET-CPS-PENDING
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-CPS-PENDING-COUNTS                                                    *
+!                                                                           *
+!       This procedure places the counts, based on age of investigation     *
+!	into the appropriate categories:  0-30, 31-60, 61-90, 91-120,       *
+!	121-150, 151-180, over 180.                                         *
+!                                                                           *
+!       CALLED BY  : GET-CPS-PENDING                                          *
+!       CALLS      :                                                        *
+!****************************************************************************
+BEGIN-PROCEDURE GET-CPS-PENDING-COUNTS
+
+EVALUATE #cpsage
+    WHEN <= 30
+    	 EVALUATE $cps_region
+	     WHEN  = '001'
+                add 1 to #CPS01TO30
+		add 1 to #CPS01TOTAL
+                add 1 to #CPSTO30
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CPS02TO30
+		add 1 to #CPS02TOTAL
+                add 1 to #CPSTO30
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CPS03TO30
+		add 1 to #CPS03TOTAL
+                add 1 to #CPSTO30
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CPS04TO30
+	        add 1 to #CPS04TOTAL
+                add 1 to #CPSTO30
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CPS05TO30
+	        add 1 to #CPS05TOTAL
+                add 1 to #CPSTO30
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CPS06TO30
+	        add 1 to #CPS06TOTAL
+                add 1 to #CPSTO30
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CPS07TO30
+	        add 1 to #CPS07TOTAL
+                add 1 to #CPSTO30
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CPS08TO30
+	        add 1 to #CPS08TOTAL
+                add 1 to #CPSTO30
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CPS09TO30
+	        add 1 to #CPS09TOTAL
+                add 1 to #CPSTO30
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CPS10TO30
+	        add 1 to #CPS10TOTAL
+                add 1 to #CPSTO30
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CPS11TO30
+	        add 1 to #CPS11TOTAL
+                add 1 to #CPSTO30
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CPSOTHERTO30
+	        add 1 to #CPSOTHERTOTAL
+                add 1 to #CPSTO30
+		add 1 to #CPSTOTAL
+	     BREAK
+         END-EVALUATE
+    BREAK
+    WHEN <= 60
+	 EVALUATE $cps_region
+	     WHEN  = '001'
+                add 1 to #CPS01TO60
+		add 1 to #CPS01TOTAL
+                add 1 to #CPSTO60
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CPS02TO60
+		add 1 to #CPS02TOTAL
+                add 1 to #CPSTO60
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CPS03TO60
+	        add 1 to #CPS03TOTAL
+                add 1 to #CPSTO60
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CPS04TO60
+	        add 1 to #CPS04TOTAL
+                add 1 to #CPSTO60
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CPS05TO60
+	        add 1 to #CPS05TOTAL
+                add 1 to #CPSTO60
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CPS06TO60
+	        add 1 to #CPS06TOTAL
+                add 1 to #CPSTO60
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CPS07TO60
+	        add 1 to #CPS07TOTAL
+                add 1 to #CPSTO60
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CPS08TO60
+	        add 1 to #CPS08TOTAL
+                add 1 to #CPSTO60
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CPS09TO60
+	        add 1 to #CPS09TOTAL
+                add 1 to #CPSTO60
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CPS10TO60
+	        add 1 to #CPS10TOTAL
+                add 1 to #CPSTO60
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CPS11TO60
+	        add 1 to #CPS11TOTAL
+                add 1 to #CPSTO60
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CPSOTHERTO60
+	        add 1 to #CPSOTHERTOTAL
+                add 1 to #CPSTO60
+		add 1 to #CPSTOTAL
+	     BREAK
+         END-EVALUATE
+    BREAK
+    WHEN <= 90
+	 EVALUATE $cps_region
+	     WHEN  = '001'
+                add 1 to #CPS01TO90
+		add 1 to #CPS01TOTAL
+                add 1 to #CPSTO90
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CPS02TO90
+		add 1 to #CPS02TOTAL
+                add 1 to #CPSTO90
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CPS03TO90
+	        add 1 to #CPS03TOTAL
+                add 1 to #CPSTO90
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CPS04TO90
+	        add 1 to #CPS04TOTAL
+                add 1 to #CPSTO90
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CPS05TO90
+	        add 1 to #CPS05TOTAL
+                add 1 to #CPSTO90
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CPS06TO90
+	        add 1 to #CPS06TOTAL
+                add 1 to #CPSTO90
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CPS07TO90
+	        add 1 to #CPS07TOTAL 
+                add 1 to #CPSTO90
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CPS08TO90
+	        add 1 to #CPS08TOTAL
+                add 1 to #CPSTO90
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CPS09TO90
+	        add 1 to #CPS09TOTAL
+                add 1 to #CPSTO90
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CPS10TO90
+	        add 1 to #CPS10TOTAL
+                add 1 to #CPSTO90
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CPS11TO90
+	        add 1 to #CPS11TOTAL
+                add 1 to #CPSTO90
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CPSOTHERTO90
+	        add 1 to #CPSOTHERTOTAL
+                add 1 to #CPSTO90
+		add 1 to #CPSTOTAL
+             BREAK
+         END-EVALUATE
+    BREAK	
+    WHEN <= 120
+	 EVALUATE $cps_region
+	     WHEN  = '001'
+                add 1 to #CPS01TO120
+		add 1 to #CPS01TOTAL
+                add 1 to #CPSTO120
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CPS02TO120
+		add 1 to #CPS02TOTAL
+                add 1 to #CPSTO120
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CPS03TO120
+	        add 1 to #CPS03TOTAL
+                add 1 to #CPSTO120
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CPS04TO120
+	        add 1 to #CPS04TOTAL
+                add 1 to #CPSTO120
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CPS05TO120
+	        add 1 to #CPS05TOTAL
+                add 1 to #CPSTO120
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CPS06TO120
+	        add 1 to #CPS06TOTAL
+                add 1 to #CPSTO120
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CPS07TO120
+	        add 1 to #CPS07TOTAL
+                add 1 to #CPSTO120
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CPS08TO120
+	        add 1 to #CPS08TOTAL
+                add 1 to #CPSTO120
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CPS09TO120
+	        add 1 to #CPS09TOTAL
+                add 1 to #CPSTO120
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CPS10TO120
+	        add 1 to #CPS10TOTAL
+                add 1 to #CPSTO120
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CPS11TO120
+	        add 1 to #CPS11TOTAL
+                add 1 to #CPSTO120
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CPSOTHERTO120
+	        add 1 to #CPSOTHERTOTAL
+                add 1 to #CPSTO120
+		add 1 to #CPSTOTAL
+	     BREAK
+         END-EVALUATE
+    BREAK	
+    WHEN <= 150
+	 EVALUATE $cps_region
+	     WHEN  = '001'
+                add 1 to #CPS01TO150
+		add 1 to #CPS01TOTAL
+                add 1 to #CPSTO150
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CPS02TO150
+		add 1 to #CPS02TOTAL
+                add 1 to #CPSTO150
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CPS03TO150
+	        add 1 to #CPS03TOTAL
+                add 1 to #CPSTO150
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CPS04TO150
+	        add 1 to #CPS04TOTAL
+                add 1 to #CPSTO150
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CPS05TO150
+	        add 1 to #CPS05TOTAL
+                add 1 to #CPSTO150
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CPS06TO150
+	        add 1 to #CPS06TOTAL
+                add 1 to #CPSTO150
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CPS07TO150
+	        add 1 to #CPS07TOTAL
+                add 1 to #CPSTO150
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CPS08TO150
+	        add 1 to #CPS08TOTAL
+                add 1 to #CPSTO150
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CPS09TO150
+	        add 1 to #CPS09TOTAL
+                add 1 to #CPSTO150
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CPS10TO150
+	        add 1 to #CPS10TOTAL
+                add 1 to #CPSTO150
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CPS11TO150
+	        add 1 to #CPS11TOTAL
+                add 1 to #CPSTO150
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CPSOTHERTO150
+	        add 1 to #CPSOTHERTOTAL
+                add 1 to #CPSTO150
+		add 1 to #CPSTOTAL
+             BREAK
+         END-EVALUATE
+    BREAK
+    WHEN <= 180
+	 EVALUATE $cps_region
+	     WHEN  = '001'
+                add 1 to #CPS01TO180
+		add 1 to #CPS01TOTAL
+                add 1 to #CPSTO180
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CPS02TO180
+		add 1 to #CPS02TOTAL
+                add 1 to #CPSTO180
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CPS03TO180
+	        add 1 to #CPS03TOTAL
+                add 1 to #CPSTO180
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CPS04TO180
+	        add 1 to #CPS04TOTAL
+                add 1 to #CPSTO180
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CPS05TO180
+	        add 1 to #CPS05TOTAL
+                add 1 to #CPSTO180
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CPS06TO180
+	        add 1 to #CPS06TOTAL
+                add 1 to #CPSTO180
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CPS07TO180
+	        add 1 to #CPS07TOTAL
+                add 1 to #CPSTO180
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CPS08TO180
+	        add 1 to #CPS08TOTAL
+                add 1 to #CPSTO180
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CPS09TO180
+	        add 1 to #CPS09TOTAL
+                add 1 to #CPSTO180
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CPS10TO180
+	        add 1 to #CPS10TOTAL
+                add 1 to #CPSTO180
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CPS11TO180
+	        add 1 to #CPS11TOTAL
+                add 1 to #CPSTO180
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CPSOTHERTO180
+	        add 1 to #CPSOTHERTOTAL
+                add 1 to #CPSTO180
+		add 1 to #CPSTOTAL
+             BREAK
+	 END-EVALUATE
+    BREAK
+    WHEN > 180
+	 EVALUATE $cps_region
+	     WHEN  = '001'
+                add 1 to #CPS01180UP
+		add 1 to #CPS01TOTAL
+                add 1 to #CPS180UP
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CPS02180UP
+		add 1 to #CPS02TOTAL
+                add 1 to #CPS180UP
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CPS03180UP
+	        add 1 to #CPS03TOTAL
+                add 1 to #CPS180UP
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CPS04180UP
+	        add 1 to #CPS04TOTAL
+                add 1 to #CPS180UP
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CPS05180UP
+	        add 1 to #CPS05TOTAL
+                add 1 to #CPS180UP
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CPS06180UP
+	        add 1 to #CPS06TOTAL
+                add 1 to #CPS180UP
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CPS07180UP
+	        add 1 to #CPS07TOTAL
+                add 1 to #CPS180UP
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CPS08180UP
+	        add 1 to #CPS08TOTAL
+                add 1 to #CPS180UP
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CPS09180UP
+	        add 1 to #CPS09TOTAL
+                add 1 to #CPS180UP
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CPS10180UP
+	        add 1 to #CPS10TOTAL
+                add 1 to #CPS180UP
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CPS11180UP
+	        add 1 to #CPS11TOTAL
+                add 1 to #CPS180UP
+		add 1 to #CPSTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CPSOTHER180UP
+	        add 1 to #CPSOTHERTOTAL
+                add 1 to #CPS180UP
+		add 1 to #CPSTOTAL
+	     BREAK
+	 END-EVALUATE
+    BREAK
+END-EVALUATE
+
+END-PROCEDURE GET-CPS-PENDING-COUNTS
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-LIC-PENDING                                                           *
+!                                                                           *
+!       This procedure retrieves the number of days a LIC investigation    *
+! 	has been open on CAPS                                               *
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : GET-LIC-PENDING-COUNTS                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-LIC-PENDING
+
+    
+    
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+lic4.ID_INV_LIC_STAGE
+
+lic4.CD_INV_LIC_STAGE_PROGRAM
+   move &lic4.CD_INV_LIC_STAGE_PROGRAM  to  $lic_program	
+
+lic4.CD_INV_LIC_SUPV_STG_REGION
+   move &lic4.CD_INV_LIC_SUPV_STG_REGION             to  $lic_region
+
+(to_date($last_day_dt) - lic4.DT_INV_LIC_STAGE_START) &licdays
+   move &licdays 			     to  $licage
+
+   let #licage = to_number($licage)
+
+   do GET-LIC-PENDING-COUNTS
+    
+FROM INV_LIC_FACT lic4
+
+WHERE lic4.ID_TIME_LOAD = #id_time
+
+AND   (lic4.DT_INV_LIC_STAGE_CLOSED IS NULL
+
+OR     lic4.DT_INV_LIC_STAGE_CLOSED > $last_day_dt)
+
+
+END-SELECT
+
+END-PROCEDURE GET-LIC-PENDING
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-LIC-PENDING-COUNTS                                                    *
+!                                                                           *
+!       This procedure places the counts, based on age of investigation     *
+!	into the appropriate categories:  0-30, 31-60, 61-90, 91-120,       *
+!	121-150, 151-180, over 180.                                         *
+!                                                                           *
+!       CALLED BY  : GET-LIC-PENDING                                          *
+!       CALLS      :                                                        *
+!****************************************************************************
+BEGIN-PROCEDURE GET-LIC-PENDING-COUNTS
+
+EVALUATE $lic_program
+   WHEN = 'RCL'
+      EVALUATE #licage
+        WHEN <= 30
+    	   add 1 to #RCCTO30
+	   add 1 to #RCCTOTAL
+	BREAK
+	WHEN <= 60
+	   add 1 to #RCCTO60
+	   add 1 to #RCCTOTAL
+	BREAK
+        WHEN <= 90
+	   add 1 to #RCCTO90
+	   add 1 to #RCCTOTAL
+	BREAK
+	WHEN <= 120
+	   add 1 to #RCCTO120
+	   add 1 to #RCCTOTAL
+        BREAK
+	WHEN <= 150
+	   add 1 to #RCCTO150
+	   add 1 to #RCCTOTAL
+	BREAK
+	WHEN <= 180
+	   add 1 to #RCCTO180
+	   add 1 to #RCCTOTAL
+	BREAK
+        WHEN > 180
+	   add 1 to #RCC180UP
+	   add 1 to #RCCTOTAL
+	BREAK
+      END-EVALUATE
+   WHEN = 'CCL'
+   EVALUATE #licage
+      WHEN <= 30
+    	 EVALUATE $lic_region
+	     WHEN  = '001'
+                add 1 to #CCL01TO30
+		add 1 to #CCL01TOTAL
+                add 1 to #CCLTO30
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CCL02TO30
+		add 1 to #CCL02TOTAL
+                add 1 to #CCLTO30
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CCL03TO30
+		add 1 to #CCL03TOTAL
+                add 1 to #CCLTO30
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CCL04TO30
+	        add 1 to #CCL04TOTAL
+                add 1 to #CCLTO30
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CCL05TO30
+	        add 1 to #CCL05TOTAL
+                add 1 to #CCLTO30
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CCL06TO30
+	        add 1 to #CCL06TOTAL
+                add 1 to #CCLTO30
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CCL07TO30
+	        add 1 to #CCL07TOTAL
+                add 1 to #CCLTO30
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CCL08TO30
+	        add 1 to #CCL08TOTAL
+                add 1 to #CCLTO30
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CCL09TO30
+	        add 1 to #CCL09TOTAL
+                add 1 to #CCLTO30
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CCL10TO30
+	        add 1 to #CCL10TOTAL
+                add 1 to #CCLTO30
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CCL11TO30
+	        add 1 to #CCL11TOTAL
+                add 1 to #CCLTO30
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CCLOTHERTO30
+	        add 1 to #CCLOTHERTOTAL
+                add 1 to #CCLTO30
+		add 1 to #CCLTOTAL
+	     BREAK
+         END-EVALUATE
+    BREAK
+    WHEN <= 60
+	 EVALUATE $lic_region
+	     WHEN  = '001'
+                add 1 to #CCL01TO60
+		add 1 to #CCL01TOTAL
+                add 1 to #CCLTO60
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CCL02TO60
+		add 1 to #CCL02TOTAL
+                add 1 to #CCLTO60
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CCL03TO60
+	        add 1 to #CCL03TOTAL
+                add 1 to #CCLTO60
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CCL04TO60
+	        add 1 to #CCL04TOTAL
+                add 1 to #CCLTO60
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CCL05TO60
+	        add 1 to #CCL05TOTAL
+                add 1 to #CCLTO60
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CCL06TO60
+	        add 1 to #CCL06TOTAL
+                add 1 to #CCLTO60
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CCL07TO60
+	        add 1 to #CCL07TOTAL
+                add 1 to #CCLTO60
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CCL08TO60
+	        add 1 to #CCL08TOTAL
+                add 1 to #CCLTO60
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CCL09TO60
+	        add 1 to #CCL09TOTAL
+                add 1 to #CCLTO60
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CCL10TO60
+	        add 1 to #CCL10TOTAL
+                add 1 to #CCLTO60
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CCL11TO60
+	        add 1 to #CCL11TOTAL
+                add 1 to #CCLTO60
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CCLOTHERTO60
+	        add 1 to #CCLOTHERTOTAL
+                add 1 to #CCLTO60
+		add 1 to #CCLTOTAL
+	     BREAK
+         END-EVALUATE
+    BREAK
+    WHEN <= 90
+	 EVALUATE $lic_region
+	     WHEN  = '001'
+                add 1 to #CCL01TO90
+		add 1 to #CCL01TOTAL
+                add 1 to #CCLTO90
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CCL02TO90
+		add 1 to #CCL02TOTAL
+                add 1 to #CCLTO90
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CCL03TO90
+	        add 1 to #CCL03TOTAL
+                add 1 to #CCLTO90
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CCL04TO90
+	        add 1 to #CCL04TOTAL
+                add 1 to #CCLTO90
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CCL05TO90
+	        add 1 to #CCL05TOTAL
+                add 1 to #CCLTO90
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CCL06TO90
+	        add 1 to #CCL06TOTAL
+                add 1 to #CCLTO90
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CCL07TO90
+	        add 1 to #CCL07TOTAL
+                add 1 to #CCLTO90
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CCL08TO90
+	        add 1 to #CCL08TOTAL
+                add 1 to #CCLTO90
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CCL09TO90
+	        add 1 to #CCL09TOTAL
+                add 1 to #CCLTO90
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CCL10TO90
+	        add 1 to #CCL10TOTAL
+                add 1 to #CCLTO90
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CCL11TO90
+	        add 1 to #CCL11TOTAL
+                add 1 to #CCLTO90
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CCLOTHERTO90
+	        add 1 to #CCLOTHERTOTAL
+                add 1 to #CCLTO90
+		add 1 to #CCLTOTAL
+             BREAK
+         END-EVALUATE
+    BREAK	
+    WHEN <= 120
+	 EVALUATE $lic_region
+	     WHEN  = '001'
+                add 1 to #CCL01TO120
+		add 1 to #CCL01TOTAL
+                add 1 to #CCLTO120
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CCL02TO120
+		add 1 to #CCL02TOTAL
+                add 1 to #CCLTO120
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CCL03TO120
+	        add 1 to #CCL03TOTAL
+                add 1 to #CCLTO120
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CCL04TO120
+	        add 1 to #CCL04TOTAL
+                add 1 to #CCLTO120
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CCL05TO120
+	        add 1 to #CCL05TOTAL
+                add 1 to #CCLTO120
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CCL06TO120
+	        add 1 to #CCL06TOTAL
+                add 1 to #CCLTO120
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CCL07TO120
+	        add 1 to #CCL07TOTAL
+                add 1 to #CCLTO120
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CCL08TO120
+	        add 1 to #CCL08TOTAL
+                add 1 to #CCLTO120
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CCL09TO120
+	        add 1 to #CCL09TOTAL
+                add 1 to #CCLTO120
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CCL10TO120
+	        add 1 to #CCL10TOTAL
+                add 1 to #CCLTO120
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CCL11TO120
+	        add 1 to #CCL11TOTAL
+                add 1 to #CCLTO120
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CCLOTHERTO120
+	        add 1 to #CCLOTHERTOTAL
+                add 1 to #CCLTO120
+		add 1 to #CCLTOTAL
+	     BREAK
+         END-EVALUATE
+    BREAK	
+    WHEN <= 150
+	 EVALUATE $lic_region
+	     WHEN  = '001'
+                add 1 to #CCL01TO150
+		add 1 to #CCL01TOTAL
+                add 1 to #CCLTO150
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CCL02TO150
+		add 1 to #CCL02TOTAL
+                add 1 to #CCLTO150
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CCL03TO150
+	        add 1 to #CCL03TOTAL
+                add 1 to #CCLTO150
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CCL04TO150
+	        add 1 to #CCL04TOTAL
+                add 1 to #CCLTO150
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CCL05TO150
+	        add 1 to #CCL05TOTAL
+                add 1 to #CCLTO150
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CCL06TO150
+	        add 1 to #CCL06TOTAL
+                add 1 to #CCLTO150
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CCL07TO150
+	        add 1 to #CCL07TOTAL
+                add 1 to #CCLTO150
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CCL08TO150
+	        add 1 to #CCL08TOTAL
+                add 1 to #CCLTO150
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CCL09TO150
+	        add 1 to #CCL09TOTAL
+                add 1 to #CCLTO150
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CCL10TO150
+	        add 1 to #CCL10TOTAL
+                add 1 to #CCLTO150
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CCL11TO150
+	        add 1 to #CCL11TOTAL
+                add 1 to #CCLTO150
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CCLOTHERTO150
+	        add 1 to #CCLOTHERTOTAL
+                add 1 to #CCLTO150
+		add 1 to #CCLTOTAL
+             BREAK
+         END-EVALUATE
+    BREAK
+    WHEN <= 180
+	 EVALUATE $lic_region
+	     WHEN  = '001'
+                add 1 to #CCL01TO180
+		add 1 to #CCL01TOTAL
+                add 1 to #CCLTO180
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CCL02TO180
+		add 1 to #CCL02TOTAL
+                add 1 to #CCLTO180
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CCL03TO180
+	        add 1 to #CCL03TOTAL
+                add 1 to #CCLTO180
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CCL04TO180
+	        add 1 to #CCL04TOTAL
+                add 1 to #CCLTO180
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CCL05TO180
+	        add 1 to #CCL05TOTAL
+                add 1 to #CCLTO180
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CCL06TO180
+	        add 1 to #CCL06TOTAL
+                add 1 to #CCLTO180
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CCL07TO180
+	        add 1 to #CCL07TOTAL
+                add 1 to #CCLTO180
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CCL08TO180
+	        add 1 to #CCL08TOTAL
+                add 1 to #CCLTO180
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CCL09TO180
+	        add 1 to #CCL09TOTAL
+                add 1 to #CCLTO180
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CCL10TO180
+	        add 1 to #CCL10TOTAL
+                add 1 to #CCLTO180
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CCL11TO180
+	        add 1 to #CCL11TOTAL
+                add 1 to #CCLTO180
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CCLOTHERTO180
+	        add 1 to #CCLOTHERTOTAL
+                add 1 to #CCLTO180
+		add 1 to #CCLTOTAL
+             BREAK
+	 END-EVALUATE
+    BREAK
+    WHEN > 180
+	 EVALUATE $lic_region
+	     WHEN  = '001'
+                add 1 to #CCL01180UP
+		add 1 to #CCL01TOTAL
+                add 1 to #CCL180UP
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '002'
+        	add 1 to #CCL02180UP
+		add 1 to #CCL02TOTAL
+                add 1 to #CCL180UP
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '003'
+        	add 1 to #CCL03180UP
+	        add 1 to #CCL03TOTAL
+                add 1 to #CCL180UP
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '004'
+        	add 1 to #CCL04180UP
+	        add 1 to #CCL04TOTAL
+                add 1 to #CCL180UP
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '005'
+        	add 1 to #CCL05180UP
+	        add 1 to #CCL05TOTAL
+                add 1 to #CCL180UP
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '006'
+        	add 1 to #CCL06180UP
+	        add 1 to #CCL06TOTAL
+                add 1 to #CCL180UP
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '007'
+        	add 1 to #CCL07180UP
+	        add 1 to #CCL07TOTAL
+                add 1 to #CCL180UP
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '008'
+        	add 1 to #CCL08180UP
+	        add 1 to #CCL08TOTAL
+                add 1 to #CCL180UP
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '009'
+        	add 1 to #CCL09180UP
+	        add 1 to #CCL09TOTAL
+                add 1 to #CCL180UP
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '010'
+        	add 1 to #CCL10180UP
+	        add 1 to #CCL10TOTAL
+                add 1 to #CCL180UP
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN  = '011'
+        	add 1 to #CCL11180UP
+	        add 1 to #CCL11TOTAL
+                add 1 to #CCL180UP
+		add 1 to #CCLTOTAL
+	     BREAK
+	     WHEN-OTHER
+		add 1 to #CCLOTHER180UP
+	        add 1 to #CCLOTHERTOTAL
+                add 1 to #CCL180UP
+		add 1 to #CCLTOTAL
+	     BREAK
+	 END-EVALUATE
+       BREAK
+     END-EVALUATE
+   BREAK
+END-EVALUATE
+			
+END-PROCEDURE GET-LIC-PENDING-COUNTS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-COUNTS                                                            *
+!                                                                           *
+!       This procedure prints COUNTS OF CALLS                               *
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : ADD-TO-STATS                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-COUNTS
+
+
+print 'APS'                     (+1,1)   
+print 'Region 01'               (+2,4) 
+print #APS01OPEN                (+0,23)  edit 99,999
+move 'INV1'	to	$stat_code
+move 'APS'      to      $stat_program
+move '001'       to      $stat_region
+move #APS01OPEN	to	#stat_count
+do ADD-TO-STATS
+print #APS01ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #APS01ODM	to	#stat_count
+do ADD-TO-STATS
+print #APS01CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #APS01CDM	to	#stat_count
+do ADD-TO-STATS
+print #APS01TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #APS01TO30	to	#stat_count
+do ADD-TO-STATS
+print #APS01TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #APS01TO60	to	#stat_count
+do ADD-TO-STATS
+print #APS01TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #APS01TO90	to	#stat_count
+do ADD-TO-STATS
+print #APS01TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #APS01TO120 to	#stat_count
+do ADD-TO-STATS
+print #APS01TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #APS01TO150 to	#stat_count
+do ADD-TO-STATS
+print #APS01TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #APS01TO180 to	#stat_count
+do ADD-TO-STATS
+print #APS01180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #APS01180UP to	#stat_count
+do ADD-TO-STATS
+print #APS01TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #APS01TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 02'               (+2,4)
+print #APS02OPEN                (+0,23)  edit 99,999
+move '002'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #APS02OPEN	to	#stat_count
+do ADD-TO-STATS
+print #APS02ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #APS02ODM	to	#stat_count
+do ADD-TO-STATS
+print #APS02CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #APS02CDM	to	#stat_count
+do ADD-TO-STATS
+print #APS02TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #APS02TO30	to	#stat_count
+do ADD-TO-STATS
+print #APS02TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #APS02TO60	to	#stat_count
+do ADD-TO-STATS
+print #APS02TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #APS02TO90	to	#stat_count
+do ADD-TO-STATS
+print #APS02TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #APS02TO120 to	#stat_count
+do ADD-TO-STATS
+print #APS02TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #APS02TO150 to	#stat_count
+do ADD-TO-STATS
+print #APS02TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #APS02TO180 to	#stat_count
+do ADD-TO-STATS
+print #APS02180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #APS02180UP to	#stat_count
+do ADD-TO-STATS
+print #APS02TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #APS02TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 03'		(+2,4)
+print #APS03OPEN                (+0,23)  edit 99,999
+move '003'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #APS03OPEN	to	#stat_count
+do ADD-TO-STATS
+print #APS03ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #APS03ODM	to	#stat_count
+do ADD-TO-STATS
+print #APS03CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #APS03CDM	to	#stat_count
+do ADD-TO-STATS
+print #APS03TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #APS03TO30	to	#stat_count
+do ADD-TO-STATS
+print #APS03TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #APS03TO60	to	#stat_count
+do ADD-TO-STATS
+print #APS03TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #APS03TO90	to	#stat_count
+do ADD-TO-STATS
+print #APS03TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #APS03TO120 to	#stat_count
+do ADD-TO-STATS
+print #APS03TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #APS03TO150 to	#stat_count
+do ADD-TO-STATS
+print #APS03TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #APS03TO180 to	#stat_count
+do ADD-TO-STATS
+print #APS03180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #APS03180UP to	#stat_count
+do ADD-TO-STATS
+print #APS03TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #APS03TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 04'		(+2,4)
+print #APS04OPEN                (+0,23)  edit 99,999
+move '004'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #APS04OPEN	to	#stat_count
+do ADD-TO-STATS
+print #APS04ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #APS04ODM	to	#stat_count
+do ADD-TO-STATS
+print #APS04CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #APS04CDM	to	#stat_count
+do ADD-TO-STATS
+print #APS04TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #APS04TO30	to	#stat_count
+do ADD-TO-STATS
+print #APS04TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #APS04TO60	to	#stat_count
+do ADD-TO-STATS
+print #APS04TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #APS04TO90	to	#stat_count
+do ADD-TO-STATS
+print #APS04TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #APS04TO120 to	#stat_count
+do ADD-TO-STATS
+print #APS04TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #APS04TO150 to	#stat_count
+do ADD-TO-STATS
+print #APS04TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #APS04TO180 to	#stat_count
+do ADD-TO-STATS
+print #APS04180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #APS04180UP to	#stat_count
+do ADD-TO-STATS
+print #APS04TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #APS04TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 05'		(+2,4)
+print #APS05OPEN                (+0,23)  edit 99,999
+move '005'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #APS05OPEN	to	#stat_count
+do ADD-TO-STATS
+print #APS05ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #APS05ODM	to	#stat_count
+do ADD-TO-STATS
+print #APS05CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #APS05CDM	to	#stat_count
+do ADD-TO-STATS
+print #APS05TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #APS05TO30	to	#stat_count
+do ADD-TO-STATS
+print #APS05TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #APS05TO60	to	#stat_count
+do ADD-TO-STATS
+print #APS05TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #APS05TO90	to	#stat_count
+do ADD-TO-STATS
+print #APS05TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #APS05TO120 to	#stat_count
+do ADD-TO-STATS
+print #APS05TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #APS05TO150 to	#stat_count
+do ADD-TO-STATS
+print #APS05TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #APS05TO180 to	#stat_count
+do ADD-TO-STATS
+print #APS05180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #APS05180UP to	#stat_count
+do ADD-TO-STATS
+print #APS05TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #APS05TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 06'		(+2,4)
+print #APS06OPEN                (+0,23)  edit 99,999
+move '006'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #APS06OPEN	to	#stat_count
+do ADD-TO-STATS
+print #APS06ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #APS06ODM	to	#stat_count
+do ADD-TO-STATS
+print #APS06CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #APS06CDM	to	#stat_count
+do ADD-TO-STATS
+print #APS06TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #APS06TO30	to	#stat_count
+do ADD-TO-STATS
+print #APS06TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #APS06TO60	to	#stat_count
+do ADD-TO-STATS
+print #APS06TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #APS06TO90	to	#stat_count
+do ADD-TO-STATS
+print #APS06TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #APS06TO120 to	#stat_count
+do ADD-TO-STATS
+print #APS06TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #APS06TO150 to	#stat_count
+do ADD-TO-STATS
+print #APS06TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #APS06TO180 to	#stat_count
+do ADD-TO-STATS
+print #APS06180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #APS06180UP to	#stat_count
+do ADD-TO-STATS
+print #APS06TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #APS06TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 07'		(+2,4)
+print #APS07OPEN                (+0,23)  edit 99,999
+move '007'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #APS07OPEN	to	#stat_count
+do ADD-TO-STATS
+print #APS07ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #APS07ODM	to	#stat_count
+do ADD-TO-STATS
+print #APS07CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #APS07CDM	to	#stat_count
+do ADD-TO-STATS
+print #APS07TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #APS07TO30	to	#stat_count
+do ADD-TO-STATS
+print #APS07TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #APS07TO60	to	#stat_count
+do ADD-TO-STATS
+print #APS07TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #APS07TO90	to	#stat_count
+do ADD-TO-STATS
+print #APS07TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #APS07TO120 to	#stat_count
+do ADD-TO-STATS
+print #APS07TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #APS07TO150 to	#stat_count
+do ADD-TO-STATS
+print #APS07TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #APS07TO180 to	#stat_count
+do ADD-TO-STATS
+print #APS07180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #APS07180UP to	#stat_count
+do ADD-TO-STATS
+print #APS07TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #APS07TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 08'		(+2,4)
+print #APS08OPEN                (+0,23)  edit 99,999
+move '008'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #APS08OPEN	to	#stat_count
+do ADD-TO-STATS
+print #APS08ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #APS08ODM	to	#stat_count
+do ADD-TO-STATS
+print #APS08CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #APS08CDM	to	#stat_count
+do ADD-TO-STATS
+print #APS08TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #APS08TO30	to	#stat_count
+do ADD-TO-STATS
+print #APS08TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #APS08TO60	to	#stat_count
+do ADD-TO-STATS
+print #APS08TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #APS08TO90	to	#stat_count
+do ADD-TO-STATS
+print #APS08TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #APS08TO120 to	#stat_count
+do ADD-TO-STATS
+print #APS08TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #APS08TO150 to	#stat_count
+do ADD-TO-STATS
+print #APS08TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #APS08TO180 to	#stat_count
+do ADD-TO-STATS
+print #APS08180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #APS08180UP to	#stat_count
+do ADD-TO-STATS
+print #APS08TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #APS08TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 09'		(+2,4)
+print #APS09OPEN                (+0,23)  edit 99,999
+move '009'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #APS09OPEN	to	#stat_count
+do ADD-TO-STATS
+print #APS09ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #APS09ODM	to	#stat_count
+do ADD-TO-STATS
+print #APS09CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #APS09CDM	to	#stat_count
+do ADD-TO-STATS
+print #APS09TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #APS09TO30	to	#stat_count
+do ADD-TO-STATS
+print #APS09TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #APS09TO60	to	#stat_count
+do ADD-TO-STATS
+print #APS09TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #APS09TO90	to	#stat_count
+do ADD-TO-STATS
+print #APS09TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #APS09TO120 to	#stat_count
+do ADD-TO-STATS
+print #APS09TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #APS09TO150 to	#stat_count
+do ADD-TO-STATS
+print #APS09TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #APS09TO180 to	#stat_count
+do ADD-TO-STATS
+print #APS09180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #APS09180UP to	#stat_count
+do ADD-TO-STATS
+print #APS09TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #APS09TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 10'		(+2,4)
+print #APS10OPEN                (+0,23)  edit 99,999
+move '010'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #APS10OPEN	to	#stat_count
+do ADD-TO-STATS
+print #APS10ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #APS10ODM	to	#stat_count
+do ADD-TO-STATS
+print #APS10CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #APS10CDM	to	#stat_count
+do ADD-TO-STATS
+print #APS10TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #APS10TO30	to	#stat_count
+do ADD-TO-STATS
+print #APS10TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #APS10TO60	to	#stat_count
+do ADD-TO-STATS
+print #APS10TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #APS10TO90	to	#stat_count
+do ADD-TO-STATS
+print #APS10TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #APS10TO120 to	#stat_count
+do ADD-TO-STATS
+print #APS10TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #APS10TO150 to	#stat_count
+do ADD-TO-STATS
+print #APS10TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #APS10TO180 to	#stat_count
+do ADD-TO-STATS
+print #APS10180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #APS10180UP to	#stat_count
+do ADD-TO-STATS
+print #APS10TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #APS10TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 11'		(+2,4)
+print #APS11OPEN                (+0,23)  edit 99,999
+move '011'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #APS11OPEN	to	#stat_count
+do ADD-TO-STATS
+print #APS11ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #APS11ODM	to	#stat_count
+do ADD-TO-STATS
+print #APS11CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #APS11CDM	to	#stat_count
+do ADD-TO-STATS
+print #APS11TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #APS11TO30	to	#stat_count
+do ADD-TO-STATS
+print #APS11TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #APS11TO60	to	#stat_count
+do ADD-TO-STATS
+print #APS11TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #APS11TO90	to	#stat_count
+do ADD-TO-STATS
+print #APS11TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #APS11TO120 to	#stat_count
+do ADD-TO-STATS
+print #APS11TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #APS11TO150 to	#stat_count
+do ADD-TO-STATS
+print #APS11TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #APS11TO180 to	#stat_count
+do ADD-TO-STATS
+print #APS11180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #APS11180UP to	#stat_count
+do ADD-TO-STATS
+print #APS11TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #APS11TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Other'    		(+2,4)
+print #APSOTHEROPEN             (+0,23)  edit 99,999
+move 'OTH'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #APSOTHEROPEN	to	#stat_count
+do ADD-TO-STATS
+print #APSOTHERODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #APSOTHERODM	to	#stat_count
+do ADD-TO-STATS
+print #APSOTHERCDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #APSOTHERCDM	to	#stat_count
+do ADD-TO-STATS
+print #APSOTHERTO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #APSOTHERTO30	to	#stat_count
+do ADD-TO-STATS
+print #APSOTHERTO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #APSOTHERTO60	to	#stat_count
+do ADD-TO-STATS
+print #APSOTHERTO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #APSOTHERTO90	to	#stat_count
+do ADD-TO-STATS
+print #APSOTHERTO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #APSOTHERTO120 to	#stat_count
+do ADD-TO-STATS
+print #APSOTHERTO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #APSOTHERTO150 to	#stat_count
+do ADD-TO-STATS
+print #APSOTHERTO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #APSOTHERTO180 to	#stat_count
+do ADD-TO-STATS
+print #APSOTHER180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #APSOTHER180UP to	#stat_count
+do ADD-TO-STATS
+print #APSOTHERTOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #APSOTHERTOTAL to	#stat_count
+do ADD-TO-STATS
+print 'TOTAL'    		(+2,4)
+print #APSOPEN                  (+0,20)  edit 9,999,999
+move 'ALL'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #APSOPEN	to	#stat_count
+do ADD-TO-STATS
+print #APSODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #APSODM	to	#stat_count
+do ADD-TO-STATS
+print #APSCDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #APSCDM	to	#stat_count
+do ADD-TO-STATS
+print #APSTO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #APSTO30	to	#stat_count
+do ADD-TO-STATS
+print #APSTO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #APSTO60	to	#stat_count
+do ADD-TO-STATS
+print #APSTO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #APSTO90	to	#stat_count
+do ADD-TO-STATS
+print #APSTO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #APSTO120 to	#stat_count
+do ADD-TO-STATS
+print #APSTO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #APSTO150 to	#stat_count
+do ADD-TO-STATS
+print #APSTO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #APSTO180 to	#stat_count
+do ADD-TO-STATS
+print #APS180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #APS180UP to	#stat_count
+do ADD-TO-STATS
+print #APSTOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #APSTOTAL to	#stat_count
+do ADD-TO-STATS
+
+NEW-PAGE
+
+print 'AFC'                     (+1,1)   
+print 'Region 01'               (+2,4) 
+print #AFC01OPEN                (+0,23)  edit 99,999
+move 'INV1'	to	$stat_code
+move 'AFC'      to      $stat_program
+move '001'       to      $stat_region
+move #AFC01OPEN	to	#stat_count
+do ADD-TO-STATS
+print #AFC01ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #AFC01ODM	to	#stat_count
+do ADD-TO-STATS
+print #AFC01CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #AFC01CDM	to	#stat_count
+do ADD-TO-STATS
+print #AFC01TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #AFC01TO30	to	#stat_count
+do ADD-TO-STATS
+print #AFC01TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #AFC01TO60	to	#stat_count
+do ADD-TO-STATS
+print #AFC01TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #AFC01TO90	to	#stat_count
+do ADD-TO-STATS
+print #AFC01TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #AFC01TO120 to	#stat_count
+do ADD-TO-STATS
+print #AFC01TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #AFC01TO150 to	#stat_count
+do ADD-TO-STATS
+print #AFC01TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #AFC01TO180 to	#stat_count
+do ADD-TO-STATS
+print #AFC01180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #AFC01180UP to	#stat_count
+do ADD-TO-STATS
+print #AFC01TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #AFC01TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 02'               (+2,4)
+print #AFC02OPEN                (+0,23)  edit 99,999
+move '002'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #AFC02OPEN	to	#stat_count
+do ADD-TO-STATS
+print #AFC02ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #AFC02ODM	to	#stat_count
+do ADD-TO-STATS
+print #AFC02CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #AFC02CDM	to	#stat_count
+do ADD-TO-STATS
+print #AFC02TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #AFC02TO30	to	#stat_count
+do ADD-TO-STATS
+print #AFC02TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #AFC02TO60	to	#stat_count
+do ADD-TO-STATS
+print #AFC02TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #AFC02TO90	to	#stat_count
+do ADD-TO-STATS
+print #AFC02TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #AFC02TO120 to	#stat_count
+do ADD-TO-STATS
+print #AFC02TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #AFC02TO150 to	#stat_count
+do ADD-TO-STATS
+print #AFC02TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #AFC02TO180 to	#stat_count
+do ADD-TO-STATS
+print #AFC02180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #AFC02180UP to	#stat_count
+do ADD-TO-STATS
+print #AFC02TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #AFC02TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 03'		(+2,4)
+print #AFC03OPEN                (+0,23)  edit 99,999
+move '003'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #AFC03OPEN	to	#stat_count
+do ADD-TO-STATS
+print #AFC03ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #AFC03ODM	to	#stat_count
+do ADD-TO-STATS
+print #AFC03CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #AFC03CDM	to	#stat_count
+do ADD-TO-STATS
+print #AFC03TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #AFC03TO30	to	#stat_count
+do ADD-TO-STATS
+print #AFC03TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #AFC03TO60	to	#stat_count
+do ADD-TO-STATS
+print #AFC03TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #AFC03TO90	to	#stat_count
+do ADD-TO-STATS
+print #AFC03TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #AFC03TO120 to	#stat_count
+do ADD-TO-STATS
+print #AFC03TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #AFC03TO150 to	#stat_count
+do ADD-TO-STATS
+print #AFC03TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #AFC03TO180 to	#stat_count
+do ADD-TO-STATS
+print #AFC03180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #AFC03180UP to	#stat_count
+do ADD-TO-STATS
+print #AFC03TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #AFC03TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 04'		(+2,4)
+print #AFC04OPEN                (+0,23)  edit 99,999
+move '004'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #AFC04OPEN	to	#stat_count
+do ADD-TO-STATS
+print #AFC04ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #AFC04ODM	to	#stat_count
+do ADD-TO-STATS
+print #AFC04CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #AFC04CDM	to	#stat_count
+do ADD-TO-STATS
+print #AFC04TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #AFC04TO30	to	#stat_count
+do ADD-TO-STATS
+print #AFC04TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #AFC04TO60	to	#stat_count
+do ADD-TO-STATS
+print #AFC04TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #AFC04TO90	to	#stat_count
+do ADD-TO-STATS
+print #AFC04TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #AFC04TO120 to	#stat_count
+do ADD-TO-STATS
+print #AFC04TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #AFC04TO150 to	#stat_count
+do ADD-TO-STATS
+print #AFC04TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #AFC04TO180 to	#stat_count
+do ADD-TO-STATS
+print #AFC04180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #AFC04180UP to	#stat_count
+do ADD-TO-STATS
+print #AFC04TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #AFC04TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 05'		(+2,4)
+print #AFC05OPEN                (+0,23)  edit 99,999
+move '005'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #AFC05OPEN	to	#stat_count
+do ADD-TO-STATS
+print #AFC05ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #AFC05ODM	to	#stat_count
+do ADD-TO-STATS
+print #AFC05CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #AFC05CDM	to	#stat_count
+do ADD-TO-STATS
+print #AFC05TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #AFC05TO30	to	#stat_count
+do ADD-TO-STATS
+print #AFC05TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #AFC05TO60	to	#stat_count
+do ADD-TO-STATS
+print #AFC05TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #AFC05TO90	to	#stat_count
+do ADD-TO-STATS
+print #AFC05TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #AFC05TO120 to	#stat_count
+do ADD-TO-STATS
+print #AFC05TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #AFC05TO150 to	#stat_count
+do ADD-TO-STATS
+print #AFC05TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #AFC05TO180 to	#stat_count
+do ADD-TO-STATS
+print #AFC05180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #AFC05180UP to	#stat_count
+do ADD-TO-STATS
+print #AFC05TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #AFC05TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 06'		(+2,4)
+print #AFC06OPEN                (+0,23)  edit 99,999
+move '006'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #AFC06OPEN	to	#stat_count
+do ADD-TO-STATS
+print #AFC06ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #AFC06ODM	to	#stat_count
+do ADD-TO-STATS
+print #AFC06CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #AFC06CDM	to	#stat_count
+do ADD-TO-STATS
+print #AFC06TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #AFC06TO30	to	#stat_count
+do ADD-TO-STATS
+print #AFC06TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #AFC06TO60	to	#stat_count
+do ADD-TO-STATS
+print #AFC06TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #AFC06TO90	to	#stat_count
+do ADD-TO-STATS
+print #AFC06TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #AFC06TO120 to	#stat_count
+do ADD-TO-STATS
+print #AFC06TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #AFC06TO150 to	#stat_count
+do ADD-TO-STATS
+print #AFC06TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #AFC06TO180 to	#stat_count
+do ADD-TO-STATS
+print #AFC06180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #AFC06180UP to	#stat_count
+do ADD-TO-STATS
+print #AFC06TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #AFC06TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 07'		(+2,4)
+print #AFC07OPEN                (+0,23)  edit 99,999
+move '007'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #AFC07OPEN	to	#stat_count
+do ADD-TO-STATS
+print #AFC07ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #AFC07ODM	to	#stat_count
+do ADD-TO-STATS
+print #AFC07CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #AFC07CDM	to	#stat_count
+do ADD-TO-STATS
+print #AFC07TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #AFC07TO30	to	#stat_count
+do ADD-TO-STATS
+print #AFC07TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #AFC07TO60	to	#stat_count
+do ADD-TO-STATS
+print #AFC07TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #AFC07TO90	to	#stat_count
+do ADD-TO-STATS
+print #AFC07TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #AFC07TO120 to	#stat_count
+do ADD-TO-STATS
+print #AFC07TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #AFC07TO150 to	#stat_count
+do ADD-TO-STATS
+print #AFC07TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #AFC07TO180 to	#stat_count
+do ADD-TO-STATS
+print #AFC07180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #AFC07180UP to	#stat_count
+do ADD-TO-STATS
+print #AFC07TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #AFC07TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 08'		(+2,4)
+print #AFC08OPEN                (+0,23)  edit 99,999
+move '008'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #AFC08OPEN	to	#stat_count
+do ADD-TO-STATS
+print #AFC08ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #AFC08ODM	to	#stat_count
+do ADD-TO-STATS
+print #AFC08CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #AFC08CDM	to	#stat_count
+do ADD-TO-STATS
+print #AFC08TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #AFC08TO30	to	#stat_count
+do ADD-TO-STATS
+print #AFC08TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #AFC08TO60	to	#stat_count
+do ADD-TO-STATS
+print #AFC08TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #AFC08TO90	to	#stat_count
+do ADD-TO-STATS
+print #AFC08TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #AFC08TO120 to	#stat_count
+do ADD-TO-STATS
+print #AFC08TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #AFC08TO150 to	#stat_count
+do ADD-TO-STATS
+print #AFC08TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #AFC08TO180 to	#stat_count
+do ADD-TO-STATS
+print #AFC08180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #AFC08180UP to	#stat_count
+do ADD-TO-STATS
+print #AFC08TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #AFC08TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 09'		(+2,4)
+print #AFC09OPEN                (+0,23)  edit 99,999
+move '009'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #AFC09OPEN	to	#stat_count
+do ADD-TO-STATS
+print #AFC09ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #AFC09ODM	to	#stat_count
+do ADD-TO-STATS
+print #AFC09CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #AFC09CDM	to	#stat_count
+do ADD-TO-STATS
+print #AFC09TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #AFC09TO30	to	#stat_count
+do ADD-TO-STATS
+print #AFC09TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #AFC09TO60	to	#stat_count
+do ADD-TO-STATS
+print #AFC09TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #AFC09TO90	to	#stat_count
+do ADD-TO-STATS
+print #AFC09TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #AFC09TO120 to	#stat_count
+do ADD-TO-STATS
+print #AFC09TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #AFC09TO150 to	#stat_count
+do ADD-TO-STATS
+print #AFC09TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #AFC09TO180 to	#stat_count
+do ADD-TO-STATS
+print #AFC09180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #AFC09180UP to	#stat_count
+do ADD-TO-STATS
+print #AFC09TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #AFC09TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 10'		(+2,4)
+print #AFC10OPEN                (+0,23)  edit 99,999
+move '010'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #AFC10OPEN	to	#stat_count
+do ADD-TO-STATS
+print #AFC10ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #AFC10ODM	to	#stat_count
+do ADD-TO-STATS
+print #AFC10CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #AFC10CDM	to	#stat_count
+do ADD-TO-STATS
+print #AFC10TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #AFC10TO30	to	#stat_count
+do ADD-TO-STATS
+print #AFC10TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #AFC10TO60	to	#stat_count
+do ADD-TO-STATS
+print #AFC10TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #AFC10TO90	to	#stat_count
+do ADD-TO-STATS
+print #AFC10TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #AFC10TO120 to	#stat_count
+do ADD-TO-STATS
+print #AFC10TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #AFC10TO150 to	#stat_count
+do ADD-TO-STATS
+print #AFC10TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #AFC10TO180 to	#stat_count
+do ADD-TO-STATS
+print #AFC10180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #AFC10180UP to	#stat_count
+do ADD-TO-STATS
+print #AFC10TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #AFC10TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 11'		(+2,4)
+print #AFC11OPEN                (+0,23)  edit 99,999
+move '011'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #AFC11OPEN	to	#stat_count
+do ADD-TO-STATS
+print #AFC11ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #AFC11ODM	to	#stat_count
+do ADD-TO-STATS
+print #AFC11CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #AFC11CDM	to	#stat_count
+do ADD-TO-STATS
+print #AFC11TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #AFC11TO30	to	#stat_count
+do ADD-TO-STATS
+print #AFC11TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #AFC11TO60	to	#stat_count
+do ADD-TO-STATS
+print #AFC11TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #AFC11TO90	to	#stat_count
+do ADD-TO-STATS
+print #AFC11TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #AFC11TO120 to	#stat_count
+do ADD-TO-STATS
+print #AFC11TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #AFC11TO150 to	#stat_count
+do ADD-TO-STATS
+print #AFC11TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #AFC11TO180 to	#stat_count
+do ADD-TO-STATS
+print #AFC11180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #AFC11180UP to	#stat_count
+do ADD-TO-STATS
+print #AFC11TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #AFC11TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Other'    		(+2,4)
+print #AFCOTHEROPEN             (+0,23)  edit 99,999
+move 'OTH'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #AFCOTHEROPEN	to	#stat_count
+do ADD-TO-STATS
+print #AFCOTHERODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #AFCOTHERODM	to	#stat_count
+do ADD-TO-STATS
+print #AFCOTHERCDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #AFCOTHERCDM	to	#stat_count
+do ADD-TO-STATS
+print #AFCOTHERTO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #AFCOTHERTO30	to	#stat_count
+do ADD-TO-STATS
+print #AFCOTHERTO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #AFCOTHERTO60	to	#stat_count
+do ADD-TO-STATS
+print #AFCOTHERTO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #AFCOTHERTO90	to	#stat_count
+do ADD-TO-STATS
+print #AFCOTHERTO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #AFCOTHERTO120 to	#stat_count
+do ADD-TO-STATS
+print #AFCOTHERTO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #AFCOTHERTO150 to	#stat_count
+do ADD-TO-STATS
+print #AFCOTHERTO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #AFCOTHERTO180 to	#stat_count
+do ADD-TO-STATS
+print #AFCOTHER180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #AFCOTHER180UP to	#stat_count
+do ADD-TO-STATS
+print #AFCOTHERTOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #AFCOTHERTOTAL to	#stat_count
+do ADD-TO-STATS
+print 'TOTAL'    		(+2,4)
+print #AFCOPEN                  (+0,20)  edit 9,999,999
+move 'ALL'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #AFCOPEN	to	#stat_count
+do ADD-TO-STATS
+print #AFCODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #AFCODM	to	#stat_count
+do ADD-TO-STATS
+print #AFCCDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #AFCCDM	to	#stat_count
+do ADD-TO-STATS
+print #AFCTO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #AFCTO30	to	#stat_count
+do ADD-TO-STATS
+print #AFCTO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #AFCTO60	to	#stat_count
+do ADD-TO-STATS
+print #AFCTO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #AFCTO90	to	#stat_count
+do ADD-TO-STATS
+print #AFCTO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #AFCTO120 to	#stat_count
+do ADD-TO-STATS
+print #AFCTO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #AFCTO150 to	#stat_count
+do ADD-TO-STATS
+print #AFCTO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #AFCTO180 to	#stat_count
+do ADD-TO-STATS
+print #AFC180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #AFC180UP to	#stat_count
+do ADD-TO-STATS
+print #AFCTOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #AFCTOTAL to	#stat_count
+do ADD-TO-STATS
+
+NEW-PAGE
+
+print 'CPS'                     (+1,1)   
+print 'Region 01'               (+2,4) 
+print #CPS01OPEN                (+0,23)  edit 99,999
+move 'INV1'	to	$stat_code
+move 'CPS'      to      $stat_program
+move '001'       to      $stat_region
+move #CPS01OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CPS01ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CPS01ODM	to	#stat_count
+do ADD-TO-STATS
+print #CPS01CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CPS01CDM	to	#stat_count
+do ADD-TO-STATS
+print #CPS01TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CPS01TO30	to	#stat_count
+do ADD-TO-STATS
+print #CPS01TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CPS01TO60	to	#stat_count
+do ADD-TO-STATS
+print #CPS01TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CPS01TO90	to	#stat_count
+do ADD-TO-STATS
+print #CPS01TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CPS01TO120 to	#stat_count
+do ADD-TO-STATS
+print #CPS01TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CPS01TO150 to	#stat_count
+do ADD-TO-STATS
+print #CPS01TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CPS01TO180 to	#stat_count
+do ADD-TO-STATS
+print #CPS01180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CPS01180UP to	#stat_count
+do ADD-TO-STATS
+print #CPS01TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CPS01TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 02'               (+2,4)
+print #CPS02OPEN                (+0,23)  edit 99,999
+move '002'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CPS02OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CPS02ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CPS02ODM	to	#stat_count
+do ADD-TO-STATS
+print #CPS02CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CPS02CDM	to	#stat_count
+do ADD-TO-STATS
+print #CPS02TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CPS02TO30	to	#stat_count
+do ADD-TO-STATS
+print #CPS02TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CPS02TO60	to	#stat_count
+do ADD-TO-STATS
+print #CPS02TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CPS02TO90	to	#stat_count
+do ADD-TO-STATS
+print #CPS02TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CPS02TO120 to	#stat_count
+do ADD-TO-STATS
+print #CPS02TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CPS02TO150 to	#stat_count
+do ADD-TO-STATS
+print #CPS02TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CPS02TO180 to	#stat_count
+do ADD-TO-STATS
+print #CPS02180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CPS02180UP to	#stat_count
+do ADD-TO-STATS
+print #CPS02TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CPS02TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 03'		(+2,4)
+print #CPS03OPEN                (+0,23)  edit 99,999
+move '003'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CPS03OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CPS03ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CPS03ODM	to	#stat_count
+do ADD-TO-STATS
+print #CPS03CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CPS03CDM	to	#stat_count
+do ADD-TO-STATS
+print #CPS03TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CPS03TO30	to	#stat_count
+do ADD-TO-STATS
+print #CPS03TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CPS03TO60	to	#stat_count
+do ADD-TO-STATS
+print #CPS03TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CPS03TO90	to	#stat_count
+do ADD-TO-STATS
+print #CPS03TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CPS03TO120 to	#stat_count
+do ADD-TO-STATS
+print #CPS03TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CPS03TO150 to	#stat_count
+do ADD-TO-STATS
+print #CPS03TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CPS03TO180 to	#stat_count
+do ADD-TO-STATS
+print #CPS03180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CPS03180UP to	#stat_count
+do ADD-TO-STATS
+print #CPS03TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CPS03TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 04'		(+2,4)
+print #CPS04OPEN                (+0,23)  edit 99,999
+move '004'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CPS04OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CPS04ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CPS04ODM	to	#stat_count
+do ADD-TO-STATS
+print #CPS04CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CPS04CDM	to	#stat_count
+do ADD-TO-STATS
+print #CPS04TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CPS04TO30	to	#stat_count
+do ADD-TO-STATS
+print #CPS04TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CPS04TO60	to	#stat_count
+do ADD-TO-STATS
+print #CPS04TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CPS04TO90	to	#stat_count
+do ADD-TO-STATS
+print #CPS04TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CPS04TO120 to	#stat_count
+do ADD-TO-STATS
+print #CPS04TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CPS04TO150 to	#stat_count
+do ADD-TO-STATS
+print #CPS04TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CPS04TO180 to	#stat_count
+do ADD-TO-STATS
+print #CPS04180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CPS04180UP to	#stat_count
+do ADD-TO-STATS
+print #CPS04TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CPS04TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 05'		(+2,4)
+print #CPS05OPEN                (+0,23)  edit 99,999
+move '005'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CPS05OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CPS05ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CPS05ODM	to	#stat_count
+do ADD-TO-STATS
+print #CPS05CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CPS05CDM	to	#stat_count
+do ADD-TO-STATS
+print #CPS05TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CPS05TO30	to	#stat_count
+do ADD-TO-STATS
+print #CPS05TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CPS05TO60	to	#stat_count
+do ADD-TO-STATS
+print #CPS05TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CPS05TO90	to	#stat_count
+do ADD-TO-STATS
+print #CPS05TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CPS05TO120 to	#stat_count
+do ADD-TO-STATS
+print #CPS05TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CPS05TO150 to	#stat_count
+do ADD-TO-STATS
+print #CPS05TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CPS05TO180 to	#stat_count
+do ADD-TO-STATS
+print #CPS05180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CPS05180UP to	#stat_count
+do ADD-TO-STATS
+print #CPS05TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CPS05TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 06'		(+2,4)
+print #CPS06OPEN                (+0,23)  edit 99,999
+move '006'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CPS06OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CPS06ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CPS06ODM	to	#stat_count
+do ADD-TO-STATS
+print #CPS06CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CPS06CDM	to	#stat_count
+do ADD-TO-STATS
+print #CPS06TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CPS06TO30	to	#stat_count
+do ADD-TO-STATS
+print #CPS06TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CPS06TO60	to	#stat_count
+do ADD-TO-STATS
+print #CPS06TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CPS06TO90	to	#stat_count
+do ADD-TO-STATS
+print #CPS06TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CPS06TO120 to	#stat_count
+do ADD-TO-STATS
+print #CPS06TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CPS06TO150 to	#stat_count
+do ADD-TO-STATS
+print #CPS06TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CPS06TO180 to	#stat_count
+do ADD-TO-STATS
+print #CPS06180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CPS06180UP to	#stat_count
+do ADD-TO-STATS
+print #CPS06TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CPS06TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 07'		(+2,4)
+print #CPS07OPEN                (+0,23)  edit 99,999
+move '007'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CPS07OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CPS07ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CPS07ODM	to	#stat_count
+do ADD-TO-STATS
+print #CPS07CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CPS07CDM	to	#stat_count
+do ADD-TO-STATS
+print #CPS07TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CPS07TO30	to	#stat_count
+do ADD-TO-STATS
+print #CPS07TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CPS07TO60	to	#stat_count
+do ADD-TO-STATS
+print #CPS07TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CPS07TO90	to	#stat_count
+do ADD-TO-STATS
+print #CPS07TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CPS07TO120 to	#stat_count
+do ADD-TO-STATS
+print #CPS07TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CPS07TO150 to	#stat_count
+do ADD-TO-STATS
+print #CPS07TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CPS07TO180 to	#stat_count
+do ADD-TO-STATS
+print #CPS07180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CPS07180UP to	#stat_count
+do ADD-TO-STATS
+print #CPS07TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CPS07TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 08'		(+2,4)
+print #CPS08OPEN                (+0,23)  edit 99,999
+move '008'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CPS08OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CPS08ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CPS08ODM	to	#stat_count
+do ADD-TO-STATS
+print #CPS08CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CPS08CDM	to	#stat_count
+do ADD-TO-STATS
+print #CPS08TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CPS08TO30	to	#stat_count
+do ADD-TO-STATS
+print #CPS08TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CPS08TO60	to	#stat_count
+do ADD-TO-STATS
+print #CPS08TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CPS08TO90	to	#stat_count
+do ADD-TO-STATS
+print #CPS08TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CPS08TO120 to	#stat_count
+do ADD-TO-STATS
+print #CPS08TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CPS08TO150 to	#stat_count
+do ADD-TO-STATS
+print #CPS08TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CPS08TO180 to	#stat_count
+do ADD-TO-STATS
+print #CPS08180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CPS08180UP to	#stat_count
+do ADD-TO-STATS
+print #CPS08TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CPS08TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 09'		(+2,4)
+print #CPS09OPEN                (+0,23)  edit 99,999
+move '009'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CPS09OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CPS09ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CPS09ODM	to	#stat_count
+do ADD-TO-STATS
+print #CPS09CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CPS09CDM	to	#stat_count
+do ADD-TO-STATS
+print #CPS09TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CPS09TO30	to	#stat_count
+do ADD-TO-STATS
+print #CPS09TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CPS09TO60	to	#stat_count
+do ADD-TO-STATS
+print #CPS09TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CPS09TO90	to	#stat_count
+do ADD-TO-STATS
+print #CPS09TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CPS09TO120 to	#stat_count
+do ADD-TO-STATS
+print #CPS09TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CPS09TO150 to	#stat_count
+do ADD-TO-STATS
+print #CPS09TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CPS09TO180 to	#stat_count
+do ADD-TO-STATS
+print #CPS09180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CPS09180UP to	#stat_count
+do ADD-TO-STATS
+print #CPS09TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CPS09TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 10'		(+2,4)
+print #CPS10OPEN                (+0,23)  edit 99,999
+move '010'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CPS10OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CPS10ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CPS10ODM	to	#stat_count
+do ADD-TO-STATS
+print #CPS10CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CPS10CDM	to	#stat_count
+do ADD-TO-STATS
+print #CPS10TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CPS10TO30	to	#stat_count
+do ADD-TO-STATS
+print #CPS10TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CPS10TO60	to	#stat_count
+do ADD-TO-STATS
+print #CPS10TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CPS10TO90	to	#stat_count
+do ADD-TO-STATS
+print #CPS10TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CPS10TO120 to	#stat_count
+do ADD-TO-STATS
+print #CPS10TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CPS10TO150 to	#stat_count
+do ADD-TO-STATS
+print #CPS10TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CPS10TO180 to	#stat_count
+do ADD-TO-STATS
+print #CPS10180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CPS10180UP to	#stat_count
+do ADD-TO-STATS
+print #CPS10TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CPS10TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 11'		(+2,4)
+print #CPS11OPEN                (+0,23)  edit 99,999
+move '011'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CPS11OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CPS11ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CPS11ODM	to	#stat_count
+do ADD-TO-STATS
+print #CPS11CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CPS11CDM	to	#stat_count
+do ADD-TO-STATS
+print #CPS11TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CPS11TO30	to	#stat_count
+do ADD-TO-STATS
+print #CPS11TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CPS11TO60	to	#stat_count
+do ADD-TO-STATS
+print #CPS11TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CPS11TO90	to	#stat_count
+do ADD-TO-STATS
+print #CPS11TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CPS11TO120 to	#stat_count
+do ADD-TO-STATS
+print #CPS11TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CPS11TO150 to	#stat_count
+do ADD-TO-STATS
+print #CPS11TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CPS11TO180 to	#stat_count
+do ADD-TO-STATS
+print #CPS11180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CPS11180UP to	#stat_count
+do ADD-TO-STATS
+print #CPS11TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CPS11TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Other'    		(+2,4)
+print #CPSOTHEROPEN             (+0,23)  edit 99,999
+move 'OTH'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CPSOTHEROPEN	to	#stat_count
+do ADD-TO-STATS
+print #CPSOTHERODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CPSOTHERODM	to	#stat_count
+do ADD-TO-STATS
+print #CPSOTHERCDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CPSOTHERCDM	to	#stat_count
+do ADD-TO-STATS
+print #CPSOTHERTO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CPSOTHERTO30	to	#stat_count
+do ADD-TO-STATS
+print #CPSOTHERTO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CPSOTHERTO60	to	#stat_count
+do ADD-TO-STATS
+print #CPSOTHERTO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CPSOTHERTO90	to	#stat_count
+do ADD-TO-STATS
+print #CPSOTHERTO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CPSOTHERTO120 to	#stat_count
+do ADD-TO-STATS
+print #CPSOTHERTO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CPSOTHERTO150 to	#stat_count
+do ADD-TO-STATS
+print #CPSOTHERTO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CPSOTHERTO180 to	#stat_count
+do ADD-TO-STATS
+print #CPSOTHER180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CPSOTHER180UP to	#stat_count
+do ADD-TO-STATS
+print #CPSOTHERTOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CPSOTHERTOTAL to	#stat_count
+do ADD-TO-STATS
+print 'TOTAL'    		(+2,4)
+print #CPSOPEN                  (+0,20)  edit 9,999,999
+move 'ALL'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CPSOPEN	to	#stat_count
+do ADD-TO-STATS
+print #CPSODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CPSODM	to	#stat_count
+do ADD-TO-STATS
+print #CPSCDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CPSCDM	to	#stat_count
+do ADD-TO-STATS
+print #CPSTO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CPSTO30	to	#stat_count
+do ADD-TO-STATS
+print #CPSTO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CPSTO60	to	#stat_count
+do ADD-TO-STATS
+print #CPSTO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CPSTO90	to	#stat_count
+do ADD-TO-STATS
+print #CPSTO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CPSTO120 to	#stat_count
+do ADD-TO-STATS
+print #CPSTO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CPSTO150 to	#stat_count
+do ADD-TO-STATS
+print #CPSTO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CPSTO180 to	#stat_count
+do ADD-TO-STATS
+print #CPS180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CPS180UP to	#stat_count
+do ADD-TO-STATS
+print #CPSTOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CPSTOTAL to	#stat_count
+do ADD-TO-STATS
+
+NEW-PAGE
+
+print 'RCCL'  (+1,1)   
+print 'TOTAL'               (+2,4) 
+print #RCCOPEN              (+0,20)  edit 9,999,999
+move 'RCC'      to      $stat_program
+move 'ALL'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #RCCOPEN	to	#stat_count
+do ADD-TO-STATS
+print #RCCODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #RCCODM	to	#stat_count
+do ADD-TO-STATS
+print #RCCCDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #RCCCDM	to	#stat_count
+do ADD-TO-STATS
+print #RCCTO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #RCCTO30	to	#stat_count
+do ADD-TO-STATS
+print #RCCTO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #RCCTO60	to	#stat_count
+do ADD-TO-STATS
+print #RCCTO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #RCCTO90	to	#stat_count
+do ADD-TO-STATS
+print #RCCTO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #RCCTO120 to	#stat_count
+do ADD-TO-STATS
+print #RCCTO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #RCCTO150 to	#stat_count
+do ADD-TO-STATS
+print #RCCTO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #RCCTO180 to	#stat_count
+do ADD-TO-STATS
+print #RCC180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #RCC180UP to	#stat_count
+do ADD-TO-STATS
+print #RCCTOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #RCCTOTAL to	#stat_count
+do ADD-TO-STATS
+
+print 'CCL'  (+3,1)   
+print 'Region 01'               (+2,4) 
+print #CCL01OPEN                (+0,23)  edit 99,999
+move 'INV1'	to	$stat_code
+move 'CCL'      to      $stat_program
+move '001'       to      $stat_region
+move #CCL01OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CCL01ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CCL01ODM	to	#stat_count
+do ADD-TO-STATS
+print #CCL01CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CCL01CDM	to	#stat_count
+do ADD-TO-STATS
+print #CCL01TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CCL01TO30	to	#stat_count
+do ADD-TO-STATS
+print #CCL01TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CCL01TO60	to	#stat_count
+do ADD-TO-STATS
+print #CCL01TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CCL01TO90	to	#stat_count
+do ADD-TO-STATS
+print #CCL01TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CCL01TO120 to	#stat_count
+do ADD-TO-STATS
+print #CCL01TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CCL01TO150 to	#stat_count
+do ADD-TO-STATS
+print #CCL01TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CCL01TO180 to	#stat_count
+do ADD-TO-STATS
+print #CCL01180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CCL01180UP to	#stat_count
+do ADD-TO-STATS
+print #CCL01TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CCL01TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 02'               (+2,4)
+print #CCL02OPEN                (+0,23)  edit 99,999
+move '002'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CCL02OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CCL02ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CCL02ODM	to	#stat_count
+do ADD-TO-STATS
+print #CCL02CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CCL02CDM	to	#stat_count
+do ADD-TO-STATS
+print #CCL02TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CCL02TO30	to	#stat_count
+do ADD-TO-STATS
+print #CCL02TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CCL02TO60	to	#stat_count
+do ADD-TO-STATS
+print #CCL02TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CCL02TO90	to	#stat_count
+do ADD-TO-STATS
+print #CCL02TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CCL02TO120 to	#stat_count
+do ADD-TO-STATS
+print #CCL02TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CCL02TO150 to	#stat_count
+do ADD-TO-STATS
+print #CCL02TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CCL02TO180 to	#stat_count
+do ADD-TO-STATS
+print #CCL02180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CCL02180UP to	#stat_count
+do ADD-TO-STATS
+print #CCL02TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CCL02TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 03'		(+2,4)
+print #CCL03OPEN                (+0,23)  edit 99,999
+move '003'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CCL03OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CCL03ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CCL03ODM	to	#stat_count
+do ADD-TO-STATS
+print #CCL03CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CCL03CDM	to	#stat_count
+do ADD-TO-STATS
+print #CCL03TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CCL03TO30	to	#stat_count
+do ADD-TO-STATS
+print #CCL03TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CCL03TO60	to	#stat_count
+do ADD-TO-STATS
+print #CCL03TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CCL03TO90	to	#stat_count
+do ADD-TO-STATS
+print #CCL03TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CCL03TO120 to	#stat_count
+do ADD-TO-STATS
+print #CCL03TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CCL03TO150 to	#stat_count
+do ADD-TO-STATS
+print #CCL03TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CCL03TO180 to	#stat_count
+do ADD-TO-STATS
+print #CCL03180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CCL03180UP to	#stat_count
+do ADD-TO-STATS
+print #CCL03TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CCL03TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 04'		(+2,4)
+print #CCL04OPEN                (+0,23)  edit 99,999
+move '004'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CCL04OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CCL04ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CCL04ODM	to	#stat_count
+do ADD-TO-STATS
+print #CCL04CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CCL04CDM	to	#stat_count
+do ADD-TO-STATS
+print #CCL04TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CCL04TO30	to	#stat_count
+do ADD-TO-STATS
+print #CCL04TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CCL04TO60	to	#stat_count
+do ADD-TO-STATS
+print #CCL04TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CCL04TO90	to	#stat_count
+do ADD-TO-STATS
+print #CCL04TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CCL04TO120 to	#stat_count
+do ADD-TO-STATS
+print #CCL04TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CCL04TO150 to	#stat_count
+do ADD-TO-STATS
+print #CCL04TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CCL04TO180 to	#stat_count
+do ADD-TO-STATS
+print #CCL04180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CCL04180UP to	#stat_count
+do ADD-TO-STATS
+print #CCL04TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CCL04TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 05'		(+2,4)
+print #CCL05OPEN                (+0,23)  edit 99,999
+move '005'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CCL05OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CCL05ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CCL05ODM	to	#stat_count
+do ADD-TO-STATS
+print #CCL05CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CCL05CDM	to	#stat_count
+do ADD-TO-STATS
+print #CCL05TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CCL05TO30	to	#stat_count
+do ADD-TO-STATS
+print #CCL05TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CCL05TO60	to	#stat_count
+do ADD-TO-STATS
+print #CCL05TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CCL05TO90	to	#stat_count
+do ADD-TO-STATS
+print #CCL05TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CCL05TO120 to	#stat_count
+do ADD-TO-STATS
+print #CCL05TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CCL05TO150 to	#stat_count
+do ADD-TO-STATS
+print #CCL05TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CCL05TO180 to	#stat_count
+do ADD-TO-STATS
+print #CCL05180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CCL05180UP to	#stat_count
+do ADD-TO-STATS
+print #CCL05TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CCL05TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 06'		(+2,4)
+print #CCL06OPEN                (+0,23)  edit 99,999
+move '006'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CCL06OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CCL06ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CCL06ODM	to	#stat_count
+do ADD-TO-STATS
+print #CCL06CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CCL06CDM	to	#stat_count
+do ADD-TO-STATS
+print #CCL06TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CCL06TO30	to	#stat_count
+do ADD-TO-STATS
+print #CCL06TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CCL06TO60	to	#stat_count
+do ADD-TO-STATS
+print #CCL06TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CCL06TO90	to	#stat_count
+do ADD-TO-STATS
+print #CCL06TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CCL06TO120 to	#stat_count
+do ADD-TO-STATS
+print #CCL06TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CCL06TO150 to	#stat_count
+do ADD-TO-STATS
+print #CCL06TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CCL06TO180 to	#stat_count
+do ADD-TO-STATS
+print #CCL06180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CCL06180UP to	#stat_count
+do ADD-TO-STATS
+print #CCL06TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CCL06TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 07'		(+2,4)
+print #CCL07OPEN                (+0,23)  edit 99,999
+move '007'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CCL07OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CCL07ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CCL07ODM	to	#stat_count
+do ADD-TO-STATS
+print #CCL07CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CCL07CDM	to	#stat_count
+do ADD-TO-STATS
+print #CCL07TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CCL07TO30	to	#stat_count
+do ADD-TO-STATS
+print #CCL07TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CCL07TO60	to	#stat_count
+do ADD-TO-STATS
+print #CCL07TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CCL07TO90	to	#stat_count
+do ADD-TO-STATS
+print #CCL07TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CCL07TO120 to	#stat_count
+do ADD-TO-STATS
+print #CCL07TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CCL07TO150 to	#stat_count
+do ADD-TO-STATS
+print #CCL07TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CCL07TO180 to	#stat_count
+do ADD-TO-STATS
+print #CCL07180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CCL07180UP to	#stat_count
+do ADD-TO-STATS
+print #CCL07TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CCL07TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 08'		(+2,4)
+print #CCL08OPEN                (+0,23)  edit 99,999
+move '008'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CCL08OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CCL08ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CCL08ODM	to	#stat_count
+do ADD-TO-STATS
+print #CCL08CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CCL08CDM	to	#stat_count
+do ADD-TO-STATS
+print #CCL08TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CCL08TO30	to	#stat_count
+do ADD-TO-STATS
+print #CCL08TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CCL08TO60	to	#stat_count
+do ADD-TO-STATS
+print #CCL08TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CCL08TO90	to	#stat_count
+do ADD-TO-STATS
+print #CCL08TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CCL08TO120 to	#stat_count
+do ADD-TO-STATS
+print #CCL08TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CCL08TO150 to	#stat_count
+do ADD-TO-STATS
+print #CCL08TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CCL08TO180 to	#stat_count
+do ADD-TO-STATS
+print #CCL08180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CCL08180UP to	#stat_count
+do ADD-TO-STATS
+print #CCL08TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CCL08TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 09'		(+2,4)
+print #CCL09OPEN                (+0,23)  edit 99,999
+move '009'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CCL09OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CCL09ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CCL09ODM	to	#stat_count
+do ADD-TO-STATS
+print #CCL09CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CCL09CDM	to	#stat_count
+do ADD-TO-STATS
+print #CCL09TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CCL09TO30	to	#stat_count
+do ADD-TO-STATS
+print #CCL09TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CCL09TO60	to	#stat_count
+do ADD-TO-STATS
+print #CCL09TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CCL09TO90	to	#stat_count
+do ADD-TO-STATS
+print #CCL09TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CCL09TO120 to	#stat_count
+do ADD-TO-STATS
+print #CCL09TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CCL09TO150 to	#stat_count
+do ADD-TO-STATS
+print #CCL09TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CCL09TO180 to	#stat_count
+do ADD-TO-STATS
+print #CCL09180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CCL09180UP to	#stat_count
+do ADD-TO-STATS
+print #CCL09TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CCL09TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 10'		(+2,4)
+print #CCL10OPEN                (+0,23)  edit 99,999
+move '010'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CCL10OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CCL10ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CCL10ODM	to	#stat_count
+do ADD-TO-STATS
+print #CCL10CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CCL10CDM	to	#stat_count
+do ADD-TO-STATS
+print #CCL10TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CCL10TO30	to	#stat_count
+do ADD-TO-STATS
+print #CCL10TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CCL10TO60	to	#stat_count
+do ADD-TO-STATS
+print #CCL10TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CCL10TO90	to	#stat_count
+do ADD-TO-STATS
+print #CCL10TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CCL10TO120 to	#stat_count
+do ADD-TO-STATS
+print #CCL10TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CCL10TO150 to	#stat_count
+do ADD-TO-STATS
+print #CCL10TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CCL10TO180 to	#stat_count
+do ADD-TO-STATS
+print #CCL10180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CCL10180UP to	#stat_count
+do ADD-TO-STATS
+print #CCL10TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CCL10TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Region 11'		(+2,4)
+print #CCL11OPEN                (+0,23)  edit 99,999
+move '011'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CCL11OPEN	to	#stat_count
+do ADD-TO-STATS
+print #CCL11ODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CCL11ODM	to	#stat_count
+do ADD-TO-STATS
+print #CCL11CDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CCL11CDM	to	#stat_count
+do ADD-TO-STATS
+print #CCL11TO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CCL11TO30	to	#stat_count
+do ADD-TO-STATS
+print #CCL11TO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CCL11TO60	to	#stat_count
+do ADD-TO-STATS
+print #CCL11TO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CCL11TO90	to	#stat_count
+do ADD-TO-STATS
+print #CCL11TO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CCL11TO120 to	#stat_count
+do ADD-TO-STATS
+print #CCL11TO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CCL11TO150 to	#stat_count
+do ADD-TO-STATS
+print #CCL11TO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CCL11TO180 to	#stat_count
+do ADD-TO-STATS
+print #CCL11180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CCL11180UP to	#stat_count
+do ADD-TO-STATS
+print #CCL11TOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CCL11TOTAL to	#stat_count
+do ADD-TO-STATS
+print 'Other'    		(+2,4)
+print #CCLOTHEROPEN             (+0,23)  edit 99,999
+move 'OTH'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CCLOTHEROPEN	to	#stat_count
+do ADD-TO-STATS
+print #CCLOTHERODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CCLOTHERODM	to	#stat_count
+do ADD-TO-STATS
+print #CCLOTHERCDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CCLOTHERCDM	to	#stat_count
+do ADD-TO-STATS
+print #CCLOTHERTO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CCLOTHERTO30	to	#stat_count
+do ADD-TO-STATS
+print #CCLOTHERTO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CCLOTHERTO60	to	#stat_count
+do ADD-TO-STATS
+print #CCLOTHERTO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CCLOTHERTO90	to	#stat_count
+do ADD-TO-STATS
+print #CCLOTHERTO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CCLOTHERTO120 to	#stat_count
+do ADD-TO-STATS
+print #CCLOTHERTO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CCLOTHERTO150 to	#stat_count
+do ADD-TO-STATS
+print #CCLOTHERTO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CCLOTHERTO180 to	#stat_count
+do ADD-TO-STATS
+print #CCLOTHER180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CCLOTHER180UP to	#stat_count
+do ADD-TO-STATS
+print #CCLOTHERTOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CCLOTHERTOTAL to	#stat_count
+do ADD-TO-STATS
+print 'TOTAL'    		(+2,4)
+print #CCLOPEN                  (+0,20)  edit 9,999,999
+move 'ALL'	to	$stat_region
+move 'INV1'	to	$stat_code
+move #CCLOPEN	to	#stat_count
+do ADD-TO-STATS
+print #CCLODM                 (+0,38)  edit 99,999
+move 'INV2'	to	$stat_code
+move #CCLODM	to	#stat_count
+do ADD-TO-STATS
+print #CCLCDM                 (+0,53)  edit 99,999
+move 'INV3'	to	$stat_code
+move #CCLCDM	to	#stat_count
+do ADD-TO-STATS
+print #CCLTO30                (+0,81)  edit 99,999
+move 'INV4'	to	$stat_code
+move #CCLTO30	to	#stat_count
+do ADD-TO-STATS
+print #CCLTO60                (+0,93)  edit 99,999
+move 'INV5'	to	$stat_code
+move #CCLTO60	to	#stat_count
+do ADD-TO-STATS
+print #CCLTO90                (+0,105) edit 99,999
+move 'INV6'	to	$stat_code
+move #CCLTO90	to	#stat_count
+do ADD-TO-STATS
+print #CCLTO120               (+0,117) edit 99,999
+move 'INV7'	to	$stat_code
+move #CCLTO120 to	#stat_count
+do ADD-TO-STATS
+print #CCLTO150   		(+0,129) edit 99,999
+move 'INV8'	to	$stat_code
+move #CCLTO150 to	#stat_count
+do ADD-TO-STATS
+print #CCLTO180               (+0,141) edit 99,999
+move 'INV9'	to	$stat_code
+move #CCLTO180 to	#stat_count
+do ADD-TO-STATS
+print #CCL180UP               (+0,153) edit 99,999
+move 'INV10'	to	$stat_code
+move #CCL180UP to	#stat_count
+do ADD-TO-STATS
+print #CCLTOTAL               (+0,167) edit 99,999
+move 'INV11'	to	$stat_code
+move #CCLTOTAL to	#stat_count
+do ADD-TO-STATS
+
+END-PROCEDURE PRINT-COUNTS
+!****************************************************************************
+!   ADD-TO-STATS                                                            *
+!                                                                           *
+!       This procedure inserts the information derived for report into      *
+!       STAT_INV.  This table will be used to provide management with       *
+!       investigation totals without providing detailed information         *
+!       to them.                                                            *
+!                                                                           * 
+!       CALLED BY  :  PRINT-COUNTS                                          *
+!       CALLS      :  NONE                                                  *
+!****************************************************************************
+
+BEGIN-PROCEDURE ADD-TO-STATS
+   
+BEGIN-SQL ON-ERROR=SqlErrorHandle
+
+INSERT INTO STAT_INV (ID_STAT_INV,
+	              DT_STAT_INV_LOAD_PROCESS,
+		      CD_STAT_INV_CODE,
+		      CD_STAT_INV_RPT_SRC,
+		      NBR_STAT_INV_RPT_MTH,
+		      NBR_STAT_INV_RPT_YR,
+		      NBR_STAT_INV_RPT_FY,
+		      CD_STAT_INV_PRG,
+	              CD_STAT_INV_REG,
+                     NBR_STAT_INV_COUNT)
+values               ('0',
+		      &currentdt,
+		      $stat_code,
+		      'civ18o00',
+                     $month,
+		      $year,
+		      #fiscalyr,
+                     $stat_program,
+                     $stat_region,
+                     #stat_count)
+
+END-SQL
+
+END-PROCEDURE ADD-TO-STATS
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+print $end_of_report                (+4) center 
+
+NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+print 'SQL error - Processing Terminated'               (+1,2)
+print $error                                            (+1,2)
+print 'ERROR: SQL error halted loader processing'       (+0)
+print $error                                            (+1,2)
+print 'SQL Error: '                                     (+0)
+print $sql-error                                        (+0)
+print $error                                            (+1,2)
+print 'SQL Status: '                                    (+0)
+print #sql-status                                       (+0)
+STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************

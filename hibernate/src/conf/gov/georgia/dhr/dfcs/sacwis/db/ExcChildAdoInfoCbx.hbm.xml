@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.ExcChildAdoInfoCbx" table="EXC_CHILD_ADO_INFO_CBX" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idInfoChar" type="integer" unsaved-value="undefined">
+            <column name="ID_INFO_CHAR" precision="16" scale="0"/>
+            <generator class="sequence">
+        <param name="sequence">SEQ_EXC_CHILD_ADO_INFO_CBX</param>
+      </generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="exchangeChild" class="gov.georgia.dhr.dfcs.sacwis.db.ExchangeChild" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <property name="cdAdoInfoCbx" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_ADO_INFO_CBX" length="3"/>
+        </property>
+        <property name="cdCbxCodeType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_CBX_CODE_TYPE" length="8"/>
+        </property>
+        <property name="dtPerformed" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_PERFORMED" length="7"/>
+        </property>
+    </class>
+</hibernate-mapping>

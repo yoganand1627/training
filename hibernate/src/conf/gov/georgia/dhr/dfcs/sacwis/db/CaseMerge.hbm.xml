@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CaseMerge" table="CASE_MERGE" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idCaseMerge" type="integer" unsaved-value="0">
+      <column name="ID_CASE_MERGE" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_CASE_MERGE</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE_MERGE_STAGE_FROM" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="situation" class="gov.georgia.dhr.dfcs.sacwis.db.Situation" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE_MERGE_SIT_FROM" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdCaseMergePersMrg" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_CASE_MERGE_PERS_MRG" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdCaseMergePersSplit" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_CASE_MERGE_PERS_SPLIT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCaseByIdCaseMergeTo" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_CASE_MERGE_TO" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCaseByIdCaseMergeFrom" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_CASE_MERGE_FROM" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="indCaseMergeInvalid" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CASE_MERGE_INVALID" length="1"/>
+    </property>
+    <property name="indCaseMergePending" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CASE_MERGE_PENDING" length="1"/>
+    </property>
+    <property name="indCaseMergeStageSwap" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_CASE_MERGE_STAGE_SWAP" length="1"/>
+    </property>
+    <property name="dtCaseMerge" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CASE_MERGE" length="7"/>
+    </property>
+    <property name="dtCaseMergeSplit" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_CASE_MERGE_SPLIT" length="7"/>
+    </property>
+  </class>
+</hibernate-mapping>

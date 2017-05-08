@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="structs" default="all" basedir=".">
+  <!-- Project-specific overrides. -->
+  <property file="build.properties"/>
+
+  <!-- Common properties. -->
+  <import file="../build-common.xml"/>
+
+  <patternset id="xsd.output.patternset">
+    <include name="ARCHOUTPUTSTRUCT.xsd"/>
+    <include name="*UO.xsd"/>
+    <include name="*DO.xsd"/>
+    <include name="*SO.xsd"/>
+    <include name="PreFillData.xsd"/>
+  </patternset>
+
+  <patternset id="xsd.input.patternset">
+    <include name="ARCHINPUTSTRUCT.xsd"/>
+    <include name="*UI.xsd"/>
+    <include name="*DI.xsd"/>
+    <include name="*SI.xsd"/>
+  </patternset>
+
+  <patternset id="xsd.doc.patternset">
+    <include name="DocumentMetaData.xsd"/>
+  </patternset>
+
+  <fileset id="xsd.output.fileset" dir="${structs.src.conf}">
+    <patternset refid="xsd.output.patternset"/>
+  </fileset>
+
+  <fileset id="xsd.input.fileset" dir="${structs.src.conf}">
+    <patternset refid="xsd.input.patternset"/>
+  </fileset>
+
+  <fileset id="xsd.doc.fileset" dir="${structs.src.conf}">
+    <patternset refid="xsd.doc.patternset"/>
+  </fileset>
+
+  <fileset id="xsd.structs.fileset" dir="${structs.src.conf}">
+    <patternset refid="xsd.output.patternset"/>
+    <patternset refid="xsd.input.patternset"/>
+    <patternset refid="xsd.doc.patternset"/>
+  </fileset>
+
+  <fileset id="xsd.output.outofdate.fileset" dir="${structs.src.conf}">
+    <patternset refid="xsd.output.patternset"/>
+    <depend targetdir="${structs.build}">
+      <mapper type="merge" to="xmlstructs.jar"/>
+    </depend>
+  </fileset>
+
+  <fileset id="xsd.input.outofdate.fileset" dir="${structs.src.conf}">
+    <patternset refid="xsd.input.patternset"/>
+    <depend targetdir="${structs.build}">
+      <mapper type="merge" to="xmlstructs.jar"/>
+    </depend>
+  </fileset>
+
+  <fileset id="xsd.doc.outofdate.fileset" dir="${structs.src.conf}">
+    <patternset refid="xsd.doc.patternset"/>
+    <depend targetdir="${structs.build}">
+      <mapper type="merge" to="xmlstructs.jar"/>
+    </depend>
+  </fileset>
+
+  <target name="clean" unless="xmlstructs.uptodate" description="Deletes structs files.">
+    <!-- Do not delete the whole structs/build directory becuase IDEs use it.. -->
+    <delete failonerror="false">
+      <fileset dir="${structs.build}" includes="*"/>
+    </delete>
+    <delete dir="${structs.build.xml}"/>
+    <delete file="${build.exploded}/xmlstructs.jar"/>
+    <delete file="${structs.jar}"/>
+  </target>
+
+  <target name="clean.all" depends="clean" description="Removes all build artifacts.">
+    <delete dir="${structs.build}"/>
+  </target>
+
+  <target name="uptodate" description="Determines if xmlstructs.jar should be rebuilt.">
+    <uptodate property="xmlstructs.uptodate" targetfile="${structs.build}/xmlstructs.jar">
+      <srcfiles refid="xsd.structs.fileset"/>
+    </uptodate>
+  </target>
+
+  <target name="update.prepare">
+    <property name="incremental" value="true"/>
+    <!-- Override filesets that will be built. -->
+    <fileset id="xsd.output.fileset" refid="xsd.output.outofdate.fileset"/>
+    <fileset id="xsd.input.fileset" refid="xsd.input.outofdate.fileset"/>
+    <fileset id="xsd.doc.fileset" refid="xsd.doc.outofdate.fileset"/>
+  </target>
+
+  <target name="prepare" depends="common-prepare">
+    <mkdir dir="${structs.build}"/>
+    <mkdir dir="${structs.build.xml}"/>
+    <mkdir dir="${structs.build.xml.java}"/>
+    <mkdir dir="${structs.build.xml.classes}"/>
+    <mkdir dir="${structs.exploded}"/>
+    <!-- The build path; defined here because the updated Castor jar must exist.. -->
+    <path id="structs.path">
+      <!-- The jar with the ant task. -->
+      <pathelement location="${core.lib}/castor-1.0.5-srcgen-ant-task.jar"/>
+      <!-- The classes needed for generation are here. -->
+      <pathelement location="${core.exploded}"/>
+      <fileset dir="${core.lib}">
+        <patternset refid="lib.castor.patternset"/>
+      </fileset>
+      <!-- Only needed for the commons-logging jar. -->
+      <fileset refid="lib.commons-logging.fileset"/>
+    </path>
+    <taskdef name="castor-srcgen" classname="org.exolab.castor.tools.ant.taskdefs.CastorSourceGenTask"
+             classpathref="structs.path"/>
+  </target>
+
+  <target name="xmlstructs" depends="prepare" unless="xmlstructs.uptodate"
+          description="Generates, compiles, and jars xmlstructs.jar.">
+    <propertyfile file="${structs.build.xml}/castorbuilder.properties">
+      <entry key="org.exolab.castor.builder.javaVersion" value="5.0"/>
+      <entry key="org.exolab.castor.builder.extraCollectionMethods" value="true"/>
+      <entry key="org.exolab.castor.builder.superclass" value="gov.georgia.dhr.dfcs.sacwis.core.xml.XmlValueBean"/>
+      <entry key="org.exolab.castor.xml.JavaNaming.upperCaseAfterUnderscore" value="true"/>
+    </propertyfile>
+    <castor-srcgen todir="${structs.build.xml.java}" package="gov.georgia.dhr.dfcs.sacwis.structs.output" types="j2"
+                   properties="${structs.build.xml}/castorbuilder.properties" warnings="false" nodesc="true">
+      <fileset refid="xsd.output.fileset"/>
+    </castor-srcgen>
+    <!--
+      Always regenerate PreFillData.xsd because unlike every other struct, this one is actually serialized
+        and therefore requires generation of its descriptors so it gets serialized into the proper form.
+    -->
+    <castor-srcgen todir="${structs.build.xml.java}" package="gov.georgia.dhr.dfcs.sacwis.structs.output" types="j2"
+                   properties="${structs.build.xml}/castorbuilder.properties" warnings="false" nodesc="false"
+                   file="${structs.src.conf}/PreFillData.xsd"/>
+    <castor-srcgen todir="${structs.build.xml.java}" package="gov.georgia.dhr.dfcs.sacwis.structs.input" types="j2"
+                   properties="${structs.build.xml}/castorbuilder.properties" warnings="false" nodesc="true">
+      <fileset refid="xsd.input.fileset"/>
+    </castor-srcgen>
+    <propertyfile file="${structs.build.xml}/doc-castorbuilder.properties">
+      <entry key="org.exolab.castor.builder.classdescfieldnames" value="true"/>
+      <entry key="org.exolab.castor.builder.extraCollectionMethods" value="true"/>
+      <entry key="org.exolab.castor.builder.javaVersion" value="5.0"/>
+      <entry key="org.exolab.castor.builder.superclass" value=""/>
+    </propertyfile>
+    <castor-srcgen todir="${structs.build.xml.java}" package="gov.georgia.dhr.dfcs.sacwis.structs.document" types="j2"
+                   properties="${structs.build.xml}/doc-castorbuilder.properties" warnings="false" nodesc="false">
+      <fileset refid="xsd.doc.fileset"/>
+    </castor-srcgen>
+    <!-- We do not include debug information for generated code. -->
+    <javac source="1.5" target="1.5" debug="false"
+           srcdir="${structs.build.xml.java}" destdir="${structs.build.xml.classes}">
+      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation,unchecked"/>
+      <classpath refid="structs.path"/>
+    </javac>
+    <jar basedir="${structs.build.xml.classes}" destfile="${structs.build}/xmlstructs.jar"
+         compress="true" update="${incremental}"/>
+  </target>
+
+  <target name="compile" depends="prepare">
+    <javac source="1.5" target="1.5" debug="${build.debug}"
+           srcdir="${structs.src.java}" destdir="${structs.exploded}">
+      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation,unchecked"/>
+      <include name="**/*.java"/>
+      <classpath>
+        <pathelement location="${structs.build}/xmlstructs.jar"/>
+      </classpath>
+    </javac>
+  </target>
+
+  <target name="package.exploded" depends="xmlstructs, compile"
+          description="Copies xml structs to the exploded ear directory.">
+    <copy file="${structs.build}/xmlstructs.jar" todir="${build.exploded}" preservelastmodified="true"
+          failonerror="true"/>
+  </target>
+
+  <target name="package.ear" depends="xmlstructs, compile" description="Copies xml structs to the ear directory.">
+    <copy file="${structs.build}/xmlstructs.jar" todir="${build.ear}" preservelastmodified="true" failonerror="true"/>
+    <jar destfile="${structs.jar}" basedir="${structs.exploded}"/>
+  </target>
+
+  <target name="update" depends="update.prepare,uptodate,package.exploded"
+          description="Incrementally builds structs jars and copies them to the exploded dir."/>
+
+  <target name="all" depends="uptodate, clean, package.exploded"
+          description="Conditionally rebuilds structs jars and copies them to the exploded dir."/>
+
+  <target name="dist" depends="all, package.ear"
+          description="Conditionally rebuilds structs jars and copies to the ear dir."/>
+
+</project>

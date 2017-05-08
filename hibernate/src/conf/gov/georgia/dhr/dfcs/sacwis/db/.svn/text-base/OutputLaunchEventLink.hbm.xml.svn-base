@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.OutputLaunchEventLink" table="OUTPUT_LAUNCH_EVENT_LINK" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false"
+         select-before-update="false" optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+
+    <property name="dtAchieved" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ACHIEVED" length="7"/>
+    </property>
+    <property name="txtResults" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_RESULTS" length="300"/>
+    </property>
+    <property name="indCurrent" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CURRENT" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

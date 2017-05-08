@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+       default-dependency-check="none">
+
+  <!-- Advice beans. -->
+  <import resource="advice-context.xml"/>
+
+  <!-- Hibernate EJBs (in alphabetical order). -->
+  <bean id="admin" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/AdminBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.admin.Admin"/>
+  </bean>
+  <bean id="adoExchange" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/AdoExchangeBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.adoexchange.AdoExchange"/>
+  </bean>
+  <bean id="assessment" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/AssessmentBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.assessment.Assessment"/>
+  </bean>
+  <bean id="caseMgmt" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/CaseMgmtBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.CaseMgmt"/>
+  </bean>
+  <bean id="common" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/CommonBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.common.Common"/>
+  </bean>
+  <bean id="courtProcess" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/CourtProcessBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.courtprocess.CourtProcess"/>
+  </bean>
+  <bean id="documentServiceExecutor" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/DocumentServiceExecutorBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.document.DocumentServiceExecutor"/>
+  </bean>
+  <bean id="external" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/ExternalBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.external.External"/>
+  </bean>
+  <bean id="financials" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/FinancialsBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.financials.Financials"/>
+  </bean>
+  <bean id="intake" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/IntakeBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.intake.Intake"/>
+  </bean>
+  <bean id="investigation" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/InvestigationBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.investigation.Investigation"/>
+  </bean>
+  <bean id="nonCompliance" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/NonComplianceBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.fad.NonCompliance"/>
+  </bean>  
+  <bean id="person" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/PersonBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.person.Person"/>
+  </bean>
+  <bean id="reports" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/ReportsBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.reports.Reports"/>
+  </bean>
+  <bean id="resource" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/ResourceBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.resource.Resource"/>
+  </bean>
+  <bean id="security" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/SecurityBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.security.Security"/>
+  </bean>
+  <bean id="ws" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/WSBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.ws.WS"/>
+  </bean>
+
+  <!--
+    FCE is a hybrid of new and old; it uses services and is initializable like the facades, but it doesn't properly
+      extend other interfaces and it still uses SQL connections manually sometimes.
+  -->
+  <bean id="fce" parent="baseFacadeEJB">
+    <property name="jndiName" value="ejb/sacwis/FceBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.fce.Fce"/>
+  </bean>
+
+  <!--Traditional EJBs (in alphabetial order). -->
+  <bean id="addressList" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/AddressListBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.common.AddressList"/>
+  </bean>
+  <bean id="adoptionAsstnc" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/AdoptionAsstncBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.financials.AdoptionAsstnc"/>
+  </bean>
+  <bean id="ageCitizenship" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/AgeCitizenshipBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.fce.AgeCitizenship"/>
+  </bean>
+  <bean id="applicationBackground" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/ApplicationBackgroundBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.fce.ApplicationBackground"/>
+  </bean>
+  <bean id="cfMgmntList" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/CFMgmntListBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.admin.CFMgmntList"/>
+  </bean>
+  <bean id="cfp" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/CfpBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.document.Cfp"/>
+  </bean>
+  <bean id="documentSave" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/DocumentSaveBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.document.DocumentSave"/>
+  </bean>
+  <bean id="domicileDeprivation" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/DomicileDeprivationBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.fce.DomicileDeprivation"/>
+  </bean>
+  <bean id="eligibilityDetermination" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/EligibilityDeterminationBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.fce.EligibilityDetermination"/>
+  </bean>
+  <bean id="eligibilitySummary" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/EligibilitySummaryBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.fce.EligibilitySummary"/>
+  </bean>
+  <bean id="eventUtility" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/EventUtilityBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.common.EventUtility"/>
+  </bean>
+   <bean id="exchangeChildSearch" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/ExchangeChildSearchBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.adoexchange.ExchangeChildSearch"/>
+  </bean>
+  <bean id="exchangeHomeSearch" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/ExchangeHomeSearchBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.adoexchange.ExchangeHomeSearch"/>
+  </bean>
+  <bean id="faHomeList" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/FAHomeListBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.resource.FAHomeList"/>
+  </bean>
+  <bean id="familyPlan" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/FamilyPlanBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.casemgmt.FamilyPlan"/>
+  </bean>
+  <bean id="fosterCareReview" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/FosterCareReviewBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.fce.FosterCareReview"/>
+  </bean>
+  <bean id="incomeExpenditures" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/IncomeExpendituresBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.fce.IncomeExpenditures"/>
+  </bean>
+  <bean id="legacyApplication" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/LegacyApplicationBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.fce.LegacyApplication"/>
+  </bean>
+  <bean id="personUtility" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/PersonUtilityBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.common.PersonUtility"/>
+  </bean>
+  <bean id="phone" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/PhoneBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.common.Phone"/>
+  </bean>
+  <bean id="principalCaseHistory" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/PrincipalCaseHistoryBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.person.PrincipalCaseHistory"/>
+  </bean>
+  <bean id="resourceORSSearch" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/ResourceORSSearchBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.resource.ResourceORSSearch"/>
+  </bean>  
+  <bean id="resourceSearch" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/ResourceSearchBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.resource.ResourceSearch"/>
+  </bean>
+  <bean id="riskAssmt" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/RiskAssmtBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.investigation.RiskAssmt"/>
+  </bean>
+  <bean id="semaphoreUtility" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/SemaphoreUtilityBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.fce.SemaphoreUtility"/>
+  </bean>
+  <bean id="serviceAuthorizaton" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/ServiceAuthBean"/>
+    <property name="businessInterface"
+              value="gov.georgia.dhr.dfcs.sacwis.service.financials.ServiceAuthorization"/>
+  </bean>
+  <bean id="thirdPartyHealthInsurance" parent="baseTraditionalEJB">
+    <property name="jndiName" value="ejb/sacwis/ThirdPartyHealthInsuranceBean"/>
+    <property name="businessInterface" value="gov.georgia.dhr.dfcs.sacwis.service.fce.ThirdPartyHealthInsurance"/>
+  </bean>
+
+  <!-- Convenience base beans to reduce the verbosity of the bean definitions. -->
+  <bean id="baseFacadeEJB" abstract="true"
+        class="gov.georgia.dhr.dfcs.sacwis.core.spring.AdvisedLocalStatelessSessionProxyFactoryBean">
+    <property name="resourceRef" value="true"/>
+    <property name="advice">
+      <list>
+        <ref bean="ejbThrowsAdvice"/>
+      </list>
+    </property>
+  </bean>
+  <bean id="baseTraditionalEJB" abstract="true"
+        class="gov.georgia.dhr.dfcs.sacwis.core.spring.AdvisedLocalStatelessSessionProxyFactoryBean">
+    <property name="resourceRef" value="true"/>
+    <property name="advice">
+      <list>
+        <ref bean="jamonInterceptor"/>
+        <ref bean="ejbThrowsAdvice"/>
+      </list>
+    </property>
+  </bean>
+</beans>

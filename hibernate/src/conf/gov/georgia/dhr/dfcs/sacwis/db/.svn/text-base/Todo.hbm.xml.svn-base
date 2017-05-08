@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Todo" table="TODO" mutable="true" polymorphism="implicit"
+         dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+    <id name="idTodo" type="integer" unsaved-value="0">
+      <column name="ID_TODO" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_TODO</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="stage" class="gov.georgia.dhr.dfcs.sacwis.db.Stage" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_TODO_STAGE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_TODO_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_TODO_EVENT" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdTodoPersAssigned" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_TODO_PERS_ASSIGNED" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="personByIdTodoPersCreator" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_TODO_PERS_CREATOR" precision="16" scale="0"/>
+    </many-to-one>
+    <many-to-one name="personByIdTodoPersWorker" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_TODO_PERS_WORKER" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="dtTodoDue" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_TODO_DUE" length="7"/>
+    </property>
+    <property name="cdTodoTask" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_TODO_TASK" length="4"/>
+    </property>
+    <property name="txtTodoDesc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_TODO_DESC" length="80"/>
+    </property>
+    <property name="cdTodoType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_TODO_TYPE" length="2"/>
+    </property>
+    <property name="txtTodoLongDesc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_TODO_LONG_DESC" length="300"/>
+    </property>
+    <property name="dtTodoCreated" type="timestamp" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_TODO_CREATED" length="7"/>
+    </property>
+    <property name="dtTodoTaskDue" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_TODO_TASK_DUE" length="7"/>
+    </property>
+    <property name="dtTodoCompleted" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_TODO_COMPLETED" length="7"/>
+    </property>
+    <property name="nmTodoCreatorInit" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_TODO_CREATOR_INIT" length="3"/>
+    </property>
+    <bag name="approverses" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_TODO" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.Approvers" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

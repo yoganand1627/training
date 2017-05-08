@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.AdoInfo" table="ADO_INFO" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+
+    <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_RESOURCE" precision="16" scale="0" not-null="false"/>
+    </many-to-one>
+        <many-to-one name="eventByIdEventChildRegistration" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT_CHILD_REGISTRATION" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdChldAvail" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_CHLD_AVAIL" length="3"/>
+    </property>
+    <property name="dtDisrupt" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_DISRUPT" length="7"/>
+    </property>
+    <property name="dtIntTpr" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_INT_TPR" length="7"/>
+    </property>
+    <property name="dtPermStaff" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PERM_STAFF" length="7"/>
+    </property>
+    <property name="dtDecAdopt" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_DEC_ADOPT" length="7"/>
+    </property>
+    <property name="dtLifeHisPres" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_LIFE_HIS_PRES" length="7"/>
+    </property>
+    <property name="dtAdoStaff" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ADO_STAFF" length="7"/>
+    </property>
+    <property name="dtAdoAgree" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_ADO_AGREE" length="7"/>
+    </property>
+    <property name="dtRelAdo" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REL_ADO" length="7"/>
+    </property>
+    <property name="dtPermFile" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PERM_FILE" length="7"/>
+    </property>
+    <property name="dtDocSent" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_DOC_SENT" length="7"/>
+    </property>
+    <property name="indOthSib" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_OTH_SIB" length="1"/>
+    </property>
+    <property name="nbrFamCons" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_FAM_CONS" precision="5" scale="0"/>
+    </property>
+    <property name="txtNotSel" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_NOT_SEL" length="300"/>
+    </property>
+    <property name="txtTypAdo" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_TYP_ADO" length="300"/>
+    </property>
+    <property name="indIdenAdo" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_IDEN_ADO" length="1"/>
+    </property>
+    <property name="cdRsrcCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_RSRC_CNTY" length="3"/>
+    </property>
+    <property name="nmPrivAgency" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="NM_PRIV_AGENCY" length="30"/>
+    </property>
+    <property name="cdState" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_STATE" length="2"/>
+    </property>
+    <property name="txtRecrBarr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_RECR_BARR" length="300"/>
+    </property>
+    <property name="txtPlcmntBarr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_PLCMNT_BARR" length="300"/>
+    </property>
+    <property name="txtTprBarr" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_TPR_BARR" length="300"/>
+    </property>
+    <property name="indInqry" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_INQRY" length="1"/>
+    </property>
+    <property name="txtPrepCmnts" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_PREP_CMNTS" length="300"/>
+    </property>
+    <property name="txtStateAct" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_STATE_ACT" length="300"/>
+    </property>
+    <property name="txtCntyAct" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CNTY_ACT" length="300"/>
+    </property>
+    <property name="txtChildLinked" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+       <column name="TXT_CHILD_LINKED" length="300" />
+    </property>
+    <property name="txtConsComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CONS_COMMENTS" length="300" />
+    </property>
+    <property name="dtLetterSent" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_LETTER_SENT" length="7" />
+    </property>
+        <property name="indFpAdo" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_FP_ADO" length="1"/>
+    </property>
+    <property name="txtCountyConsComment" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_COUNTY_CONS_COMMENT" length="300"/>
+    </property>
+    <property name="indHasSiblingExtCase" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_HAS_SIBLING_EXT_CASE" length="1" />
+    </property>
+    <property name="indSiblingGrpExtCase" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_SIBLING_GRP_EXT_CASE" length="1" />
+    </property>
+    <bag name="adoInfoCbxes" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdoInfoCbx" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="adoInfoFamilies" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdoInfoFamily" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="adoSiblingHistory" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ADO_INFO_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdoSiblingHistory" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="adoSiblingExtLnkHistory" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_ADO_INFO_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.AdoSiblingExtLnkHistory" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

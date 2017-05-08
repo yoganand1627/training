@@ -1,0 +1,19 @@
+!******************************************************
+!        /opt/impact/sys/prod/sqc/footer03.sqc
+!                                                     *
+!   Standard Footer for Printed Reports               *
+!   For Landscape On Demand Reports                   *
+!******************************************************
+
+!**********************
+! Print Footer Row #1 *
+!**********************
+  do GET-CFP-STAMP
+  if #cfp_stamp = 0
+    print 'Department of Family and Protective Services' (1,) center
+    print 'Printed: '       (+0,1)
+    date-time () 'MM/DD/YY'  &date_printed
+    print &date_printed           ()
+    print 'PAGE: '          (+0,98)
+    page-number             ()
+  end-if

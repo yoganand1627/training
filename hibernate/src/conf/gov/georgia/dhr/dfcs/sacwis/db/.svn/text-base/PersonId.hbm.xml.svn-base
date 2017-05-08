@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.PersonId" table="PERSON_ID" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idPersonId" type="integer" unsaved-value="0">
+      <column name="ID_PERSON_ID" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_PERSON_ID</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="nbrPersonIdNumber" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_PERSON_ID_NUMBER" length="15"/>
+    </property>
+    <property name="cdPersonIdType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_PERSON_ID_TYPE" length="20"/>
+    </property>
+    <property name="descPersonId" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DESC_PERSON_ID" length="40"/>
+    </property>
+    <property name="indPersonIdInvalid" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_PERSON_ID_INVALID" length="1" not-null="true"/>
+    </property>
+    <property name="dtPersonIdStart" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PERSON_ID_START" length="7"/>
+    </property>
+    <property name="dtPersonIdEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_PERSON_ID_END" length="7"/>
+    </property>
+    <property name="indValidateByInterface" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_VALIDATE_BY_INTERFACE" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

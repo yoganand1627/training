@@ -1,0 +1,48 @@
+--STGAP00018104 - Release(5.2) New table -RR  Conversion Exception
+
+CREATE TABLE CAPS.RR_CONVERSION_EXCEPTION
+(
+  ID_RR_CONVERSION_EXCEPTION  NUMBER(16)        NOT NULL,
+  NM_TABLE                    VARCHAR2(30 BYTE) NOT NULL,
+  ID_PRIMARY_KEY              NUMBER(16),
+  TXT_DESCRIPTION             VARCHAR2(250 BYTE),
+  TXT_EXCEPTION               VARCHAR2(30 BYTE),
+  DT_LAST_UPDATE              DATE              NOT NULL
+);
+
+COMMENT ON TABLE CAPS.RR_CONVERSION_EXCEPTION IS 'Contains skipped records due to error during execution of conversion region restructuring script';
+COMMENT ON COLUMN CAPS.RR_CONVERSION_EXCEPTION.ID_RR_CONVERSION_EXCEPTION IS 'Unique identifier for RR_CONVERSION_EXCEPTION table';
+COMMENT ON COLUMN CAPS.RR_CONVERSION_EXCEPTION.NM_TABLE IS 'The updated table';
+COMMENT ON COLUMN CAPS.RR_CONVERSION_EXCEPTION.ID_PRIMARY_KEY IS 'The primary value of the updated table';
+COMMENT ON COLUMN CAPS.RR_CONVERSION_EXCEPTION.TXT_DESCRIPTION IS 'Error description';
+COMMENT ON COLUMN CAPS.RR_CONVERSION_EXCEPTION.TXT_EXCEPTION IS 'Exception code or name';
+
+CREATE INDEX CAPS.IND_RR_CONVERSION_EXCEPTION ON CAPS.RR_CONVERSION_EXCEPTION (ID_PRIMARY_KEY, NM_TABLE);
+CREATE SEQUENCE CAPS.SEQ_RR_CONVERSION_EXCEPTION MINVALUE 1 MAXVALUE 999999999999999999999999999 INCREMENT BY 1 START WITH 1  CACHE 20  NOORDER NOCYCLE;
+/
+CREATE OR REPLACE TRIGGER CAPS.TUBR_rr_conversion_exception
+BEFORE UPDATE ON CAPS.RR_CONVERSION_EXCEPTION FOR EACH ROW
+BEGIN
+    :new.DT_LAST_UPDATE := SYSDATE;
+END;
+/
+/
+CREATE OR REPLACE TRIGGER CAPS.TIBR_rr_conversion_exception
+BEFORE INSERT ON CAPS.RR_CONVERSION_EXCEPTION FOR EACH ROW
+DECLARE
+    dummy        NUMBER;
+BEGIN
+    :new.DT_LAST_UPDATE := SYSDATE;
+    IF (:new.id_rr_conversion_exception = 0) THEN
+        SELECT    seq_rr_conversion_exception.NEXTVAL
+        INTO    dummy
+        FROM    DUAL;
+        :new.id_rr_conversion_exception := dummy;
+    END IF;
+END;
+/
+
+insert into caps.schema_version(id_schema_version,application_version,comments)
+            values (1223, 'SacwisRev5', 'Release 5.2 - DBCR 18104');
+
+commit;

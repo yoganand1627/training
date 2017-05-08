@@ -1,0 +1,164 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Fri Mar 21 12:36:02 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\SACWIS\Accenture Report Team\StaffToDoList00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+Begin-Select Loops=1
+NM_EMPLOYEE_FIRST &Init_Query_Init_Query_NM_EMPLOYEE_FIRST
+NM_EMPLOYEE_LAST &Init_Query_Init_Query_NM_EMPLOYEE_LAST
+NM_EMPLOYEE_MIDDLE &Init_Query_Init_Query_NM_EMPLOYEE_MIDDLE
+NBR_UNIT &Init_Query_Init_Query_NBR_UNIT
+From  EMPLOYEE, UNIT
+      Where EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+ And EMPLOYEE.ID_PERSON = $_I5301_EMPLOYEE_ID_PERSON
+End-Select
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Input
+ Position (1,1)
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get-Input
+! -----------------------------
+Input $_I5301_EMPLOYEE_ID_PERSON 'Enter a value for ID_PERSON' MaxLen=16  Type=Number
+If IsNull($_I5301_EMPLOYEE_ID_PERSON) or IsBlank($_I5301_EMPLOYEE_ID_PERSON)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Let $brb_tmp = 'EMPLOYEE.ID_PERSON'
+Let $where_clause5301 = $brb_tmp  || ' = ' || $_I5301_EMPLOYEE_ID_PERSON
+End-Procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #53ROW_COUNT
+Begin-Select
+(NVL( PERSON_CREATOR.NM_PERSON_FULL , 'System' )) &nm_creator_subtitute
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+DT_TODO_DUE &Master_Query_DT_TODO_DUE (10,175) Edit MM/DD/YYYY
+NM_STAGE &Master_Query_NM_STAGE (10,232,25)
+ID_CASE &Master_Query_ID_CASE (10,371) Edit 88888888888na
+TXT_TODO_DESC &Master_Query_TXT_TODO_DESC (10,432,51) Wrap 51 3 line-height=12 Keep-Top
+DECODE &todo_type_decode (10,1,6) Wrap 6 4 line-height=12 Keep-Top
+ Print &nm_creator_subtitute (10,37,25)
+ Add 1 To #53ROW_COUNT
+ Next-Listing  SkipLines=2 Need=24
+From  STAGE, CTODOTYP
+,      TODO, EMPLOYEE, PERSON PERSON_CREATOR
+      Where TODO.ID_TODO_STAGE = STAGE.ID_STAGE(+)
+            And TODO.CD_TODO_TYPE = CTODOTYP.CODE(+)
+            And EMPLOYEE.ID_PERSON = TODO.ID_TODO_PERS_ASSIGNED
+            And TODO.ID_TODO_PERS_CREATOR = PERSON_CREATOR.ID_PERSON(+)
+ And [$where_clause5301]
+ And ((CD_TODO_TYPE = 'T'
+ And DT_TODO_COMPLETED IS NULL ) Or CD_TODO_TYPE <> 'T')
+Order By DT_TODO_DUE
+,      NM_STAGE
+,      DECODE
+End-Select
+ Next-Listing
+ Next-Listing  Need=22
+ If #53ROW_COUNT > 0
+ Graphic (4,1,716) Horz-Line 10 
+ Position (5,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Total:'  (22,4) Bold 
+ let #ReportTotal = #53ROW_COUNT
+  Print #ReportTotal (21,36) Edit 88888888na
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (10,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Staff To-Do List' (46,307,0) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='hong.van.t.vo\My Documents\Reports Layout\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (10,652) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (10,589,0)
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Manager:' (95,1,0) Bold 
+ Print 'Unit:' (114,1,0) Bold 
+Print &Init_Query_Init_Query_NBR_UNIT (115,94,6)
+ Let $nm_mg_full=&Init_Query_Init_Query_NM_EMPLOYEE_LAST  || ', '  ||  &Init_Query_Init_Query_NM_EMPLOYEE_FIRST
+ Print $nm_mg_full (95,94,15)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Type' (137,1,0) Underline  Bold 
+ Print 'Stage Name' (137,232,0) Underline  Bold 
+ Print 'Description' (137,432,0) Underline  Bold 
+ Print 'Due Date' (137,175,11) Underline  Bold 
+ Print 'Creator' (137,37,0) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Type' (14,1,0) Underline  Bold 
+ Print 'Stage Name' (14,232,0) Underline  Bold 
+ Print 'Description' (14,432,0) Underline  Bold 
+ Print 'Due Date' (14,175,11) Underline  Bold 
+ Print 'Creator' (14,37,0) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 60 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (49,676) '' ' of '
+ Last-Page (49,698) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

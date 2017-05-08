@@ -1,0 +1,57 @@
+#### Log to standard out.
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.Target=System.out
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%d{ABSOLUTE} %5p %c{1}:%L - %m%n
+
+##### Log to the log/sacwis.log file.
+log4j.appender.launcher=org.apache.log4j.FileAppender
+log4j.appender.launcher.File=log/launcher.log
+log4j.appender.launcher.layout=org.apache.log4j.PatternLayout
+log4j.appender.launcher.layout.ConversionPattern=%d{ABSOLUTE} %5p %c{1}:%L - %m%n
+
+##### Log to the log/sacwis.log file.
+log4j.appender.sql=org.apache.log4j.FileAppender
+log4j.appender.sql.File=log/launcher-sql.log
+log4j.appender.sql.layout=org.apache.log4j.PatternLayout
+log4j.appender.sql.layout.ConversionPattern=%d{ABSOLUTE} %5p %c{1}:%L - %m%n
+
+### set log levels - for more verbose logging change 'INFO' to 'DEBUG' ###
+# Root logger gets WARN under normal conditions.
+log4j.rootLogger=WARN, launcher
+#log4j.rootLogger=WARN, stdout, sacwis
+
+# Loggers for SACWIS code
+log4j.logger.gov.georgia.dhr.dfcs.sacwis.launcher=INFO
+log4j.logger.gov.georgia.dhr.dfcs.sacwis.dao=INFO
+
+### Basic levels for libraries; this prevents overly verbose information from being logged.
+log4j.logger.org.hibernate=WARN
+log4j.logger.org.springframework=WARN
+log4j.logger.org.springframework.remoting.rmi.RmiRegistryFactoryBean=ERROR
+log4j.logger.org.apache.jasper=WARN
+
+### Usefule Hibernate loggers.
+## log Hibernate SQL generation
+#log4j.logger.org.hibernate.SQL=DEBUG, sql, stdout
+#log4j.additivity.org.hibernate.SQL=false
+
+## log JDBC bind parameters
+#log4j.logger.org.hibernate.type=TRACE, sql
+#log4j.additivity.org.hibernate.type=false
+
+### More obscure Hibernate loggers (not usually required).
+## log HQL query parser activity
+#log4j.logger.org.hibernate.hql.ast.AST=DEBUG
+## log JDBC resource acquisition
+#log4j.logger.org.hibernate.jdbc=DEBUG
+## log various details of how Hibernate saves
+#log4j.logger.org.hibernate.engine.Versioning=DEBUG
+#log4j.logger.org.hibernate.persister.entity.AbstractEntityPersister=INFO
+#log4j.logger.org.hibernate.event.def.WrapVisitor=TRACE
+## log HQL parse trees
+#log4j.logger.org.hibernate.hql=DEBUG
+## log cache activity ###
+#log4j.logger.org.hibernate.cache=DEBUG
+## log transaction activity
+#log4j.logger.org.hibernate.transaction=DEBUG

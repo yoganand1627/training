@@ -1,0 +1,442 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Tue Mar 06 15:35:53 2012 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\ajpottammel\Desktop\ConsOverdue\cn\March1\March6\ConsiderationOverdue00.sqr
+! Format  : Tabular
+! Username: JPOTTAMMEL
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=156    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions:' (11,1,0) Bold 
+ Print 'This report displays all registered children in DFCS custody whose non-availability reason is Consideration and days out is more than 15 days as of the date report is run.' (32,9,108) Wrap 108 2 line-height=12 Keep-Top
+ Print 'The report displays all families that are currently considering the child with non-availability reason code as Consideration and days out is more than 15 days as of the date report is run or had considered the child with the non-availability reason as Study Not Returned regardless of the date out on the considerations.' (67,9,110) Wrap 110 5 line-height=12 Keep-Top
+ Print 'Case Manager:' (114,9,0) Bold 
+ Print 'Name of the current primary case manager on the most recently open ADO stage.' (114,87,0)
+ Print 'Date Out:' (133,9,0) Bold 
+ Print 'Date Out of the earliest or oldest family the child is linked to.' (133,87,0)
+ Print 'Family Name:' (152,9,0) Bold 
+ Print 'Name of the family considering or had considered the child.' (151,87,0)
+ Print 'Date Out (in the Families section):' (209,9,0) Bold 
+ Print 'Date Out of family the child is linked / had linked.' (209,180,0)
+ Print 'Days Out:' (228,9,0) Bold 
+ Print 'Number of days the family has been considering  / had considered the child.' (228,87,0)
+ Print 'County of the family.' (246,87,0)
+ Print 'Agency:' (264,9,0) Bold 
+ Print 'Family County:' (246,9,0) Bold 
+ Print 'Non-DFCS Certifying Entity.' (264,87,0)
+ Alter-Printer Font=4 Point-Size=9    ! [SQR.INI] 4=Arial,proportional
+ Print 'Non-Avail Code' (312,7,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Keys' (295,6,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print '03 - Consideration' (326,22,0)
+ Print '55 - Study Not Returned' (342,22,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (486,483) '' ' of '
+ Last-Page (486,513) 
+ Print 'Non-Avail Code:' (169,9,0) Bold 
+ Print 'It will have values either ''03'' (Consideration) or ''55'' (Study Not Returned). Homes currently considering the child will have code ''03''. Those families, who had considered the child before, will have non-availability reason code ''55''.' (170,94,98) Wrap 98 5 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=60   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do LoadLookupTables
+ Position (1,1)
+Do Get-Reg-Cnty
+ Do Master_Query
+Do Display_No_Result_Msg
+End-Program
+Begin-Procedure Get-Reg-Cnty 
+Input $_I201_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=3  Type=Char
+If IsNull($_I201_CD_STAGE_REGION) or IsBlank($_I201_CD_STAGE_REGION) or ($_I201_CD_STAGE_REGION = '0')
+ Let $region_selected = 'N'
+Else
+ Let $region_selected = 'Y'
+End-If
+
+Input $_I201_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_I201_CD_STAGE_CNTY) or IsBlank($_I201_CD_STAGE_CNTY) or ($_I201_CD_STAGE_CNTY = '0')
+ Let $county_selected = 'N'
+Else
+ Let $county_selected = 'Y'
+End-If
+
+If $county_selected = 'Y'
+ Do Decode-County
+ Let $header = $county_decode
+ Let $where_clause_reg_cnty = 'CD_STAGE_CNTY = ' || '''' || $_I201_CD_STAGE_CNTY || ''''
+Else
+ If $region_selected = 'Y'
+  Let $where_clause_reg_cnty = 'CD_STAGE_REGION = ' || '''' || $_I201_CD_STAGE_REGION || ''''
+  Let $header = 'Region ' || $_I201_CD_STAGE_REGION
+ Else
+  Let $header = 'Statewide'
+  Let $where_clause_reg_cnty = 'CD_STAGE_REGION IS NOT NULL'
+ End-If
+End-If 
+ ! Fill spaces in front of the header to make it centered on page. This fix might not place header precisely at center due to Arial font letter takes up different space.
+ ! It is however simple to implement and gives decent result.
+ ! Header possible values:
+ ! - County name: currently the longest county name in GA is 13 chars
+ ! - 'Region xx' is 9 chars
+ ! - 'Statewide' is also 9 chars long
+ Let #header_len = length($header)
+ Let #spaces = (13 - #header_len) ! No need to divide by 2 b/c space is non-character; observation shows that compiler does not bold it, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $header = ' ' || $header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+Begin-Procedure Decode-County
+Let $county_decode = 'County ' || $_I201_CD_STAGE_CNTY
+Let $county_code = '''' || $_I201_CD_STAGE_CNTY|| ''''
+Begin-Select
+DECODE &county_decode
+ Move &county_decode to $county_decode
+From  CCOUNT
+Where CCOUNT.CODE = [$county_code]
+End-Select
+    
+End-Procedure
+
+Begin-Procedure Display_No_Result_Msg
+If #report_overdue_cnt = 0
+ Let $no_result='There is no overdue for the requested area'
+End-if
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select Distinct
+(EMPLOYEE.NM_EMPLOYEE_LAST || ', ' ||  EMPLOYEE.NM_EMPLOYEE_FIRST) &NM_CASEWORKER
+(replace(txt_child_is_linked,chr(10),' ')) &txt_child_linked
+(SELECT  (count(distinct  EXCHANGE_CHILD_FAM_LINK00.ID_EXCHANGE_CHILD_FAM_LINK  ))  FROM  CAPS.EXCHANGE_CHILD_FAM_LINK EXCHANGE_CHILD_FAM_LINK00 WHERE EXCHANGE_CHILD_FAM_LINK00.IND_LINK_CURRENT = 'Y' AND  sysdate -  EXCHANGE_CHILD_FAM_LINK00.DT_OUT > 35 AND  EXCHANGE_CHILD_FAM_LINK00.ID_EVENT_CHILD_REGISTRATION = EVENT_EXC_CHILD.ID_EVENT) &Master_Query_ovrdue_per_child
+EXCHANGE_CHILD00.TXT_CHILD_IS_LINKED &Master_Query_EXCHANGE_CHILD00.TXT_CHILD_IS_LINKED
+DECODE &Master_Query_DECODE
+EVENT_EXC_CHILD.ID_EVENT &Master_Query_EVENT_EXC_CHILD.ID_EVENT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+(1) &dummy () On-Break Set=1 Level=1 Print=Never Before=Master_Querydummy_BeforeProc101 After=Master_Querydummy_AfterProc101
+CD_STAGE_REGION &Master_Query_CD_STAGE_REGION () On-Break Set=1 Level=2 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc102 After=Master_QueryCD_STAGE_REGION_AfterProc102
+CD_STAGE_CNTY &Master_Query_CD_STAGE_CNTY () On-Break Set=1 Level=3 Print=Never Before=Master_QueryCD_STAGE_CNTY_BeforeProc103 After=Master_QueryCD_STAGE_CNTY_AfterProc103
+ Graphic (17,2,536) Horz-Line 12 
+ Print 'Child Name:' (34,11,10) Underline 
+NM_PERSON_FULL &NM_CHILD (34,71,25) Wrap 25 2 line-height=12 Keep-Top
+ Print 'Person ID:' (34,213,0) Underline 
+EXCHANGE_CHILD00.ID_PERSON &childID (34,287) Edit 8888888888888888na
+ Next-Listing   ! Close up the wrapped columns
+ Print &NM_CASEWORKER (19,287,25)
+ Print 'Case Manager:' (19,213,0) Underline 
+CAPS.STAGE.ID_CASE &Master_Query_CAPS.STAGE.ID_CASE (19,71) Edit 8888888888888888na
+ Print 'Case ID:' (19,11,0) Underline 
+EXCHANGE_CHILD00.DT_OUT &Master_Query_EXCHANGE_CHILD00.DT_OUT (40,71) Edit MM/DD/YYYY
+ Print 'Date Out:' (40,11,0) Underline 
+ Print 'Child Is Linked:' (62,11,0) Underline 
+ Print &txt_child_linked (62,88,82) Wrap 82 8 line-height=12 Keep-Top on= 
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Add 1 To #103ROW_COUNT
+ Next-Listing  Need=97
+EXCHANGE_CHILD00.ID_EVENT &Master_Query_EXCHANGE_CHILD00.ID_EVENT
+ Do New_Query(&Master_Query_EXCHANGE_CHILD00.ID_EVENT, &childID)
+From  CAPS.PERSON_ENC, CAPS.EMPLOYEE
+,      CAPS.WORKLOAD, CAPS.STAGE, CAPS.EVENT EVENT_EXC_CHILD
+,      CAPS.EXCHANGE_CHILD EXCHANGE_CHILD00, CAPS.CCOUNT, CAPS.LEGAL_STATUS_VIEW
+,      CAPS.EXCHANGE_CHILD_FAM_LINK EFAMLINK
+      Where CAPS.EMPLOYEE.ID_PERSON = CAPS.WORKLOAD.ID_WKLD_PERSON
+            And CAPS.WORKLOAD.ID_WKLD_STAGE = CAPS.STAGE.ID_STAGE
+            And EVENT_EXC_CHILD.ID_EVENT_STAGE = CAPS.STAGE.ID_STAGE
+            And CAPS.PERSON_ENC.ID_PERSON = EXCHANGE_CHILD00.ID_PERSON
+            And EVENT_EXC_CHILD.ID_EVENT = EXCHANGE_CHILD00.ID_EVENT
+            And CAPS.STAGE.CD_STAGE_CNTY = CAPS.CCOUNT.CODE
+            And EXCHANGE_CHILD00.ID_PERSON = CAPS.LEGAL_STATUS_VIEW.ID_PERSON
+            And EVENT_EXC_CHILD.ID_CASE = CAPS.LEGAL_STATUS_VIEW.ID_CASE
+            And EXCHANGE_CHILD00.ID_EVENT = EFAMLINK.ID_EVENT_CHILD_REGISTRATION
+ And EVENT_EXC_CHILD.CD_EVENT_STATUS IN ('PROC','NEW')
+ And [$where_clause_reg_cnty]
+ And CD_WKLD_STAGE_PERS_ROLE = 'PR'
+ And IN_DFCS_CUSTODY = 'Y'
+ And STAGE.DT_STAGE_CLOSE is null
+ And STAGE.CD_STAGE ='ADO'
+ And exists (select distinct lsv.id_person from legal_status_view lsv where lsv.dt_legal_stat_status_dt= (select max(lsvc.dt_legal_stat_status_dt)
+     from legal_status_view lsvc where lsvc.id_person = lsv.id_person) and lsv.in_dfcs_custody = 'Y' and lsv.id_person =  EXCHANGE_CHILD00.ID_PERSON
+     )
+ And (exists(select distinct CAPS.EXCHANGE_CHILD.id_person From  CAPS.CAPS_RESOURCE, CAPS.EXCHANGE_CHILD_FAM_LINK, CAPS.EXCHANGE_HOME, CAPS.STAGE
+     STAGE2, CAPS.EXCHANGE_CHILD Where CAPS.CAPS_RESOURCE.ID_RESOURCE = CAPS.EXCHANGE_HOME.ID_RESOURCE And CAPS.EXCHANGE_HOME.ID_EVENT = CAPS.EXCHANGE_CHILD_FAM_LINK.ID_EVENT_HOME_REGISTRATION
+     And CAPS.CAPS_RESOURCE.ID_RSRC_FA_HOME_STAGE = STAGE2.ID_STAGE And CAPS.EXCHANGE_CHILD_FAM_LINK.ID_EVENT_CHILD_REGISTRATION = CAPS.EXCHANGE_CHILD.ID_EVENT
+     And CAPS.EXCHANGE_CHILD_FAM_LINK.ID_EVENT_CHILD_REGISTRATION = EXCHANGE_CHILD00.ID_EVENT And CAPS.EXCHANGE_CHILD.ID_PERSON = EXCHANGE_CHILD00.ID_PERSON
+     And ( (IND_LINK_CURRENT = 'Y' And EXCHANGE_CHILD.CD_NON_AVAIL_STATUS ='03' And (sysdate -  EXCHANGE_CHILD_FAM_LINK.DT_OUT) > 15) )) Or exists(select distinct CAPS.EXCHANGE_CHILD.id_person From  CAPS.CAPS_RESOURCE, CAPS.EXCHANGE_CHILD_FAM_LINK,  CAPS.EXCHANGE_HOME, CAPS.STAGE
+     STAGE2, CAPS.EXCHANGE_CHILD Where CAPS.CAPS_RESOURCE.ID_RESOURCE = CAPS.EXCHANGE_HOME.ID_RESOURCE And CAPS.EXCHANGE_HOME.ID_EVENT = CAPS.EXCHANGE_CHILD_FAM_LINK.ID_EVENT_HOME_REGISTRATION
+     And CAPS.CAPS_RESOURCE.ID_RSRC_FA_HOME_STAGE = STAGE2.ID_STAGE And CAPS.EXCHANGE_CHILD_FAM_LINK.ID_EVENT_CHILD_REGISTRATION = CAPS.EXCHANGE_CHILD.ID_EVENT
+     And CAPS.EXCHANGE_CHILD_FAM_LINK.ID_EVENT_CHILD_REGISTRATION = EXCHANGE_CHILD00.ID_EVENT And CAPS.EXCHANGE_CHILD.ID_PERSON = EXCHANGE_CHILD00.ID_PERSON
+     And (IND_LINK_CURRENT = 'N' And EXCHANGE_HOME.CD_NON_AVAIL_STATUS  ='55' And CAPS.EXCHANGE_CHILD_FAM_LINK.ID_EVENT_CHILD_REGISTRATION
+     = (select distinct ecl.id_event_child_registration from exchange_child_fam_link ecl, exchange_child ec,exchange_home eh where ec.id_event
+     = ecl.id_event_child_registration and ecl.id_event_home_registration = eh.id_event and eh.id_event = CAPS.EXCHANGE_HOME.ID_EVENT and
+     ecl.ind_link_current = 'N' and ecl.id_event_home_registration = CAPS.EXCHANGE_HOME.ID_EVENT and ecl.dt_out = (select max(ecl2.dt_out)
+     from exchange_child_fam_link ecl2 where ecl2.id_event_home_registration = eh.id_event and ecl2.ind_link_current = 'N') and ec.id_person
+     in (select distinct ec3.id_person from exchange_child ec3, exchange_home eh3,exchange_child_fam_link ecl3 where ec3.id_event = ecl3.id_event_child_registration
+     and ecl3.id_event_home_registration = eh3.id_event and ecl3.dt_out = (select max(ecl4.dt_out) from exchange_child_fam_link ecl4 where
+     ecl4.id_event_home_registration = eh.id_event and ecl4.ind_link_current = 'N')  ) and ec.id_person =CAPS.EXCHANGE_CHILD.ID_PERSON   )
+     )))
+Order By CD_STAGE_REGION
+,      DECODE
+,      NM_PERSON_FULL
+End-Select
+ Next-Listing
+ Next-Listing  Need=8
+ If #1ROW_COUNT > 0
+ Graphic (9,2,537) Horz-Line 12 
+ Position (10,1)
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc102
+ Next-Listing  Need=27
+ Graphic (10,2,538) Horz-Line 20 
+ Position (12,1)
+   let #region_overdue_cnt = #102ROW_COUNT
+ If not ($region_selected = 'N' and $county_selected = 'N')
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #brb_delay_0176E3A0 (27,103,10) Delay Bold  Edit 99999999na
+ End-If
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CD_STAGE_REGION (27,44,3) Bold 
+ Print 'Region:'  (27,1) Bold 
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  Need=97
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc102
+ Next-Listing 
+ let #region_overdue_cnt = #102ROW_COUNT
+ If not ($region_selected = 'N' and $county_selected = 'N')
+    ! do nothing
+ Else
+ Set-Delay-Print #brb_delay_0176E3A0 With #region_overdue_cnt
+ End-If
+ Move 0 To #102ROW_COUNT
+ Next-Listing  Need=97
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_BeforeProc103
+ Next-Listing  Need=26
+ Graphic (9,2,537) Horz-Line 15 
+ Position (10,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_DECODE (26,11,15) Bold 
+ let #cnty_overdue_cnt = #103ROW_COUNT
+ If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Print #brb_delay_01D57318 (26,103,10) Delay Bold  Edit 99999999na
+ End-If
+   Position (+12,)
+ Move 0 To #103ROW_COUNT
+ Next-Listing  Need=97
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_AfterProc103
+ Next-Listing 
+ let #cnty_overdue_cnt = #103ROW_COUNT
+ If $county_selected = 'Y'
+    ! do nothing
+ Else
+ Set-Delay-Print #brb_delay_01D57318 With #cnty_overdue_cnt
+ End-If
+ Move 0 To #103ROW_COUNT
+ Next-Listing  Need=97
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querydummy_BeforeProc101
+ Next-Listing  Need=18
+ let #report_overdue_cnt = #101ROW_COUNT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #brb_delay_01D408F8 (18,226,10) Delay Bold  Edit 88888888na
+  Let $Report_Total_Label='Total Children for Report as of ' ||  datetostr($current-date,'mm/dd/yyyy') || ': '
+ Print $Report_Total_Label (18,1,46) Bold 
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=97
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_Querydummy_AfterProc101
+ Next-Listing 
+ let #report_overdue_cnt = #101ROW_COUNT
+ Set-Delay-Print #brb_delay_01D408F8 With #report_overdue_cnt
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=97
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure New_Query (#P1_ID_EVENT_CHILD_REGISTRATION, #P2_ID_PERSON)
+Begin-Select Distinct
+(sysdate -  EXCHANGE_CHILD_FAM_LINK.DT_OUT) &_nbr_days_out
+CD_RSRC_CNTY &_New_Query_CD_RSRC_CNTY
+CD_STAGE_CNTY &_New_Query_CD_STAGE_CNTY
+CD_NON_AVAIL_CODE &_nonAvailCode
+ID_EVENT_CHILD_REGISTRATION &_New_Query_ID_EVENT_CHILD_REGISTRATION
+ID_PERSON &_New_Query_ID_PERSON
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+('Date  Out') &_header () On-Break Set=4 Level=1 Print=Never Before=New_Queryheader_BeforeProc401
+CAPS.EXCHANGE_CHILD_FAM_LINK.DT_OUT &_New_Query_CAPS.EXCHANGE_CHILD_FAM_LINK.DT_OUT (11,242) Edit MM/DD/YYYY
+ Print &_nbr_days_out (11,313) Edit 99999na
+ Lookup ccount_lookup &_New_Query_CD_STAGE_CNTY $_fad_stage_county
+ Print $_fad_stage_county (11,348,13)
+NDFCS_CERT_ENTITY &_New_Query_NDFCS_CERT_ENTITY (11,423,23) Wrap 23 2 line-height=12 Keep-Top
+NM_RESOURCE &_New_Query_NM_RESOURCE (11,25,26)
+CAPS.EXCHANGE_HOME.CD_NON_AVAIL_STATUS &_currentAvailStatHome (11,187,6)
+ Next-Listing  SkipLines=1 Need=23
+From  CAPS.CAPS_RESOURCE, CAPS.EXCHANGE_CHILD_FAM_LINK
+,      CAPS.EXCHANGE_HOME, CAPS.STAGE, CAPS.EXCHANGE_CHILD
+      Where CAPS.CAPS_RESOURCE.ID_RESOURCE = CAPS.EXCHANGE_HOME.ID_RESOURCE
+            And CAPS.EXCHANGE_HOME.ID_EVENT = CAPS.EXCHANGE_CHILD_FAM_LINK.ID_EVENT_HOME_REGISTRATION
+            And CAPS.CAPS_RESOURCE.ID_RSRC_FA_HOME_STAGE = CAPS.STAGE.ID_STAGE
+            And CAPS.EXCHANGE_CHILD_FAM_LINK.ID_EVENT_CHILD_REGISTRATION = CAPS.EXCHANGE_CHILD.ID_EVENT
+ And ID_EVENT_CHILD_REGISTRATION = #P1_ID_EVENT_CHILD_REGISTRATION
+ And ID_PERSON = #P2_ID_PERSON
+ And ((IND_LINK_CURRENT = 'Y'
+ And (EXCHANGE_CHILD.CD_NON_AVAIL_STATUS ='03' )
+ And (sysdate -  EXCHANGE_CHILD_FAM_LINK.DT_OUT) > 15) Or (IND_LINK_CURRENT = 'N'
+ And EXCHANGE_HOME.CD_NON_AVAIL_STATUS  ='55'
+ And CAPS.EXCHANGE_CHILD_FAM_LINK.ID_EVENT_CHILD_REGISTRATION = (select distinct ecl.id_event_child_registration from exchange_child_fam_link
+     ecl, exchange_child ec,exchange_home eh where ec.id_event = ecl.id_event_child_registration and ecl.id_event_home_registration = eh.id_event
+     and eh.id_event = CAPS.EXCHANGE_HOME.ID_EVENT and ecl.ind_link_current = 'N' and ecl.id_event_home_registration = CAPS.EXCHANGE_HOME.ID_EVENT
+     and ecl.dt_out = (select max(ecl2.dt_out) from exchange_child_fam_link ecl2 where ecl2.id_event_home_registration = eh.id_event and ecl2.ind_link_current
+     = 'N') and ec.id_person in (select distinct ec3.id_person from exchange_child ec3, exchange_home eh3,exchange_child_fam_link ecl3 where
+     ec3.id_event = ecl3.id_event_child_registration and ecl3.id_event_home_registration = eh3.id_event and ecl3.dt_out = (select max(ecl4.dt_out)
+     from exchange_child_fam_link ecl4 where ecl4.id_event_home_registration = eh.id_event and ecl4.ind_link_current = 'N')   ) and ec.id_person
+     = CAPS.EXCHANGE_CHILD.ID_PERSON )))
+Order By CAPS.EXCHANGE_CHILD_FAM_LINK.DT_OUT
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure New_Queryheader_BeforeProc401
+ Next-Listing  Need=40
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Date Out'  (40,243) Underline 
+ Print 'Days Out'  (40,297) Underline 
+ Print 'Family Name'  (40,25) Underline 
+ Print 'Family County'  (40,348) Underline 
+ Print 'Agency'  (40,423) Underline 
+ Print 'Families:'  (23,9) Underline  Bold 
+ Print 'Non-Avail Code'  (40,169) Underline 
+   Position (+12,)
+ Next-Listing  SkipLines=1 Need=23
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=ccount_lookup
+      Table=CAPS.CCOUNT
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+End-Procedure
+
+Begin-Heading 60 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (4,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (14,184,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Consideration Overdue' (39,189,0) Bold 
+ Let $header_dsp=$header
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $header_dsp (56,220,15) Bold 
+ Let $no_result_dsp=$no_result
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $no_result_dsp (77,184,42)
+ Print 'Produced On: ' (14,406,0)
+ Print $current-date (14,472) edit 'MM/DD/YYYY'
+ Alter-Printer Font=4 Point-Size=1    ! [SQR.INI] 4=Arial,proportional
+ Print ' ' (102,1,0)
+ Else   ! put a non combined page header
+ Print ' ' (3,1,0)
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (16,488) '' ' of '
+ Last-Page (16,517) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

@@ -1,0 +1,820 @@
+!*******************************************************************************
+!  Singular Pre-Bill for Foster Care                                           *
+!*******************************************************************************
+
+!*******************************************************************************
+!                                                                              *
+! PROGRAM NAME:         cfn51o01.sqr                                           *
+!                                                                              *
+! PROGRAM LOCATION:     /caps/users/cyskd/work/sqr                             *
+!                                                                              *
+!                                                                              *
+! DATE:                 03/19/96                                               *
+!                                                                              *
+! PROGRAMMER NAME:      Kent Cys                                               *
+!                                                                              *
+!                                                                              *
+! PROGRAM DESCRIPTION:  The Singular Pre-Bill for Foster Care is               *
+!                       generated on-demand from the Invoice List window.      *
+!                       An Invoice record must be highlighted in the Invoice   *
+!                       List window and the user will select "Print Foster     *
+!                       Care Pre-Bill" If the invoice is not a Foster Care     *
+!                       invoice, the "Print Foster Care Pre-Bill"              *
+!                       menu item will not be enabled.  If the invoice phase   *
+!                       is "Submited","Not Submited" or "Paid" then the        *
+!                       Pre-Bill menu items will not be enabled.  The user     *
+!                       will navigate to the Report List window off of the     *
+!                       Toolbar.                                               *
+!                                                                              *
+!*******************************************************************************
+!*******************************************************************************
+!                                                                              *
+! PROGRAM MODIFICATION SECTION                                                 *
+! ----------------------------                                                 *
+!                                                                              *
+!   DATE     PROGRAMMER                       MODIFICATION                     *
+! --------   ----------   -------------------------------------------------    *
+! 03/19/96   K.Cys        Initial Programming                                  *
+! 04/10/96   K.Cys        SIR #20305 -- Contract prints to report now.         *
+! 04/11/96   K.Cys        SIR #20337 -- Code added to display SERV DAYS        *
+!                                       correctly and code added for UNIT      *
+!                                       QTY.                                   *
+! 04/11/96   K.Cys        SIR #20338 -- Code that allowed selection in PRB     *
+!                                       only removed.                          *
+!                                                                              *
+! 09/06/96   K.Cys        SIR #22163 -- Changed code so that County Decode     *
+!                                       appears under COUNTY heading on the    *
+!                                       report.                                *
+! 09/16/96   K.Cys        SIR  #3461 -- Changed edit mask for Quantity         *
+!                                       variable so that it will accept        *
+!                                       decimals of two digits of precision.   *
+!                                                                              *
+! 04/09/97   K.Cys        SIR #13506 -- Added new procedure GET-CM-NAME to     *
+!                                       select the latest primary version of   *
+!                                       a Contract Mngr's name without         *
+!                                       causing report to do a full table      *
+!                                       scan of the NAME table.                *
+!                                                                              *
+! 05/23/97   K.Janecek    SIR # 13937 -- Added if statements to not print      *
+!                                       QUANTITY, FEE PAID, and AMOUNT when    *
+!                                       they are zeros or null.                *
+! 10/27/2003 dejuanr      Added alter-printer font=300 point-size=14           *
+! SIR 19813               This will bold the font and make it larger.          *
+!                                                                              *
+! 11/08/2004 R. Hall      Modified the program to acquire client and contract  *
+! SIR 23226               manager names from the PERSON table instead of the   *
+!                         NAME table.  This makes the source of names          *
+!                         consistent with the Provider Statements and changes  *
+!                         made in the Delivered Service Prebill reports.       *
+!                                                                              *
+!                         Changed variable names used for client first and     *
+!                         last names so that they reflect the contents.  The   *
+!                         variable names originally used indicated employee    *
+!                         names instead of client names.                       *
+!                                                                              *
+! 11/08/2004 R. Hall      Modified the program to print the resource ID of     *
+! SIR 14863               the facility with which the child is placed when     *
+!                         printing DELVRD SVC DTL data instead of printing the *
+!                         resource ID associated with the contract.            *
+!                                                                              *
+!*******************************************************************************
+
+!*******************************************************************************
+
+!*******************************************************************************
+!                                                                              *
+! REPORT PROCESSING SECTION                                                    *
+!                                                                              *
+!       This procedure defines the beginning and end of the report proc-       *
+!       essing. Housekeeping initializes all report values, Processing         *
+!       processes the body of the report, and Wrap-Up prints the end of re-    *
+!       port message and other wrap up functions.                              *
+!                                                                              *
+!*******************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT
+
+    do WRAP-UP
+
+END-REPORT
+
+!*******************************************************************************
+!  SETUP-SECTION                                                               *
+!                                                                              *
+!       This section sets up common parameters including page size and         *
+!       printer as well as input parameters                                    *
+!                                                                              *
+!*******************************************************************************
+
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup01c.sqc'                 ! control codes for Landscape Batch
+
+    ask ID_INVOICE                          !key identifier
+
+END-SETUP
+
+!*******************************************************************************
+!                                                                              *
+! HEADER                                                                       *
+!                                                                              *
+!       These commands will be processed every time SQR writes a page. They    *
+!       include the report title, date, time, page number, report id, and      *
+!       column headers. XXX lines are reserved to print the heading at the     *
+!       top of each page. This includes blank lines. A common setup header     *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait  *
+!       reports.                                                               *
+!                                                                              *
+!*******************************************************************************
+
+BEGIN-HEADING 15
+
+    move 'Pre-Bill for AFDC and STATE-PAID Foster Care'   to $ReportTitle
+    move 'cfn51o01'                                       to $ReportID
+
+    #INCLUDE 'header05.sqc'     ! Include file with header information
+
+    print 'PROVIDER NAME AND ADDRESS: '         (+2,1)
+    print 'REGIONAL FC BILLING COORDINATOR: '   (+0,98)
+    print $prov_name                            (+2,1)
+    print 'VENDOR ID NUMBER: '                  (+0,50)
+    print $vendor_id                            (+0,70)  edit B8888888888888
+    print $cm_name                              (+0,102)
+
+    print $prov_addr_ln1                        (+1,1)
+
+    !*************
+    ! SIR # 20305*
+    !*************
+    print 'CONTRACT NUMBER : '                  (+0,50)
+    print #id_contract                          (+0,70)  edit B888888888888888
+
+    print $cm_addr_ln1                          (+0,102)
+
+    print $prov_addr_ln2                        (+1,1)
+
+    print 'INVOICE MO/YEAR : '                  (+0,50)
+
+    if #svc_yr <> 0
+    print #svc_mo                               (+0,70)  edit 00
+    print '/'                                   ()
+    print #svc_yr                               ()       edit 8888
+    end-if
+
+    print $cm_addr_ln2                          (+0,102)
+
+    print $prov_city                            (+1,1)
+
+if $prov_city <> ''
+    print ','                                   ()
+    print $prov_state                           ()
+    print ' '                                   ()
+end-if
+
+    print $prov_zip                             ()
+
+    print 'RESOURCE NUMBER :'                   (+0,50)
+    print #id_resource                          (+0,70)  edit B88888888888888
+
+if $cm_city <> ''
+    print $cm_city                              (+0,102)
+    print ','                                   ()
+end-if
+
+if (#id_contract <> 0 and $cm_city <> '')
+    print 'TX'                                  ()
+    print ' '                                   ()
+end-if
+
+    print $cm_zip                               ()
+
+    print 'INVOICE NUMBER  : '                  (+1,50)
+    print #input_invoice                        (+0,70)  edit B888888888888888
+
+print 'LIN'                                     (+4,1)
+print 'CLIENT'                                  (+0,45)
+print 'SERV'                                    (+0,74)
+print 'SERV'                                    (+0,83)
+print 'SERV'                                    (+0,91)
+print 'UNIT'                                    (+0,101)
+print 'UNIT'                                    (+0,111)
+print 'COST OF'                                 (+0,120)
+print 'NO.'                                     (+1,1)
+print 'COUNTY'                                  (+0,5)
+print 'ID PERSON'                               (+0,19)
+print 'LAST NAME'                               (+0,30)
+print 'FIRST NAME'                              (+0,52)
+print 'FACILITY'                                (+0,64)
+print 'CODE'                                    (+0,74)
+print 'MM/YYYY'                                 (+0,81)
+print 'DAYS'                                    (+0,91)
+print 'QTY'                                     (+0,102)
+print 'RATE'                                    (+0,111)
+print 'CARE'                                    (+0,123)
+print 'INCOME'                                  (+0,133)
+print 'AMOUNT'                                  (+0,144)
+print '-'                                       (+1,1,3)    fill
+print '-'                                       (+0,5,12)   fill
+print '-'                                       (+0,19,9)   fill
+print '-'                                       (+0,30,20)  fill
+print '-'                                       (+0,52,10)  fill
+print '-'                                       (+0,64,8)   fill
+print '-'                                       (+0,74,4)   fill
+print '-'                                       (+0,81,7)   fill
+print '-'                                       (+0,91,5)   fill
+print '-'                                       (+0,97,8)   fill
+print '-'                                       (+0,107,8)  fill
+print '-'                                       (+0,118,9)  fill
+print '-'                                       (+0,131,8)  fill
+print '-'                                       (+0,141,9)  fill
+
+END-HEADING
+
+!*******************************************************************************
+!                                                                              *
+!   HOUSEKEEPING                                                               *
+!                                                                              *
+!       Set environment variables, initialize report id, initialize title      *
+!       id, initialize date and time, initialize variables, and define         *
+!       constants                                                              *
+!                                                                              *
+!       CALLED BY: BEGIN-REPORT                                                *
+!                                                                              *
+!*******************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   alter-printer font=300 point-size=14
+
+   #INCLUDE 'setenv.sqc'                    !Set printer environment
+
+    move '{ID_INVOICE}'         to #input_invoice
+    move 'FSC'                  to $FSC
+    move 'No PERSON Last Name'  to $UNKNOWN_LAST_NM                            !SIR 23226
+    move 'No First Nm'          to $UNKNOWN_FRST_NM                            !SIR 23226
+
+END-PROCEDURE HOUSEKEEPING
+
+!*******************************************************************************
+!                                                                              *
+!   PROCESS-REPORT                                                             *
+!                                                                              *
+!      This procedure includes the main processing logic of the report.        *
+!                                                                              *
+!       CALLED BY  : BEGIN-REPORT                                              *
+!       CALLS      : GET-COUNTY-INVOICES                                       *
+!*******************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT
+
+   do GET-COUNTY-INVOICES
+
+END-PROCEDURE PROCESS-REPORT
+
+!*******************************************************************************
+!                                                                              *
+!   GET-COUNTY-INVOICES                                                        *
+!                                                                              *
+!       This procedure uses the input region to retrieve the appropriate       *
+!       contract and contract manager.  Since most of the SQL is driven by     *
+!       contract, this procedure calls almost all of them.                     *
+!                                                                              *
+!       CALLED BY  : PROCESS-REPORT                                            *
+!       CALLS      : GET-CONTRACT-MANAGER, GET-PROV-NAME, GET-PROVIDER-ADDR,   *
+!                    GET-EMPLOYEE, GET-OFFICE, GET-MAIL-CODE, GET-SVC-DTL      *
+!*******************************************************************************
+
+BEGIN-PROCEDURE GET-COUNTY-INVOICES
+
+  move 0                                            to #count2
+  move 'N'                                          to $total_flag
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+G.ID_CONTRACT
+    move &G.ID_CONTRACT                             to #id_contract
+
+G.YR_INVO_YEAR
+    move &G.YR_INVO_YEAR                            to #svc_yr
+
+G.MO_INVO_MONTH
+    move &G.MO_INVO_MONTH                           to #svc_mo
+
+G.ID_INVOICE
+    move &G.ID_INVOICE                              to #id_invoice
+
+G.NBR_INVO_VID
+    move &G.NBR_INVO_VID                            to $vendor_id
+
+    move 'Y'                                        to $total_flag
+
+
+
+    do GET-CONTRACT-MANAGER
+    do GET-PROV-NAME
+    do GET-PROVIDER-ADDR
+    do GET-EMPLOYEE
+    do GET-OFFICE
+    do GET-MAIL-CODE
+    do GET-SVC-DTL
+
+FROM    INVOICE         G
+
+WHERE   G.ID_INVOICE = #input_invoice
+AND     G.CD_INVO_TYPE = $FSC
+
+END-SELECT
+
+    if $total_flag = 'Y'
+        do PRINT-TOTALS
+    end-if
+
+END-PROCEDURE GET-COUNTY-INVOICES
+
+!*******************************************************************************
+!                                                                              *
+!   GET-CONTRACT-MANAGER                                                       *
+!                                                                              *
+!       This procedure uses the input region to retrieve the appropriate       *
+!       contract and contract manager.  Since most of the SQL is driven by     *
+!       contract, this procedure calls almost all of them.                     *
+!                                                                              *
+!       CALLED BY  : GET-COUNTY-INVOICES                                       *
+!       CALLS      : NONE                                                      *
+!                                                                              *
+!*******************************************************************************
+
+BEGIN-PROCEDURE GET-CONTRACT-MANAGER
+
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+A.ID_CONTRACT
+    move &A.ID_CONTRACT                             to #id_contract
+
+A.ID_RESOURCE
+    move &A.ID_RESOURCE                             to #id_resource
+
+A.ID_RSRC_ADDRESS
+    move &A.ID_RSRC_ADDRESS                         to #id_resource_addr
+
+A.ID_CNTRCT_MANAGER
+    move &A.ID_CNTRCT_MANAGER                       to #id_cm
+
+    do GET-CM-NAME !***SIR 13506***
+
+
+FROM    CONTRACT    A
+
+WHERE   A.ID_CONTRACT = #id_contract
+
+END-SELECT
+
+END-PROCEDURE GET-CONTRACT-MANAGER
+
+!*******************************************************************************
+!                            SIR 13506                                         *
+!   GET-CM-NAME                                                                *
+!                                                                              *
+!       Returns the latest version of the Contract Manager's name from the     *
+!       NAME table.  For Performance reasons, this SQL was separated from      *
+!       GET-CONTRACT-MANAGER above.                                            *
+!                                                                              *
+!       CALLED BY  : GET-CONTRACT-MANAGER                                      *
+!       CALLS      : NONE                                                      *
+!                                                                              *
+!*******************************************************************************
+BEGIN-PROCEDURE GET-CM-NAME
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                                                                               !SIR 23226: Changed source of cm name to
+                                                                               !           PERSON table from NAME.
+!N.NM_NAME_FIRST || ' ' || N.NM_NAME_MIDDLE || ' ' || N.NM_NAME_LAST  &cm_name
+(P.NM_PERSON_FIRST
+ ||
+ DECODE(P.NM_PERSON_FIRST,NULL,'',' ')
+ ||
+ P.NM_PERSON_MIDDLE
+ ||
+ DECODE(P.NM_PERSON_MIDDLE,NULL,'',' ')
+ ||
+ P.NM_PERSON_LAST
+) &cm_name
+    move &cm_name                                   to $cm_name
+
+FROM PERSON P
+
+WHERE   P.ID_PERSON = #id_cm
+
+END-SELECT
+
+END-PROCEDURE GET-CM-NAME
+
+!*******************************************************************************
+!                                                                              *
+!   GET-PROV-NAME                                                              *
+!                                                                              *
+!       This procedure will select the provider name for the header.           *
+!                                                                              *
+!       CALLED BY  : GET-COUNTY-INVOICES                                       *
+!       CALLS      : NONE                                                      *
+!*******************************************************************************
+
+BEGIN-PROCEDURE GET-PROV-NAME
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+B.NM_RESOURCE
+    move &B.NM_RESOURCE                     to $prov_name
+
+FROM    CAPS_RESOURCE   B
+
+WHERE   B.ID_RESOURCE = #id_resource
+
+END-SELECT
+
+END-PROCEDURE GET-PROV-NAME
+
+!*******************************************************************************
+!                                                                              *
+!   GET-PROVIDER-ADDR                                                          *
+!                                                                              *
+!       This procedure will select provider address information for the        *
+!       header.                                                                *
+!                                                                              *
+!                                                                              *
+!       CALLED BY  : GET-COUNTY-INVOICES                                       *
+!       CALLS      : NONE                                                      *
+!*******************************************************************************
+
+BEGIN-PROCEDURE GET-PROVIDER-ADDR
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+C.ADDR_RSRC_ADDR_ST_LN_1
+    move &C.ADDR_RSRC_ADDR_ST_LN_1              to $prov_addr_ln1
+
+C.ADDR_RSRC_ADDR_ST_LN_2
+    move &C.ADDR_RSRC_ADDR_ST_LN_2              to $prov_addr_ln2
+
+C.ADDR_RSRC_ADDR_CITY
+    move &C.ADDR_RSRC_ADDR_CITY                 to $prov_city
+
+C.CD_RSRC_ADDR_STATE
+    move &C.CD_RSRC_ADDR_STATE                  to $prov_state
+
+C.ADDR_RSRC_ADDR_ZIP
+    move &C.ADDR_RSRC_ADDR_ZIP                  to $prov_zip
+
+FROM    RESOURCE_ADDRESS    C
+
+WHERE   C.ID_RSRC_ADDRESS = #id_resource_addr
+
+END-SELECT
+
+END-PROCEDURE GET-PROVIDER-ADDR
+
+!*******************************************************************************
+!                                                                              *
+!   GET-EMPLOYEE                                                               *
+!                                                                              *
+!       This procedure will select the employee id so we can retrieve the      *
+!       office code.                                                           *
+!                                                                              *
+!       CALLED BY  : GET-COUNTY-INVOICES                                       *
+!       CALLS      : NONE                                                      *
+!*******************************************************************************
+
+BEGIN-PROCEDURE GET-EMPLOYEE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+D.ID_EMP_OFFICE
+    move &D.ID_EMP_OFFICE                         to #id_employee
+
+FROM    EMPLOYEE    D
+
+WHERE   D.ID_PERSON = #id_cm
+
+END-SELECT
+
+END-PROCEDURE GET-EMPLOYEE
+
+!*******************************************************************************
+!                                                                              *
+!   GET-OFFICE                                                                 *
+!                                                                              *
+!       This procedure will select the office code so we can retrieve the      *
+!       mail code information.                                                 *
+!                                                                              *
+!       CALLED BY  : GET-COUNTY-INVOICES                                       *
+!       CALLS      : NONE                                                      *
+!*******************************************************************************
+
+BEGIN-PROCEDURE GET-OFFICE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+E.CD_OFFICE_MAIL
+    move &E.CD_OFFICE_MAIL                      to $office_code
+
+FROM    OFFICE      E
+
+WHERE  E.ID_OFFICE = #id_employee
+
+END-SELECT
+
+END-PROCEDURE GET-OFFICE
+
+!*******************************************************************************
+!                                                                              *
+!   GET-MAIL-CODE                                                              *
+!                                                                              *
+!       This procedure will select the contract manager's address given the    *
+!       office code.                                                           *
+!                                                                              *
+!                                                                              *
+!       CALLED BY  : GET-COUNTY-INVOICES                                       *
+!       CALLS      : NONE                                                      *
+!*******************************************************************************
+
+BEGIN-PROCEDURE GET-MAIL-CODE
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+F.ADDR_MAIL_CODE_ST_LN_1
+    move &F.ADDR_MAIL_CODE_ST_LN_1              to $cm_addr_ln1
+
+F.ADDR_MAIL_CODE_ST_LN_2
+    move &F.ADDR_MAIL_CODE_ST_LN_2              to $cm_addr_ln2
+
+F.ADDR_MAIL_CODE_CITY
+    move &F.ADDR_MAIL_CODE_CITY                 to $cm_city
+
+F.ADDR_MAIL_CODE_ZIP
+    move &F.ADDR_MAIL_CODE_ZIP                  to $cm_zip
+
+FROM    MAIL_CODE    F
+
+WHERE   F.CD_MAIL_CODE = $office_code
+
+END-SELECT
+
+END-PROCEDURE GET-MAIL-CODE
+
+!*******************************************************************************
+!                                                                              *
+!   GET-SVC-DTL                                                                *
+!                                                                              *
+!       This procedure will select the report rows for each individual         *
+!       contract.  It also calls a procedure to get the client name.           *
+!                                                                              *
+!       CALLED BY  : GET-COUNTY-INVOICES                                       *
+!       CALLS      : GET-NAME, PRINT-SVC-DTL                                   *
+!*******************************************************************************
+
+BEGIN-PROCEDURE GET-SVC-DTL
+
+  move 0                                        to #cost_care
+
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+DSD.ID_SVC_DTL_PERSON
+    move &DSD.ID_SVC_DTL_PERSON                 to #id_person
+
+DSD.ID_RESOURCE
+    move &DSD.ID_RESOURCE                       to #id_rsrc_facility           !SIR 14863: Modified $service_res to #id_rsrc_facility
+
+DSD.CD_SVC_DTL_SERVICE
+    move &DSD.CD_SVC_DTL_SERVICE                to $serv
+
+DSD.CD_SVC_DTL_UNIT_TYPE
+    move &DSD.CD_SVC_DTL_UNIT_TYPE              to $county_code
+
+DSD.AMT_SVC_DTL_INCOME
+    move &DSD.AMT_SVC_DTL_INCOME                to #income
+
+DSD.MO_SVC_DTL_SVC_MONTH
+    move &DSD.MO_SVC_DTL_SVC_MONTH              to #svc_dtl_mo
+
+DSD.YR_SVC_DTL_SVC_YEAR
+    move &DSD.YR_SVC_DTL_SVC_YEAR               to #svc_dtl_yr
+
+DSD.NBR_SVC_DTL_FROM_DAY
+    move &DSD.NBR_SVC_DTL_FROM_DAY              to #from_day
+
+DSD.NBR_SVC_DTL_TO_DAY                                      !************
+    move &DSD.NBR_SVC_DTL_TO_DAY                to #to_day  ! SIR #20337*
+                                                            !************
+DSD.NBR_SVC_DTL_UNIT_QTY
+    move &DSD.NBR_SVC_DTL_UNIT_QTY              to #qty
+
+DSD.AMT_SVC_DTL_UNIT_RATE
+    move &DSD.AMT_SVC_DTL_UNIT_RATE             to #rate
+
+CCOUNT.DECODE                                               !***SIR 22163***
+    move &CCOUNT.DECODE                         to $county_dec
+
+P.NM_PERSON_FIRST                                                              !SIR 23226: Added join to PERSON
+    move &P.NM_PERSON_FIRST                     to $client_first
+
+P.NM_PERSON_LAST                                                               !SIR 23226: Added join to PERSON
+    move &P.NM_PERSON_LAST                      to $client_last
+
+    let #cost_care = #rate * #qty
+    let #serv_days = #to_day - #from_day
+    let #count2 = #count2 + 1
+
+
+    !do GET-NAME
+    do PRINT-SVC-DTL
+
+FROM   PERSON              P,
+       CCOUNT              CCOUNT,
+       DELVRD_SVC_DTL      DSD
+
+WHERE  P.ID_PERSON    = DSD.ID_SVC_DTL_PERSON                                  !SIR 23226: Added join to person so that listing is sorted by name.
+AND    CCOUNT.CODE(+) = DSD.CD_SVC_DTL_COUNTY !***SIR 22163***
+AND    DSD.ID_INVOICE = #input_invoice
+
+ORDER BY P.NM_PERSON_LAST,                                                     !SIR 23226: Added order by clause so that order is the same
+         P.NM_PERSON_FIRST,                                                    !           for batch and singl-print SQR reports.
+         DSD.YR_SVC_DTL_SVC_YEAR,
+         DSD.MO_SVC_DTL_SVC_MONTH,
+         DSD.NBR_SVC_DTL_FROM_DAY
+
+END-SELECT
+
+END-PROCEDURE GET-SVC-DTL
+
+!*******************************************************************************
+!                                                                              *
+!   GET-NAME                                                                   *
+!                                                                              *
+!       This procedure will select the name that is associated with each       *
+!       invoice.                                                               *
+!                                                                              *
+!       CALLED BY  : GET-SVC-DTL                                               *
+!       CALLS      : NONE                                                      *
+!*******************************************************************************
+
+!BEGIN-PROCEDURE GET-NAME
+
+!BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                                                                               !SIR 23226: Changed source of client name to
+                                                                               !           PERSON table from NAME table.
+!P.NM_PERSON_FIRST
+!   move &P.NM_PERSON_FIRST                     to $client_first                !SIR 23226: Changed variable name from $emp_first to $client_first
+
+!P.NM_PERSON_LAST
+!   move &P.NM_PERSON_LAST                      to $client_last                 !SIR 23226: Changed variable from $emp_last to $client_last
+
+!FROM  PERSON P
+
+!WHERE P.ID_PERSON = #id_person
+
+!END-SELECT
+
+!END-PROCEDURE GET-NAME
+
+!*******************************************************************************
+!                                                                              *
+!   PRINT-SVC-DTL                                                              *
+!                                                                              *
+!       This procedure prints the report rows for each invoice.                *
+!                                                                              *
+!       CALLED BY  : GET-SVC-DTL                                               *
+!       CALLS      : NONE                                                      *
+!*******************************************************************************
+
+BEGIN-PROCEDURE PRINT-SVC-DTL
+
+let $client_last = nvl($client_last,$UNKNOWN_LAST_NM)                          !SIR 23226
+let $client_first = nvl($client_first,$UNKNOWN_FRST_NM)                        !SIR 23226
+
+print #count2                                     (+2,1)   edit 88888
+print $county_dec                                 (+0,5)   !***SIR 22163***
+print #id_person                                  (+0,19)  edit 888888888
+print $client_last                                (+0,30)                      !SIR 23226: Changed variable form emp_last to client_last
+print $client_first                               (+0,52)                      !SIR 23226: Changed variable from emp_first to client_first
+print #id_rsrc_facility                           (+0,63)  edit 999999999      !SIR 14863: Changed to use resource ID from DSD.
+print $serv                                       (+0,75)
+
+if #svc_dtl_yr <> 0
+print #svc_dtl_mo                                 (+0,81)  edit 99
+print '/'                                           ()
+print #svc_dtl_yr                                   ()     edit 9999
+end-if
+
+print #from_day                                   (+0,91)  edit 99 !************
+print '-'                                           ()             ! SIR #20337*
+print #to_day                                       ()     edit 99 !************
+!***SIR 3461***
+print #qty                                        (+0,97)  edit 99999.99
+
+if #rate <> 0
+    print #rate                                   (+0,107) edit $$$$$.00
+end-if
+
+if #cost_care <> 0                  !SIR 13937
+print #cost_care                                  (+0,116) edit $$$$$$$$.00
+end-if
+
+if #income <> 0                     !SIR 13937
+print #income                                     (+0,128) edit $$$$$$$$.00
+end-if
+
+if #amount <> 0                     !SIR 13937
+print #amount                                     (+0,139) edit $$$$$$$$.00
+end-if
+
+END-PROCEDURE PRINT-SVC-DTL
+
+!*******************************************************************************
+!                                                                              *
+!   PRINT-TOTALS                                                               *
+!                                                                              *
+!       This procedure prints the subtotals at the end of each invoice         *
+!       selected.                                                              *
+!                                                                              *
+!       CALLED BY  : GET-INVOICE                                               *
+!       CALLS      : NONE                                                      *
+!*******************************************************************************
+
+BEGIN-PROCEDURE PRINT-TOTALS
+
+next-listing need = 10
+
+print 'Foster Care Pre-Bill Subtotal: '         (+3,63)
+print '_'                                       (+0,117,20) fill
+print 'Attached Form(s) 2025 Subtotal: '        (+3,62)
+print '_'                                       (+0,117,20) fill
+print 'Total Claimed Amount: '                  (+3,72)
+print '_'                                       (+0,117,20) fill
+
+END-PROCEDURE PRINT-TOTALS
+
+!*******************************************************************************
+!                                                                              *
+!   WRAP-UP                                                                    *
+!                                                                              *
+!       This procedure prints the messages for the end of the report as well   *
+!       as over all totals.                                                    *
+!                                                                              *
+!       CALLED BY  : BEGIN-REPORT                                              *
+!       CALLS      : NONE                                                      *
+!*******************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!*******************************************************************************
+!                                                                              *
+! SqlErrorHandle                                                               *
+!                                                                              *
+!      This section handles formatting of messages for SQL errors.             *
+!      When an SQL error is encounterd, the program will write to              *
+!      the log file, program processing does not stop for SQL errors.          *
+!                                                                              *
+!  CALLS:  None                                                                *
+!                                                                              *
+!*******************************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!*******************************************************************************
+!                                                                              *
+!                                INCLUDE SECTION                               *
+!                                                                              *
+!   Include all files that contain common modules or procedures that           *
+!   will be used in the report                                                 *
+!*******************************************************************************

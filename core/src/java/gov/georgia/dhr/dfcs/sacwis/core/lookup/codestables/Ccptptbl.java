@@ -1,0 +1,63 @@
+package gov.georgia.dhr.dfcs.sacwis.core.lookup.codestables;
+
+public interface Ccptptbl {
+
+  public static final String CCPTPTBL = "CCPTPTBL";
+  public static final String CCPTPTBL_AOP = "AOP";
+  public static final String CCPTPTBL_APA = "APA";
+  public static final String CCPTPTBL_APP = "APP";
+  public static final String CCPTPTBL_APR = "APR";
+  public static final String CCPTPTBL_ASF = "ASF";
+  public static final String CCPTPTBL_CHG = "CHG";
+  public static final String CCPTPTBL_CNP = "CNP";
+  public static final String CCPTPTBL_CPL = "CPL";
+  public static final String CCPTPTBL_CTP = "CTP";
+  public static final String CCPTPTBL_DAP = "DAP";
+  public static final String CCPTPTBL_DSC = "DSC";
+  public static final String CCPTPTBL_DVL = "DVL";
+  public static final String CCPTPTBL_DVN = "DVN";
+  public static final String CCPTPTBL_DVP = "DVP";
+  public static final String CCPTPTBL_EDN = "EDN";
+  public static final String CCPTPTBL_EDP = "EDP";
+  public static final String CCPTPTBL_EOC = "EOC";
+  public static final String CCPTPTBL_FAM = "FAM";
+  public static final String CCPTPTBL_FAN = "FAN";
+  public static final String CCPTPTBL_FMP = "FMP";
+  public static final String CCPTPTBL_FNP = "FNP";
+  public static final String CCPTPTBL_IBP = "IBP";
+  public static final String CCPTPTBL_ICH = "ICH";
+  public static final String CCPTPTBL_IGH = "IGH";
+  public static final String CCPTPTBL_ISH = "ISH";
+  public static final String CCPTPTBL_MDN = "MDN";
+  public static final String CCPTPTBL_MDP = "MDP";
+  public static final String CCPTPTBL_OOP = "OOP";
+  public static final String CCPTPTBL_PAL = "PAL";
+  public static final String CCPTPTBL_PAP = "PAP";
+  public static final String CCPTPTBL_PCH = "PCH";
+  public static final String CCPTPTBL_PDO = "PDO";
+  public static final String CCPTPTBL_PER = "PER";
+  public static final String CCPTPTBL_PFC = "PFC";
+  public static final String CCPTPTBL_PHP = "PHP";
+  public static final String CCPTPTBL_PHY = "PHY";
+  public static final String CCPTPTBL_PLP = "PLP";
+  public static final String CCPTPTBL_PLS = "PLS";
+  public static final String CCPTPTBL_PRA = "PRA";
+  public static final String CCPTPTBL_PSP = "PSP";
+  public static final String CCPTPTBL_PSY = "PSY";
+  public static final String CCPTPTBL_PVP = "PVP";
+  public static final String CCPTPTBL_REC = "REC";
+  public static final String CCPTPTBL_REP = "REP";
+  public static final String CCPTPTBL_SAE = "SAE";
+  public static final String CCPTPTBL_SAP = "SAP";
+  public static final String CCPTPTBL_SEN = "SEN";
+  public static final String CCPTPTBL_SEP = "SEP";
+  public static final String CCPTPTBL_SSC = "SSC";
+  public static final String CCPTPTBL_SSF = "SSF";
+  public static final String CCPTPTBL_SUP = "SUP";
+  public static final String CCPTPTBL_TPL = "TPL";
+  public static final String CCPTPTBL_TRM = "TRM";
+  public static final String CCPTPTBL_TRV = "TRV";
+  public static final String CCPTPTBL_VIS = "VIS";
+  public static final String CCPTPTBL_WOR = "WOR";
+
+}

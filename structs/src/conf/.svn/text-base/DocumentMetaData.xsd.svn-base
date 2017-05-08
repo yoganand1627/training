@@ -1,0 +1,189 @@
+<?xml version="1.0"?>
+<xs:schema id="documents" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:simpleType name="columnType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="NUMBER"/>
+      <xs:enumeration value="TEXT"/>
+      <xs:enumeration value="DATE"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="statusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="NEW"/>
+      <xs:enumeration value="PROC"/>
+      <xs:enumeration value="COMP"/>
+      <xs:enumeration value="PEND"/>
+      <xs:enumeration value="APRV"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+
+  <xs:simpleType name="renderType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="PDF"/>
+      <xs:enumeration value="HTML_WITH_SHELL"/>
+      <xs:enumeration value="HTML_WITHOUT_SHELL"/>
+      <xs:enumeration value="HTML_COMMENT_SHELL"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="categoryType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="NARRATIVE_DOCUMENT"/>
+      <xs:enumeration value="COMPOSITE_DOCUMENT"/>
+      <xs:enumeration value="SIMPLE_DOCUMENT"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:element name="documents" maxOccurs="1" minOccurs="1">
+    <xs:complexType>
+      <xs:choice>
+        <xs:element name="documentMetaData" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="documentType" type="xs:string" minOccurs="1" maxOccurs="1"/>
+              <xs:element name="documentDisplayName" type="xs:string" minOccurs="1" maxOccurs="1"/>
+              <xs:element name="documentCategory" type="categoryType" minOccurs="1" maxOccurs="1"/>
+              <xs:element name="templateType" type="xs:string" minOccurs="1" maxOccurs="1"/>
+              <xs:element name="newTemplateVersion" maxOccurs="1" type="xs:int"/>
+              <xs:element name="actualTemplateVersion" type="xs:int" maxOccurs="1" minOccurs="0"/>
+              <xs:element name="legacy" type="xs:boolean" maxOccurs="1" minOccurs="0"/>
+              <xs:element name="renderFormat" type="renderType" minOccurs="0" maxOccurs="1"/>
+              <xs:element name="hasFooter" type="xs:boolean" maxOccurs="1" minOccurs="1"/>
+              <xs:element name="displayOnly" type="xs:boolean" maxOccurs="1" minOccurs="1"/>
+              <xs:element name="documentExists" type="xs:boolean" maxOccurs="1" minOccurs="0"/>
+              <xs:element name="checkStage" type="xs:int" maxOccurs="1" minOccurs="0"/>
+              <xs:element name="validationClass" type="xs:string" minOccurs="0" maxOccurs="1"/>
+              <xs:element name="validationParameters" type="xs:string" minOccurs="0" maxOccurs="1"/>
+			  <xs:element name="saveActionClass" type="xs:string" minOccurs="0" maxOccurs="1"/>
+              <xs:element name="successActionClass" type="xs:string" minOccurs="0" maxOccurs="1"/>
+              <xs:element name="isInApproverMode" type="xs:boolean" minOccurs="0" maxOccurs="1"/>
+			  <xs:element name="userName" type="xs:string" minOccurs="0" maxOccurs="1"/>
+			  <xs:element name="userId" type="xs:int" minOccurs="0" maxOccurs="1"/>
+			  <xs:element name="stageId" type="xs:int" minOccurs="0" maxOccurs="1"/>
+			  <xs:element name="caseId" type="xs:int" minOccurs="0" maxOccurs="1"/>
+              <!-- Prefill Meta Data -->
+
+              <xs:element name="preFillMetaData" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="serviceName" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                    <!-- Start Input Class Description -->
+                    <xs:element name="inputClass" minOccurs="1" maxOccurs="1">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                          <xs:element name="parameter" nillable="false" minOccurs="1" content="mixed"
+                                      maxOccurs="unbounded">
+                            <xs:complexType>
+                              <xs:simpleContent>
+                                <xs:extension base="xs:string">
+                                  <xs:attribute name="type" use="required" type="xs:string"/>
+                                  <xs:attribute name="name" use="required" type="xs:string"/>
+                                  <xs:attribute name="setMethod" use="required" type="xs:string"/>
+                                  <xs:attribute name="requestName" use="required" type="xs:string"/>
+                                  <xs:attribute name="format" use="optional" type="xs:string"/>
+                                  <xs:attribute name="state" use="optional" type="xs:boolean"/>
+                                </xs:extension>
+                              </xs:simpleContent>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+
+                    <!-- End Input Class Description -->
+
+
+                    <!-- Start Output Class Description -->
+
+                    <xs:element name="outputClass" minOccurs="1" maxOccurs="1">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                          <xs:element name="preFillData" nillable="false" minOccurs="1" maxOccurs="1">
+                            <xs:complexType>
+                              <xs:attribute name="type" type="xs:string" use="required"/>
+                              <xs:attribute name="getMethod" type="xs:string" use="required"/>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <!-- End Output Class Description -->
+
+                    <!-- Start ErrorMessages -->
+                    <xs:element name="errorMessages" minOccurs="1" maxOccurs="1">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="error" minOccurs="0" maxOccurs="unbounded">
+                            <xs:complexType>
+                              <xs:attribute name="errorCode" type="xs:string" use="required"/>
+                              <xs:attribute name="displayMessage" type="xs:string" use="required"/>
+                            </xs:complexType>
+                          </xs:element>
+                          <xs:element name="default" minOccurs="1" maxOccurs="1">
+                            <xs:complexType>
+                              <xs:attribute name="displayMessage" type="xs:string" use="required"/>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <!-- End ErrorMessages -->
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <!-- End PreFill Meta Data -->
+
+              <!-- TableMetaData Description -->
+              <xs:element name="tableMetaData" maxOccurs="1" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="tableName" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                    <xs:element name="narrativeColumn" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                    <xs:element name="tableFields" minOccurs="1" maxOccurs="1">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="column" nillable="false" minOccurs="1" content="mixed"
+                                      maxOccurs="unbounded">
+                            <xs:complexType>
+                              <xs:simpleContent>
+                                <xs:extension base="xs:string">
+                                  <xs:attribute name="type" use="required" type="columnType"/>
+                                  <xs:attribute name="name" use="required" type="xs:string"/>
+                                  <xs:attribute name="requestName" use="required" type="xs:string"/>
+                                  <xs:attribute name="format" use="optional" type="xs:string"/>
+                                </xs:extension>
+                              </xs:simpleContent>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <!-- End TableMetaData Description -->
+
+
+              <!-- ValidEventStatus Description -->
+              <xs:element name="validEventStatus" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="validStatus" nillable="false" minOccurs="0" maxOccurs="unbounded"
+                                type="statusType"/>
+                  </xs:sequence>
+                </xs:complexType>
+                <!-- End ValidEventStatus Description -->
+
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

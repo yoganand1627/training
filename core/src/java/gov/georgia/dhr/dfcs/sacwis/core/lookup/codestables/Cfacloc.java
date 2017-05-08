@@ -1,0 +1,61 @@
+package gov.georgia.dhr.dfcs.sacwis.core.lookup.codestables;
+
+public interface Cfacloc {
+
+  public static final String CFACLOC = "CFACLOC";
+  public static final String CFACLOC_01 = "01";
+  public static final String CFACLOC_03 = "03";
+  public static final String CFACLOC_04 = "04";
+  public static final String CFACLOC_06 = "06";
+  public static final String CFACLOC_07 = "07";
+  public static final String CFACLOC_11 = "11";
+  public static final String CFACLOC_13 = "13";
+  public static final String CFACLOC_14 = "14";
+  public static final String CFACLOC_16 = "16";
+  public static final String CFACLOC_17 = "17";
+  public static final String CFACLOC_19 = "19";
+  public static final String CFACLOC_20 = "20";
+  public static final String CFACLOC_21 = "21";
+  public static final String CFACLOC_22 = "22";
+  public static final String CFACLOC_23 = "23";
+  public static final String CFACLOC_24 = "24";
+  public static final String CFACLOC_25 = "25";
+  public static final String CFACLOC_26 = "26";
+  public static final String CFACLOC_27 = "27";
+  public static final String CFACLOC_28 = "28";
+  public static final String CFACLOC_29 = "29";
+  public static final String CFACLOC_31 = "31";
+  public static final String CFACLOC_32 = "32";
+  public static final String CFACLOC_33 = "33";
+  public static final String CFACLOC_35 = "35";
+  public static final String CFACLOC_36 = "36";
+  public static final String CFACLOC_37 = "37";
+  public static final String CFACLOC_38 = "38";
+  public static final String CFACLOC_39 = "39";
+  public static final String CFACLOC_46 = "46";
+  public static final String CFACLOC_48 = "48";
+  public static final String CFACLOC_49 = "49";
+  public static final String CFACLOC_51 = "51";
+  public static final String CFACLOC_52 = "52";
+  public static final String CFACLOC_53 = "53";
+  public static final String CFACLOC_55 = "55";
+  public static final String CFACLOC_56 = "56";
+  public static final String CFACLOC_57 = "57";
+  public static final String CFACLOC_58 = "58";
+  public static final String CFACLOC_59 = "59";
+  public static final String CFACLOC_60 = "60";
+  public static final String CFACLOC_62 = "62";
+  public static final String CFACLOC_63 = "63";
+  public static final String CFACLOC_64 = "64";
+  public static final String CFACLOC_65 = "65";
+  public static final String CFACLOC_66 = "66";
+  public static final String CFACLOC_67 = "67";
+  public static final String CFACLOC_68 = "68";
+  public static final String CFACLOC_69 = "69";
+  public static final String CFACLOC_70 = "70";
+  public static final String CFACLOC_71 = "71";
+  public static final String CFACLOC_88 = "88";
+  public static final String CFACLOC_98 = "98";
+  public static final String CFACLOC_99 = "99";
+
+}

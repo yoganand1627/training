@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.YrppLink" table="YRPP_LINK" >
+        <id name="idYrppLink" type="integer">
+            <column name="ID_YRPP_LINK" precision="16" scale="0" />
+            <generator class="sequence"><param name="sequence">SEQ_YRPP_LINK</param></generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="null" source="vm"/>
+        <many-to-one name="youthReportDtl" class="gov.georgia.dhr.dfcs.sacwis.db.YouthReportDtl" fetch="select">
+            <column name="ID_YRD" precision="16" scale="0" />
+        </many-to-one>
+        <many-to-one name="portalUser" class="gov.georgia.dhr.dfcs.sacwis.db.PortalUser" fetch="select">
+            <column name="ID_PORTAL_USER" precision="16" scale="0" />
+        </many-to-one>
+        <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select">
+            <column name="ID_PERSON" precision="16" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="indNytdSurveyComplete" type="string">
+            <column name="IND_NYTD_SURVEY_COMPLETE" length="1" />
+        </property>
+        <property name="indNytdGreetEmailSent" type="string">
+            <column name="IND_NYTD_GREET_EMAIL_SENT" length="1" not-null="true" />
+        </property>
+        <property name="reportingYear" type="integer">
+            <column name="REPORTING_YEAR" precision="4" scale="0" not-null="true" />
+        </property>
+        <property name="dtSurveyStart" type="date">
+            <column name="DT_SURVEY_START" length="7" />
+        </property>
+        <property name="dtReportingPeriodStart" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never" not-null="true">
+            <column name="DT_REPORTING_PERIOD_START" length="7"/>
+        </property>
+        <property name="dtReportingPeriodEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never" not-null="true">
+            <column name="DT_REPORTING_PERIOD_END" length="7"/>
+        </property>
+    </class>
+</hibernate-mapping>

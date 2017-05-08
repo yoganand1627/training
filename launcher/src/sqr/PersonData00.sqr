@@ -1,0 +1,490 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Fri Aug 29 17:11:22 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\sacwis\launcher\src\sqr\PersonData00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+Begin-Select Loops=1
+(PERSON.NM_PERSON_LAST||', '|| PERSON.NM_PERSON_FIRST ||' '|| PERSON.NM_PERSON_MIDDLE) &NameHeader_NmPers
+From  PERSON
+Where [$where_clause301]
+End-Select
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=48   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do LoadLookupTables
+ Do Get-Input
+ Position (1,1)
+ Do PersonInfo
+ Do PaymentOfCare
+ Do NameHistory
+ Do AddressHistory
+ Do Characteristics
+ Do PhoneHistory
+ Do CaseHistory
+ Do EducationHistory
+ Do Placement
+End-Program
+
+Begin-Procedure Get-Input
+! -----------------------------
+Label_301_ID_PERSON:
+Input $_I301_ID_PERSON 'Enter a value for ID_PERSON' MaxLen=16  Type=Number
+If IsNull($_I301_ID_PERSON) or IsBlank($_I301_ID_PERSON)
+  Goto Label_301_ID_PERSON
+End-If
+Let $brb_tmp = 'PERSON.ID_PERSON'
+Let $where_clause301 = $brb_tmp  || ' = ' || $_I301_ID_PERSON
+End-Procedure
+
+Begin-Procedure PersonInfo
+ Do CreateXML_ManifestFile
+Begin-Select
+(PERSON.NM_PERSON_LAST ||', '|| PERSON.NM_PERSON_FIRST) &PersonName
+CD_PERSON_SEX &PersonInfo_CD_PERSON_SEX
+CD_PERSON_LANGUAGE &PersonInfo_CD_PERSON_LANGUAGE
+CD_PERSON_ETHNIC_GROUP &PersonInfo_CD_PERSON_ETHNIC_GROUP
+CD_PERSON_MARITAL_STATUS &PersonInfo_CD_PERSON_MARITAL_STATUS
+CD_PERSON_CITIZENSHIP &PersonInfo_CD_PERSON_CITIZENSHIP
+PERSON.ID_PERSON &PersonInfo_PERSON.ID_PERSON
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+DT_PERSON_BIRTH &PersonInfo_DT_PERSON_BIRTH (25,165) Edit MM/DD/YYYY
+DT_PERSON_DEATH &PersonInfo_DT_PERSON_DEATH (25,418) Edit MM/DD/YYYY
+ Print 'Date of Birth:' (25,48,14) Bold 
+ Print 'Date of Death:' (25,309,14) Bold 
+IND_PERSON_DOB_APPROX &PersonInfo_IND_PERSON_DOB_APPROX (40,165,1)
+ Print 'DOB Approx:' (40,48,11) Bold 
+ Print 'Reason for Death:' (42,309,17) Bold 
+CD_PERSON_DEATH &PersonInfo_CD_PERSON_DEATH (43,418,3)
+NBR_PERSON_AGE &PersonInfo_NBR_PERSON_AGE (55,165) Edit 888na
+ Print 'Age:' (57,48,4) Bold 
+CSEX.DECODE &PersonInfo_CSEX.DECODE (63,418,25)
+ Print 'Gender:' (64,309,8) Bold 
+ Print 'Language:' (69,48,9) Bold 
+CLANG.DECODE &PersonInfo_CLANG.DECODE (71,166,22)
+CETHNIC.DECODE &PersonInfo_CETHNIC.DECODE (78,418,25)
+ Print 'Ethnicity:' (79,309,10) Bold 
+ Print 'Marital Status:' (84,48,15) Bold 
+CMARSTAT.DECODE &PersonInfo_CMARSTAT.DECODE (87,166,22)
+CD_PERSON_BIRTH_COUNTRY &PersonInfo_CD_PERSON_BIRTH_COUNTRY (92,418,5)
+ Print 'Birth Country:' (92,309,14) Bold 
+ Print 'Citizenship Status:' (100,48,19) Bold 
+CCTZNSTA.DECODE &PersonInfo_CCTZNSTA.DECODE (104,166,29)
+ Print 'Most Recent Employer:' (116,48,21) Bold 
+NM_PERSON_LAST_EMPLOYER &PersonInfo_NM_PERSON_LAST_EMPLOYER (117,166,28)
+ Print 'Occupation:' (130,48,11) Bold 
+TXT_PERSON_OCCUPATION &PersonInfo_TXT_PERSON_OCCUPATION (131,165,25) Wrap 25 2 line-height=12 Keep-Top on= 
+ If #page-count > #pageNum
+  Let #pageNum = #page-count
+  Let $PersonNameFirst = &PersonName
+  Let $PersonInfo_PERSON.ID_PERSONFirst = &PersonInfo_PERSON.ID_PERSON
+  Let $PersonNameFirst = &PersonName
+ End-If
+ Next-Listing  Need=131
+From  PERSON, PERSON_DTL
+,      CSEX, CCTZNSTA, CMARSTAT
+,      CLANG, CETHNIC
+      Where PERSON.ID_PERSON = PERSON_DTL.ID_PERSON(+)
+            And PERSON.CD_PERSON_SEX = CSEX.CODE(+)
+            And PERSON_DTL.CD_PERSON_CITIZENSHIP = CCTZNSTA.CODE(+)
+            And PERSON.CD_PERSON_MARITAL_STATUS = CMARSTAT.CODE(+)
+            And PERSON.CD_PERSON_LANGUAGE = CLANG.CODE(+)
+            And PERSON.CD_PERSON_ETHNIC_GROUP = CETHNIC.CODE
+ And [$where_clause301]
+End-Select
+ Next-Listing
+skiplines=40
+  Alter-Printer Font=4 Point-Size=10![SQR.INI]4=Arial,proportional
+  Print 'Payment of Care History/RBWO' (48,48) Underline Bold
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure PaymentOfCare
+Alter-Printer Font=4 Point-Size=10  ![SQR.INI]4=Arial,proportional
+  Next-Listing skipLines=1
+  Print 'Payment Of Care Type' (14,48) Underline Bold
+  Print 'Start Date' (,282) Underline Bold
+  Print 'End Date' (,381) Underline Bold
+  Print 'Termination Date' (,460) Underline Bold
+  Print 'CCI Indic' (,552) Underline Bold
+  Print 'RBWO Program' (,618) Underline Bold
+  Next-Listing
+Begin-Select
+CD_POC_TYPE &PaymentOfCare_CD_POC_TYPE
+CD_RBWO_PROGRAM &PaymentOfCare_CD_RBWO_PROGRAM
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+DT_START &PaymentOfCare_DT_START (16,283) Edit MM/DD/YYYY
+PAYMENT_OF_CARE.DT_END &PaymentOfCare_PAYMENT_OF_CARE.DT_END (16,380) Edit MM/DD/YYYY
+DT_TERMINATE &PaymentOfCare_DT_TERMINATE (17,463) Edit MM/DD/YYYY
+IND_CCI &PaymentOfCare_IND_CCI (17,576,1)
+DECODE &PaymentOfCare_DECODE (17,48,37)
+ Lookup Rbwo_Conv &PaymentOfCare_CD_RBWO_PROGRAM $_RBWO_DECODE
+ Print $_RBWO_DECODE (17,618,18)
+ Next-Listing  Need=17
+From  PAYMENT_OF_CARE, EVENT
+,      PERSON, STAGE_PERSON_LINK, STAGE
+,      CODES_TABLES
+      Where PAYMENT_OF_CARE.ID_POC_EVENT = EVENT.ID_EVENT
+            And EVENT.ID_EVENT_STAGE = STAGE.ID_STAGE
+            And STAGE.ID_STAGE = STAGE_PERSON_LINK.ID_STAGE
+            And STAGE_PERSON_LINK.ID_PERSON = PERSON.ID_PERSON
+            And CODES_TABLES.CODE = PAYMENT_OF_CARE.CD_POC_TYPE
+ And [$where_clause301]
+ And CODE_TYPE = 'CPOCTYPE'
+Order By DT_START Desc
+End-Select
+ Next-Listing
+skiplines=40
+ Alter-Printer Font=4 Point-Size=10  ![SQR.INI] 4=Arial,proportional
+ Print 'Name History' (17,48) Underline Bold
+End-Procedure
+
+Begin-Procedure NameHistory
+Alter-Printer Font=4 Point-Size=10  ![SQR.INI]4=Arial,proportional
+  Next-Listing skipLines=1
+  Print 'First Name' (18,48) Underline Bold
+  Print 'Middle Name' (,171) Underline Bold
+  Print 'Last Name' (,293) Underline Bold
+  Print 'Suffix' (,426) Underline Bold
+  Print 'Primary' (,480) Underline Bold
+  Print 'Start Date' (,563) Underline Bold
+  Print 'End Date' (,637) Underline Bold
+Next-Listing
+Begin-Select Distinct
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+NM_NAME_FIRST &NameHistory_NM_NAME_FIRST (12,48,12)
+NM_NAME_MIDDLE &NameHistory_NM_NAME_MIDDLE (12,171,12)
+NM_NAME_LAST &NameHistory_NM_NAME_LAST (12,293,22)
+CD_NAME_SUFFIX &NameHistory_CD_NAME_SUFFIX (12,426,2)
+DT_NAME_START_DATE &NameHistory_DT_NAME_START_DATE (12,563) Edit MM/DD/YYYY
+DT_NAME_END_DATE &NameHistory_DT_NAME_END_DATE (12,637) Edit MM/DD/YYYY
+IND_NAME_PRIMARY &NameHistory_IND_NAME_PRIMARY (12,490,1)
+ Next-Listing  Need=12
+From  NAME, PERSON
+      Where NAME.ID_PERSON = PERSON.ID_PERSON
+ And [$where_clause301]
+Order By DT_NAME_START_DATE Desc
+End-Select
+ Next-Listing
+skiplines=40
+ Alter-Printer Font=4 Point-Size=10  ![SQR.INI] 4=Arial,proportional
+ Print 'Address History' (17,48) Underline Bold
+End-Procedure
+
+Begin-Procedure AddressHistory
+Alter-Printer Font=4 Point-Size=10  ![SQR.INI]4=Arial,proportional
+  Next-Listing skipLines=1
+  Print 'Address' (18,48) Underline Bold
+  !Print 'Address_2' (,212) Underline Bold
+  Print 'City' (,303) Underline Bold
+  Print 'State' (,418) Underline Bold
+  Print 'Zip' (,449) Underline Bold
+  Print 'County' (,493) Underline Bold
+  Print 'Start Date' (,603) Underline Bold
+  Print 'End Date' (,665) Underline Bold
+Next-Listing
+Begin-Select Distinct
+CD_PERSON_ADDR_COUNTY &AddressHistory_CD_PERSON_ADDR_COUNTY
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ADDR_PERS_ADDR_ST_LN_1 &AddressHistory_ADDR_PERS_ADDR_ST_LN_1 (14,48,27)
+ADDR_PERS_ADDR_ST_LN_2 &AddressHistory_ADDR_PERS_ADDR_ST_LN_2 (14,204,16)
+ADDR_PERSON_ADDR_CITY &AddressHistory_ADDR_PERSON_ADDR_CITY (14,303,20)
+CD_PERSON_ADDR_STATE &AddressHistory_CD_PERSON_ADDR_STATE (14,422,2)
+ADDR_PERSON_ADDR_ZIP &AddressHistory_ADDR_PERSON_ADDR_ZIP (14,445,8)
+DECODE &AddressHistory_DECODE (14,493,19)
+DT_PERS_ADDR_LINK_START &AddressHistory_DT_PERS_ADDR_LINK_START (14,603) Edit MM/DD/YYYY
+DT_PERS_ADDR_LINK_END &AddressHistory_DT_PERS_ADDR_LINK_END (14,665) Edit MM/DD/YYYY
+ Next-Listing  Need=14
+From  ADDRESS_PERSON_LINK, PERSON_ADDRESS
+,      PERSON, CCOUNT
+      Where ADDRESS_PERSON_LINK.ID_PERSON_ADDR = PERSON_ADDRESS.ID_PERSON_ADDR
+            And PERSON.ID_PERSON = ADDRESS_PERSON_LINK.ID_PERSON
+            And PERSON.CD_PERSON_COUNTY = CCOUNT.CODE(+)
+ And [$where_clause301]
+Order By DT_PERS_ADDR_LINK_START Desc
+End-Select
+ Next-Listing
+skiplines=40
+ Alter-Printer Font=4 Point-Size=10  ![SQR.INI] 4=Arial,proportional
+ Print 'History of Characteristics' (17,48) Underline Bold
+End-Procedure
+
+Begin-Procedure Characteristics
+Alter-Printer Font=4 Point-Size=10  ![SQR.INI]4=Arial,proportional
+  Next-Listing skipLines=1
+  Print 'Characteristics' (18,48) Underline Bold
+  Print 'Start Date' (,386) Underline Bold
+  Print 'End Date' (,467) Underline Bold
+Next-Listing
+ Move 0 To #31ROW_COUNT
+Begin-Select
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+DECODE &Characteristics_DECODE (16,48,53)
+DT_CHAR_START &Characteristics_DT_CHAR_START (16,386) Edit MM/DD/YYYY
+DT_CHAR_END &Characteristics_DT_CHAR_END (16,467) Edit MM/DD/YYYY
+ Add 1 To #31ROW_COUNT
+ Next-Listing  Need=16
+From  CHARACTERISTICS, PERSON
+,      CODES_TABLES
+      Where CHARACTERISTICS.ID_PERSON = PERSON.ID_PERSON
+            And CODES_TABLES.CODE = CHARACTERISTICS.CD_CHARACTERISTIC
+ And CODE_TYPE IN ('CCT','CPM','CHB','CME','OTH')
+ And [$where_clause301]
+Order By DT_CHAR_START Desc
+End-Select
+ Next-Listing
+ Next-Listing  Need=22
+ If #31ROW_COUNT > 0
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print '* The Start and End Dates displayed reflect the dates the case manager recorded or ended the characteristic.'  (21,48)
+ End-If
+ Next-Listing
+skiplines=40
+ Alter-Printer Font=4 Point-Size=10  ![SQR.INI] 4=Arial,proportional
+ Print 'Phone Number History' (17,48) Underline Bold
+End-Procedure
+
+Begin-Procedure PhoneHistory
+Alter-Printer Font=4 Point-Size=10  ![SQR.INI]4=Arial,proportional
+  Next-Listing skipLines=1
+  Print 'Phone Type' (18,48) Underline Bold
+  Print 'Phone Number' (,291) Underline Bold
+  Print 'Extension' (,375) Underline Bold
+  Print 'Primary' (,449) Underline Bold
+  Print 'Start Date' (,512) Underline Bold
+  Print 'End Date' (,587) Underline Bold
+Next-Listing
+Begin-Select
+('('||substr( PERSON_PHONE.NBR_PERSON_PHONE,1,3)||')'||' '||substr( PERSON_PHONE.NBR_PERSON_PHONE,4,3)||'-'||substr( PERSON_PHONE.NBR_PERSON_PHONE,7,4)) &EditedPhone
+PERSON_PHONE.NBR_PERSON_PHONE &PhoneHistory_PERSON_PHONE.NBR_PERSON_PHONE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+DECODE &PhoneHistory_DECODE (14,48,40)
+NBR_PERSON_PHONE_EXTENSION &PhoneHistory_NBR_PERSON_PHONE_EXTENSION (14,375,8)
+DT_PERSON_PHONE_START &PhoneHistory_DT_PERSON_PHONE_START (14,512) Edit MM/DD/YYYY
+ Print &EditedPhone (14,291,14)
+IND_PERSON_PHONE_PRIMARY &PhoneHistory_IND_PERSON_PHONE_PRIMARY (15,454,1)
+DT_PERSON_PHONE_END &PhoneHistory_DT_PERSON_PHONE_END (15,587) Edit MM/DD/YYYY
+ Next-Listing  Need=15
+From  PERSON, PERSON_PHONE
+,      CPHNTYP
+      Where PERSON_PHONE.CD_PERSON_PHONE_TYPE = CPHNTYP.CODE(+)
+            And PERSON.ID_PERSON = PERSON_PHONE.ID_PERSON
+ And [$where_clause301]
+Order By DT_PERSON_PHONE_START Desc
+End-Select
+ Next-Listing
+skiplines=40
+ Alter-Printer Font=4 Point-Size=10  ![SQR.INI] 4=Arial,proportional
+ Print 'Case History' (17,48) Underline Bold
+End-Procedure
+
+Begin-Procedure CaseHistory
+Alter-Printer Font=4 Point-Size=10  ![SQR.INI]4=Arial,proportional
+  Next-Listing skipLines=1
+  Print 'ID Case' (19,48) Underline Bold
+  Print 'ID Stage' (,107) Underline Bold
+  Print 'Stage Dt Start' (,172) Underline Bold
+  Print 'Stage Dt Close' (,264) Underline Bold
+  Print 'Stage' (,342) Underline Bold
+  Print 'Stage Type' (,395) Underline Bold
+  Print 'Role' (,487) Underline Bold
+  Print 'Relationship' (,583) Underline Bold
+Next-Listing
+Begin-Select
+CD_STAGE &CaseHistory_CD_STAGE
+CD_STAGE_PERS_TYPE &CaseHistory_CD_STAGE_PERS_TYPE
+CD_STAGE_PERS_ROLE &CaseHistory_CD_STAGE_PERS_ROLE
+CD_STAGE_PERS_REL_INT &CaseHistory_CD_STAGE_PERS_REL_INT
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+STAGE_PERSON_LINK.ID_CASE &CaseHistory_STAGE_PERSON_LINK.ID_CASE (17,48) Edit 888888888na
+STAGE_PERSON_LINK.ID_STAGE &CaseHistory_STAGE_PERSON_LINK.ID_STAGE (17,107) Edit 888888888na
+DT_STAGE_START &CaseHistory_DT_STAGE_START (17,172) Edit MM/DD/YYYY
+DT_STAGE_CLOSE &CaseHistory_DT_STAGE_CLOSE (17,264) Edit MM/DD/YYYY
+CINTROLE.DECODE &CaseHistory_CINTROLE.DECODE (17,487,15)
+CPRSNTYP.DECODE &CaseHistory_CPRSNTYP.DECODE (17,395,13)
+CODES_TABLES.DECODE &CaseHistory_CODES_TABLES.DECODE (17,342,6)
+CRELVICT.DECODE &CaseHistory_CRELVICT.DECODE (18,583,24)
+ Next-Listing  Need=18
+From  STAGE_PERSON_LINK, STAGE
+,      PERSON, CODES_TABLES, CINTROLE
+,      CPRSNTYP, CRELVICT
+      Where STAGE_PERSON_LINK.ID_STAGE = STAGE.ID_STAGE
+            And PERSON.ID_PERSON = STAGE_PERSON_LINK.ID_PERSON
+            And STAGE.CD_STAGE = CODES_TABLES.CODE
+            And CINTROLE.CODE = STAGE_PERSON_LINK.CD_STAGE_PERS_ROLE
+            And CPRSNTYP.CODE = STAGE_PERSON_LINK.CD_STAGE_PERS_TYPE
+            And STAGE_PERSON_LINK.CD_STAGE_PERS_REL_INT = CRELVICT.CODE
+ And CD_STAGE_PERS_TYPE IN ('PRN','COL')
+ And [$where_clause301]
+ And CODE_TYPE = 'CTXTOGA'
+Order By STAGE_PERSON_LINK.ID_CASE Desc
+,      DT_STAGE_START Desc
+End-Select
+ Next-Listing
+skiplines=40
+ Alter-Printer Font=4 Point-Size=10  ![SQR.INI] 4=Arial,proportional
+ Print 'Educational History' (17,48) Underline Bold
+End-Procedure
+
+Begin-Procedure EducationHistory
+Alter-Printer Font=4 Point-Size=10  ![SQR.INI]4=Arial,proportional
+  Next-Listing skipLines=1
+  Print 'Education Type' (19,48) Underline Bold
+  Print 'School Name' (,218) Underline Bold
+  Print 'Enroll Date' (,453) Underline Bold
+  Print 'Withdraw Date' (,531) Underline Bold
+Next-Listing
+Begin-Select
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+DECODE &EducationHistory_DECODE (14,48,27)
+NM_EDHIST_SCHOOL &EducationHistory_NM_EDHIST_SCHOOL (14,218,40)
+DT_EDHIST_ENROLL_DATE &EducationHistory_DT_EDHIST_ENROLL_DATE (14,453) Edit MM/DD/YYYY
+DT_EDHIST_WITHDRAWN_DATE &EducationHistory_DT_EDHIST_WITHDRAWN_DATE (14,531) Edit MM/DD/YYYY
+ Next-Listing  Need=14
+From  EDUCATIONAL_HISTORY, PERSON
+,      CODES_TABLES
+      Where EDUCATIONAL_HISTORY.ID_PERSON = PERSON.ID_PERSON
+            And EDUCATIONAL_HISTORY.CD_EDHIST_TYPE = CODES_TABLES.CODE
+ And CODE_TYPE = 'CEDTYPE'
+ And [$where_clause301]
+End-Select
+ Next-Listing
+skiplines=40
+ Alter-Printer Font=4 Point-Size=10  ![SQR.INI] 4=Arial,proportional
+ Print 'Placement History' (17,48) Underline Bold
+End-Procedure
+
+Begin-Procedure Placement
+Begin-Select Distinct
+CPLMNTYP.DECODE &Placement_CPLMNTYP.DECODE
+ADDR_RSRC_ADDR_ST_LN_2 &Placement_ADDR_RSRC_ADDR_ST_LN_2
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+PLACEMENT.ID_CASE &Placement_PLACEMENT.ID_CASE (31,89) Edit 888888888na
+DT_PLCMT_START &Placement_DT_PLCMT_START (31,487) Edit MM/DD/YYYY
+DT_PLCMT_END &Placement_DT_PLCMT_END (31,603) Edit MM/DD/YYYY
+NM_PLCMT_PERSON_FULL &Placement_NM_PLCMT_PERSON_FULL (31,234,33)
+ Print 'Case ID:' (31,47,8) Bold 
+ Print 'Start Date:' (31,423,11) Bold 
+ Print 'End Date:' (31,551,9) Bold 
+ Print 'Placement Name:' (31,144,15) Bold 
+ADDR_RSRC_ADDR_CITY &Placement_ADDR_RSRC_ADDR_CITY (47,270,18)
+ Print 'City:' (47,242,5) Bold 
+ Print 'State:' (47,373,6) Bold 
+ADDR_RSRC_ADDR_ST_LN_1 &Placement_ADDR_RSRC_ADDR_ST_LN_1 (47,95,25)
+ Print 'County:' (47,557,7) Bold 
+CCOUNT.DECODE &Placement_CCOUNT.DECODE (47,596,20)
+ADDR_RSRC_ADDR_ZIP &Placement_ADDR_RSRC_ADDR_ZIP (47,496,10)
+ Print 'Zip:' (47,472,4) Bold 
+CSTATE.DECODE &Placement_CSTATE.DECODE (47,411,10)
+ Print 'Address:' (47,46,8) Bold 
+ Next-Listing  Need=47
+From  CAPS_RESOURCE, PLACEMENT
+,      RESOURCE_ADDRESS, PERSON, CPLMNTYP
+,      CCOUNT, CSTATE
+      Where RESOURCE_ADDRESS.ID_RESOURCE = CAPS_RESOURCE.ID_RESOURCE
+            And PLACEMENT.ID_RSRC_FACIL = CAPS_RESOURCE.ID_RESOURCE
+            And PLACEMENT.ID_PLCMT_CHILD = PERSON.ID_PERSON
+            And CPLMNTYP.CODE = PLACEMENT.CD_PLCMT_TYPE
+            And RESOURCE_ADDRESS.CD_RSRC_ADDR_STATE = CSTATE.CODE
+            And RESOURCE_ADDRESS.CD_RSRC_ADDR_COUNTY = CCOUNT.CODE
+ And [$where_clause301]
+ And CD_PLCMT_ACT_PLANNED IN ('A')
+Order By DT_PLCMT_START Desc
+End-Select
+ Next-Listing
+!Next-Listing skiplines=3
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=Rbwo_Conv
+      Table=CODES_TABLES
+      Key=CODE
+      Return_Value=DECODE where=CODE_TYPE='CRBPROGI'
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+End-Procedure
+
+Begin-Heading 48 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Print-Image (5,4)
+	Type=bmp-file
+	Source='C:\sacwis\launcher\src\sqr\SHINES.bmp'
+	Image-size=(102,87)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (13,657) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (13,594,12)
+ Print 'Division of Family and Children Services' (13,256,40)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Person Data' (62,296,11) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Person ID:' (115,48,10) Bold 
+ Print 'Person Name:' (134,48,12) Bold 
+ Let #var_Id_Person=$_I301_ID_PERSON
+ Print #var_Id_Person (114,120) Edit 888888888
+Print &NameHeader_NmPers (133,121,49)
+ Else   ! put a non combined page header
+ Print 'Person ID:' (16,48,10) Bold 
+ Print 'Person Name:' (35,48,12) Bold 
+ Print #var_Id_Person (15,120) Edit 888888888
+Print &NameHeader_NmPers (35,121,49)
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 60 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (52,664) '' ' of'
+ Last-Page (52,689) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

@@ -1,0 +1,395 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Fri Oct 21 12:33:06 2011 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2011\5.0 Reports\OnCall00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definition' (11,1,22) Underline  Bold 
+ Print 'Program:' (59,1,9) Bold 
+ Print 'Title:' (78,1,6) Bold 
+ Print 'Type:' (116,1,7) Bold 
+ Print 'Start Date:' (153,1,11) Bold 
+ Print 'End Date:' (172,1,11) Bold 
+ Print 'The area of coverage (Foster Care, CPS, or Both) for the designated staff.' (59,65,124)
+ Print 'Identifies whether a worker is working a shift or block schedule. A shift is a period of time covered over multiple days. A block is a continious period of' (116,65,198)
+ Print 'time between identified start and end dates.' (134,65,118)
+ Print 'The Staff''s job Title.' (78,65,146)
+ Print 'Date the on-call worker starts their on-call shift or block.' (153,65,117)
+ Print 'Date the on-call worker ends their on-call shift or block.' (172,65,119)
+ Print 'The report displays a list of on-call staff and their contact information for a specified reporting period. ' (25,1,128)
+ Page-Number (194,667) '' ' of '
+ Last-Page (194,694) 
+ Print 'CO:' (97,1,6) Bold 
+ Print 'The order the on-call staff should be contacted.' (97,65,103)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=48   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Position (1,1)
+Do Get-Month
+Do Get-Region
+Do Get-County
+ Do Master_Query
+End-Program
+Begin-Procedure Get-Month
+Input $StartDate 'Enter Start Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+Input $EndDate 'Enter End Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+! -----------------------------
+End-Procedure
+
+Begin-Procedure Get-Region
+Input $_I1801_ON_CALL_Region 'Enter a value for ON_CALL_REGION' MaxLen=2  Type=Char
+If IsNull($_I1801_ON_CALL_Region) or IsBlank($_I1801_ON_CALL_Region) or ($_I1801_ON_CALL_Region) = '0' 
+  Let $where_clause1801 = 'ON_CALL_REGION is not null'
+  Let $regVar = 'All'
+  Let $regSelected = 'N'
+Else
+  Let $regSelected = 'Y'
+
+Let $regVar = $_I1801_ON_CALL_Region
+Let $_region = $_I1801_ON_CALL_Region
+ 
+If SubStr($_I1801_ON_CALL_Region, 1, 1) != ''''
+  Let $_I1801_ON_CALL_Region = '''' || $_I1801_ON_CALL_Region || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I1801_ON_CALL_Region,'''',0) = 0 and instr($_I1801_ON_CALL_Region,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'ON_CALL_REGION'
+   Let $where_clause1801 = $brb_tmp  || ' = ' ||  '''' || $_I1801_ON_CALL_Region || '''' 
+ Else
+   If (instr($_I1801_ON_CALL_Region,'''',0) = 0 and instr($_I1801_ON_CALL_Region,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'ON_CALL_REGION'
+     Let $where_clause1801 = $brb_tmp  || ' = ' || $_I1801_ON_CALL_Region
+   End-If
+ End-If
+End-If
+End-Procedure
+
+Begin-Procedure Get-County 
+! County Code Parameter
+Input $_I1801_CD_ON_CALL_COUNTY 'Enter a value for CD_COUNTY' MaxLen=3  Type=Text
+If IsNull($_I1801_CD_ON_CALL_COUNTY) or IsBlank($_I1801_CD_ON_CALL_COUNTY) or ($_I1801_CD_ON_CALL_COUNTY) = '0' 
+  Let $where_clause101 = 'CD_ON_CALL_COUNTY is not null'
+  Let $countyVar = 'All'
+  Let $cntySelected = 'N'
+Else
+ Let $cntySelected = 'Y'
+
+If SubStr($_I1801_CD_ON_CALL_COUNTY, 1, 1) != ''''
+  Let $_I1801_CD_ON_CALL_COUNTY = '''' || $_I1801_CD_ON_CALL_COUNTY || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I1801_CD_ON_CALL_COUNTY,'''',0) = 0 and instr($_I1801_CD_ON_CALL_COUNTY,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_ON_CALL_COUNTY'
+   Let $where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I1801_CD_ON_CALL_COUNTY || '''' 
+ Else
+   If (instr($_I1801_CD_ON_CALL_COUNTY,'''',0) = 0 and instr($_I1801_CD_ON_CALL_COUNTY,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_ON_CALL_COUNTY'
+     Let $where_clause101 = $brb_tmp  || ' = ' || $_I1801_CD_ON_CALL_COUNTY
+   End-If
+ End-If
+End-If
+
+If $cntySelected = 'Y'
+Begin-Select Loops=1
+DECODE &_County_Decode
+From  CCOUNT
+Where CCOUNT.CODE = [$_I1801_CD_ON_CALL_COUNTY]
+End-Select
+  Move &_County_Decode to $_header_disp
+Else
+  If $regSelected = 'Y'
+    Let $_header_disp = 'Region ' || $_region
+  Else 
+    Let $_header_disp = 'Statewide'
+  End-If
+End-If
+
+End-Procedure
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #18ROW_COUNT
+Begin-Select
+(SELECT  PERSON_PHONE00.NBR_PERSON_PHONE  FROM  CAPS.PERSON_PHONE PERSON_PHONE00 WHERE PERSON_PHONE00.CD_PERSON_PHONE_TYPE = 'RS' AND  PERSON_PHONE00.ID_PERSON = PERSON00.ID_PERSON) &Master_Query_HOME_PHONE
+DT_ON_CALL_START &Master_Query_DT_ON_CALL_START
+DT_ON_CALL_END &Master_Query_DT_ON_CALL_END
+CD_ON_CALL_TYPE &Master_Query_CD_ON_CALL_TYPE
+CD_ON_CALL_PROGRAM &Master_Query_CD_ON_CALL_PROGRAM
+CAPS.CONCLTYP.DECODE &Master_Query_CAPS.CONCLTYP.DECODE
+((TO_CHAR(DT_ON_CALL_START,'DD-MON-YYYY HH:MMAM'))) &OnCallStartDate
+((TO_CHAR(DT_ON_CALL_END,'DD-MON-YYYY HH:MMAM'))) &OnCallEndDate
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+ON_CALL_REGION &Master_Query_ON_CALL_REGION () On-Break Set=18 Level=1 Print=Never Before=Master_QueryON_CALL_REGION_BeforeProc1801 After=Master_QueryON_CALL_REGION_AfterProc1801
+CAPS.CCOUNT.DECODE &Master_Query_CAPS.CCOUNT.DECODE () On-Break Set=18 Level=2 Print=Never Before=Master_QueryDECODE_BeforeProc1802 After=Master_QueryDECODE_AfterProc1802
+CAPS.ON_CALL.ID_ON_CALL &Master_Query_CAPS.ON_CALL.ID_ON_CALL () On-Break Set=18 Level=3 Print=Never Before=Master_QueryID_ON_CALL_BeforeProc1803
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+PERSON00.NM_PERSON_FULL &Master_Query_PERSON00.NM_PERSON_FULL (12,67,26)
+PERSON00.ID_PERSON &Master_Query_PERSON00.ID_PERSON (12,219) Edit 888888888na
+CAPS.CODES_TABLES.DECODE &Master_Query_CAPS.CODES_TABLES.DECODE (12,3,9)
+NBR_EMP_ON_CALL_PHONE1 &Master_Query_NBR_EMP_ON_CALL_PHONE1 (12,448) Edit (xxx)bxxx-xxxx
+NBR_EMP_ON_CALL_EXT1 &Master_Query_NBR_EMP_ON_CALL_EXT1 (12,537,5)
+NBR_EMP_ON_CALL_PHONE2 &Master_Query_NBR_EMP_ON_CALL_PHONE2 (12,602) Edit (xxx)bxxx-xxxx
+NBR_EMP_ON_CALL_EXT2 &Master_Query_NBR_EMP_ON_CALL_EXT2 (12,692,4)
+ Print &Master_Query_HOME_PHONE (12,352) Edit (xxx)bxxx-xxxx
+CD_TITLE &Master_Query_CD_TITLE (12,284,9)
+NBR_EMP_ON_CALL_CNTCT_ORD &Master_Query_NBR_EMP_ON_CALL_CNTCT_ORD (12,581) Edit 9na
+ Add 1 To #18ROW_COUNT
+ Add 1 To #1801ROW_COUNT
+ Add 1 To #1802ROW_COUNT
+ Next-Listing  Need=12
+From  CAPS.EMP_ON_CALL_LINK, CAPS.ON_CALL
+,      CAPS.PERSON PERSON00, CAPS.CONCLTYP, CAPS.CODES_TABLES
+,      CAPS.CCOUNT
+      Where CAPS.EMP_ON_CALL_LINK.ID_PERSON = PERSON00.ID_PERSON
+            And CAPS.EMP_ON_CALL_LINK.ID_ON_CALL = CAPS.ON_CALL.ID_ON_CALL
+            And CAPS.ON_CALL.CD_ON_CALL_TYPE = CAPS.CONCLTYP.CODE
+            And CAPS.ON_CALL.CD_ON_CALL_PROGRAM = CAPS.CODES_TABLES.CODE
+            And CAPS.ON_CALL.CD_ON_CALL_COUNTY = CAPS.CCOUNT.CODE
+ And CODE_TYPE = 'CONCLPRG'
+ And DT_ON_CALL_START <= to_date($EndDate,'MM/DD/YYYY')
+ And DT_ON_CALL_END >= to_date($StartDate, 'MM/DD/YYYY')
+ And [$where_clause1801]
+ And [$where_clause101]
+Order By ON_CALL_REGION
+,      CAPS.CCOUNT.DECODE
+,      DT_ON_CALL_START
+,      NBR_EMP_ON_CALL_CNTCT_ORD
+End-Select
+ Next-Listing
+ Next-Listing  Need=16
+ If #18ROW_COUNT > 0
+ Graphic (2,1,716) Horz-Line 20 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Report Total:'  (16,3) Bold 
+ let #ReportTotal = #18ROW_COUNT
+  Print #ReportTotal (16,77) Bold  Edit 88888888na
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Master_QueryID_ON_CALL_BeforeProc1803
+ Next-Listing  Need=24
+ Graphic (25,131,519) Horz-Line 10 
+ Position (26,1)
+    Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'START DATE:'  (21,129) Bold 
+  Print 'END DATE:'  (21,482) Bold 
+    Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+ Print &Master_Query_CAPS.ON_CALL.ID_ON_CALL (12,1) Edit 9999999999999999na Foreground=(255,255,255)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CAPS.CONCLTYP.DECODE (21,366,13) Bold 
+ Print 'TYPE:'  (21,333) Bold 
+  Print &Master_Query_DT_ON_CALL_START (21,201) Edit 'MM/DD/YYYY HH:MI PM' Bold 
+  Print &Master_Query_DT_ON_CALL_END (21,541) Edit 'MM/DD/YYYY HH:MI PM' Bold 
+   Position (+12,)
+ Next-Listing  Need=12
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryON_CALL_REGION_BeforeProc1801
+if $cntySelected = 'Y' or $regSelected = 'Y'
+!DO NOTHING
+else
+ Next-Listing  Need=23
+ Graphic (2,1,716) Horz-Line 20 
+ Position (4,1)
+ Graphic (2,1,716) Horz-Line 20 
+ Position (4,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_ON_CALL_REGION (23,63,11) Bold 
+  Let $RegGroupLabel='Region '
+ Print $RegGroupLabel (23,3,10) Bold 
+   Position (+12,)
+ Next-Listing  Need=12
+end-if
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryON_CALL_REGION_AfterProc1801
+if $cntySelected = 'Y' or $regSelected = 'Y'
+!DO NOTHING
+else
+
+ Next-Listing  Need=15
+ Graphic (2,1,716) Horz-Line 15 
+ Position (3,1)
+  Let $RegTotalLabel='Region Total: '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $RegTotalLabel (15,3,14) Bold 
+ let #RegTotal = #1801ROW_COUNT
+ Print #RegTotal (15,87) Bold  Edit 88888888na
+   Position (+12,)
+ Move 0 To #1801ROW_COUNT
+ Next-Listing  Need=12
+end-if
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_BeforeProc1802
+if $cntySelected = 'Y' 
+!DO NOTHING
+else
+
+ Next-Listing  Need=22
+ Graphic (2,1,716) Horz-Line 10 
+ Position (3,1)
+ Graphic (2,1,716) Horz-Line 15 
+ Position (3,1)
+ Graphic (2,1,716) Horz-Line 15 
+ Position (3,1)
+ Graphic (23,1,716) Horz-Line 10 
+ Position (24,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CAPS.CCOUNT.DECODE (17,3,16) Bold 
+   Position (+12,)
+ Next-Listing  Need=12
+end-if
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc1802
+ Next-Listing  Need=25
+ Graphic (4,1,716) Horz-Line 10 
+ Position (5,1)
+  Let $CntyTotalLabel='County Total: '
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $CntyTotalLabel (25,3,14) Bold 
+ let #CntyTotal = #1802ROW_COUNT
+ Print #CntyTotal (25,87) Bold  Edit 88888888na
+   Position (+12,)
+ Move 0 To #1802ROW_COUNT
+ Next-Listing  Need=12
+ Alter-Printer Font=901 Point-Size=10    ! [SQR.INI] 901=MS Shell Dlg,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 48 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (13,655) edit 'MM/DD/YYYY'
+ Print 'Produced On:' (13,590,0)
+ Print 'Division of Family and Children Services' (13,277,0)
+ Print 'FROM' (72,274,0) Bold 
+ Print 'THROUGH' (72,366,0) Bold 
+ Let $StartDate=$StartDate
+ Print $StartDate (72,310,10) Bold 
+ Let $EndDate=$EndDate
+ Print $EndDate (72,422,10) Bold 
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'ON-CALL REPORT' (46,299,0) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='C:\sacwis\launcher\src\images\SHINES.bmp'
+	Image-size=(102,73)
+ Let $Headerdisp=$_header_disp
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $Headerdisp (89,333,15) Bold 
+ Print 'On-Call Phone' (142,448,0) Underline  Bold 
+ Print 'Other Phone' (142,602,0) Underline  Bold 
+ Print 'Ext' (142,537,3) Underline  Bold 
+ Print 'Ext' (142,692,0) Underline  Bold 
+ Print 'Home Phone' (142,352,0) Underline  Bold 
+ Print 'Staff Name' (142,67,16) Underline  Bold 
+ Print 'Program' (142,3,0) Underline  Bold 
+ Print 'Staff ID' (142,219,7) Underline  Bold 
+ Print 'Title' (142,284,0) Underline  Bold 
+ Print 'CO' (142,577,3) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'On-Call Phone' (44,448,0) Underline  Bold 
+ Print 'Other Phone' (44,602,0) Underline  Bold 
+ Print 'Ext' (44,537,3) Underline  Bold 
+ Print 'Ext' (44,692,0) Underline  Bold 
+ Print 'Home Phone' (44,352,0) Underline  Bold 
+ Print 'Staff Name' (44,67,16) Underline  Bold 
+ Print 'Program' (44,3,0) Underline  Bold 
+ Print 'Staff ID' (44,219,7) Underline  Bold 
+ Print 'Title' (44,284,0) Underline  Bold 
+ Print 'CO' (44,577,3) Underline  Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (11,668) '' ' of'
+ Last-Page (11,692) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

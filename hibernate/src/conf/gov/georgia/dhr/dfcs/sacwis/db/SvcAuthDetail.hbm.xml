@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.SvcAuthDetail" table="SVC_AUTH_DETAIL" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idSvcAuthDtl" type="integer" unsaved-value="undefined">
+      <column name="ID_SVC_AUTH_DTL" precision="16" scale="0"/>
+      <generator class="assigned"/>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="serviceAuthorization" class="gov.georgia.dhr.dfcs.sacwis.db.ServiceAuthorization" fetch="select"
+                 unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception"
+                 embed-xml="true">
+      <column name="ID_SVC_AUTH" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdSvcAuthDtlAuthType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_SVC_AUTH_DTL_AUTH_TYPE" length="10" not-null="true"/>
+    </property>
+    <property name="cdSvcAuthDtlPeriod" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_SVC_AUTH_DTL_PERIOD" length="6" not-null="true"/>
+    </property>
+    <property name="cdSvcAuthDtlSvc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SVC_AUTH_DTL_SVC" length="6" not-null="true"/>
+    </property>
+    <property name="cdSvcAuthDtlUnitType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_SVC_AUTH_DTL_UNIT_TYPE" length="15" not-null="true"/>
+    </property>
+    <property name="dtSvcAuthDtl" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SVC_AUTH_DTL" length="7" not-null="true"/>
+    </property>
+    <property name="dtSvcAuthDtlBegin" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SVC_AUTH_DTL_BEGIN" length="7" not-null="true"/>
+    </property>
+    <property name="dtSvcAuthDtlEnd" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SVC_AUTH_DTL_END" length="7" not-null="true"/>
+    </property>
+    <property name="dtSvcAuthDtlTerm" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SVC_AUTH_DTL_TERM" length="7" not-null="true"/>
+    </property>
+    <property name="dtSvcAuthDtlShow" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_SVC_AUTH_DTL_SHOW" length="7"/>
+    </property>
+    <property name="amtSvcAuthDtlAmtReq" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SVC_AUTH_DTL_AMT_REQ" precision="10"/>
+    </property>
+    <property name="amtSvcAuthDtlAmtUsed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="AMT_SVC_AUTH_DTL_AMT_USED" precision="10"/>
+    </property>
+    <property name="nbrSvcAuthDtlFreq" type="integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SVC_AUTH_DTL_FREQ" precision="4" scale="0" not-null="true"/>
+    </property>
+    <property name="nbrSvcAuthDtlLineItm" type="integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SVC_AUTH_DTL_LINE_ITM" precision="3" scale="0" not-null="true"/>
+    </property>
+    <property name="nbrSvcAuthDtlSugUnit" type="integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SVC_AUTH_DTL_SUG_UNIT" precision="7" scale="0" not-null="true"/>
+    </property>
+    <property name="nbrSvcAuthDtlUnitsReq" type="double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SVC_AUTH_DTL_UNITS_REQ" precision="6" not-null="true"/>
+    </property>
+    <property name="nbrSvcAuthDtlUnitRate" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SVC_AUTH_DTL_UNIT_RATE" precision="6"/>
+    </property>
+    <property name="nbrSvcAuthDtlUnitUsed" type="java.lang.Double" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SVC_AUTH_DTL_UNIT_USED" precision="9"/>
+    </property>
+    <property name="indServAcpt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_SERV_ACPT" length="1"/>
+    </property>
+    <property name="indCasePlnSvc" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CASE_PLN_SVC" length="1"/>
+    </property>
+    <property name="cdSvcQlty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_SVC_QLTY" length="3"/>
+    </property>
+    <property name="txtCmmts" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CMMTS" length="1000"/>
+    </property>
+     <property name="txtCmmtsAdditional" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_CMMTS_ADDITIONAL" length="1000"/>
+    </property>
+	<many-to-one name="specialNeedsDetermination" class="gov.georgia.dhr.dfcs.sacwis.db.SpecialNeedsDetermination" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_SPC_NEEDS_DET" precision="16" scale="0"/>
+    </many-to-one>
+    <bag name="delvrdSvcDtls" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_SVC_AUTH_DTL" precision="16" scale="0"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.DelvrdSvcDtl" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

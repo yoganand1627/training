@@ -1,0 +1,1412 @@
+!*****************************************************************************
+! WORKER REPORT                                                              *
+!*****************************************************************************  
+ 
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cmr01o01.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/blackam/work/sqr                         *
+!                                                                            *
+!                                                                            *
+! DATE:                 05/30/96                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Angela Black                                         *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This program will offer managers the opportunity to  *
+!                       view trends in an employee's caseload.  The report   *
+!                       generated will give a summary of the monthly         *
+!                       activities of each employee, in addition to          *
+!                       displaying the same information for other months     *
+!                       to provide the opportunity for comparison.  A fiscal *
+!                       year to date total and average are also displayed.   *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 05/30/96   A. Black     Initial Programming                                *
+! 07/31/96   A. Black     Revised Programming-The program was originally     *
+!                                             designed to display stage      *
+!                                             type and class for particular  *
+!                                             stages.  This code has been    *
+!                                             commented out based on the     *
+!                                             decisions made by Leslie DeHay *
+!                                             and Kathy Slay on July 31,1996.*
+!                                             The program can also run for   *
+!                                             a date other than the system   *
+!                                             date, if the sequel 'GET-DATE' *
+!                                             is uncommented out and a date  *
+!                                             stored in the Batch Parameters *
+!                                             table.                         *
+! 01/10/97   odonnerj     Fixed the GetSysDate function so that it handles   *
+!                         the month of January correctly.  Also fixed the    *
+!                         where clause of the get-state-info so that it      *
+!                         looks for month and year exact combinations.       *
+!                         Finally removed the <= sysdate in the cytd and     *
+!                         fiscal year to date calculations.                  *
+!                                                                            *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+    
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup01a.sqc'                 ! control codes for Landscape 
+
+    ask ID_WRKR_UNIT        
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 7
+
+  move 'WORKER WORKLOAD REPORT - UNIT'                     to $ReportTitle
+  
+  #INCLUDE 'header01.sqc'               !Include file with Header Information
+                    !Specific to MIS batch landscape reports
+
+print $cd_unit_dislay             (-1,103) edit 888888
+print 'NAME'                      (+3,18)  
+print 'REG'                       (+0,45)
+print 'COUNTY'                    (+0,51)
+print 'UNIT'                      (+0,61)
+print 'PROG'                      (+0,68)
+print 'STAGE'                       (+0,75)
+!print 'TYPE/CLASS'                    (+0,83)
+print 'STATS'                     (+0,99)
+print 'C  U  R  R  E  N  T            Y  E  A  R'  (+0,113,159)
+print #input_month                (+0,113) edit 00
+print '/'                         (+0,115)
+print #input_year                 (+0,116) edit 8888 
+print #input_month_1              (+0,122) edit 00
+print '/'                         (+0,124)
+print #input_year_3               (+0,125) edit 8888
+print #input_month_2              (+0,130) edit 00
+print '/'                         (+0,132)
+print #input_year_4               (+0,133) edit 8888
+print 'FYTD'                      (+0,138)
+print 'FYTD'                      (+0,144)
+print 'CYTD'                       (+0,150)
+!print 'YTD'                       (+0,155)
+print #input_month                (+0,162) edit 00
+print '/'                         (+0,164)
+print #input_year_1               (+0,165) edit 8888
+print 'TOT'                       (+1,138)
+print 'AVG'                       (+0,144)
+print 'TOT'                       (+0,150)
+!print 'AVG'                      (+0,155)
+!print '[C  U  R  R  E  N  T           Y  E  A  R]'  (+1,113,159)
+print '_'                         (+1,18,155) fill                      
+
+!  show 'got heading'
+END-HEADING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+  move '{ID_WRKR_UNIT}'        to #input_unit
+!  do GET-DATE
+!    if $sysdate <> ''
+!      else
+      do GET-SYSDATE
+!    end-if
+  do GET-UNIT-CHECK
+  do GET-CD-UNIT 
+
+  !************************************************
+  ! Variables and Constants                       *
+  !************************************************
+
+    move 'IN'                  to $IN
+
+    evaluate #input_month
+        when = 1
+            let #input_month_1  = 12
+            let #input_month_2  = 11
+            let #input_month_3  = 10 
+            let #input_year_3   = #input_year - 1
+            let #input_year_4   = #input_year - 1
+            let #input_year_5   = #input_year
+            let #fy_months = 5
+        break
+        when = 2
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = 12
+            let #input_month_3  = 11
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year - 1 
+            let #input_year_5   = #input_year
+            let #fy_months = 6
+        break
+        when = 3
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = 12
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year
+            let #input_year_5   = #input_year  
+            let #fy_months = 7
+        break
+        when = 4
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_3   = #input_year  
+            let #input_year_4   = #input_year
+            let #input_year_5   = #input_year 
+            let #fy_months = 8
+        break
+        when = 5
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3 
+            let #input_year_3   = #input_year  
+            let #input_year_4   = #input_year
+            let #input_year_5   = #input_year 
+            let #fy_months = 9
+        break
+        when = 6
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year
+            let #input_year_5   = #input_year 
+            let #fy_months = 10
+        break
+        when = 7
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year
+            let #input_year_5   = #input_year 
+            let #fy_months = 11
+        break
+        when = 8
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year
+            let #input_year_5   = #input_year 
+            let #fy_months = 12
+        break
+        when = 9
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year
+            let #input_year_5   = #input_year + 1 
+            let #fy_months = 1
+        break
+        when = 10
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year    
+            let #input_year_5   = #input_year + 1
+            let #fy_months = 2
+        break
+        when = 11
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year    
+            let #input_year_5   = #input_year + 1
+            let #fy_months = 3
+        break
+        when = 12
+            let #input_month_1  = #input_month - 1
+            let #input_month_2  = #input_month - 2
+            let #input_month_3  = #input_month - 3
+            let #input_year_3   = #input_year 
+            let #input_year_4   = #input_year    
+            let #input_year_5   = #input_year + 1
+            let #fy_months = 4
+        break
+    end-evaluate
+
+    let #input_year_1   = #input_year - 1
+    let #input_year_2   = #input_year - 2
+                                
+  move 'N' to $print_stage_flag
+
+  
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-WORKER-INFO                                        *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+
+    do GET-WORKER-INFO
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-DATE                                                                *
+!                                                                           *
+!       This procedure will select the system date in order to replace the  * 
+!       input year and month.                                               *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+!BEGIN-PROCEDURE GET-DATE
+       
+!BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+!to_date(DT_PARAM_EFFECTIVE, 'MM/DD/YYYY') &date1
+!     move &date1             to $sysdate
+  
+!  show $sysdate
+
+!  let $input_month = substr($sysdate,1,2)
+!  let $input_year  = substr($sysdate,7,10)
+
+!  move $input_month     to #input_month
+!  move $input_year      to #input_year
+
+!FROM BATCH_PARAMETERS
+!WHERE DT_LAST_UPDATE  = (SELECT MAX(DT_LAST_UPDATE) FROM BATCH_PARAMETERS)
+     
+!END-SELECT              
+                       
+!END-PROCEDURE GET-DATE
+         
+!****************************************************************************
+!                                                                           *
+!   GET-SYSDATE                                                             *
+!                                                                           *
+!       This procedure will select the system date in order to replace the  * 
+!       input year and month.                                               *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-SYSDATE
+       
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+to_date(SYSDATE, 'MM/DD/YYYY') &sysdate
+     move &sysdate            to $sysdate
+
+   let $input_month = substr($sysdate,1,2)
+   let $input_year  = substr($sysdate,7,10)
+  
+   move $input_month      to #input_month_a
+  if #input_month_a = 1
+    let #input_month = 12
+
+    move $input_year to #input_year_a
+    let  #input_year_b = #input_year_a - 1
+    move #input_year_b to #input_year
+  else
+    let  #input_month_b = #input_month_a - 1
+
+    move #input_month_b     to #input_month
+    move $input_year      to #input_year
+
+  end-if
+
+FROM DUAL
+     
+END-SELECT              
+     
+END-PROCEDURE GET-SYSDATE 
+
+!****************************************************************************
+!                                                                           *
+!   GET-UNIT-CHECK                                                          *
+!                                                                           *
+!       This procedure will select the system date in order to replace the  * 
+!       input year and month.                                               *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-UNIT-CHECK
+       
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+UC.ID_UNIT
+  move &UC.ID_UNIT          to $unit_check   
+
+FROM  UNIT UC
+  
+WHERE UC.ID_UNIT   =  $input_unit
+
+!  if UC.ID_UNIT <> $input_unit
+!     do PROCEDURE
+!  else
+!  end-if      
+     
+END-SELECT              
+     
+END-PROCEDURE GET-UNIT-CHECK
+
+!****************************************************************************
+!                                                                           *
+!   GET-CD-UNIT                                                             *
+!                                                                           *
+!       This procedure will select the unit for which this report is        * 
+!       being generated.                                                    *
+!                                                                           * 
+!       CALLED BY  : HOUSEKEEPING                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CD-UNIT
+  
+!  show 'got date getting unit number'
+       
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+UN.NBR_UNIT
+  move &UN.NBR_UNIT                     to $cd_unit_dislay 
+
+FROM UNIT UN,
+     STATS_UNIT_WKM SUW
+     
+WHERE SUW.ID_UNIT_UNIT = UN.ID_UNIT
+  AND SUW.ID_UNIT_UNIT = #input_unit       
+
+END-SELECT              
+
+!  show 'got unit number'
+     
+END-PROCEDURE GET-CD-UNIT
+               
+!****************************************************************************
+!                                                                           *
+!   GET-WORKER-INFO                                                         *
+!                                                                           *
+!       This procedure will get worker info.                                *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         * 
+!       CALLS      : PRINT-WORKER-INFO                                      *
+!                    GET-WRKR-THIS-MONTH                                    *
+!                    GET-WRKR-LAST-MONTH                                    *
+!                    GET-WRKR-2AGO-MONTH                                    *
+!                    GET-WRKR-3AGO-MONTH                                    *
+!                    GET-WRKR-FYTD-TOTAL                                    *
+!                    GET-WRKR-YTD-TOTAL                                     *
+!                    GET-WRKR-LAST-YEAR-THIS-MONTH                          *
+!                    GET-WRKR-LAST-YEAR-LAST-MONTH                          *
+!                    PRINT-WRKR-MONTHLY-STATS                               *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WORKER-INFO                  
+  
+  move 0              to #wrkr_count
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+SWW1.CD_WRKR_STAGE     
+  move &SWW1.CD_WRKR_STAGE                to $wrkr_info_wrkr_stage
+  
+!SWW1.CD_WRKR_STAGE_TYPE
+!  move &SWW1.CD_WRKR_STAGE_TYPE           to $wrkr_info_wrkr_stage_type  
+  
+SWW1.CD_WRKR_REGION    
+  move &SWW1.CD_WRKR_REGION               to $wrkr_info_wrkr_region
+  
+SWW1.CD_WRKR_COUNTY     
+  move &SWW1.CD_WRKR_COUNTY               to $wrkr_info_wrkr_county
+  
+SWW1.CD_WRKR_PROGRAM   
+  move &SWW1.CD_WRKR_PROGRAM              to $wrkr_info_wrkr_program
+  
+U.NBR_UNIT
+  move &U.NBR_UNIT                        to $nbr_unit
+
+P.NM_PERSON_FULL
+  move &P.NM_PERSON_FULL                  to $wrkr_info_wrkr_name
+
+P.ID_PERSON
+  move &P.ID_PERSON                       to #id_person
+    
+  let #wrkr_count = #wrkr_count + 1
+
+!  show #wrkr_count
+  
+   if #wrkr_count = 1
+   else
+      if ($last_wrkr_info_wrkr_name <> $wrkr_info_wrkr_name)
+          NEW-PAGE
+          move 'N' to $print_stage_flag
+      else
+          move 'Y' to $print_stage_flag
+      end-if
+   end-if
+   
+!   if $wrkr_info_wrkr_stage = 'INT'
+!      do GET-WORKER-EXTRA-INFO
+!   else
+!      if $wrkr_info_wrkr_stage = 'SVC'
+!         do GET-WORKER-EXTRA-INFO
+!      else
+!         if $wrkr_info_wrkr_stage = 'FPR'
+!            do GET-WORKER-EXTRA-INFO
+!        else
+!            if $wrkr_info_wrkr_stage = 'FRU'
+!               do GET-WORKER-EXTRA-INFO
+!            else
+!               move 'Y' to $print_stage_flag_x
+!            end-if
+!         end-if
+!      end-if
+!   end-if            
+      
+    do PRINT-WORKER-INFO
+    do GET-WRKR-THIS-MONTH
+    do GET-WRKR-LAST-MONTH
+    do GET-WRKR-2AGO-MONTH
+    do GET-WRKR-3AGO-MONTH
+    do GET-WRKR-FYTD-TOTAL
+    do GET-WRKR-YTD-TOTAL
+    do GET-WRKR-LAST-YEAR-THIS-MONTH
+    do GET-WRKR-LAST-YEAR-LAST-MONTH
+    do CALCULATE-EXCEPTION-FIELD
+    do PRINT-WRKR-MONTHLY-STATS  
+  
+FROM    PERSON              P,
+        UNIT_EMP_LINK       UEL,                                       
+        STATS_WORKER_WKM    SWW1,
+        UNIT                U
+        
+WHERE    (SWW1.ID_WRKR_UNIT          = #input_unit
+  AND    UEL.ID_PERSON               = SWW1.ID_WRKR_WORKER
+  AND    P.ID_PERSON                 = UEL.ID_PERSON  
+  AND    U.ID_UNIT                   = SWW1.ID_WRKR_UNIT)
+   OR    (UEL.ID_UNIT                = #input_unit              
+  AND    UEL.CD_UNIT_MEMBER_IN_OUT   = $IN                  
+  AND    UEL.ID_PERSON               = SWW1.ID_WRKR_WORKER 
+  AND    SWW1.ID_WRKR_UNIT           <> #input_unit
+  AND    P.ID_PERSON                 = UEL.ID_PERSON
+  AND    U.ID_UNIT                   = SWW1.ID_WRKR_UNIT)
+  AND    ((SWW1.MO_WRKR_STAT_MO = #input_month 
+AND      (SWW1.YR_WRKR_STAT_YR = #input_year OR SWW1.YR_WRKR_STAT_YR = #input_year_1))
+OR      (SWW1.MO_WRKR_STAT_MO = #input_month_1 
+AND      (SWW1.YR_WRKR_STAT_YR = #input_year_2 OR SWW1.YR_WRKR_STAT_YR = #input_year_5))
+OR      (SWW1.MO_WRKR_STAT_MO = #input_month_2 
+AND      (SWW1.YR_WRKR_STAT_YR = #input_year_3 OR SWW1.YR_WRKR_STAT_YR = #input_year_6))
+OR      (SWW1.MO_WRKR_STAT_MO = #input_month_3 
+AND      (SWW1.YR_WRKR_STAT_YR = #input_year_4 OR SWW1.YR_WRKR_STAT_YR = #input_year_7)))
+
+
+ORDER BY SWW1.CD_WRKR_PROGRAM, U.NBR_UNIT, SWW1.CD_WRKR_COUNTY 
+
+
+END-SELECT
+
+!  show 'got worker info'
+
+END-PROCEDURE GET-WORKER-INFO
+
+!****************************************************************************
+!                                                                           *
+!   GET-WORKER-EXTRA-INFO                                                   *
+!                                                                           *
+!       This procedure will get additional worker info.                     *
+!                                                                           * 
+!       CALLED BY  : GET-WORKER-INFO                                        * 
+!       CALLS      : NONE                                                   *
+!*****************************************************************************
+!
+!BEGIN-PROCEDURE GET-WORKER-EXTRA-INFO                  
+!
+!BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+!
+!SWW1.CD_WRKR_STAGE_TYPE
+!  move &SWW1.CD_WRKR_STAGE_TYPE           to $wrkr_info_wrkr_stage_type
+!
+!SWW1.CD_WRKR_STAGE_CLASS                  
+!  move &SWW1.CD_WRKR_STAGE_CLASS          to $wrkr_info_wrkr_stage_class
+!
+!  if $wrkr_info_wrkr_stage = 'INT'
+!     move 'C' to $print_stage_flag_x
+!  else
+!     if $wrkr_info_wrkr_stage = 'SVC'
+!        move 'T' to $print_stage_flag_x  
+!     else
+!        if $wrkr_info_wrkr_stage = 'FPR'
+!           move 'T' to $print_stage_flag_x
+!        else
+!           if $wrkr_info_wrkr_stage = 'FRU'
+!              move 'T' to $print_stage_flag_x
+!           end-if
+!        end-if
+!     end-if
+!  end-if           
+!      
+!FROM    PERSON              P,
+!        STATS_WORKER_WKM    SWW1,
+!        UNIT_EMP_LINK       UEL,                                       
+!        UNIT                U
+!        
+!WHERE    (SWW1.ID_WRKR_UNIT          = #input_unit
+!  AND    UEL.ID_PERSON               = SWW1.ID_WRKR_WORKER
+!  AND    P.ID_PERSON                 = UEL.ID_PERSON)   
+!   OR    (UEL.ID_UNIT                = #input_unit              
+!  AND    UEL.CD_UNIT_MEMBER_IN_OUT   = $IN                  
+!  AND    UEL.ID_PERSON               = SWW1.ID_WRKR_WORKER 
+!  AND    SWW1.ID_WRKR_UNIT           <> #input_unit
+!  AND    P.ID_PERSON                 = UEL.ID_PERSON)
+!  AND    (((SWW1.MO_WRKR_STAT_MO     = #input_month    
+!   OR    SWW1.MO_WRKR_STAT_MO        = #input_month_1     
+!   OR    SWW1.MO_WRKR_STAT_MO        = #input_month_2     
+!   OR    SWW1.MO_WRKR_STAT_MO        = #input_month_3)     
+!  AND    SWW1.YR_WRKR_STAT_YR        = #input_year)
+!   OR    (SWW1.YR_WRKR_STAT_YR       = #input_year_1 
+!  AND    (SWW1.MO_WRKR_STAT_MO       = #input_month)
+!   OR    (SWW1.MO_WRKR_STAT_MO       = #input_month_1)))
+!  AND    U.ID_UNIT                   = SWW1.ID_WRKR_UNIT 
+!  AND    ($wrkr_info_wrkr_stage       = 'INT'
+!   OR    $wrkr_info_wrkr_stage       = 'SVC'
+!   OR    $wrkr_info_wrkr_stage       = 'FPR'
+!   OR    $wrkr_info_wrkr_stage       = 'FRU')
+!
+!END-SELECT
+!
+!  show 'got extra worker info'
+!
+!END-PROCEDURE GET-WORKER-EXTRA-INFO
+!
+!****************************************************************************
+!                                                                           *
+!   GET-WRKR-THIS-MONTH                                                     *
+!                                                                           *
+!       This procedure will select this month's statistics.                 *
+!                                                                           * 
+!       CALLED BY  : GET-WORKER-INFO                                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WRKR-THIS-MONTH
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+   
+SUM (SWW1.NBR_WRKR_CLOS_FCT_CON)  &sww1_nbr_wrkr_clos_fct_con
+  move &sww1_nbr_wrkr_clos_fct_con      to #this_mo_nbr_wrkr_clos_fct_con
+  
+SUM (SWW1.NBR_WRKR_CLOS_NO_SIG)   &sww1_nbr_wrkr_clos_no_sig
+  move &sww1_nbr_wrkr_clos_no_sig       to #this_mo_nbr_wrkr_clos_no_sig
+  
+SUM (SWW1.NBR_WRKR_CLOS_RSK_ASS)  &sww1_nbr_wrkr_clos_rsk_ass
+  move &sww1_nbr_wrkr_clos_rsk_ass      to #this_mo_nbr_wrkr_clos_rsk_ass
+  
+SUM (SWW1.NBR_WRKR_CLOS_RSK_IND)  &sww1_nbr_wrkr_clos_rsk_ind
+  move &sww1_nbr_wrkr_clos_rsk_ind      to #this_mo_nbr_wrkr_clos_rsk_ind
+
+SUM (SWW1.NBR_WRKR_CLOSED)        &sww1_nbr_wrkr_closed
+  move &sww1_nbr_wrkr_closed            to #this_mo_nbr_wrkr_closed
+  
+SUM (SWW1.NBR_WRKR_END_BAL)       &sww1_nbr_wrkr_end_bal
+  move &sww1_nbr_wrkr_end_bal           to #this_mo_nbr_wrkr_end_bal
+  
+SUM (SWW1.NBR_WRKR_NEW)           &sww1_nbr_wrkr_new
+  move &sww1_nbr_wrkr_new               to #this_mo_nbr_wrkr_new
+  
+SUM (SWW1.NBR_WRKR_SECOND_ASGMT)  &sww1_nbr_wrkr_second_asgmt
+  move &sww1_nbr_wrkr_second_asgmt      to #this_mo_nbr_wrkr_second_asgmt
+  
+SUM (SWW1.NBR_WRKR_TRANSFR_IN)    &sww1_nbr_wrkr_transfr_in
+  move &sww1_nbr_wrkr_transfr_in        to #this_mo_nbr_wrkr_transfr_in
+  
+SUM (SWW1.NBR_WRKR_TRANSFR_OUT)   &sww1_nbr_wrkr_transfr_out
+  move &sww1_nbr_wrkr_transfr_out       to #this_mo_nbr_wrkr_transfr_out
+
+  let #sum_this_mo_nbr_closed_total =  #this_mo_nbr_wrkr_clos_fct_con 
+                                      + #this_mo_nbr_wrkr_clos_no_sig
+                                      + #this_mo_nbr_wrkr_clos_rsk_ass
+                                      + #this_mo_nbr_wrkr_clos_rsk_ind
+                                      + #this_mo_nbr_wrkr_closed
+
+FROM  STATS_WORKER_WKM SWW1
+
+WHERE SWW1.MO_WRKR_STAT_MO            = #input_month
+AND   SWW1.YR_WRKR_STAT_YR            = #input_year
+AND   SWW1.ID_WRKR_UNIT               = #input_unit
+AND   SWW1.ID_WRKR_WORKER             = #id_person
+AND   SWW1.CD_WRKR_PROGRAM            = $wrkr_info_wrkr_program
+AND   SWW1.CD_WRKR_COUNTY             = $wrkr_info_wrkr_county
+AND   SWW1.CD_WRKR_REGION             = $wrkr_info_wrkr_region
+AND   SWW1.CD_WRKR_STAGE              = $wrkr_info_wrkr_stage
+!AND   SWW1.CD_WRKR_STAGE_TYPE        = $wrkr_info_wrkr_stage_type
+!AND   SWW1.CD_WRKR_STAGE_CLASS       = $wrkr_info_wrkr_stage_class
+
+END-SELECT
+
+!  show 'got this month'
+
+END-PROCEDURE GET-WRKR-THIS-MONTH
+
+!****************************************************************************
+!                                                                           *
+!   GET-WRKR-LAST-MONTH                                                     *
+!                                                                           *
+!       This procedure will select last month's statistics.                 *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-WORKER-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WRKR-LAST-MONTH
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SWW3.NBR_WRKR_CLOS_FCT_CON)  &sww3_nbr_wrkr_clos_fct_con
+  move &sww3_nbr_wrkr_clos_fct_con      to #last_mo_nbr_wrkr_clos_fct_con
+
+SUM (SWW3.NBR_WRKR_CLOS_NO_SIG)   &sww3_nbr_wrkr_clos_no_sig
+  move &sww3_nbr_wrkr_clos_no_sig       to #last_mo_nbr_wrkr_clos_no_sig
+
+SUM (SWW3.NBR_WRKR_CLOS_RSK_ASS)  &sww3_nbr_wrkr_clos_rsk_ass
+  move &sww3_nbr_wrkr_clos_rsk_ass      to #last_mo_nbr_wrkr_clos_rsk_ass
+
+SUM (SWW3.NBR_WRKR_CLOS_RSK_IND)  &sww3_nbr_wrkr_clos_rsk_ind
+  move &sww3_nbr_wrkr_clos_rsk_ind      to #last_mo_nbr_wrkr_clos_rsk_ind
+
+SUM (SWW3.NBR_WRKR_CLOSED)        &sww3_nbr_wrkr_closed
+  move &sww3_nbr_wrkr_closed            to #last_mo_nbr_wrkr_closed
+
+SUM (SWW3.NBR_WRKR_END_BAL)       &sww3_nbr_wrkr_end_bal
+  move &sww3_nbr_wrkr_end_bal           to #last_mo_nbr_wrkr_end_bal
+
+SUM (SWW3.NBR_WRKR_NEW)           &sww3_nbr_wrkr_new
+  move &sww3_nbr_wrkr_new               to #last_mo_nbr_wrkr_new
+
+SUM (SWW3.NBR_WRKR_SECOND_ASGMT)  &sww3_nbr_wrkr_second_asgmt
+  move &sww3_nbr_wrkr_second_asgmt      to #last_mo_nbr_wrkr_second_asgmt
+
+SUM (SWW3.NBR_WRKR_TRANSFR_IN)    &sww3_nbr_wrkr_transfr_in
+  move &sww3_nbr_wrkr_transfr_in        to #last_mo_nbr_wrkr_transfr_in
+
+SUM (SWW3.NBR_WRKR_TRANSFR_OUT)   &sww3_nbr_wrkr_transfr_out
+  move &sww3_nbr_wrkr_transfr_out       to #last_mo_nbr_wrkr_transfr_out
+ 
+  let #sum_last_mo_nbr_closed_total = #last_mo_nbr_wrkr_clos_fct_con 
+                                      + #last_mo_nbr_wrkr_clos_no_sig
+                                      + #last_mo_nbr_wrkr_clos_rsk_ass
+                                      + #last_mo_nbr_wrkr_clos_rsk_ind
+                                      + #last_mo_nbr_wrkr_closed
+  
+FROM  STATS_WORKER_WKM SWW3
+
+WHERE SWW3.MO_WRKR_STAT_MO            = #input_month_1
+AND   SWW3.YR_WRKR_STAT_YR            = #input_year 
+AND   SWW3.ID_WRKR_UNIT               = #input_unit
+AND   SWW3.ID_WRKR_WORKER             = #id_person
+AND   SWW3.CD_WRKR_PROGRAM            = $wrkr_info_wrkr_program
+AND   SWW3.CD_WRKR_COUNTY             = $wrkr_info_wrkr_county
+AND   SWW3.CD_WRKR_REGION             = $wrkr_info_wrkr_region
+AND   SWW3.CD_WRKR_STAGE              = $wrkr_info_wrkr_stage
+!AND   SWW3.CD_WRKR_STAGE_TYPE         = $wrkr_info_wrkr_stage_type
+!AND   SWW3.CD_WRKR_STAGE_CLASS        = $wrkr_info_wrkr_stage_class
+
+END-SELECT
+
+!  show 'got last month'
+    
+END-PROCEDURE GET-WRKR-LAST-MONTH
+
+!****************************************************************************
+!                                                                           *
+!   GET-WRKR-2AGO-MONTH                                                     *
+!                                                                           *
+!       This procedure will select the statistics for two months ago.       *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-WORKER-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WRKR-2AGO-MONTH
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SWW4.NBR_WRKR_CLOS_FCT_CON)  &sww4_nbr_wrkr_clos_fct_con
+  move &sww4_nbr_wrkr_clos_fct_con  to #2ago_mo_nbr_wrkr_clos_fct_con
+
+SUM (SWW4.NBR_WRKR_CLOS_NO_SIG)   &sww4_nbr_wrkr_clos_no_sig
+  move &sww4_nbr_wrkr_clos_no_sig   to #2ago_mo_nbr_wrkr_clos_no_sig
+
+SUM (SWW4.NBR_WRKR_CLOS_RSK_ASS)  &sww4_nbr_wrkr_clos_rsk_ass
+  move &sww4_nbr_wrkr_clos_rsk_ass  to #2ago_mo_nbr_wrkr_clos_rsk_ass
+
+SUM (SWW4.NBR_WRKR_CLOS_RSK_IND)  &sww4_nbr_wrkr_clos_rsk_ind
+  move &sww4_nbr_wrkr_clos_rsk_ind  to #2ago_mo_nbr_wrkr_clos_rsk_ind
+
+SUM (SWW4.NBR_WRKR_CLOSED)        &sww4_nbr_wrkr_closed
+  move &sww4_nbr_wrkr_closed        to #2ago_mo_nbr_wrkr_closed
+
+SUM (SWW4.NBR_WRKR_END_BAL)       &sww4_nbr_wrkr_end_bal
+  move &sww4_nbr_wrkr_end_bal       to #2ago_mo_nbr_wrkr_end_bal
+
+SUM (SWW4.NBR_WRKR_NEW)           &sww4_nbr_wrkr_new
+  move &sww4_nbr_wrkr_new           to #2ago_mo_nbr_wrkr_new
+
+SUM (SWW4.NBR_WRKR_SECOND_ASGMT)  &sww4_nbr_wrkr_second_asgmt
+  move &sww4_nbr_wrkr_second_asgmt  to #2ago_mo_nbr_wrkr_second_asgmt
+
+SUM (SWW4.NBR_WRKR_TRANSFR_IN)    &sww4_nbr_wrkr_transfr_in
+  move &sww4_nbr_wrkr_transfr_in    to #2ago_mo_nbr_wrkr_transfr_in
+
+SUM (SWW4.NBR_WRKR_TRANSFR_OUT)   &sww4_nbr_wrkr_transfr_out
+  move &sww4_nbr_wrkr_transfr_out   to #2ago_mo_nbr_transfr_out
+
+
+  let #sum_2ago_mo_nbr_closed_total = #2ago_mo_nbr_wrkr_clos_fct_con 
+                                      + #2ago_mo_nbr_wrkr_clos_no_sig
+                                      + #2ago_mo_nbr_wrkr_clos_rsk_ass
+                                      + #2ago_mo_nbr_wrkr_clos_rsk_ind
+                                      + #2ago_mo_nbr_wrkr_closed
+
+FROM    STATS_WORKER_WKM SWW4  
+
+WHERE   SWW4.MO_WRKR_STAT_MO          = #input_month_2
+AND     SWW4.YR_WRKR_STAT_YR          = #input_year 
+AND     SWW4.ID_WRKR_UNIT             = #input_unit
+AND     SWW4.ID_WRKR_WORKER           = #id_person
+AND     SWW4.CD_WRKR_COUNTY           = $wrkr_info_wrkr_county
+AND     SWW4.CD_WRKR_PROGRAM          = $wrkr_info_wrkr_program
+AND     SWW4.CD_WRKR_REGION           = $wrkr_info_wrkr_region
+AND     SWW4.CD_WRKR_STAGE            = $wrkr_info_wrkr_stage
+!AND     SWW4.CD_WRKR_STAGE_TYPE       = $wrkr_info_wrkr_stage_type
+!AND     SWW4.CD_WRKR_STAGE_CLASS      = $wrkr_info_wrkr_stage_class
+
+END-SELECT
+
+!  show 'got 2 months ago'
+    
+END-PROCEDURE GET-WRKR-LAST-MONTH
+
+!****************************************************************************
+!                                                                           *
+!   GET-WRKR-3AGO-MONTH                                                     *
+!                                                                           *
+!       This procedure will select the statistics for three months ago.     *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-WORKER-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WRKR-3AGO-MONTH
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SWW2.NBR_WRKR_END_BAL)       &sww2_nbr_wrkr_end_bal
+  move &sww2_nbr_wrkr_end_bal           to #3ago_mo_nbr_wrkr_end_bal
+
+FROM   STATS_WORKER_WKM SWW2
+
+WHERE  SWW2.MO_WRKR_STAT_MO          = #input_month_3
+AND    SWW2.YR_WRKR_STAT_YR          = #input_year   
+AND    SWW2.ID_WRKR_UNIT             = #input_unit
+AND    SWW2.ID_WRKR_WORKER           = #id_person
+AND    SWW2.CD_WRKR_COUNTY           = $wrkr_info_wrkr_county
+AND    SWW2.CD_WRKR_PROGRAM          = $wrkr_info_wrkr_program
+AND    SWW2.CD_WRKR_REGION           = $wrkr_info_wrkr_region
+AND    SWW2.CD_WRKR_STAGE            = $wrkr_info_wrkr_stage
+!AND    SWW2.CD_WRKR_STAGE_TYPE       = $wrkr_info_wrkr_stage_type
+!AND    SWW2.CD_WRKR_STAGE_CLASS      = $wrkr_info_wrkr_stage_class
+
+END-SELECT
+
+!  show 'got three months ago'
+    
+END-PROCEDURE GET-WRKR-3AGO-MONTH
+ 
+!****************************************************************************
+!                                                                           *
+!   GET-WRKR-FYTD-TOTAL                                                      *
+!                                                                           *
+!       This procedure will select the totals for the fiscal year to date.  *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-WORKER-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WRKR-FYTD-TOTAL
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SWW9.NBR_WRKR_CLOS_FCT_CON)  &sww9_nbr_wrkr_clos_fct_con
+  move &sww9_nbr_wrkr_clos_fct_con      to #fytd_nbr_wrkr_clos_fct_con
+
+SUM (SWW9.NBR_WRKR_CLOS_NO_SIG)   &sww9_nbr_wrkr_clos_no_sig
+  move &sww9_nbr_wrkr_clos_no_sig       to #fytd_nbr_wrkr_clos_no_sig
+
+SUM (SWW9.NBR_WRKR_CLOS_RSK_ASS)  &sww9_nbr_wrkr_clos_rsk_ass
+  move &sww9_nbr_wrkr_clos_rsk_ass      to #fytd_nbr_wrkr_clos_rsk_ass
+
+SUM (SWW9.NBR_WRKR_CLOS_RSK_IND)  &sww9_nbr_wrkr_clos_rsk_ind
+  move &sww9_nbr_wrkr_clos_rsk_ind      to #fytd_nbr_wrkr_clos_rsk_ind
+
+SUM (SWW9.NBR_WRKR_CLOSED)        &sww9_nbr_wrkr_closed
+  move &sww9_nbr_wrkr_closed            to #fytd_nbr_wrkr_closed
+
+SUM (SWW9.NBR_WRKR_END_BAL)       &sww9_nbr_wrkr_end_bal
+  move &sww9_nbr_wrkr_end_bal           to #fytd_nbr_wrkr_end_bal
+
+SUM (SWW9.NBR_WRKR_NEW)           &sww9_nbr_wrkr_new
+  move &sww9_nbr_wrkr_new               to #fytd_nbr_wrkr_new
+
+SUM (SWW9.NBR_WRKR_SECOND_ASGMT)  &sww9_nbr_wrkr_second_asgmt
+  move &sww9_nbr_wrkr_second_asgmt      to #fytd_nbr_wrkr_second_asgmt
+
+SUM (SWW9.NBR_WRKR_TRANSFR_IN)    &sww9_nbr_wrkr_transfr_in
+  move &sww9_nbr_wrkr_transfr_in        to #fytd_nbr_wrkr_transfr_in
+
+SUM (SWW9.NBR_WRKR_TRANSFR_OUT)   &sww9_nbr_wrkr_transfr_out
+  move &sww9_nbr_wrkr_transfr_out       to #fytd_nbr_wrkr_transfr_out
+
+
+  let #sum_fytd_nbr_closed_total = #fytd_nbr_wrkr_clos_fct_con 
+                                      + #fytd_nbr_wrkr_clos_no_sig
+                                      + #fytd_nbr_wrkr_clos_rsk_ass
+                                      + #fytd_nbr_wrkr_clos_rsk_ind
+                                      + #fytd_nbr_wrkr_closed
+
+FROM   STATS_WORKER_WKM SWW9
+
+WHERE  SWW9.FY_WRKR_STAT_FY         = #input_year_5
+AND   SWW9.ID_WRKR_UNIT              = #input_unit
+AND   SWW9.ID_WRKR_WORKER            = #id_person
+AND    SWW9.CD_WRKR_COUNTY           = $wrkr_info_wrkr_county
+AND    SWW9.CD_WRKR_PROGRAM          = $wrkr_info_wrkr_program
+AND    SWW9.CD_WRKR_REGION           = $wrkr_info_wrkr_region
+AND    SWW9.CD_WRKR_STAGE            = $wrkr_info_wrkr_stage
+!AND    SWW9.CD_WRKR_STAGE_TYPE      = $wrkr_info_wrkr_stage_type
+!AND    SWW9.CD_WRKR_STAGE_CLASS     = $wrkr_info_wrkr_stage_class
+
+END-SELECT
+
+!  show 'fytd totals'
+    
+END-PROCEDURE GET-WRKR-FYTD-TOTAL
+ 
+!****************************************************************************
+!                                                                           *
+!   GET-WRKR-YTD-TOTAL                                                      *
+!                                                                           *
+!       This procedure will select the totals for the fiscal year to date.  *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-WORKER-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WRKR-YTD-TOTAL
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SWW9a.NBR_WRKR_CLOS_FCT_CON)  &sww9a_nbr_wrkr_clos_fct_con
+  move &sww9a_nbr_wrkr_clos_fct_con      to #ytd_nbr_wrkr_clos_fct_con
+
+SUM (SWW9a.NBR_WRKR_CLOS_NO_SIG)   &sww9a_nbr_wrkr_clos_no_sig
+  move &sww9a_nbr_wrkr_clos_no_sig       to #ytd_nbr_wrkr_clos_no_sig
+
+SUM (SWW9a.NBR_WRKR_CLOS_RSK_ASS)  &sww9a_nbr_wrkr_clos_rsk_ass
+  move &sww9a_nbr_wrkr_clos_rsk_ass      to #ytd_nbr_wrkr_clos_rsk_ass
+
+SUM (SWW9a.NBR_WRKR_CLOS_RSK_IND)  &sww9a_nbr_wrkr_clos_rsk_ind
+  move &sww9a_nbr_wrkr_clos_rsk_ind      to #ytd_nbr_wrkr_clos_rsk_ind
+
+SUM (SWW9a.NBR_WRKR_CLOSED)        &sww9a_nbr_wrkr_closed
+  move &sww9a_nbr_wrkr_closed            to #ytd_nbr_wrkr_closed
+
+SUM (SWW9a.NBR_WRKR_END_BAL)       &sww9a_nbr_wrkr_end_bal
+  move &sww9a_nbr_wrkr_end_bal           to #ytd_nbr_wrkr_end_bal
+
+SUM (SWW9a.NBR_WRKR_NEW)           &sww9a_nbr_wrkr_new
+  move &sww9a_nbr_wrkr_new               to #ytd_nbr_wrkr_new
+
+SUM (SWW9a.NBR_WRKR_SECOND_ASGMT)  &sww9a_nbr_wrkr_second_asgmt
+  move &sww9a_nbr_wrkr_second_asgmt      to #ytd_nbr_wrkr_second_asgmt
+
+SUM (SWW9a.NBR_WRKR_TRANSFR_IN)    &sww9a_nbr_wrkr_transfr_in
+  move &sww9a_nbr_wrkr_transfr_in        to #ytd_nbr_wrkr_transfr_in
+
+SUM (SWW9a.NBR_WRKR_TRANSFR_OUT)   &sww9a_nbr_wrkr_transfr_out
+  move &sww9a_nbr_wrkr_transfr_out       to #ytd_nbr_wrkr_transfr_out
+
+         
+  let #sum_ytd_nbr_closed_total = #ytd_nbr_wrkr_clos_fct_con 
+                                      + #ytd_nbr_wrkr_clos_no_sig
+                                      + #ytd_nbr_wrkr_clos_rsk_ass
+                                      + #ytd_nbr_wrkr_clos_rsk_ind
+                                      + #ytd_nbr_wrkr_closed
+
+FROM   STATS_WORKER_WKM SWW9a
+
+WHERE  SWW9a.YR_WRKR_STAT_YR         = #input_year 
+AND   SWW9a.ID_WRKR_UNIT              = #input_unit
+AND   SWW9A.ID_WRKR_WORKER            = #id_person
+AND    SWW9a.CD_WRKR_COUNTY           = $wrkr_info_wrkr_county
+AND    SWW9a.CD_WRKR_PROGRAM          = $wrkr_info_wrkr_program
+AND    SWW9a.CD_WRKR_REGION           = $wrkr_info_wrkr_region
+AND    SWW9a.CD_WRKR_STAGE            = $wrkr_info_wrkr_stage
+!AND    SWW9a.CD_WRKR_STAGE_TYPE      = $wrkr_info_wrkr_stage_type
+!AND    SWW9a.CD_WRKR_STAGE_CLASS     = $wrkr_info_wrkr_stage_class
+
+END-SELECT
+
+!  show 'ytd numbers'
+    
+END-PROCEDURE GET-WRKR-YTD-TOTAL
+
+!****************************************************************************
+!                                                                           *
+!   GET-WRKR-LAST-YEAR-THIS-MONTH                                           *
+!                                                                           *
+!       This procedure will select the statistics for this month last year. *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-WORKER-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WRKR-LAST-YEAR-THIS-MONTH
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SWW7.NBR_WRKR_CLOS_FCT_CON)  &sww7_nbr_wrkr_clos_fct_con
+  move &sww7_nbr_wrkr_clos_fct_con      to #last_year_this_mo_nbr_wrkr_clos_fct_con
+
+SUM (SWW7.NBR_WRKR_CLOS_NO_SIG)   &sww7_nbr_wrkr_clos_no_sig
+  move &sww7_nbr_wrkr_clos_no_sig       to #last_year_this_mo_nbr_wrkr_clos_no_sig
+
+SUM (SWW7.NBR_WRKR_CLOS_RSK_ASS)  &sww7_nbr_wrkr_clos_rsk_ass
+  move &sww7_nbr_wrkr_clos_rsk_ass      to #last_year_this_mo_nbr_wrkr_clos_rsk_ass
+
+SUM (SWW7.NBR_WRKR_CLOS_RSK_IND)  &sww7_nbr_wrkr_clos_rsk_ind
+  move &sww7_nbr_wrkr_clos_rsk_ind      to #last_year_this_mo_nbr_wrkr_clos_rsk_ind
+
+SUM (SWW7.NBR_WRKR_CLOSED)        &sww7_nbr_wrkr_closed
+  move &sww7_nbr_wrkr_closed            to #last_year_this_mo_nbr_wrkr_closed
+
+SUM (SWW7.NBR_WRKR_END_BAL)       &sww7_nbr_wrkr_end_bal
+  move &sww7_nbr_wrkr_end_bal           to #last_year_this_mo_nbr_wrkr_end_bal
+                                            
+SUM (SWW7.NBR_WRKR_NEW)           &sww7_nbr_wrkr_new
+  move &sww7_nbr_wrkr_new               to #last_year_this_mo_nbr_wrkr_new
+
+SUM (SWW7.NBR_WRKR_SECOND_ASGMT)  &sww7_nbr_wrkr_second_asgmt
+  move &sww7_nbr_wrkr_second_asgmt      to #last_year_this_mo_nbr_wrkr_second_asgmt
+
+SUM (SWW7.NBR_WRKR_TRANSFR_IN)    &sww7_nbr_wrkr_transfr_in
+  move &sww7_nbr_wrkr_transfr_in        to #last_year_this_mo_nbr_wrkr_transfr_in
+
+SUM (SWW7.NBR_WRKR_TRANSFR_OUT)   &sww7_nbr_wrkr_transfr_out
+  move &sww7_nbr_wrkr_transfr_out       to #last_year_this_mo_nbr_transfr_out
+
+  let #sum_last_year_this_mo_nbr_closed_total = #last_year_this_mo_nbr_wrkr_clos_fct_con 
+                                      + #last_year_this_mo_nbr_wrkr_clos_no_sig
+                                      + #last_year_this_mo_nbr_wrkr_clos_rsk_ass
+                                      + #last_year_this_mo_nbr_wrkr_clos_rsk_ind
+                                      + #last_year_this_mo_nbr_wrkr_closed
+
+FROM   STATS_WORKER_WKM SWW7                        
+
+WHERE  SWW7.MO_WRKR_STAT_MO          = #input_month
+AND    SWW7.YR_WRKR_STAT_YR          = #input_year_1
+AND    SWW7.CD_WRKR_COUNTY           = $wrkr_info_wrkr_county
+AND    SWW7.CD_WRKR_PROGRAM          = $wrkr_info_wrkr_program
+AND    SWW7.CD_WRKR_REGION           = $wrkr_info_wrkr_region
+AND    SWW7.CD_WRKR_STAGE            = $wrkr_info_wrkr_stage
+!AND    SWW7.CD_WRKR_STAGE_TYPE       = $wrkr_info_wrkr_stage_type
+!AND    SWW7.CD_WRKR_STAGE_CLASS      = $wrkr_info_wrkr_stage_class
+
+END-SELECT
+
+!  show 'got last year this month'
+    
+END-PROCEDURE GET-WRKR-LAST-YEAR-THIS-MONTH
+
+!****************************************************************************
+!                                                                           *
+!   GET-WRKR-LAST-YEAR-LAST-MONTH                                           *
+!                                                                           *
+!       This procedure will select the statistics for last month last year. *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-WORKER-INFO                                          *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WRKR-LAST-YEAR-LAST-MONTH  
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+SUM (SWW6.NBR_WRKR_END_BAL)       &sww6_nbr_wrkr_end_bal
+  move &sww6_nbr_wrkr_end_bal           to #last_year_last_mo_nbr_wrkr_end_bal
+
+FROM   STATS_WORKER_WKM SWW6
+
+WHERE  SWW6.MO_WRKR_STAT_MO          = #input_month_1
+AND    SWW6.YR_WRKR_STAT_YR          = #input_year_1
+AND    SWW6.CD_WRKR_COUNTY           = $wrkr_info_wrkr_county
+AND    SWW6.CD_WRKR_PROGRAM          = $wrkr_info_wrkr_program
+AND    SWW6.CD_WRKR_REGION           = $wrkr_info_wrkr_region
+AND    SWW6.CD_WRKR_STAGE            = $wrkr_info_wrkr_stage
+!*AND    SWW6.CD_WRKR_STAGE_TYPE       = $wrkr_info_wrkr_stage_type
+!*AND    SWW6.CD_WRKR_STAGE_CLASS      = $wrkr_info_wrkr_stage_class
+
+END-SELECT
+
+!  show 'got last year last month'
+    
+END-PROCEDURE GET-WRKR-LAST-YEAR-LAST-MONTH
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-WORKER-INFO                                                       *
+!                                                                           *
+!       This procedure prints the information selected for each worker.     *
+!                                                                           * 
+!       CALLED BY  : GET-WORKER-INFO                                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-WORKER-INFO
+
+  
+if $print_stage_flag = 'N'                 
+  print $wrkr_info_wrkr_name            (+1,18)    
+  print $wrkr_info_wrkr_region          (+0,45) edit 88888
+  print $wrkr_info_wrkr_county          (+0,51) 
+  print $nbr_unit                       (+0,61) edit 8888
+  print $wrkr_info_wrkr_program         (+0,68)
+  print $wrkr_info_wrkr_stage           (+0,75)
+!  print $wrkr_info_wrkr_stage_type      (+0,83) 
+else 
+  print $wrkr_info_wrkr_name            (+2,18)
+  print $wrkr_info_wrkr_region          (+0,45) edit 88888
+  print $wrkr_info_wrkr_county          (+0,51) 
+  print $nbr_unit                       (+0,61) edit 8888 
+  print $wrkr_info_wrkr_program         (+0,68)
+  print $wrkr_info_wrkr_stage           (+0,75)
+!  print $wrkr_info_wrkr_stage_type      (+0,83)   
+end-if
+
+!if $print_stage_flag_x = 'T'
+!  print $wrkr_info_wrkr_stage_type      (+0,83)  
+!else 
+!  if $print_stage_flag_x = 'C'
+!    print $wrkr_info_wrkr_stage_class   (+0,83)
+!  end-if
+!end-if      
+!
+  move $wrkr_info_wrkr_name         to $last_wrkr_info_wrkr_name
+                                
+!   show 'printed worker info'
+                                   
+END-PROCEDURE PRINT-WORKER-INFO
+
+!***************************************************************************
+!                                                                           *
+!   PRINT-WRKR-MONTHLY-STATS                                                *
+!                                                                           *
+!       This procedure prints the majority of fields within the report.     *
+!       It details the statistics of each employee for each month           *
+!       selected for reporting.                                             *
+!                                                                           *
+!                                                                           * 
+!       CALLED BY  : GET-WORKER-INFO                                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-WRKR-MONTHLY-STATS
+
+print 'BEG BAL'                             (+0,99)
+print #last_mo_nbr_wrkr_end_bal             (+0,113) edit 8888
+print #2ago_mo_nbr_wrkr_end_bal             (+0,122) edit 8888
+print #3ago_mo_nbr_wrkr_end_bal             (+0,130) edit 8888 
+print '****'                                  (+0,138)
+print '****'                                  (+0,144)
+print '****'                                  (+0,150)
+!print '***'                                  (+0,155)
+print #last_year_last_mo_nbr_wrkr_end_bal   (+0,162) edit 8888 
+print 'NEW'                                 (+1,99) 
+print #this_mo_nbr_wrkr_new                 (+0,113) edit 8888
+print #last_mo_nbr_wrkr_new                 (+0,122) edit 8888
+print #2ago_mo_nbr_wrkr_new                 (+0,130) edit 8888
+print #fytd_nbr_wrkr_new                    (+0,138) edit 8888
+
+    let #fytd_nbr_wrkr_new_avg = #fytd_nbr_wrkr_new/#fy_months
+
+print #fytd_nbr_wrkr_new_avg                 (+0,144) edit 888.8
+print #ytd_nbr_wrkr_new                     (+0,150) edit 8888 
+
+ !   let #ytd_nbr_wrkr_new_avg = #ytd_nbr_wrkr_new/#input_month
+
+!print #ytd_nbr_wrkr_new_avg                 (+0,155) edit 888.8
+print #last_year_this_mo_nbr_wrkr_new       (+0,162)  edit 8888
+print 'TRNFRIN'                             (+1,99) 
+print #this_mo_nbr_wrkr_transfr_in          (+0,113) edit 8888
+print #last_mo_nbr_wrkr_transfr_in          (+0,122) edit 8888
+print #2ago_mo_nbr_wrkr_transfr_in          (+0,130) edit 8888
+print #fytd_nbr_wrkr_transfr_in              (+0,138) edit 8888
+
+    let #fytd_nbr_wrkr_transf_in_avg = #fytd_nbr_wrkr_transfr_in/#fy_months
+
+print #fytd_nbr_wrkr_transf_in_avg               (+0,144) edit 888.8 
+print #ytd_nbr_wrkr_transfr_in              (+0,150) edit 8888 
+
+ !   let #ytd_nbr_wrkr_transfr_in_avg = #ytd_nbr_wrkr_transfr_in/#input_month
+
+!print #ytd_nbr_wrkr_transfr_in_avg              (+0,155)  edit 888.8
+print #last_year_this_mo_nbr_wrkr_transfr_in    (+0,162)  edit 8888
+print 'TRNFROUT'                                (+1,99) 
+print #this_mo_nbr_wrkr_transfr_out             (+0,113) edit 8888
+print #last_mo_nbr_wrkr_transfr_out             (+0,122) edit 8888
+print #2ago_mo_nbr_transfr_out                  (+0,130) edit 8888
+print #fytd_nbr_wrkr_transfr_out                 (+0,138) edit 8888
+
+    let #fytd_nbr_wrkr_transfr_out_avg = #fytd_nbr_wrkr_transfr_out/#fy_months
+
+print #fytd_nbr_wrkr_transfr_out_avg             (+0,144) edit 888.8
+print #ytd_nbr_wrkr_transfr_out                 (+0,150) edit 8888 
+
+ !   let #ytd_nbr_wrkr_transfr_out_avg = #ytd_nbr_wrkr_transfr_out/#input_month
+
+!print #ytd_nbr_wrkr_transfr_out_avg                 (+0,155) edit 888.8
+print #last_year_this_mo_nbr_transfr_out   (+0,162) edit 8888
+print 'CLOSED'                                  (+1,99) 
+print #sum_this_mo_nbr_closed_total             (+0,113) edit 8888
+print #sum_last_mo_nbr_closed_total             (+0,122) edit 8888
+print #sum_2ago_mo_nbr_closed_total             (+0,130) edit 8888
+print #sum_fytd_nbr_closed_total                 (+0,138) edit 8888
+
+    let #fytd_nbr_wrkr_clo_avg = #sum_fytd_nbr_closed_total/#fy_months
+
+print #fytd_nbr_wrkr_clo_avg                     (+0,144) edit 888.8 
+print #sum_ytd_nbr_closed_total                 (+0,150) edit 8888
+
+!    let #ytd_nbr_wrkr_clo_avg = #sum_ytd_nbr_closed_total/#input_month
+
+!print #ytd_nbr_wrkr_clo_avg                      (+0,155) edit 888.8 
+print #sum_last_year_this_mo_nbr_closed_total   (+0,162) edit 8888
+
+print 'EXCEPT'                            (+1,99) 
+print #sum_this_mo_nbr_wrkr_except_total    (+0,113)  edit 888888
+print #sum_last_mo_nbr_wrkr_except_total    (+0,122)  edit 888888
+print #sum_2ago_mo_nbr_wrkr_except_total    (+0,130)  edit 888888
+print '****'                              (+0,138)
+print '****'                            (+0,144)
+print '****'                              (+0,150)
+!print '*****'                            (+0,128)
+print #sum_last_year_this_mo_nbr_wrkr_except_total  (+0,162) edit 888888
+
+print 'END BAL'                                 (+1,99) 
+print #this_mo_nbr_wrkr_end_bal                 (+0,113) edit 8888
+print #last_mo_nbr_wrkr_end_bal                 (+0,122) edit 8888
+print #2ago_mo_nbr_wrkr_end_bal                 (+0,130) edit 8888
+print #fytd_nbr_wrkr_end_bal                    (+0,138) edit 8888
+
+    let #fytd_nbr_wrkr_end_bal_avg = #fytd_nbr_wrkr_end_bal/#fy_months
+    
+print #fytd_nbr_wrkr_end_bal_avg                (+0,144) edit 888.8
+print #ytd_nbr_wrkr_end_bal                     (+0,150) edit 8888
+
+ !   let #ytd_nbr_wrkr_end_bal_avg = #ytd_nbr_wrkr_end_bal/#input_month
+     
+!print #ytd_nbr_wrkr_end_bal_avg                 (+0,155) edit 888.8 
+print #last_year_this_mo_nbr_wrkr_end_bal       (+0,162) edit 8888
+print '2nd asgmt tot'                               (+1,99) 
+print #this_mo_nbr_wrkr_second_asgmt                  (+0,113) edit 8888
+print #last_mo_nbr_wrkr_second_asgmt                  (+0,122) edit 8888
+print #2ago_mo_nbr_wrkr_second_asgmt                  (+0,130) edit 8888
+print #fytd_nbr_wrkr_second_asgmt                      (+0,138) edit 8888
+
+    let #fytd_nbr_wrkr_2nd_as_avg = #fytd_nbr_wrkr_second_asgmt/#fy_months
+
+print #fytd_nbr_wrkr_2nd_as_avg                  (+0,144) edit 888.8
+print #ytd_nbr_wrkr_second_asgmt                  (+0,150) edit 8888
+
+!   let #ytd_nbr_wrkr_second_asgmt_avg = #ytd_nbr_wrkr_second_asgmt/#input_month
+
+!print #ytd_nbr_wrkr_second_asgmt_avg                (+0,155) edit 888.8
+print #last_year_this_mo_nbr_wrkr_second_asgmt       (+0,162) edit 8888   
+  
+!  show 'printed worker stats'
+   
+END-PROCEDURE PRINT-WRKR-MONTHLY-STATS 
+
+!****************************************************************************
+!                                                                           *
+!   CALCULATE-EXCEPTION-FIELD                                               *
+!                                                                           *
+!      This procedure calculates the exception fields                       *
+!                                                                           *
+!       CALLED BY  : GET-STATE-INFO                                         *
+!       CALLS      : NONE                                                   *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE CALCULATE-EXCEPTION-FIELD 
+                                       
+let #sum_this_mo_nbr_wrkr_except_total = #this_mo_nbr_wrkr_end_bal 
+                                     - #last_mo_nbr_wrkr_end_bal
+                                     - #this_mo_nbr_wrkr_new
+                                     + #sum_this_mo_nbr_wrkr_closed_total
+                                     - #this_mo_nbr_wrkr_transfr_in
+                                     + #this_mo_nbr_wrkr_transfr_out  
+                                     
+let #sum_last_mo_nbr_wrkr_except_total = #last_mo_nbr_wrkr_end_bal 
+                                     - #2ago_mo_nbr_wrkr_end_bal
+                                     - #last_mo_nbr_wrkr_new
+                                     + #sum_last_mo_nbr_wrkr_closed_total
+                                     - #last_mo_nbr_wrkr_transfr_in
+                                     + #last_mo_nbr_wrkr_transfr_out
+                                     
+let #sum_2ago_mo_nbr_wrkr_except_total = #2ago_mo_nbr_wrkr_end_bal 
+                                     - #3ago_mo_nbr_wrkr_end_bal
+                                     - #2ago_mo_nbr_wrkr_new
+                                     + #sum_2ago_mo_nbr_wrkr_closed_total
+                                     - #2ago_mo_nbr_wrkr_transfr_in
+                                     + #2ago_mo_nbr_wrkr_transfr_out
+                                     
+let #sum_last_year_this_mo_nbr_wrkr_except_total = #last_year_this_mo_nbr_wrkr_end_bal 
+                                     - #last_year_last_mo_nbr_wrkr_end_bal
+                                     - #last_year_this_mo_nbr_wrkr_new
+                                     + #sum_last_year_this_mo_nbr_wrkr_closed_total
+                                     - #last_year_this_mo_nbr_wrkr_transfr_in
+                                     + #last_year_this_mo_nbr_wrkr_transfr_out
+                                     
+END-PROCEDURE CALCULATE-EXCEPTION-FIELD                  
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+END-PROCEDURE SqlErrorHandle
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+
+

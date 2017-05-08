@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE grnds-web-app SYSTEM "grnds-web-app.dtd">
+
+<grnds-web-app>
+
+
+  <servlet mapping="person">
+    <conversations>
+      <conversation>
+        <conversation-name>PortalChildDetail</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.person.PortalChildDetailConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayPortalChildDetail</command-name>
+            <activity type="method">displayPortalChildDetail_xa</activity>
+            <presentation type="class" screen="PORTAL_CHILD_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+      <conversation>
+        <conversation-name>PortalSurveyDetail</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.person.PortalSurveyDetailConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayPortalSurveyDetail</command-name>
+            <activity type="method">displayPortalSurveyDetail_xa</activity>
+            <presentation type="class" screen="PORTAL_SURVEY_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="errorUser" type="url">
+              /admin/VendorStaffDetail/displayUserProfileDetail
+            </presentation>                       
+          </command>
+          <command>
+            <command-name>savePortalSurveyDetail</command-name>
+            <activity type="method">savePortalSurveyDetail_xa</activity>
+            <presentation type="url" branch="survey">
+              /person/PortalSurveyDetail/displayPortalSurveyDetail
+            </presentation>
+            <presentation type="class" screen="PORTAL_SURVEY_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+
+    </conversations>
+  </servlet>
+
+  <error-handling>
+    <domain>sacwis</domain>
+    <logger>grnds.syslog</logger>
+  </error-handling>
+
+</grnds-web-app>

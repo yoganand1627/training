@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CollegeExam" table="COLLEGE_EXAM" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idCollegeExam" type="integer" unsaved-value="0">
+      <column name="ID_COLLEGE_EXAM" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_COLLEGE_EXAM</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" update="true" insert="true"
+                 fetch="select" unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdExamTyp" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_EXAM_TYP" length="3"/>
+    </property>
+    <property name="nbrEnglish" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_ENGLISH" precision="6" scale="0"/>
+    </property>
+    <property name="nbrMath" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_MATH" precision="6" scale="0"/>
+    </property>
+    <property name="nbrReading" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_READING" precision="6" scale="0"/>
+    </property>
+    <property name="nbrScience" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_SCIENCE" precision="6" scale="0"/>
+    </property>
+    <property name="nbrWriting" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_WRITING" precision="6" scale="0"/>
+    </property>
+    <property name="nbrTotal" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_TOTAL" precision="6" scale="0"/>
+    </property>
+    <property name="nbrVerbal" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_VERBAL" precision="6" scale="0"/>
+    </property>
+    <property name="dtExam" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_EXAM" length="7"/>
+    </property>
+  </class>
+</hibernate-mapping>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.Referral" table="REFERRAL" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEvent" type="integer" unsaved-value="undefined">
+      <column name="ID_EVENT" precision="16" scale="0"/>
+      <generator class="foreign">
+        <param name="property">event</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <one-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" constrained="true"/>
+
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="addrReferCity" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="ADDR_REFER_CITY" length="20"/>
+    </property>
+    <property name="cdReferAddrSchDist" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_REFER_ADDR_SCH_DIST" length="6"/>
+    </property>
+    <property name="cdReferCategory" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_REFER_CATEGORY" length="1"/>
+    </property>
+    <property name="cdReferCnty" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_REFER_CNTY" length="3"/>
+    </property>
+    <property name="cdReferEthnicity" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_REFER_ETHNICITY" length="2"/>
+    </property>
+    <property name="cdReferFosterType" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_REFER_FOSTER_TYPE" length="1"/>
+    </property>
+    <property name="cdReferLanguage" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_REFER_LANGUAGE" length="2"/>
+    </property>
+    <property name="cdReferRegion" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="CD_REFER_REGION" length="2"/>
+    </property>
+    <property name="dtReferExpire" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REFER_EXPIRE" length="7"/>
+    </property>
+    <property name="dtReferHomeNeeded" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REFER_HOME_NEEDED" length="7"/>
+    </property>
+    <property name="dtReferSearchComplete" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_REFER_SEARCH_COMPLETE" length="7"/>
+    </property>
+    <property name="dtReferSent" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="DT_REFER_SENT" length="7"/>
+    </property>
+    <property name="indReferCareProv" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_REFER_CARE_PROV" length="1"/>
+    </property>
+    <property name="indReferFEmergPlace" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_REFER_F_EMERG_PLACE" length="1"/>
+    </property>
+    <property name="indReferSearchDone" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_REFER_SEARCH_DONE" length="1"/>
+    </property>
+    <property name="indReferFTransport" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="IND_REFER_F_TRANSPORT" length="1"/>
+    </property>
+    <property name="nbrReferFeAgeMax" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_REFER_FE_AGE_MAX" precision="4" scale="0"/>
+    </property>
+    <property name="nbrReferFeAgeMin" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_REFER_FE_AGE_MIN" precision="4" scale="0"/>
+    </property>
+    <property name="nbrReferMaAgeMax" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_REFER_MA_AGE_MAX" precision="4" scale="0"/>
+    </property>
+    <property name="nbrReferMaAgeMin" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_REFER_MA_AGE_MIN" precision="4" scale="0"/>
+    </property>
+    <property name="nbrReferOpenSlots" type="java.lang.Integer" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NBR_REFER_OPEN_SLOTS" precision="2" scale="0"/>
+    </property>
+    <bag name="referralPersonLinks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ReferralPersonLink" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="referralHomeLinks" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ReferralHomeLink" not-found="exception" embed-xml="true"/>
+    </bag>
+    <bag name="referralChrctrs" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.ReferralChrctr" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

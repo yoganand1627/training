@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="core" default="all" basedir=".">
+  <!-- Project-specific overrides. -->
+  <property file="build.properties"/>
+
+  <!-- Common properties. -->
+  <import file="../build-common.xml"/>
+
+  <path id="core.build.path">
+    <dirset refid="structs.exploded.dirset"/>
+    <fileset refid="xmlstructs.exploded.dirset"/>
+    <fileset refid="lib.fileset"/>
+    <fileset refid="lib.oracle.fileset"/>
+    <fileset refid="lib.commons-logging.fileset"/>
+    <fileset refid="lib.j2ee.fileset"/>
+  </path>
+
+  <target name="clean" description="Removes files used to build the core classes.">
+    <!-- Do not delete the core/build directory becuase IDEs use it.. -->
+    <delete dir="${core.exploded}"/>
+    <delete file="${core.jar}"/>
+  </target>
+
+  <target name="clean.all" depends="clean" description="Removes all build artifacts.">
+    <delete dir="${core.build}"/>
+  </target>
+
+  <target name="prepare" depends="common-prepare">
+    <mkdir dir="${core.build}"/>
+    <mkdir dir="${core.build.test}"/>
+    <mkdir dir="${core.build.test.classes}"/>
+    <mkdir dir="${core.exploded}"/>
+  </target>
+
+  <target name="compile" depends="prepare" description="Compiles the core classes.">
+    <javac source="1.5" target="1.5" debug="${build.debug}" srcdir="${core.src.java}" destdir="${core.exploded}"
+           classpathref="core.build.path">
+      <compilerarg value="-Xlint:deprecation"/>
+      <!--Too many warnings: <compilerarg value="-Xlint:unchecked"/>-->
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation"/>
+      <include name="**/*.java"/>
+      <!-- Exclude the ant tasks, as they are unneeded. -->
+      <exclude name="gov/georgia/dhr/dfcs/sacwis/core/ant/**/*.java"/>
+    </javac>
+    <javac source="1.5" target="1.5" debug="${build.debug}" srcdir="${core.test.java}"
+           destdir="${core.build.test.classes}" classpathref="core.build.path">
+      <compilerarg value="-Xlint:deprecation"/>
+      <!--Too many warnings: <compilerarg value="-Xlint:unchecked"/>-->
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation"/>
+      <include name="**/*.java"/>
+    </javac>
+  </target>
+
+  <target name="package.exploded" depends="compile"
+          description="Copies compiled classes to the exploded ear directory.">
+    <!-- Copy the files in conf. -->
+    <copy todir="${core.exploded}" preservelastmodified="true">
+      <fileset dir="${core.src.conf}"/>
+    </copy>
+    <!-- Also copy the libraries that are needed here. -->
+    <copy todir="${build.exploded}" preservelastmodified="true">
+      <fileset refid="lib.fileset"/>
+    </copy>
+  </target>
+
+  <target name="package.ear" depends="package.exploded" description="Jars classes to the ear directory.">
+    <jar destfile="${core.jar}" basedir="${core.exploded}"/>
+  </target>
+
+  <target name="update" depends="package.exploded" description="Incremental build for development."/>
+
+  <target name="all" depends="clean,package.exploded"
+          description="Cleans, builds, packages to the exploded ear directory."/>
+
+  <target name="dist" depends="all,package.ear" description="Cleans, builds, packages to the ear directory."/>
+
+  <target name="genhql" depends="prepare" description="Compiles and runs GenerateSimpleHQL">
+    <mkdir dir="${core.build}"/>
+    <mkdir dir="${core.build.classes}"/>
+    <javac source="1.5" target="1.5" debug="${build.debug}" destdir="${core.build.classes}" srcdir="${core.src.java}">
+      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation,unchecked"/>
+      <include name="gov/georgia/dhr/dfcs/sacwis/core/ant/GenerateSimpleHQL.java"/>
+    </javac>
+    <java classname="gov.georgia.dhr.dfcs.sacwis.core.ant.GenerateSimpleHQL" fork="true" spawn="true">
+      <classpath location="${core.build.classes}"/>
+    </java>
+  </target>
+</project>

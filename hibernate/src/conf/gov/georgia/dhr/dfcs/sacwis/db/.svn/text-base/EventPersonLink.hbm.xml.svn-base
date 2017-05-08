@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.EventPersonLink" table="EVENT_PERSON_LINK" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idEventPersLink" type="integer" unsaved-value="0">
+      <column name="ID_EVENT_PERS_LINK" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_EVENT_PERSON_LINK</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="event" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="person" class="gov.georgia.dhr.dfcs.sacwis.db.Person" fetch="select" unique="false" update="true"
+                 insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_PERSON" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false"
+                 update="false" insert="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_CASE" precision="16" scale="0"/>
+    </many-to-one>
+    <property name="cdFamPlanPermGoal" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_FAM_PLAN_PERM_GOAL" length="3"/>
+    </property>
+    <property name="dtFamPlanPermGoalTarget" type="date" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="DT_FAM_PLAN_PERM_GOAL_TARGET" length="7"/>
+    </property>
+    <property name="txtGoalCmmt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="TXT_GOAL_CMMT" length="300"/>
+    </property>
+    <property name="indCaregiver" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+      <column name="IND_CAREGIVER" length="1"/>
+    </property>
+  </class>
+</hibernate-mapping>

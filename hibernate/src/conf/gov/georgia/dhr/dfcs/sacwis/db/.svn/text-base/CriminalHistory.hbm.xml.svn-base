@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+  <class name="gov.georgia.dhr.dfcs.sacwis.db.CriminalHistory" table="CRIMINAL_HISTORY" mutable="true"
+         polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false"
+         optimistic-lock="version">
+    <id name="idCrimHist" type="integer" unsaved-value="0">
+      <column name="ID_CRIM_HIST" precision="16" scale="0"/>
+      <generator class="sequence">
+        <param name="sequence">SEQ_CRIMINAL_HISTORY</param>
+      </generator>
+    </id>
+    <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+    <many-to-one name="recordsCheck" class="gov.georgia.dhr.dfcs.sacwis.db.RecordsCheck" fetch="select" unique="false"
+                 update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+      <column name="ID_REC_CHECK" precision="16" scale="0" not-null="true"/>
+    </many-to-one>
+    <property name="cdCrimHistAction" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="CD_CRIM_HIST_ACTION" length="3"/>
+    </property>
+    <property name="nmCrimHistReturned" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="NM_CRIM_HIST_RETURNED" length="30"/>
+    </property>
+    <property name="txtCrimHistCmnts" type="string" unique="false" optimistic-lock="true" lazy="false"
+              generated="never">
+      <column name="TXT_CRIM_HIST_CMNTS" length="300"/>
+    </property>
+    <bag name="criminalHistNarrs" inverse="true" mutable="true" optimistic-lock="true" embed-xml="true">
+      <key on-delete="noaction" update="false">
+        <column name="ID_CRIM_HIST" precision="16" scale="0" not-null="true" unique="true"/>
+      </key>
+      <one-to-many class="gov.georgia.dhr.dfcs.sacwis.db.CriminalHistNarr" not-found="exception" embed-xml="true"/>
+    </bag>
+  </class>
+</hibernate-mapping>

@@ -1,0 +1,525 @@
+!*****************************************************************************
+!  CPS LEGAL LOG                                                             *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         csc02o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 09/27/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brad McCleary                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  This report lists the current and previous statuses  *
+!                       and lists all actions and outcomes for a person      *
+!                       without regard to stage or case.                     *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 09/27/95   B. McCleary  Initial Programming                                *
+! 12/14/96   K. Cys       ENH -- Changed Person Name to new Name Person      *
+!                         Full Format.                                       *
+! 06/04/04   Eric Dickman SIR 14365 - Added the TMC Dismissal Date to the    *
+!                         Legal Status Section of the report                 *
+! 07/06/04   C.Douglass   SIR 22873 - change sort order for legal action     *
+!                         to outcome date, then date filed, since date filed *
+!                         is no longer used.
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'            ! control codes for Portrait 
+
+    ask ID_PERSON                      ! input parameter 
+
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 4
+
+  print 'Person Name: '                 (+0,25)
+  if $person_suffix <> '' !***ENH***
+   let $person_name_suff = ', ' || $person_suffix
+  end-if
+  if $person_middle = ''
+   let $person_name = $person_first || ' ' || $person_last || $person_name_suff
+  else
+   let $person_name = $person_first || ' ' || $person_middle || ' ' || $person_last || $person_name_suff
+  end-if
+  print $person_name                    (+0,38)   wrap 23  4
+  move '' to $person_name_suff  !***ENH***
+  print 'CPS LEGAL LOG'                 (+2) center
+                           
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                            !Set printer environment
+
+    move {ID_PERSON}            to #input_id_person    
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-PERSON, GET-STATUS, GET-ACTION                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+                  
+    do GET-PERSON              
+    do GET-STATUS
+    do GET-ACTION
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-PERSON                                                              *
+!                                                                           *
+!       This procedure will select Person Name from PERSON                  *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-PERSON
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+A.NM_NAME_FIRST  !***ENH***
+    move &A.NM_NAME_FIRST                       to $person_first
+    
+A.NM_NAME_MIDDLE
+    move &A.NM_NAME_MIDDLE                      to $person_middle     
+    
+A.NM_NAME_LAST
+    move &A.NM_NAME_LAST                        to $person_last
+
+CSUFFIX2.decode
+    move &CSUFFIX2.decode                       to $person_suffix    
+
+FROM    CSUFFIX2    CSUFFIX2,    
+        NAME        A     
+
+WHERE   A.ID_PERSON = #input_id_person
+AND     A.IND_NAME_INVALID = 'N'
+AND     A.IND_NAME_PRIMARY = 'Y'
+AND     A.DT_NAME_END_DATE = '12/31/4712'
+AND     A.CD_NAME_SUFFIX   = CSUFFIX2.CODE(+)
+
+END-SELECT
+
+END-PROCEDURE GET-PERSON
+
+!****************************************************************************
+!                                                                           *
+!   GET-STATUS                                                              *
+!                                                                           *
+!       This procedure will select the legal status information when the    *
+!           input id_person is the same as the id_person in legal_status.   *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : PRINT-STATUS-TITLE, PRINT-STATUS                       *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-STATUS
+
+    move 0                                  to #count1
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+CLEGSTAT.decode
+    move &CLEGSTAT.decode                   to $legal_status    
+
+to_char(A.DT_LEGAL_STAT_STATUS_DT, 'MM/DD/YYYY') &date1    
+    move &date1                             to $status_date
+    
+CCOUNT.decode    
+    move &CCOUNT.decode                     to $county
+    
+A.TXT_LEGAL_STAT_CAUSE_NBR
+    move &A.TXT_LEGAL_STAT_CAUSE_NBR        to $cause_number
+    
+A.TXT_LEGAL_STAT_COURT_NBR        
+    move &A.TXT_LEGAL_STAT_COURT_NBR        to $court_number
+
+!***SIR 14365***
+A.DT_LEGAL_STAT_TMC_DISMISS
+	  move &A.DT_LEGAL_STAT_TMC_DISMISS       to $tmc_dismissal_date
+
+
+    let #count1 = #count1 + 1
+            
+    if #count1 = 1          
+       do PRINT-STATUS-TITLE       
+       do PRINT-STATUS
+    else
+       do PRINT-STATUS
+    end-if 
+
+FROM    LEGAL_STATUS          A,
+        EVENT                 E,
+        CLEGSTAT              CLEGSTAT,
+        CCOUNT                CCOUNT
+      
+WHERE   A.ID_PERSON   = #input_id_person
+AND     A.ID_LEGAL_STAT_EVENT = E.ID_EVENT
+AND     E.CD_EVENT_STATUS <> 'NEW'
+AND     CLEGSTAT.CODE(+) = A.CD_LEGAL_STAT_STATUS
+AND     CCOUNT.CODE(+) = A.CD_LEGAL_STAT_CNTY
+
+ORDER BY    A.DT_LEGAL_STAT_STATUS_DT DESC              
+
+END-SELECT
+
+END-PROCEDURE GET-STATUS
+
+!****************************************************************************
+!                                                                           *
+!   GET-ACTION                                                              *
+!                                                                           *
+!       This procedure will select the legal action information when the    *
+!       input id_person is the same as the id_person in legal_action.  It   *
+!       calls DYNAMIC for the decodes for every row selected.               *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : DYNAMIC, PRINT-ACTION-TITLE, PRINT-ACTION              *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-ACTION
+                     
+    move 0                                       to #count2                     
+                     
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                 
+A.CD_LEGAL_ACT_ACTION
+    move &A.CD_LEGAL_ACT_ACTION                  to $legal_action
+    
+A.CD_LEGAL_ACT_ACTN_SUBTYPE
+    move &A.CD_LEGAL_ACT_ACTN_SUBTYPE            to $action_subtype
+    
+to_char(A.DT_LEGAL_ACT_DATE_FILED, 'MM/DD/YYYY') &date2
+    move &date2                                  to $date_filed
+    
+to_char(A.DT_LEGAL_ACT_OUTCOME_DT, 'MM/DD/YYYY') &date3
+    move &date3                                  to $outcome_date
+    
+A.IND_LEGAL_ACT_DOCS_N_CASE 
+    move &A.IND_LEGAL_ACT_DOCS_N_CASE            to $doc_n_case_file
+    
+A.TXT_LEGAL_ACT_COMMENT 
+    move &A.TXT_LEGAL_ACT_COMMENT                to $comments
+    
+CLEGCPS.decode
+    move &CLEGCPS.decode                         to $legal_action_decode
+   
+CLEGLOUT.decode 
+    move &CLEGLOUT.decode                        to $outcome   
+
+  if rtrim($legal_action, ' ') != ''
+    do DYNAMIC
+  end-if
+
+
+    let #count2 = #count2 + 1
+            
+    if #count2 = 1          
+       do PRINT-ACTION-TITLE       
+       do PRINT-ACTION
+    else
+       do PRINT-ACTION
+    end-if 
+
+FROM    LEGAL_ACTION          A,
+        EVENT                 E1,
+        CLEGCPS               CLEGCPS,
+        CLEGLOUT              CLEGLOUT
+      
+WHERE   A.ID_PERSON   =  #input_id_person
+AND     A.ID_LEGAL_ACT_EVENT = E1.ID_EVENT
+AND     E1.CD_EVENT_STATUS <> 'NEW'
+AND     CLEGCPS.CODE(+) =  A.CD_LEGAL_ACT_ACTION
+AND     CLEGLOUT.CODE(+) =  A.CD_LEGAL_ACT_OUTCOME
+
+ORDER BY NVL( A.DT_LEGAL_ACT_OUTCOME_DT, to_date('01/01/0001','mm/dd/yyyy')) DESC,
+         NVL(A.DT_LEGAL_ACT_DATE_FILED, to_date('01/01/0001','mm/dd/yyyy')) DESC              
+
+END-SELECT
+
+END-PROCEDURE GET-ACTION
+
+!****************************************************************************
+!                                                                           *
+!   DYNAMIC                                                                 *
+!                                                                           *
+!       This procedure calls the DECODE from the codes table.               *
+!                                                                           *
+!       CALLED BY  :  GET-ACTION                                            *
+!       CALLS      :  NONE                                                  *
+!****************************************************************************
+                                                                             
+BEGIN-PROCEDURE DYNAMIC
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+                                                                             
+DECODE                                                                      
+    move &DECODE                to $subtype_decode
+
+FROM    [$legal_action]  
+
+WHERE   CODE = $action_subtype
+
+END-SELECT
+
+END-PROCEDURE DYNAMIC
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-STATUS-TITLE                                                      *
+!                                                                           *
+!       This procedure prints the legal status title.                       *
+!                                                                           * 
+!       CALLED BY  : GET-STATUS                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-STATUS-TITLE
+
+print 'LEGAL STATUS'                (+1) center 
+
+END-PROCEDURE PRINT-STATUS-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-STATUS                                                            *
+!                                                                           *
+!       This procedure prints the legal statuses and makes sure they are not*
+!           split between pages.                                            *
+!                                                                           * 
+!       CALLED BY  : GET-STATUS                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-STATUS
+
+if #current-line > 43
+    NEW-PAGE
+end-if
+
+print 'LEGAL STATUS: '              (+2,1)
+print $legal_status                 (+0,15)
+print 'STATUS DATE: '               (+0,47)
+print $status_date                  (+0,60)
+print 'COUNTY: '                    (+1,1)
+print $county                       (+0,9)
+print 'CAUSE NUMBER: '              (+1,1)
+print $cause_number                 (+0,15)
+print 'COURT NUMBER: '              (+1,1)
+print $court_number                 (+0,15)
+!***SIR 14365***
+print 'TMC DISMISSAL DATE:'         (+1,1)
+print $tmc_dismissal_date           (+0,21)
+
+END-PROCEDURE PRINT-STATUS
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ACTION-TITLE                                                      *
+!                                                                           *
+!       This procedure prints the legal action title.                       *
+!                                                                           * 
+!       CALLED BY  : GET-ACTION                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ACTION-TITLE
+
+if #current-line > 43
+    NEW-PAGE
+end-if
+
+print 'LEGAL ACTION'                (+2) center 
+
+END-PROCEDURE PRINT-ACTION-TITLE
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-ACTION                                                            *
+!                                                                           *
+!       This procedure prints the legal actions and makes sure they are not*
+!           split between pages.                                            *
+!                                                                           * 
+!       CALLED BY  : GET-ACTION                                             *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-ACTION
+
+if #current-line > 43
+    NEW-PAGE
+end-if
+
+print 'DATE FILED: '                (+2,1)
+print $date_filed                   (+0,17)
+print 'OUTCOME DATE: '              (+0,52)
+print $outcome_date                 (+0,66)
+print 'LEGAL ACTION: '              (+1,1)
+print $legal_action_decode          (+0,17)
+print 'OUTCOME: '                   (+0,52)
+print $outcome                      (+0,61)
+print 'ACTION SUBTYPE: '            (+1,1)
+print $subtype_decode               (+0,17)
+print 'DOCUMENT IN CASE FILE: '     (+0,52)
+print $doc_n_case_file              (+0,75)
+print 'COMMENTS: '                  (+1,1)
+print $comments                     (+1,1)  wrap 76 4
+
+END-PROCEDURE PRINT-ACTION
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *                                                                      
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  show  $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  show  $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+  show  #sql-status                                       (+0)
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+
+
+#INCLUDE 'cfpstamp.sqc'

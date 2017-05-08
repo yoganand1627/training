@@ -1,0 +1,338 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE grnds-web-app SYSTEM "grnds-web-app.dtd">
+
+<grnds-web-app>
+
+  <servlet mapping="workload">
+    <conversations>
+      <conversation>
+        <conversation-name>AssignedWorkload</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.workload.AssignedWorkloadConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayMyTasks</command-name>
+            <activity type="method">displayMyTasks_xa</activity>
+            <presentation type="url">
+              /workload/AssignedWorkload/displayAssignedWorkload
+            </presentation>
+            <presentation branch="AssignedWorkload" type="url">
+              /workload/AssignedWorkload/displayAssignedWorkload
+            </presentation>
+            <presentation branch="UnitSummaryWorkload" type="url">
+              /workload/AssignedWorkload/displayOtherAssignedWorkload
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayAssignedWorkload</command-name>
+            <activity type="method">displayAssignedWorkload_xa</activity>
+            <presentation type="class" screen="ASSIGNED_WORKLOAD">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayOtherAssignedWorkload</command-name>
+            <activity type="method">displayOtherAssignedWorkload_xa</activity>
+            <presentation type="class" screen="ASSIGNED_WORKLOAD_OTHER">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>callCaseSummary</command-name>
+            <activity type="method">callCaseSummary_xa</activity>
+            <presentation type="url">
+              /workload/CaseSummary/displayCaseSummary
+            </presentation>
+          </command>
+          <command>
+            <command-name>callEventList</command-name>
+            <activity type="method">callEventList_xa</activity>
+            <presentation type="url">
+              /workload/EventSearch/displayEventList
+            </presentation>
+          </command>
+          <!-- SPB This command is called by Assigned Workload for links w/o a Case ID -->
+          <command>
+            <command-name>callEventListNoCaseId</command-name>
+            <activity type="method">callEventList_xa</activity>
+            <presentation type="url">
+              <!-- SPB This command is called to allow for a different presentation of EventList in this case -->
+              /workload/EventSearch/displayEventListNoCaseId
+            </presentation>
+          </command>
+          <command>
+            <command-name>assignStage</command-name>
+            <activity type="method">assignStage_xa</activity>
+            <presentation type="url">
+              /workload/Assign/displayAssign
+            </presentation>
+            <presentation branch="error" type="class" screen="ASSIGNED_WORKLOAD">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>stageProgression</command-name>
+            <activity type="method">stageProgression_xa</activity>
+            <presentation type="url">
+              /workload/StageProgression/displayStageProgression
+            </presentation>
+            <presentation branch="error" type="class" screen="ASSIGNED_WORKLOAD">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+		  <command>
+            <command-name>callCaseSummary</command-name>
+            <activity type="method">callCaseSummary_xa</activity>
+            <presentation type="url">
+              /workload/CaseSummary/displayCaseSummaryStage
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+	  	  
+	  <conversation>
+        <conversation-name>CaseSummary</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.workload.CaseSummaryConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>displayCaseSummary</command-name>
+            <activity type="method">displayCaseSummary_xa</activity>
+            <presentation type="class" screen="CASE_SUMMARY">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+		  <command>
+            <command-name>displayCaseSummaryStage</command-name>
+            <activity type="method">displayCaseSummary_xa</activity>
+             <presentation type="url">
+              /workload/StageSummary/displayStage
+            </presentation>
+          </command>
+          <command>
+            <command-name>callCaseFilePrint</command-name>
+            <activity type="method">callCaseFilePrint_xa</activity>
+            <presentation type="url">
+              /workload/CfpConversation/cfp
+            </presentation>
+          </command>
+          <command>
+            <command-name>createAdmnReview_CheckPersonList</command-name>
+            <activity type="method">createAdmnReview_CheckPersonList_xa</activity>
+            <presentation type="url">
+              /person/PersonList/displayPersonList
+            </presentation>
+            <presentation branch="stay" type="class" screen="CASE_SUMMARY">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>createAdmnReview_CallCCFC42S</command-name>
+            <activity type="method">createAdmnReview_CallCCFC42S_xa</activity>
+            <presentation type="url">
+              /workload/CaseSummary/displayCaseSummary
+            </presentation>
+          </command>
+          <command>
+            <command-name>callAdmnReview</command-name>
+            <activity type="method">callAdmnReview_xa</activity>
+            <presentation type="url">
+              /workload/AdmnReview/displayAdmnReview
+            </presentation>
+            <presentation branch="error" type="class" screen="CASE_SUMMARY">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>callAdminCommand</command-name>
+            <activity type="method">callAdminCommand_xa</activity>
+          </command>
+          <command>
+            <command-name>selectStage</command-name>
+            <activity type="method">selectStage_xa</activity>
+            <presentation type="url">
+              /workload/CaseSummary/displayCaseSummary
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveCaseSummary</command-name>
+            <activity type="method">saveCaseSummary_xa</activity>
+            <presentation type="url">
+              /workload/CaseSummary/displayCaseSummary
+            </presentation>
+            <presentation branch="error" type="class" screen="CASE_SUMMARY">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>addCaseMergeDetail</command-name>
+            <activity type="method">addCaseMergeDetail_xa</activity>
+            <presentation type="class" screen="CASE_MERGE_SPLIT_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayValidate</command-name>
+            <activity type="method">displayValidate_xa</activity>
+            <presentation type="class" screen="CASE_MERGE_SPLIT_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>voidPending</command-name>
+            <activity type="method">voidPending_xa</activity>
+            <presentation type="url">
+              /workload/CaseSummary/saveCaseMergeSplitDetail
+            </presentation>
+            <presentation branch="error" type="class" screen="CASE_SUMMARY">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayCaseMergeSplitDetail</command-name>
+            <activity type="method">displayCaseMergeSplitDetail_xa</activity>
+            <presentation type="class" screen="CASE_MERGE_SPLIT_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="CASE_SUMMARY">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>validateCaseMerge</command-name>
+            <activity type="method">validateCaseMerge_xa</activity>
+            <presentation type="url">
+              /workload/CaseSummary/displayValidate
+            </presentation>
+            <presentation branch="error" type="class" screen="CASE_MERGE_SPLIT_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>saveCaseMergeSplitDetail</command-name>
+            <activity type="method">saveCaseMergeSplitDetail_xa</activity>
+            <presentation type="url">
+              /workload/CaseSummary/displayCaseSummary
+            </presentation>
+            <presentation branch="error" type="class" screen="CASE_MERGE_SPLIT_DETAIL">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+           <command-name>reopenStage</command-name>
+            <activity type="method">reopenStage_xa</activity>
+            <presentation type="url">
+              /workload/StageReopen/displayStageReopen
+            </presentation>
+            <presentation branch="error" type="class" screen="CASE_SUMMARY">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+	  
+	  <conversation>
+	  <conversation-name>StageSummary</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.workload.StageSummaryConversation</conversation-class>
+        <commands>
+          <command>
+		   <command-name>displayStageSummary</command-name>
+            <activity type="method">displayStageSummary_xa</activity>
+            <presentation type="class" screen="STAGE_SUMMARY">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+		  </command>
+		  <command>
+		   <command-name>displayStage</command-name>
+            <activity type="method">displayStage_xa</activity>
+            <presentation type="class" screen="STAGE_SUMMARY">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+		  </command>
+        </commands>
+      </conversation>
+
+      <conversation>
+        <conversation-name>EventSearch</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.workload.EventSearchConversation</conversation-class>
+        <commands>
+          <command>
+            <command-name>DummyEventDetail</command-name>
+            <activity type="method">blank_xa</activity>
+            <presentation type="url">/grnds-docs/workload/DummyEventDetail.jsp</presentation>
+          </command>
+          <command>
+            <command-name>forwardTo</command-name>
+            <activity type="method">forwardTo_xa</activity>
+          </command>
+          <command>
+            <command-name>addEventDetail</command-name>
+            <activity type="method">addEventDetail_xa</activity>
+            <presentation type="url" branch="error">
+              /workload/EventSearch/displayEventList
+            </presentation>
+          </command>
+          <command>
+            <command-name>newUsingEventDetail</command-name>
+            <activity type="method">newUsingEventDetail_xa</activity>
+          </command>
+          <command>
+            <command-name>deleteEvent</command-name>
+            <activity type="method">deleteEvent_xa</activity>
+            <presentation type="url">
+              /workload/EventSearch/displayEventList
+            </presentation>
+          </command>
+          <command>
+            <command-name>continueEventDetail</command-name>
+            <activity type="method">continueEventDetail_xa</activity>
+          </command>
+          <command>
+            <command-name>displayEventDetail</command-name>
+            <activity type="method">displayEventDetail_xa</activity>
+            <presentation type="url" branch="error">
+              /workload/EventSearch/displayEventList
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayPersonList</command-name>
+            <activity type="method">displayPersonList_xa</activity>
+          </command>
+          <command>
+            <command-name>displayStaffList</command-name>
+            <activity type="method">displayStaffList_xa</activity>
+          </command>
+          <command>
+            <command-name>displayEventSearch</command-name>
+            <activity type="method">displayEventSearch_xa</activity>
+            <presentation type="class" screen="EVENT_SEARCH">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayEventList</command-name>
+            <activity type="method">displayEventList_xa</activity>
+            <presentation type="class" screen="EVENT_LIST">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <!-- SPB This command is called to allow for a different presentation of EventList from Workload for no Case ID -->
+          <command>
+            <command-name>displayEventListNoCaseId</command-name>
+            <activity type="method">displayEventList_xa</activity>
+            <presentation type="class" screen="EVENT_LIST_WORKLOAD">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+      
+    </conversations>
+  </servlet>
+
+  <error-handling>
+    <domain>sacwis</domain>
+    <logger>grnds.syslog</logger>
+  </error-handling>
+
+
+</grnds-web-app>

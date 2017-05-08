@@ -1,0 +1,563 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Aug 06 11:41:49 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\TCM Monthly Statictics\TCMMonthlyBillingStatistics00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Text $RptMonth 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+Begin-Select Loops=1
+(count(distinct TCM_CLAIM.ID_TCM_CLAIM )) &TotalClaims_TotalTCMClaims
+From  TCM_CLAIM
+End-Select
+Begin-Select Loops=1
+(count(distinct TCM_CLAIM.ID_TCM_CLAIM )) &TCMTotals_AllTCMTotals
+From  TCM_CLAIM
+End-Select
+Begin-Select Loops=1
+(count(distinct CONTACT.ID_EVENT )) &ContactTotals_ContactTotals
+From  CONTACT
+End-Select
+Begin-Select Loops=1
+CODE &Init_Query_Init_Query_CODE
+DECODE &Init_Query_Init_Query_DECODE
+From  CCNTYREG
+Where [$where_clause105]
+End-Select
+Begin-Select Loops=1
+(count(distinct  TCM_CLAIM.ID_TCM_CLAIM )) &Init_TCMClaims_TotalCalcClaims
+From  STAGE, TCM_CLAIM
+,      UNIT
+      Where STAGE.ID_STAGE = TCM_CLAIM.ID_STAGE
+            And STAGE.ID_UNIT = UNIT.ID_UNIT
+ And (DT_SERVICE < (last_day(to_date($RptMonth,'MM/YYYY'))+1)
+ And DT_SERVICE >= to_date($RptMonth,'MM/YYYY'))
+ And [$where_clause101]
+ And [$where_clause102]
+End-Select
+Begin-Select Loops=1
+(count(distinct  CONTACT.ID_EVENT )) &Init_Services_TotalServices
+From  CONTACT, CONTACT_CBX
+,      STAGE, UNIT
+      Where STAGE.ID_UNIT = UNIT.ID_UNIT
+            And CONTACT.ID_CONTACT_STAGE = STAGE.ID_STAGE
+            And CONTACT.ID_EVENT = CONTACT_CBX.ID_CONTACT_EVENT
+ And CONTACT.CD_CONTACT_TYPE  IN ('MTCM','HTCM','LTCM')
+ And (DT_CONTACT_OCCURRED >= to_date($RptMonth,'MM/YYYY')
+ And DT_CONTACT_OCCURRED < (last_day(to_date($RptMonth,'MM/YYYY'))+1))
+ And CD_CBX_CODE_TYPE = 'CTCMSVCS'
+ And [$where_clause101]
+ And [$where_clause102]
+ And (CD_CONTACT_TCM_ELIGIBLE IS NULL  Or CD_CONTACT_TCM_ELIGIBLE = 'Y')
+ And CD_CONTACT_TCM_MED_SVCS = 'Y'
+End-Select
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (14,55,13) Underline  Bold 
+ Print 'Cases Never Billed:' (64,55,19) Bold 
+ Print 'Cases With Claims:' (88,55,18) Bold 
+ Print 'Not Billed Claims:' (112,55,18) Bold 
+ Print 'Voided Claims:' (136,55,14) Bold 
+ Print 'Rejected/Denied:' (161,55,16) Bold 
+ Print 'Resubmissions:' (185,55,19) Bold 
+ Print 'Paid:' (209,55,12) Bold 
+ Print 'Billed:' (234,55,7) Bold 
+ Print 'Services Provided for Contacts:' (268,55,31) Bold 
+ Print 'A count of unique stages open during the service month that did not have a TCM claim.' (64,208,88)
+ Print 'A count of unique stages open during the service month with a TCM claim.' (88,208,88)
+ Print 'TCM claims entered into SHINES but not yet submitted for the service month.' (112,208,88)
+ Print 'Voided TCM claims submitted for the service month.' (136,208,88)
+ Print 'Rejected and Denied TCM claims submitted for the service month.' (161,208,88)
+ Print 'Rejected and Denied TCM claims corrected in SHINES and resubmitted for the service month.' (185,208,95) Wrap 95 2 line-height=12 Keep-Top on= 
+ Print 'TCM claims paid for the service month.' (209,208,74) Wrap 74 2 line-height=12 Keep-Top on= 
+ Print 'Pending and Billed TCM claims for the service month received by the Department of Community Health (DCH).' (234,208,95) Wrap 95 2 line-height=12 Keep-Top on= 
+ Print 'Counts of services provided for all TCM contacts made during the month that resulted in a TCM claim.' (268,208,95) Wrap 95 2 line-height=12 Keep-Top on= 
+ Print 'Note, a TCM contact may have more than one service provider.' (300,208,74) Wrap 74 2 line-height=12 Keep-Top on= 
+ Page-Number (466,668) '' ' of'
+ Last-Page (466,690) 
+ Print 'The reporting county is determined by the county of the stage, not the unit county of the primary case manager.' (39,55,0)
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=60   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+Do Get-Input
+Do Get-Input-County
+ Position (1,1)
+ Do CasesNeverBilled
+ Do CasesWithClaim
+ Do NotBilledClaims
+ Do IneligibleCases
+ Do DeniedCases
+ Do MarkedForRebill
+ Do PaidCases
+ Do BilledButNoInfo
+ Do BehavioralNeeds
+ Do NutritionalNeeds
+ Do SubstanceAbuse
+ Do OtherMedical
+End-Program
+Begin-Procedure Get-Input
+Input $RptMonth 'Enter Month and Year(MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+! -----------------------------
+Input $_I101_CD_UNIT_REGION 'Enter a value for CD_UNIT_REGION' MaxLen=3  Type=Char
+If IsNull($_I101_CD_UNIT_REGION) or IsBlank($_I101_CD_UNIT_REGION)
+  Let $_I101_CD_UNIT_REGION = '017'
+End-If
+Let $where_clause105 = 'DECODE = ''' || $_I101_CD_UNIT_REGION || ''''
+
+Let $_I101_CD_UNIT_REGION = '0' || $_I101_CD_UNIT_REGION
+
+If SubStr($_I101_CD_UNIT_REGION, 1, 1) != ''''
+  Let $_I101_CD_UNIT_REGION = '''' || $_I101_CD_UNIT_REGION || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I101_CD_UNIT_REGION,'''',0) = 0 and instr($_I101_CD_UNIT_REGION,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_UNIT_REGION'
+   Let $where_clause101 = $brb_tmp  || ' = ' ||  '''' || $_I101_CD_UNIT_REGION || '''' 
+ Else
+   If (instr($_I101_CD_UNIT_REGION,'''',0) = 0 and instr($_I101_CD_UNIT_REGION,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_UNIT_REGION'
+     Let $where_clause101 = $brb_tmp  || ' = ' || $_I101_CD_UNIT_REGION
+   End-If
+ End-If
+End-Procedure
+begin-procedure Get-Input-County
+Input $_I102_CD_COUNTY 'Enter a value for CD_COUNTY' MaxLen=3  Type=Char
+If $_I102_CD_COUNTY = '0'
+  Let $where_clause102 = 'CD_STAGE_CNTY is not null'
+  Let $County_Var = 'All'
+else
+If SubStr($_I102_CD_COUNTY, 1, 1) != ''''
+  Let $_I102_CD_COUNTY = '''' || $_I102_CD_COUNTY || ''''
+End-If
+ ! The input-variable is a CHAR; auto-add quotes in case the user doesn't.
+ ! Exception - don't auto-add if user entered a list (ie, has comma(s))
+ Let $BRBSkipThis = 'F'  ! Override conditionals by inserting user-line to set to 'T'
+ If (instr($_I102_CD_COUNTY,'''',0) = 0 and instr($_I102_CD_COUNTY,',',0) = 0 and $BRBSkipThis = 'F')
+   ! no quotes, no commas - add quotes
+   Let $brb_tmp = 'CD_STAGE_CNTY'
+   Let $where_clause102 = $brb_tmp  || ' = ' ||  '''' || $_I102_CD_COUNTY || '''' 
+ Else
+   If (instr($_I102_CD_COUNTY,'''',0) = 0 and instr($_I102_CD_COUNTY,',',0) > 0 and $BRBSkipThis = 'F')
+      ! no quotes, has commas - database won't accept
+       Show 'Multiple CHAR entries must each be wrapped in quotes'
+       Let #return-status = 3701
+       Stop
+   Else
+     ! quotes, no commas - process variable as-is
+     Let $brb_tmp = 'CD_STAGE_CNTY'
+     Let $where_clause102 = $brb_tmp  || ' = ' || $_I102_CD_COUNTY
+   End-If
+ End-If
+Do Get-County-Name
+Move &nm_cnty to $County_Var
+end-if
+end-procedure
+Begin-Procedure Get-County-Name
+Begin-Select
+CODES_TABLES.DECODE &nm_cnty 
+from CODES_TABLES
+where CODES_TABLES.CODE_TYPE = 'CCOUNT'
+AND CODES_TABLES.CODE = [$_I102_CD_COUNTY]
+End-Select
+End-Procedure
+
+
+Begin-Procedure CasesNeverBilled
+ Do CreateXML_ManifestFile
+Begin-Select
+(count(distinct  STAGE00.ID_STAGE)) &CasesNeverBilled
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Cases Never Billed' (24,145,18)
+ Print &CasesNeverBilled (24,353) Edit 9999999999na
+ Graphic (32,4,697) Horz-Line 15 
+ Next-Listing  SkipLines=7 Need=31
+From  STAGE STAGE00, UNIT
+      Where UNIT.ID_UNIT = STAGE00.ID_UNIT
+ And STAGE00.CD_STAGE IN ('SUB','FPR','ADO')
+ And STAGE00.DT_STAGE_START < (last_day(to_date($RptMonth,'MM/YYYY')) +1)
+ And (STAGE00.DT_STAGE_CLOSE >= to_date($RptMonth,'MM/YYYY') Or STAGE00.DT_STAGE_CLOSE IS NULL )
+ And STAGE00.ID_STAGE NOT IN (SELECT  TCM_CLAIM00.ID_STAGE  FROM  TCM_CLAIM TCM_CLAIM00 WHERE TCM_CLAIM00.DT_SERVICE < (last_day(to_date($RptMonth
+    ,'MM/YYYY'))+1) AND  TCM_CLAIM00.DT_SERVICE >= to_date($RptMonth,'MM/YYYY') AND  TCM_CLAIM00.ID_STAGE = STAGE00.ID_STAGE)
+ And [$where_clause102]
+ And [$where_clause101]
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure CasesWithClaim
+Begin-Select
+(count(distinct TCM_CLAIM.ID_STAGE )) &CasesWithClaims
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Cases With Claims' (19,145,0)
+ Print &CasesWithClaims (19,353) Edit 9999999999na
+ Next-Listing  Need=19
+From  STAGE, TCM_CLAIM
+,      UNIT
+      Where STAGE.ID_UNIT = UNIT.ID_UNIT
+            And TCM_CLAIM.ID_STAGE = STAGE.ID_STAGE
+ And [$where_clause101]
+ And [$where_clause102]
+ And (DT_SERVICE < (last_day(to_date($RptMonth,'MM/YYYY'))+1)
+ And DT_SERVICE >= to_date($RptMonth,'MM/YYYY'))
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure NotBilledClaims
+Begin-Select
+(count(distinct  TCM_CLAIM.ID_TCM_CLAIM )) &NotBilledClaims
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+!Move &Init_TCMClaims_TotalCalcClaims to #TCMMove
+!Move &NotBilledClaims to #TCMBilClaim 
+ Print 'Not Billed Claims' (13,181,0)
+ Let #_per_not_billed=( &NotBilledClaims  /  &Init_TCMClaims_TotalCalcClaims ) * 100
+ Print #_per_not_billed (17,562) Edit 9999
+ Print '%' (17,586,1)
+ Print &NotBilledClaims (18,397) Edit 9999999999na
+ Next-Listing  Need=18
+From  STAGE, UNIT
+,      TCM_CLAIM
+      Where STAGE.ID_UNIT = UNIT.ID_UNIT
+            And STAGE.ID_STAGE = TCM_CLAIM.ID_STAGE
+ And NBR_TCN IS NULL 
+ And CD_STATUS IN ('NBL')
+ And (DT_SERVICE < (last_day(to_date($RptMonth,'MM/YYYY'))+1)
+ And DT_SERVICE >= to_date($RptMonth,'MM/YYYY'))
+ And [$where_clause101]
+ And [$where_clause102]
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure IneligibleCases
+Begin-Select
+(count(distinct TCM_CLAIM.ID_TCM_CLAIM )) &VoidedClaims
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &VoidedClaims (16,396) Edit 9999999999na
+ Print 'Voided Claims' (16,180,0)
+ Let #_per_VoidedClaims=( &VoidedClaims / &Init_TCMClaims_TotalCalcClaims ) * 100
+ Print #_per_VoidedClaims (16,562) Edit 9999
+ Print '%' (17,586,1)
+ Next-Listing  Need=17
+From  STAGE, TCM_CLAIM
+,      UNIT
+      Where STAGE.ID_UNIT = UNIT.ID_UNIT
+            And TCM_CLAIM.ID_STAGE = STAGE.ID_STAGE
+ And CD_STATUS IN ('VOD')
+ And [$where_clause101]
+ And [$where_clause102]
+ And (DT_SERVICE < (last_day(to_date($RptMonth,'MM/YYYY'))+1)
+ And DT_SERVICE >= to_date($RptMonth,'MM/YYYY'))
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure DeniedCases
+Begin-Select
+(count(distinct TCM_CLAIM.ID_TCM_CLAIM )) &RejectedDeniedCases
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Rejected/Denied' (14,179,0)
+ Print &RejectedDeniedCases (14,396) Edit 9999999999na
+ Let #_per_RejectedDeniedCases=( &RejectedDeniedCases  /  &Init_TCMClaims_TotalCalcClaims ) * 100
+ Print #_per_RejectedDeniedCases (16,562) Edit 9999
+ Print '%' (16,586,0)
+ Next-Listing  Need=16
+From  STAGE, TCM_CLAIM
+,      UNIT
+      Where STAGE.ID_STAGE = TCM_CLAIM.ID_STAGE
+            And STAGE.ID_UNIT = UNIT.ID_UNIT
+ And CD_STATUS IN ('DND','RSU','REJ')
+ And (DT_SERVICE < (last_day(to_date($RptMonth,'MM/YYYY'))+1)
+ And DT_SERVICE >= to_date($RptMonth,'MM/YYYY'))
+ And [$where_clause101]
+ And [$where_clause102]
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure MarkedForRebill
+Begin-Select
+(count(distinct TCM_CLAIM.ID_TCM_CLAIM)) &Resubmitted
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Resubmissions' (18,198,20)
+ Print &Resubmitted (18,413) Edit 9999999999na
+ Next-Listing  Need=18
+From  STAGE, TCM_CLAIM
+,      UNIT
+      Where STAGE.ID_UNIT = UNIT.ID_UNIT
+            And STAGE.ID_STAGE = TCM_CLAIM.ID_STAGE
+ And CD_STATUS = 'RSU'
+ And (DT_SERVICE < (last_day(to_date($RptMonth,'MM/YYYY'))+1)
+ And DT_SERVICE >= to_date($RptMonth,'MM/YYYY'))
+ And [$where_clause101]
+ And [$where_clause102]
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure PaidCases
+Begin-Select
+(count(distinct TCM_CLAIM.ID_TCM_CLAIM)) &ClaimsPaid
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Paid ' (20,180,0)
+ Print &ClaimsPaid (20,397) Edit 9999999999na
+ Let #_per_ClaimsPaid=( &ClaimsPaid / &Init_TCMClaims_TotalCalcClaims ) * 100
+ Print #_per_ClaimsPaid (20,562) Edit 9999
+ Print '%' (20,586,1)
+ Next-Listing  Need=20
+From  STAGE, TCM_CLAIM
+,      UNIT
+      Where UNIT.ID_UNIT = STAGE.ID_UNIT
+            And TCM_CLAIM.ID_STAGE = STAGE.ID_STAGE
+ And CD_STATUS = 'PAD'
+ And (DT_SERVICE < (last_day(to_date($RptMonth,'MM/YYYY'))+1)
+ And DT_SERVICE >= to_date($RptMonth,'MM/YYYY'))
+ And [$where_clause101]
+ And [$where_clause102]
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BilledButNoInfo
+Begin-Select
+(count(distinct TCM_CLAIM.ID_TCM_CLAIM)) &Billed
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Billed' (17,181,0)
+ Print &Billed (18,397) Edit 9999999999na
+ Let #_per_Billed=( &Billed / &Init_TCMClaims_TotalCalcClaims ) * 100
+ Print #_per_Billed (18,562) Edit 9999
+ Print '%' (18,586,1)
+ Graphic (26,5,678) Horz-Line 15 
+ Next-Listing  SkipLines=7 Need=25
+From  STAGE, TCM_CLAIM
+,      UNIT
+      Where STAGE.ID_STAGE = TCM_CLAIM.ID_STAGE
+            And STAGE.ID_UNIT = UNIT.ID_UNIT
+ And CD_STATUS IN ('BIL','PND')
+ And (DT_SERVICE < (last_day(to_date($RptMonth,'MM/YYYY'))+1)
+ And DT_SERVICE >= to_date($RptMonth,'MM/YYYY'))
+ And [$where_clause101]
+ And [$where_clause102]
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BehavioralNeeds
+Begin-Select
+(count(distinct  CONTACT.ID_EVENT )) &BehavioralNeeds
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Services Provided for Contacts' (17,56,30)
+ Print 'Billed for Behavioral Needs' (41,144,0)
+ Print &BehavioralNeeds (41,354) Edit 9999999999na
+ Let #_BehavioralNeeds=( &BehavioralNeeds/ &Init_Services_TotalServices  ) * 100
+ Print #_BehavioralNeeds (41,562) Edit 9999
+ Print '%' (42,586,1)
+ Next-Listing  Need=42
+From  STAGE, UNIT
+,      CONTACT, CONTACT_CBX
+      Where STAGE.ID_STAGE = CONTACT.ID_CONTACT_STAGE
+            And CONTACT.ID_EVENT = CONTACT_CBX.ID_CONTACT_EVENT
+            And STAGE.ID_UNIT = UNIT.ID_UNIT
+ And CD_CONTACT_CBX = 'BEH'
+ And CD_CBX_CODE_TYPE = 'CTCMSVCS'
+ And (DT_CONTACT_OCCURRED < (last_day(to_date($RptMonth,'MM/YYYY'))+1)
+ And DT_CONTACT_OCCURRED >= to_date($RptMonth,'MM/YYYY'))
+ And [$where_clause101]
+ And [$where_clause102]
+ And CD_CONTACT_TYPE IN ('MTCM','HTCM','LTCM')
+ And (CD_CONTACT_TCM_ELIGIBLE IS NULL  Or CD_CONTACT_TCM_ELIGIBLE = 'Y')
+ And CD_CONTACT_TCM_MED_SVCS = 'Y'
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure NutritionalNeeds
+Begin-Select
+(count( distinct  CONTACT.ID_EVENT  )) &NutritionalNeeds
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &NutritionalNeeds (22,353) Edit 9999999999na
+ Print 'Billed for Nutritional Needs' (23,145,0)
+ Let #_per_NutritionalNeeds=( &NutritionalNeeds/ &Init_Services_TotalServices  ) * 100
+ Print #_per_NutritionalNeeds (23,562) Edit 9999
+ Print '%' (23,586,1)
+ Next-Listing  Need=23
+From  CONTACT, CONTACT_CBX
+,      STAGE, UNIT
+      Where UNIT.ID_UNIT = STAGE.ID_UNIT
+            And CONTACT.ID_CONTACT_STAGE = STAGE.ID_STAGE
+            And CONTACT_CBX.ID_CONTACT_EVENT = CONTACT.ID_EVENT
+ And CD_CONTACT_CBX = 'NUT'
+ And CD_CBX_CODE_TYPE = 'CTCMSVCS'
+ And (DT_CONTACT_OCCURRED < (last_day(to_date($RptMonth,'MM/YYYY'))+1)
+ And DT_CONTACT_OCCURRED >= to_date($RptMonth,'MM/YYYY'))
+ And [$where_clause101]
+ And [$where_clause102]
+ And CD_CONTACT_TYPE IN ('MTCM','HTCM','LTCM')
+ And (CD_CONTACT_TCM_ELIGIBLE IS NULL  Or CD_CONTACT_TCM_ELIGIBLE = 'Y')
+ And CD_CONTACT_TCM_MED_SVCS = 'Y'
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure SubstanceAbuse
+Begin-Select
+(count(distinct  CONTACT.ID_EVENT  )) &SubstanceAbuse
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Billed for Substance Abuse Needs' (24,145,0)
+ Print &SubstanceAbuse (24,353) Edit 9999999999na
+ Let #_per_SubstanceAbuse=( &SubstanceAbuse / &Init_Services_TotalServices ) * 100
+ Print #_per_SubstanceAbuse (25,562) Edit 9999
+ Print '%' (25,586,1)
+ Next-Listing  Need=25
+From  CONTACT, CONTACT_CBX
+,      STAGE, UNIT
+      Where STAGE.ID_UNIT = UNIT.ID_UNIT
+            And CONTACT.ID_CONTACT_STAGE = STAGE.ID_STAGE
+            And CONTACT_CBX.ID_CONTACT_EVENT = CONTACT.ID_EVENT
+ And CD_CONTACT_CBX = 'SBA'
+ And CD_CBX_CODE_TYPE = 'CTCMSVCS'
+ And (DT_CONTACT_OCCURRED < (last_day(to_date($RptMonth,'MM/YYYY'))+1)
+ And DT_CONTACT_OCCURRED >= to_date($RptMonth,'MM/YYYY'))
+ And [$where_clause101]
+ And [$where_clause102]
+ And CD_CONTACT_TYPE IN ('MTCM','HTCM','LTCM')
+ And (CD_CONTACT_TCM_ELIGIBLE IS NULL  Or CD_CONTACT_TCM_ELIGIBLE = 'Y')
+ And CD_CONTACT_TCM_MED_SVCS = 'Y'
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure OtherMedical
+Begin-Select
+(count(distinct  CONTACT.ID_EVENT  )) &OtherMedical
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Billed for Other Medical Needs' (19,144,0)
+ Print &OtherMedical (19,354) Edit 9999999999na
+ Let #_per_OtherMedical=( &OtherMedical / &Init_Services_TotalServices ) * 100
+ Print #_per_OtherMedical (19,562) Edit 9999
+ Print '%' (20,586,1)
+ Next-Listing  Need=20
+From  CONTACT, CONTACT_CBX
+,      STAGE, UNIT
+      Where STAGE.ID_UNIT = UNIT.ID_UNIT
+            And CONTACT.ID_CONTACT_STAGE = STAGE.ID_STAGE
+            And CONTACT.ID_EVENT = CONTACT_CBX.ID_CONTACT_EVENT
+ And CD_CONTACT_CBX = 'XXX'
+ And CD_CBX_CODE_TYPE = 'CTCMSVCS'
+ And (DT_CONTACT_OCCURRED < (last_day(to_date($RptMonth,'MM/YYYY'))+1)
+ And DT_CONTACT_OCCURRED >= to_date($RptMonth,'MM/YYYY'))
+ And [$where_clause101]
+ And [$where_clause102]
+ And CD_CONTACT_TYPE IN ('MTCM','HTCM','LTCM')
+ And (CD_CONTACT_TCM_ELIGIBLE IS NULL  Or CD_CONTACT_TCM_ELIGIBLE = 'Y')
+ And CD_CONTACT_TCM_MED_SVCS = 'Y'
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 60 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'TCM Monthly Billing Statistics' (50,235,0) Bold 
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='sacwis\launcher\src\images\SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (16,595,12)
+ Print $current-date (16,659) edit 'MM/DD/YYYY'
+ Print 'Division of Family and Children Services' (16,246,41)
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region :' (118,56,8)
+ Print 'County :' (133,56,8)
+ Print 'Report Month :' (103,56,14)
+ Let $RptMonth=$RptMonth
+ Print $RptMonth (103,136,12)
+ Let $CountyName=$County_Var
+ Print $CountyName (133,136,35)
+Print &Init_Query_Init_Query_DECODE (119,136,36)
+ Else   ! put a non combined page header
+ Print 'Region :' (31,56,8)
+ Print 'County :' (46,56,8)
+ Print 'Report Month :' (16,56,14)
+ Print $RptMonth (16,136,12)
+ Print $CountyName (46,136,35)
+Print &Init_Query_Init_Query_DECODE (32,136,36)
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 36 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (18,662) '' ' of'
+ Last-Page (18,684) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

@@ -1,0 +1,1010 @@
+!*****************************************************************************
+!ccf21o00.sqr                                                                *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         ccf21o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/dickmaec/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 04/18/2005                                           *
+!                                                                            *
+! PROGRAMMER NAME:      Eric Dickman	                                       *
+!                                                                            *
+!*****************************************************************************
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ------------ -------------------------------------------------  *
+! 04/18/05   Eric Dickman Initial Programming                                *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                           !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'            ! control codes for Landscape 
+
+    ask ID_CASE
+    
+    ask EVENT_ID
+    
+    ask ID_PERSON
+    
+END-SETUP
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!                                                                           * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'                    !Set printer environment
+   
+   move '{ID_CASE}'        to $passed_in_case_id
+   move '{EVENT_ID}'       to $passed_in_event_id
+   move '{ID_PERSON}'			 TO $passed_in_person_id
+         
+END-PROCEDURE HOUSEKEEPING
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+
+BEGIN-HEADING 5
+
+	do GET-HEADER-CASE-INFORMATION ($passed_in_case_id,
+																	$passed_in_person_id)	
+	
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+      
+ 	do GET-LIFE-HEALTH-THREATENING($passed_in_event_id)
+ 	
+ 	do GET-SUMMARY-ASSESSMENT($passed_in_event_id)
+		
+END-PROCEDURE PROCESS-REPORT                   
+
+
+!****************************************************************************
+!                                                                           *
+!   GET-HEADER-CASE-INFORMATION($passed_in_case_id)                         *
+!   CALLED BY:BEGIN-HEADING                                                 *
+!   CALLS: PRINT-HEADER-CASE-INFORMATION ($header_case_name,                *
+!     	  																$header_id_case)                  *
+!                                                                           *
+!   This method will print the Case Information Header.                     *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-HEADER-CASE-INFORMATION($passed_in_case_id,
+																						$passed_in_person_id)
+
+let $header_id_case = $passed_in_case_id
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+P.NM_PERSON_FULL 
+	move &P.NM_PERSON_FULL    												to $worker_person_full
+	
+W.NM_WKLD_CASE
+	move &W.NM_WKLD_CASE    													to $case_name
+
+				   FROM 
+				   PERSON P, 
+				   WORKLOAD W 
+				   WHERE P.ID_PERSON = $passed_in_person_id
+				   AND P.ID_PERSON = W.ID_WKLD_PERSON
+				   AND ID_WKLD_CASE = $header_id_case  
+		
+END-SELECT
+	
+	do PRINT-HEADER-CASE-INFORMATION ($header_id_case,
+	  																$worker_person_full,
+	  																$case_name) 
+																	 
+END-PROCEDURE GET-HEADER-CASE-INFORMATION
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-HEADER-CASE-INFORMATION                                           *
+!   CALLED BY:GET-HEADER-CASE-INFORMATION                                   *
+!																																						*
+!   Gets the header page on every pages of the report.                      *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-HEADER-CASE-INFORMATION ($header_id_case,
+	  																					 $worker_person_full,
+	  																					 $case_name) 
+
+print 'CASE INFORMATION'       				(1,25)
+print 'Case Name: '										(+1,25)	
+print $case_name         						  (0,36)
+print 'Case #: '                      (+1,25)
+print $header_id_case           			(0,33)
+print 'Worker Name: '                 (+1,25)
+print $worker_person_full					 		(0,38)
+
+END-PROCEDURE PRINT-HEADER-CASE-INFORMATION   
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-HEADER-CASE-INFORMATION                                           *
+!   CALLED BY  : GET-HEADER-CASE-INFORMATION 											          *
+!   CALLS      :            																								*
+!                                                                           *
+!		Prints the header page information on each page,												*  
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-LIFE-HEALTH-THREATENING($passed_in_event_id)
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CD_LIFE_THREAT_RESPONSE
+	move &CD_LIFE_THREAT_RESPONSE												  to $LIFE_THREAT_RESPONSE
+	
+DESC_LIFE_THREAT_COMMENT
+	move &DESC_LIFE_THREAT_COMMENT											  to $DESC_LIFE_THREAT_COMMENT
+	
+
+DESC_LIFE_THREAT_ACTIONS
+	move &DESC_LIFE_THREAT_ACTIONS												to $DESC_LIFE_THREAT_ACTIONS
+	
+	do PRINT-LIFE-HEALTH-THREATENING($LIFE_THREAT_RESPONSE,
+																	 $DESC_LIFE_THREAT_COMMENT,
+																	 $DESC_LIFE_THREAT_ACTIONS)
+	   FROM CARE 
+  	 WHERE CARE.ID_EVENT = $passed_in_event_id
+  	 
+END-SELECT
+END-PROCEDURE GET-LIFE-HEALTH-THREATENING()
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-LIFE-HEALTH-THREATENING																						*
+!   CALLED BY  : GET-LIFE-HEALTH-THREATENING											          *
+!   								        																								*
+!   Prints the Life and Health Threatening section of the report.           *
+!																																						*  
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-LIFE-HEALTH-THREATENING($LIFE_THREAT_RESPONSE,
+																	 					  $DESC_LIFE_THREAT_COMMENT,
+																	 						$DESC_LIFE_THREAT_ACTIONS)
+
+print 'LIFE OR HEALTH THREATENING'  															(1,0) bold
+
+let $threat_response = ''
+let $no_threat = ''
+
+if $LIFE_THREAT_RESPONSE = 'Y'
+	let $threat_response = 'Yes'
+	let $no_threat = 'No'	
+end-if
+
+if $LIFE_THREAT_RESPONSE = 'N'
+	let $threat_response = 'No'
+	let $no_threat = 'Yes'	
+end-if
+
+print $threat_response											   									         (+1,1) bold
+print 'A life or health threatening condition exists. The'               (0,5)
+print	'situation is'																						         (0,56)	
+print 'extremely serious, and 9-1-1, police,' 													 (+1,5)
+
+let $clientName1 = 'client@s '
+let $clientName1 = translate( $clientName1, '@' , '''')
+
+print $clientName1																											 (0,43)
+print 'immediate removal, '																							 (0,52)
+print 'or other appropriate action is needed within 24 hours.'           (+1,5)
+print	'(Once the'																								         (0,61) bold	
+print 'situation/client has been stabilized, complete'					         (+1,5) bold
+print	'all assessment domains.)' 																         (0,52) bold 
+print 'Comments:'																								         (+2,5) 
+print $DESC_LIFE_THREAT_COMMENT								                           (0,15) wrap 50 80 
+print 'Actions:'																								         (+2,5)
+print $DESC_LIFE_THREAT_ACTIONS								                           (0,14) wrap 50 80
+print $no_threat																								         (+2,1) bold
+print 'A life or health threatening condition does not exist.' 	         (0,5)
+print '(Proceed with client	assessment)'												         (+1,5) bold		
+
+END-PROCEDURE PRINT-LIFE-HEALTH-THREATENING() 
+
+!****************************************************************************
+!                                                                           *
+!   GET-LIFE-HEALTH-THREATENING()                                           *
+!   CALLED BY  : PROCESS-REPORT 																	          *
+!   CALLS      : GET-A-2-LAUNCH, GET-A-2, PRINT-SUMMARY-ASSESSMENT  				*
+!                                                                           *
+!		Gets the Summary Assessment information for this report									*  
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-SUMMARY-ASSESSMENT($passed_in_event_id)
+
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CD.ID_CARE_DOMAIN
+  move &CD.ID_CARE_DOMAIN												  to $CARE_DOMAIN
+
+CDL.CD_DOMAIN
+	move &CDL.CD_DOMAIN												      to $CD_DOMAIN
+	
+CD.CD_ALLEGATION_FOCUS	
+	move &CD.CD_ALLEGATION_FOCUS										to $CD_ALLEGATION_FOCUS
+	
+CDL.TXT_DOMAIN 
+	move &CDL.TXT_DOMAIN 										        to $TXT_DOMAIN
+	
+CDL.NBR_DOMAIN_ORDER 
+	move &CDL.NBR_DOMAIN_ORDER 							        to $NBR_DOMAIN_ORDER 	
+	
+	do PRINT-SUMMARY-ASSESSMENT($CARE_DOMAIN,
+															$CD_DOMAIN,
+															$CD_ALLEGATION_FOCUS,
+															$TXT_DOMAIN,
+															$NBR_DOMAIN_ORDER)
+											
+	print $CD_REASON_BELIEVE (+1,0)									
+	
+	if $CD_ALLEGATION_FOCUS = 'N'
+	
+		do GET-A-2($CARE_DOMAIN,
+							 $TXT_DOMAIN,
+							 $passed_in_event_id)
+	end-if							 
+	
+	do GET-A-2-LAUNCH($CARE_DOMAIN,
+										$passed_in_event_id,
+										$CD_ALLEGATION_FOCUS)
+		
+	FROM CARE_DOMAIN CD, 
+			 CARE_DOMAIN_LOOKUP CDL 
+	   			WHERE CD.ID_EVENT = $passed_in_event_id   
+					AND CD.CD_CARE_DOMAIN = CDL.CD_DOMAIN 
+ 					ORDER BY CDL.NBR_DOMAIN_ORDER 
+
+END-SELECT
+END-PROCEDURE GET-SUMMARY-ASSESSMENT() 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-SUMMARY-ASSESSMENT                                                *
+!   CALLED BY:   GET-SUMMARY-ASSESSMENT														          *
+!     					            																								*
+!  Print the Summary Assessment on the report                               *
+!																																						*  
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-SUMMARY-ASSESSMENT($CARE_DOMAIN,
+															 					 $CDL.CD_DOMAIN,
+															 					 $CD_ALLEGATION_FOCUS,
+															 					 $TXT_DOMAIN,
+																				 $CDL.NBR_DOMAIN_ORDER)
+
+
+print $TXT_DOMAIN 															 				(+3,1) bold
+print 'A. Summary Assessment'														(+1,2)
+print 'A1. Were any items in this domain mentioned in the intake report? '  (+1,5)
+
+let $allegation = ''
+
+if $CD_ALLEGATION_FOCUS = 'Y'
+	let $allegation = 'Yes'
+end-if
+
+if $CD_ALLEGATION_FOCUS = 'N'
+	let $allegation = 'No'
+end-if
+
+print $allegation																				(0,72)
+	
+END-PROCEDURE PRINT-SUMMARY-ASSESSMENT 
+
+!****************************************************************************
+!                                                                           *
+!   GET-A-2-LAUNCH:                                                         *
+!   CALLED BY  :GET-SUMMARY-ASSESSMENT 														          *
+!   CALLS      :GET-DETAILED-ASSESSMENT($CARE_DOMAIN,												*
+!													 $passed_in_event_id,															*
+!													 $CD_REASON_BELIEVE)          										*
+!                                                                           *
+!		check to see if the A-2 section can be lauched or should be hidden.			*  
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-A-2-LAUNCH($CARE_DOMAIN,
+															 $passed_in_event_id,
+															 $CD_ALLEGATION_FOCUS)
+
+let $reason_flag = 'false'
+
+if $CD_ALLEGATION_FOCUS = 'Y'
+	let $reason_flag = 'true'
+end-if
+
+BEGIN-SELECT DISTINCT ON-ERROR=SqlErrorHandle
+
+CC.CD_REASON_BELIEVE
+	move &CC.CD_REASON_BELIEVE											to $CD_REASON_BELIEVE
+	
+	
+	if $CD_REASON_BELIEVE = 'Y'
+	  let $reason_flag = 'true'
+	end-if  
+	
+FROM CARE_CATEGORY CC, 
+  	 CARE_CATEGORY_LOOKUP CCL 
+	  		  WHERE CC.ID_EVENT = $passed_in_event_id 
+    			AND CC.CD_CARE_CATEGORY = CCL.CD_CATEGORY
+    			AND CC.ID_CARE_DOMAIN = $CARE_DOMAIN
+				  
+END-SELECT
+
+	do GET-DETAILED-ASSESSMENT($CARE_DOMAIN,
+														 $passed_in_event_id,
+														 $CD_REASON_BELIEVE,
+														 $reason_flag)
+	
+
+END-PROCEDURE GET-A-2-LAUNCH($CD_REASON_BELIEVE) 
+
+!****************************************************************************
+!                                                                           *
+!   GET-A-2()                                                               *
+!   CALLED BY  : GET-SUMMARY-ASSESSMENT														          *
+!   CALLS      : PRINT-A-2   																								*
+!                                                                           *
+!		Gets the information for the A-2 section																*  
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-A-2($CARE_DOMAIN,
+												$TXT_DOMAIN,
+												$passed_in_event_id)
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CC.ID_CARE_CATEGORY
+	move &CC.ID_CARE_CATEGORY												to $A2_ID_CARE_CATEGORY
+
+CC.CD_REASON_BELIEVE
+	move &CC.CD_REASON_BELIEVE											to $A2_CD_REASON_BELIEVE
+	
+CCL.TXT_CATEGORY
+	move &CCL.TXT_CATEGORY			 									  to $A2_TXT_CATEGORY
+	
+CCL.NBR_CATEGORY_ORDER
+	move &CCL.NBR_CATEGORY_ORDER										to $A2_NBR_CATEGORY_ORDER
+	
+	do PRINT-A-2($A2_ID_CARE_CATEGORY,
+							 $A2_CD_REASON_BELIEVE,
+							 $A2_TXT_CATEGORY,
+							 $A2_NBR_CATEGORY_ORDER,
+							 $TXT_DOMAIN)
+							 
+	FROM CARE_CATEGORY CC, 
+   		 CARE_CATEGORY_LOOKUP CCL 
+	  		  WHERE CC.ID_EVENT = $passed_in_event_id 
+    			AND CC.CD_CARE_CATEGORY = CCL.CD_CATEGORY
+    			AND CC.ID_CARE_DOMAIN = $CARE_DOMAIN
+    			ORDER BY 	ID_CARE_DOMAIN
+
+END-SELECT
+END-PROCEDURE GET-A-2() 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-A-2()                             							                  *
+!   CALLED BY  : GET-A-2()      																	          *
+!                           																								*
+!  Pinrts the information for the A-2 section.                              *
+!																																						*  
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-A-2($A2_ID_CARE_CATEGORY,
+													$A2_CD_REASON_BELIEVE,
+												  $A2_TXT_CATEGORY,
+												  $A2_NBR_CATEGORY_ORDER,
+												  $TXT_DOMAIN)
+
+let $txt_domain = $TXT_DOMAIN || '?'
+ 
+if $A2_NBR_CATEGORY_ORDER = '1'
+	print 'A2. Based on worker observation, the '                               (+2,5)
+  let $clientName = 'client@s '
+  let $clientName = translate( $clientName, '@' , '''')														
+  print $clientName																														(0,42)
+	print 'statement, and all other' 																						(0,51)
+	print ' evidence, is there reason to believe there are problems in the'     (+1,8)
+	print ' following aspects of'   								  			    			 					(+1,8)
+	print $txt_domain     																									 	  (0,30)	 
+	print ''																																	  (+1,8)	
+end-if
+
+print $A2_TXT_CATEGORY																											  (+1,9)
+
+let $reason_believe = ''
+
+if $A2_CD_REASON_BELIEVE = 'Y'
+	let $reason_believe = 'Yes'
+end-if
+
+if $A2_CD_REASON_BELIEVE = 'N'
+	let $reason_believe = 'No'
+end-if
+
+if $A2_CD_REASON_BELIEVE = 'I'
+	let $reason_believe = 'Inadequate Information'
+end-if
+
+print $reason_believe																		 										 (0,55)
+	
+END-PROCEDURE PRINT-SUMMARY-ASSESSMENT 
+
+!****************************************************************************
+!                                                                           *
+!   GET-DETAILED-ASSESSMENT() 		                                          *
+!   CALLED BY  : GET-A-2-LAUNCH	    															          *
+!   CALLS      : PRINT-DETAILED-ASSESSMENT  																*
+!                                                                           *
+!		Gets the Detail Assessment information.																	*  
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-DETAILED-ASSESSMENT($CARE_DOMAIN,
+																				$passed_in_event_id,
+																				$CD_REASON_BELIEVE,
+																				$reason_flag)
+
+if $reason_flag = 'true'
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CF.ID_CARE_CATEGORY 
+ 	move &CF.ID_CARE_CATEGORY												to $CARE_CATEGORY
+             
+CF.ID_EVENT 
+ 	move &CF.ID_EVENT												        to $ID_EVENT
+ 		
+CF.ID_CASE
+ 	move &CF.ID_CASE																to $ID_CASE
+ 		
+CF.ID_STAGE 
+	move &CF.ID_STAGE	        											to $ID_STAGE
+ 		
+CF.CD_CARE_FACTOR 
+	move &CF.CD_CARE_FACTOR												  to $CD_CARE_FACTOR
+ 		
+CF.ID_CARE_FACTOR 
+	move &CF.ID_CARE_FACTOR											  	to $ID_CARE_FACTOR
+ 		
+CFL.CD_FACTOR 
+  move &CFL.CD_FACTOR     												to $CD_FACTOR
+ 		
+CFL.TXT_FACTOR 
+  move &CFL.TXT_FACTOR	     											to $TXT_FACTOR
+ 		
+CF.ID_CARE_DOMAIN
+		move &CF.ID_CARE_DOMAIN										   	to $ID_CARE_DOMAIN
+
+CF.DT_LAST_UPDATE
+		move &CF.DT_LAST_UPDATE										    to $DT_LAST_UPDATE
+
+CFL.NBR_FACTOR_ORDER
+		move &CFL.NBR_FACTOR_ORDER									  to $NBR_FACTOR_ORDER
+
+CFL.CD_CATEGORY 	
+		move &CFL.CD_CATEGORY 									 			to $CD_CATEGORY 
+
+CF.CD_CARE_FACTOR_RESPONSE
+		move &CF.CD_CARE_FACTOR_RESPONSE					 		to $CD_CARE_FACTOR_RESPONSE
+
+  do PRINT-DETAILED-ASSESSMENT($CARE_CATEGORY,
+  												  	 $ID_EVENT,
+															 $ID_CASE,
+															 $ID_STAGE,
+															 $CD_CARE_FACTOR,
+															 $ID_CARE_FACTOR,
+															 $CD_FACTOR,
+															 $TXT_FACTOR,
+															 $ID_CARE_DOMAIN,
+															 $DT_LAST_UPDATE,
+															 $NBR_FACTOR_ORDER,
+															 $CD_CATEGORY,
+															 $CD_CARE_FACTOR_RESPONSE)	
+FROM CARE_FACTOR CF, 
+		 CARE_FACTOR_LOOKUP CFL
+		 				   WHERE CF.ID_EVENT = $passed_in_event_id
+ 						   AND CF.CD_CARE_FACTOR = CFL.CD_FACTOR
+ 						   AND CF.ID_CARE_DOMAIN = $CARE_DOMAIN
+ 						   ORDER BY CFL.TXT_FACTOR
+
+END-SELECT
+
+end-if
+
+END-PROCEDURE GET-DETAILED-ASSESSMENT() 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-DETAILED-ASSESSMENT                                               *
+!   CALLED BY  : GET-DETAILED-ASSESSMENT() 												          *
+!   CALLS      :            																								*
+!                                                                           *
+!		Prints the Detailed Assessment page.																		*  
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-DETAILED-ASSESSMENT($CARE_CATEGORY,
+																		  		$ID_EVENT,
+														   						$ID_CASE,
+																					$ID_STAGE,
+																					$CD_CARE_FACTOR,
+																					$ID_CARE_FACTOR,
+																					$CD_FACTOR,
+																					$TXT_FACTOR,
+																					$ID_CARE_DOMAIN,
+																					$DT_LAST_UPDATE,
+																					$NBR_FACTOR_ORDER,
+																					$CD_CATEGORY,
+																					$CD_CARE_FACTOR_RESPONSE)
+
+let $level = ''
+
+if $CD_CARE_FACTOR_RESPONSE = 'L'
+	let $level = 'No Problem'
+end-if
+
+if $CD_CARE_FACTOR_RESPONSE = 'M'
+	let $level = 'Problem'
+end-if
+
+if $CD_CARE_FACTOR_RESPONSE = 'H'
+	let $level = 'Severe Problem'
+end-if
+
+if $CD_CARE_FACTOR_RESPONSE = 'N'
+	let $level = 'NA'
+end-if
+
+if $CD_CARE_FACTOR_RESPONSE = 'U'
+	let $level = 'UTD'
+end-if
+
+if $CD_FACTOR = 'LA1'
+  print 'Availability of shelter'													(+2,7) bold
+  print $TXT_FACTOR						  													(+1,8)
+  print $level																			      (+0,64)
+end-if
+
+if $CD_FACTOR = 'LA2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level    																				(+0,64)
+end-if
+
+if $CD_FACTOR = 'LG1'
+	print 'Ground/Structure of Home'  											(+2,7) bold
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LG2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LG3'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LH1'
+  print 'Hazards'									  											(+2,7) bold
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LH2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LH3'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LH4'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LH5'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LS1'
+  print 'Sanitation of Home'			  											(+2,7) bold
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LS2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LS3'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LS4'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LS5'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LS6'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LN1'
+  print 'Necessary Resources'			  											(+2,7) bold
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LN2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'LN3'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'FI1'
+  print 'Income/Benefits'   			  											(+2,7) bold
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'FI2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'FF1'
+  print 'Financial Management'   		 											(+2,7) bold
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'FF2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'FF3'
+  print $TXT_FACTOR																				(+1,8)
+  print $level 																				    (+0,64)
+end-if
+
+if $CD_FACTOR = 'FF4'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'PP1'
+  print 'Physical Condition/Disability'         					(+2,7) bold
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'PP2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'PP3'
+  print $TXT_FACTOR																				(+1,8)
+  print $level 																				    (+0,64)
+end-if
+
+if $CD_FACTOR = 'PP4'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'PP5'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'PP6'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'PI1'
+  print 'Illness/Medication'   		 											  (+2,7) bold
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'PI2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'PI3'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'PI4'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'MC1'
+  print 'Cognitive/Mental Status and Functioning'   			(+2,7) bold
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'MC2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if 
+
+if $CD_FACTOR = 'MC3'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'MC4'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'MC5'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'MC6'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'MC7'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'MC8'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'MC9'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'MC0'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+
+if $CD_FACTOR = 'MP1'
+  print 'Problem Solving'													   			(+2,7) bold
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'SI1'
+  print 'Isolation/Connectedness'									   			(+2,7) bold
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'SI2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'SI3'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'SI4'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'SI5'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'SR1'
+  print 'Relationship with Others'								   			(+2,7) bold
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'SR2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'SA1'
+  print 'Response to Care/Abuse'								   			  (+2,7) bold
+  print $TXT_FACTOR																	 			(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'SA2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'SC1'
+  print 'Caregiver Characteristics'								   			(+2,7) bold
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'SC2'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'SC3'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																				  (+0,64)
+end-if
+
+if $CD_FACTOR = 'SC4'
+  print $TXT_FACTOR																				(+1,8)
+  print $level  																			  	(+0,64)
+end-if
+
+END-PROCEDURE PRINT-LIVING-CONDITIONS() 
+
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+   
+END-PROCEDURE WRAP-UP
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      * 
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'ERROR: SQL error halted loader processing'       (+0)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql_id_person-error                              (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc'

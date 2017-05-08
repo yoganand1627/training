@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.FamilyPlan" table="FAMILY_PLAN" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <id name="idFamilyPlan" type="integer" unsaved-value="0">
+            <column name="ID_FAMILY_PLAN" precision="16" scale="0"/>
+            <generator class="sequence">
+<param name="sequence">SEQ_FAMILY_PLAN</param>
+</generator>
+        </id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="eventByIdEventRiskAssmt" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_EVENT_RISK_ASSMT" precision="16" scale="0"/>
+        </many-to-one>
+        <many-to-one name="eventByIdEvent" class="gov.georgia.dhr.dfcs.sacwis.db.Event" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_EVENT" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <many-to-one name="capsCase" class="gov.georgia.dhr.dfcs.sacwis.db.CapsCase" fetch="select" unique="false" update="true" insert="true" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_CASE" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+        <property name="dtCompleted" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_COMPLETED" length="7"/>
+        </property>
+        <property name="cdPlanType" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_PLAN_TYPE" length="3"/>
+        </property>
+        <property name="dtNextReview" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_NEXT_REVIEW" length="7"/>
+        </property>
+        <property name="txtRsnCpsInvlvmnt" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_RSN_CPS_INVLVMNT" length="1000"/>
+        </property>
+        <property name="indClientComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_CLIENT_COMMENTS" length="1"/>
+        </property>
+        <property name="txtStrngthsRsrcs" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_STRNGTHS_RSRCS" length="1000"/>
+        </property>
+        <property name="txtNotParticipate" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_NOT_PARTICIPATE" length="1000"/>
+        </property>
+        <property name="txtPermGoalComments" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="TXT_PERM_GOAL_COMMENTS" length="500"/>
+        </property>
+        <property name="indCrtOrdrd" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_CRT_ORDRD" length="1"/>
+        </property>
+        <property name="dtInitDue" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_INIT_DUE" length="7"/>
+        </property>
+        <property name="dtPlanPrep" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_PLAN_PREP" length="7"/>
+        </property>
+        <property name="dtRevFam" type="date" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="DT_REV_FAM" length="7"/>
+        </property>
+        <property name="indUpdatePlan" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_UPDATE_PLAN" length="1"/>
+        </property>
+        <property name="cdOutcome" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="CD_OUTCOME" length="3"/>
+        </property>
+        <property name="indCopiedPlan" type="string" unique="false" optimistic-lock="true" lazy="false" generated="never">
+            <column name="IND_COPIED_PLAN" length="1"/>
+        </property>
+    </class>
+</hibernate-mapping>

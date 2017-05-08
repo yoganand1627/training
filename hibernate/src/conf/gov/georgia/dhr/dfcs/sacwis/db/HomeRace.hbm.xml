@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-cascade="none" default-access="property" default-lazy="true" auto-import="true">
+    <class name="gov.georgia.dhr.dfcs.sacwis.db.HomeRace" table="HOME_RACE" mutable="true" polymorphism="implicit" dynamic-update="false" dynamic-insert="false" select-before-update="false" optimistic-lock="version">
+        <composite-id name="id" class="gov.georgia.dhr.dfcs.sacwis.db.HomeRaceId" mapped="false" unsaved-value="undefined">
+            <key-property name="idResource" type="int">
+                <column name="ID_RESOURCE" precision="16" scale="0"/>
+            </key-property>
+            <key-property name="cdRace" type="string">
+                <column name="CD_RACE" length="2"/>
+            </key-property>
+        </composite-id>
+        <timestamp name="dtLastUpdate" column="DT_LAST_UPDATE" generated="always" unsaved-value="undefined" source="vm"/>
+        <many-to-one name="capsResource" class="gov.georgia.dhr.dfcs.sacwis.db.CapsResource" update="false" insert="false" fetch="select" unique="false" optimistic-lock="true" not-found="exception" embed-xml="true">
+            <column name="ID_RESOURCE" precision="16" scale="0" not-null="true"/>
+        </many-to-one>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,495 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Thu Oct 15 09:47:55 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Reports\Joby\ParentInvolvementInCasePlanningFCC00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=180    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (16,1,0) Underline  Bold 
+ Page-Number (535,650) '' ' of '
+ Last-Page (535,680) 
+ Print 'This report displays cases without parent involvement in the development of the case plan in Foster Care Cases (FC) within past 6 months. Only those cases which have permanency plan of Reunification will be included in the report. Parent involvement is indicated by whether all persons listed as a parent have participated in a family team meeting or been contacted with the purpose of case planning in the past 6 months from the reporting month, including the reporting month. For example, if the reporting month is June, involvement activities from January to June are considered. Both parents (Father and Mother) should be checked for involvement in the case planning. If a parent/child is deceased prior to the last day of the reporting month this parent would not be included in the calculation of parent involvement.' (32,12,127) Wrap 127 7 line-height=12 Keep-Top on= 
+ Print 'Qualifying family team meetings should be recorded in ADO, FCC or FCF (Foster Care Family) stages in the Family Teem Meetings/Reviews page. Meeting date should be within the past 6 months. Parent should be included as participant in the meeting and with an actual participation date recorded.' (202,12,125) Wrap 125 4 line-height=12 Keep-Top
+ Print 'The principal child should be under 18 years as of the first day of the reporting month. The child should be in DFCS custody as of the reporting period. If the child turns 18 on the first day of the reporting month, the case is still being considered in capturing parent involvement. Child should be alive as of the last day of the reporting month.' (158,12,125) Wrap 125 4 line-height=12 Keep-Top
+ Print 'Relationship:' (425,12,0) Bold 
+ Print 'Parent:' (348,12,0) Bold 
+ Print 'Living person listed on Person List page of the principal child as Biological Father, Biological Mother, Biological and Legal Father, Biologial Parent, Legal Father, Legal Mother, Parent, Putative Father, or Absent Parent.' (348,101,109) Wrap 109 4 line-height=12 Keep-Top
+ Print 'Gender:' (407,12,0) Bold 
+ Print 'The parent relationship to the case as indicated on the parent''s Person Detail page. ' (425,101,0)
+ Print 'Gender of the Parent.' (407,101,0)
+ Print 'Qualifying contacts should also be recorded in ADO, FCC, or FCF (Foster Care Family) stages in the past 6 months. Contact purpose is Case Planning. Contact method needs not be face to face for this measure since the contact is used as substitute for parents that did participate in case planning but was unable to be present at the family team meeting.' (245,12,125) Wrap 125 3 line-height=12 Keep-Top
+ Print 'If either one of the parent (Male or Female) is missing in the person list, that stage will display "Missing Parent" in this field.' (389,101,0)
+ Print 'The total at the end of each unit, county, or region group is the number of stages which did not have parent involvement in the Case Planning of the FC cases per unit, county or region. The report uses stage county and region in grouping stages. If a stage is being worked by a case manager from another county, the case manager''s home county will be displayed in parenthesis to the right of the unit supervisor''s name at the unit group level.' (292,13,125) Wrap 125 4 line-height=12 Keep-Top
+ Print 'Stage Start Date:' (443,12,0) Bold 
+ Print 'Stage Closed?:' (462,12,0) Bold 
+ Print 'The Date the Foster Care Child (FCC) or Adoption (ADO) stage was opened.' (444,101,0)
+ Print 'An indicator of whether the FCC or ADO stage was closed. The field displays Y if the stage was closed, blank if the stage is still open.' (462,101,0)
+ Print 'Parent is defined as a living person listed on Person List page of the principal child as Biological Father, Biological Mother, Biological and Legal Father, Biologial Parent, Legal Father, Legal Mother, Parent, Putative Father, or Absent Parent.' (122,12,126) Wrap 126 2 line-height=12 Keep-Top
+ Print 'The number of active FC cases refers to the count of unique primary children. If a child has both FCC and ADO active in the month, it counts as one for the case manager that has both stages. If FCC and ADO are assigned to different case managers, it counts for the case manager of the most recent stage. Most recent stage is one with greater stage id number when both stages active in the month.' (487,12,135) Wrap 135 3 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=36   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do LoadLookupTables
+ Position (1,1)
+ Do Get_MonthYear
+ Do Get_Region_County 
+
+ Do Master_Query
+End-Program
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select Distinct
+((case when  STAGE_ONG.DT_STAGE_CLOSE is not null then 'Y' else ' ' end)) &stageclosed
+((case when exists (select 1 from stage_person_link spl1 , person p1 where  STAGE_ONG.ID_STAGE  = spl1.id_stage and spl1.cd_stage_pers_rel_int in ('BF','LM','AB','BM','BB','BP','LF','PA','PF') and p1.id_person = spl1.id_person and p1.cd_person_sex in  ('M','F') AND SPL1.ID_PERSON = STAGE_PERSON_LINK_PARENT.ID_PERSON) then CRELVICT_RelParent.DECODE  when (not (exists (select 1 from stage_person_link spl1 , person p1 where  STAGE_ONG.ID_STAGE  = spl1.id_stage and spl1.cd_stage_pers_rel_int in ('BF','LM','AB','BM','BB','BP','LF','PA','PF') and p1.id_person = spl1.id_person and  p1.cd_person_sex = 'M') and exists (select 1 from stage_person_link spl2 , person p2 where  STAGE_ONG.ID_STAGE  = spl2.id_stage and spl2.cd_stage_pers_rel_int in ('BF','LM','AB','BM','BB','BP','LF','PA','PF') and p2.id_person = spl2.id_person and p2.cd_person_sex = 'F'))) then 'N/A'  end)) &missrelation
+((case when exists (select 1 from stage_person_link spl1 , person p1 where  STAGE_ONG.ID_STAGE  = spl1.id_stage and spl1.cd_stage_pers_rel_int in ('BF','LM','AB','BM','BB','BP','LF','PA','PF') and p1.id_person = spl1.id_person and p1.cd_person_sex in  ('M','F') and spl1.id_person = STAGE_PERSON_LINK_PARENT.ID_PERSON) then  PERSON_PARENT.NM_PERSON_FULL  when (not (exists (select 1 from stage_person_link spl1 , person p1 where  STAGE_ONG.ID_STAGE  = spl1.id_stage and spl1.cd_stage_pers_rel_int in ('BF','LM','AB','BM','BB','BP','LF','PA','PF') and p1.id_person = spl1.id_person and p1.cd_person_sex = 'M') and exists (select 1 from stage_person_link spl2 , person p2 where  STAGE_ONG.ID_STAGE  = spl2.id_stage and spl2.cd_stage_pers_rel_int in ('BF','LM','AB','BM','BB','BP','LF','PA','PF') and p2.id_person = spl2.id_person and p2.cd_person_sex = 'F'))) then 'Missing Parent(s)'  end)) &missingorlivParent
+((case when exists (select 1 from stage_person_link spl1 , person p1 where  STAGE_ONG.ID_STAGE  = spl1.id_stage and spl1.cd_stage_pers_rel_int in ('BF','LM','AB','BM','BB','BP','LF','PA','PF') and p1.id_person = spl1.id_person and p1.cd_person_sex in  ('M','F') AND SPL1.ID_PERSON = STAGE_PERSON_LINK_PARENT.ID_PERSON) then PERSON_PARENT.CD_PERSON_SEX when (not (exists (select 1 from stage_person_link spl1 , person p1 where  STAGE_ONG.ID_STAGE  = spl1.id_stage and spl1.cd_stage_pers_rel_int in ('BF','LM','AB','BM','BB','BP','LF','PA','PF') and p1.id_person = spl1.id_person and p1.cd_person_sex = 'M') and exists (select 1 from stage_person_link spl2 , person p2 where  STAGE_ONG.ID_STAGE  = spl2.id_stage and spl2.cd_stage_pers_rel_int in ('BF','LM','AB','BM','BB','BP','LF','PA','PF') and p2.id_person = spl2.id_person and p2.cd_person_sex = 'F'))) then 'N/A'  end)) &genmissing
+STAGE_ONG.NM_STAGE &Master_Query_STAGE_ONG.NM_STAGE
+UNIT_STAGE.NBR_UNIT &Master_Query_UNIT_STAGE.NBR_UNIT
+PERSON_SUP.NM_PERSON_FULL &supervisor
+('(' || Decode( CCOUNT_SUPERVISOR.DECODE, '-None-','-Multi-County-', CCOUNT_SUPERVISOR.DECODE  ) || ')') &county_supervisor
+CCOUNT_SUPERVISOR.DECODE &Master_Query_CCOUNT_SUPERVISOR.DECODE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+STAGE_ONG.CD_STAGE_REGION &Master_Query_STAGE_ONG.CD_STAGE_REGION () On-Break Set=1 Level=1 Save=$prev_stage_region Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc101 After=Master_QueryCD_STAGE_REGION_AfterProc101
+CCOUNT_STAGE.DECODE &county_decode () On-Break Set=1 Level=2 Save=$prev_stage_cnty Print=Never Before=Master_QueryDECODE_BeforeProc102 After=Master_QueryDECODE_AfterProc102
+UNIT_STAGE.ID_UNIT &Master_Query_UNIT_STAGE.ID_UNIT () On-Break Set=1 Level=3 Print=Never Before=Master_QueryID_UNIT_BeforeProc103 After=Master_QueryID_UNIT_AfterProc103
+PERSON_CM.NM_PERSON_FULL &casemanagerPERSONNM (16,1,21) On-Break Set=1 Level=4 After=Master_QueryNM_PERSON_FULL_AfterProc104
+STAGE_ONG.ID_CASE &Master_Query_STAGE_ONG.ID_CASE (16,125) On-Break Set=1 Level=5 Edit 99999999999na
+PERSON_CHILD.ID_PERSON &ChildPerson (16,251) On-Break Set=1 Level=6 After=Master_QueryID_PERSON_AfterProc106 Edit 9999999999999999na Foreground=(255,255,255)
+PERSON_CHILD.NM_PERSON_FULL &ChildName (16,191,25) On-Break Set=1 Level=7
+ Print &missingorlivParent (16,334,20) On-Break Set=1 Level=8
+ Print &missrelation (16,491,20) On-Break Set=1 Level=9
+ Print &genmissing (16,452,5) On-Break Set=1 Level=10
+STAGE_ONG.DT_STAGE_START &Master_Query_STAGE_ONG.DT_STAGE_START (16,608) Edit MM/DD/YYYY
+ Print &stageclosed (16,674,4)
+ Add 1 To #1ROW_COUNT
+ Next-Listing  Need=16
+From  PERSON_ENC PERSON_CHILD, PERSON_ENC PERSON_PARENT
+,      STAGE STAGE_ONG, STAGE_PERSON_LINK STAGE_PERSON_LINK_PARENT, STAGE_PERSON_LINK STAGE_PERSON_LINK_CHILD
+,      CCOUNT CCOUNT_STAGE, UNIT UNIT_STAGE, PERSON_ENC PERSON_SUP
+,      PERSON_ENC PERSON_CM, CRELVICT CRELVICT_RelParent, STAGE_PERSON_LINK STAGE_PERSON_LINK_CM
+,      CCOUNT CCOUNT_SUPERVISOR
+      Where PERSON_CHILD.ID_PERSON = STAGE_PERSON_LINK_CHILD.ID_PERSON
+            And PERSON_PARENT.ID_PERSON = STAGE_PERSON_LINK_PARENT.ID_PERSON
+            And STAGE_ONG.CD_STAGE_CNTY = CCOUNT_STAGE.CODE
+            And STAGE_ONG.ID_UNIT = UNIT_STAGE.ID_UNIT
+            And UNIT_STAGE.ID_PERSON = PERSON_SUP.ID_PERSON
+            And STAGE_ONG.ID_STAGE = STAGE_PERSON_LINK_PARENT.ID_STAGE
+            And STAGE_ONG.ID_STAGE = STAGE_PERSON_LINK_CHILD.ID_STAGE
+            And STAGE_PERSON_LINK_PARENT.CD_STAGE_PERS_REL_INT = CRELVICT_RelParent.CODE(+)
+            And STAGE_PERSON_LINK_CM.ID_PERSON = PERSON_CM.ID_PERSON
+            And STAGE_ONG.ID_STAGE = STAGE_PERSON_LINK_CM.ID_STAGE
+            And UNIT_STAGE.CD_COUNTY = CCOUNT_SUPERVISOR.CODE
+ And STAGE_ONG.CD_STAGE IN ('SUB','ADO')
+ And add_months( PERSON_CHILD.DT_PERSON_BIRTH , 12*18) >=  to_date($dt_report, 'mm/yyyy')
+ And STAGE_PERSON_LINK_CHILD.CD_STAGE_PERS_ROLE = 'PC'
+ And [$where_clause_region_county]
+ And (STAGE_PERSON_LINK_PARENT.ID_PERSON NOT IN (SELECT  PPT_PARTICIPANT_PARENT.ID_PERSON  FROM  PPT_PARTICIPANT PPT_PARTICIPANT_PARENT,  EVENT
+     EVENT_PPT,  PPT PPT_PARENT,  STAGE STAGE_PPT WHERE PPT_PARTICIPANT_PARENT.ID_EVENT = EVENT_PPT.ID_EVENT
+  AND  EVENT_PPT.ID_EVENT =
+     PPT_PARENT.ID_PPT_EVENT
+  AND  EVENT_PPT.ID_EVENT_STAGE = STAGE_PPT.ID_STAGE
+ AND  PPT_PARENT.DT_PPT_DATE < last_day(to_date($dt_report
+    , 'mm/yyyy'))+1 AND PPT_PARTICIPANT_PARENT.DT_PPT_PART < last_day(to_date($dt_report , 'mm/yyyy'))+1 AND  PPT_PARENT.DT_PPT_DATE >= add_months
+    (to_date($dt_report,'mm/yyyy'),-5) AND  STAGE_PPT.CD_STAGE  IN ('SUB','ADO','FSU') AND  EVENT_PPT.ID_CASE = STAGE_ONG.ID_CASE AND  PPT_PARTICIPANT_PARENT.ID_PERSON
+     = STAGE_PERSON_LINK_PARENT.ID_PERSON)
+ And STAGE_PERSON_LINK_PARENT.ID_PERSON NOT IN (SELECT  EVENT_PERSON_LINK_CONTACT.ID_PERSON  FROM  CONTACT CONTACT_PARENT,  EVENT_PERSON_LINK
+     EVENT_PERSON_LINK_CONTACT,  STAGE STAGE_SUBFSU WHERE CONTACT_PARENT.ID_EVENT = EVENT_PERSON_LINK_CONTACT.ID_EVENT
+  AND  CONTACT_PARENT.ID_CONTACT_STAGE
+     = STAGE_SUBFSU.ID_STAGE
+ AND  CONTACT_PARENT.DT_CONTACT_OCCURRED < last_day(to_date($dt_report, 'mm/yyyy')) +1 AND  CONTACT_PARENT.DT_CONTACT_OCCURRED
+     >= add_months( to_date($dt_report,'mm/yyyy'), -5) AND  (CONTACT_PARENT.IND_CONTACT_ATTEMPTED is null or CONTACT_PARENT.IND_CONTACT_ATTEMPTED
+      <> 'Y') AND  STAGE_SUBFSU.CD_STAGE  IN ('SUB','ADO','FSU') AND  (EXISTS (SELECT 1 FROM CONTACT_CBX CBX_PUR WHERE CBX_PUR.ID_CONTACT_EVENT
+    =CONTACT_PARENT.ID_EVENT AND CBX_PUR.CD_CBX_CODE_TYPE = 'CCNTPURP' AND CBX_PUR.CD_CONTACT_CBX IN ('CPL','JCPL') )   ) AND  CONTACT_PARENT.ID_CASE
+     = STAGE_ONG.ID_CASE))
+ And (exists (select distinct 1 from fccp_family ff, event e, event_person_link epl where ff.id_case =  STAGE_ONG.id_case and ff.id_event 
+    =  e.id_event  and ff.id_event=epl.id_event and epl.id_person = STAGE_PERSON_LINK_CHILD.id_person and e.cd_event_status in ('APRV') and
+     ff.id_event = (select max(fccpfamily2.id_event) from event event2,fccp_family fccpfamily2, event_person_link epl2 where  event2.cd_event_status
+     in ('APRV')  and event2.id_event= fccpfamily2.id_event and fccpfamily2.id_event=epl2.id_event and fccpfamily2.id_case = e.id_case and
+     epl2.id_person = epl.id_person and fccpfamily2.dt_curr_rev = (select max(fccpfamily3.dt_curr_rev) from event e3, fccp_family fccpfamily3
+    , event_person_link epl3 where e3.id_event = fccpfamily3.id_event and e3.id_event = epl3.id_event  and epl3.id_person = epl2.id_person
+     and e3.id_case = event2.id_case and e3.cd_event_status = 'APRV' and fccpfamily3.dt_curr_rev < last_day(to_date($dt_report,'mm/yyyy'))
+    +1 )  ) and ff.cd_prim_perm_plan = 'RUI'   )  )
+ And (PERSON_PARENT.DT_PERSON_DEATH is null or PERSON_PARENT.DT_PERSON_DEATH >=  last_day(to_date($dt_report,'mm/yyyy')))
+ And (STAGE_ONG.DT_STAGE_CLOSE is null or  STAGE_ONG.DT_STAGE_CLOSE >= to_date($dt_report,'mm/yyyy'))
+ And STAGE_PERSON_LINK_CM.CD_STAGE_PERS_ROLE in ('PR','HP')
+ And PERSON_CHILD.DT_PERSON_BIRTH < last_day(to_date($dt_report, 'mm/yyyy')) + 1
+ And (PERSON_CHILD.DT_PERSON_DEATH is null or PERSON_CHILD.DT_PERSON_DEATH >= last_day(to_date($dt_report,'mm/yyyy')))
+ And (exists (select lv2.cd_legal_stat_status from legal_status_view lv2 where lv2.IN_DFCS_CUSTODY  = 'Y' and  lv2.DT_LEGAL_STAT_END >= to_date
+    ($dt_report,'mm/yyyy') and lv2.dt_legal_stat_status_dt < last_day(to_date($dt_report,'mm/yyyy')) + 1 and lv2.id_person = STAGE_PERSON_LINK_CHILD.id_person
+     and lv2.id_case =  STAGE_PERSON_LINK_CHILD.id_case ))
+ And STAGE_PERSON_LINK_CHILD.CD_STAGE_PERS_TYPE = 'PRN'
+ And STAGE_ONG.ID_STAGE =(SELECT MAX (stage2.ID_STAGE) FROM STAGE_PERSON_LINK stage_person_link2, STAGE stage2 WHERE stage_person_link2.CD_STAGE_PERS_ROLE
+     = 'PC' AND stage_person_link2.id_stage = stage2.id_stage AND stage2.CD_STAGE IN ('SUB','ADO') AND stage_person_link_child.ID_CASE = stage_person_link2.ID_CASE
+     AND stage_person_link_child.ID_PERSON = stage_person_link2.ID_PERSON AND (stage2.dt_stage_start < LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))
+    + 1)  and (stage2.dt_stage_close is null or stage2.dt_stage_close >= to_date($dt_report,'mm/yyyy')))
+ And STAGE_ONG.DT_STAGE_START< LAST_DAY(TO_DATE($dt_report,'mm/yyyy'))+ 1
+ And ((case when exists (select 1 from stage_person_link spl1 , person p1 where  STAGE_ONG.ID_STAGE  = spl1.id_stage and spl1.cd_stage_pers_rel_int
+     in ('BF','LM','AB','BM','BB','BP','LF','PA','PF') and p1.id_person = spl1.id_person and p1.cd_person_sex in  ('M','F') and spl1.id_person
+     = STAGE_PERSON_LINK_PARENT.ID_PERSON) then  PERSON_PARENT.NM_PERSON_FULL  when (not (exists (select 1 from stage_person_link spl1 , person
+     p1 where  STAGE_ONG.ID_STAGE  = spl1.id_stage and spl1.cd_stage_pers_rel_int in ('BF','LM','AB','BM','BB','BP','LF','PA','PF') and p1.id_person
+     = spl1.id_person and p1.cd_person_sex = 'M') and exists (select 1 from stage_person_link spl2 , person p2 where  STAGE_ONG.ID_STAGE 
+     = spl2.id_stage and spl2.cd_stage_pers_rel_int in ('BF','LM','AB','BM','BB','BP','LF','PA','PF') and p2.id_person = spl2.id_person and
+     p2.cd_person_sex = 'F'))) then 'Missing Parent(s)'  end)) IS NOT NULL 
+Order By STAGE_ONG.CD_STAGE_REGION
+,      CCOUNT_STAGE.DECODE
+,      UNIT_STAGE.NBR_UNIT
+,      UNIT_STAGE.ID_UNIT
+,      PERSON_CM.NM_PERSON_FULL
+,      STAGE_ONG.ID_CASE
+,      PERSON_CHILD.NM_PERSON_FULL
+End-Select
+ Next-Listing
+ Next-Listing  Need=23
+ If #1ROW_COUNT > 0
+ Graphic (4,1,715) Horz-Line 20 
+ Position (6,1)
+   Let $report_total_label='Report Total of Children without Case Planning Involvement:'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $report_total_label (23,1,60) Bold 
+   Let #statesum=#statesum
+ Print #statesum (23,328) Edit 99999999 Bold 
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+Begin-Procedure Get_Region_County
+! -----------------------------
+! Get region optional input
+Input $_cd_stage_region 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_cd_stage_region) or IsBlank($_cd_stage_region) or ($_cd_stage_region='0')
+  Let $where_clause_region = 'CD_STAGE_REGION IS NOT NULL'
+  Let $regionSelected = 'N'
+Else 
+  Let $where_clause_region = 'CD_STAGE_REGION = ' || '''' || $_cd_stage_region || ''''
+  Let $regionSelected = 'Y'
+End-If
+
+! Get county optional input
+Input $_cd_stage_county 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+If IsNull($_cd_stage_county) or IsBlank($_cd_stage_county) or ($_cd_stage_county='0')
+  Let $where_clause_county = 'CD_STAGE_CNTY IS NOT NULL'
+  Let $countySelected = 'N'
+Else 
+  Let $where_clause_county = 'CD_STAGE_CNTY = ' || '''' || $_cd_stage_county || ''''
+  Let $countySelected = 'Y'
+End-If
+
+! Get unit optional input
+Input $_nbr_unit 'Enter a value for NBR_UNIT' MaxLen=2  Type=Char
+If IsNull($_nbr_unit) or IsBlank($_nbr_unit) or ($_nbr_unit='0')
+  Let $where_clause_unit = 'UNIT_STAGE.NBR_UNIT IS NOT NULL'
+  Let $unitSelected = 'N'
+Else 
+  Let $where_clause_unit = 'UNIT_STAGE.NBR_UNIT = ' || '''' || $_nbr_unit || ''''
+  Let $unitSelected = 'Y'
+End-If
+
+! Create where clause for region, county and unit input
+Let $where_clause_region_county = $where_clause_region || ' and ' || $where_clause_county || ' and ' || $where_clause_unit
+!
+Do Make_Header
+End-Procedure
+
+!
+Begin-Procedure Make_Header
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_cd_stage_county || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_cd_stage_county = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_cd_stage_region
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_cd_stage_region
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+Begin-Procedure Get_MonthYear
+Input $dt_report 'Enter a value for Month and Year(MM/YYYY)' MaxLen=7 Type=Date Format='MM/YYYY'
+End-Procedure
+
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc101
+If $regionSelected = 'N' and $countySelected = 'N'
+ Next-Listing  Need=21
+ Graphic (3,1,717) Horz-Line 20 
+ Position (5,1)
+   Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region:'  (21,1) Bold 
+                     Print &Master_Query_STAGE_ONG.CD_STAGE_REGION (21,45,4) Bold 
+   Position (+12,)
+ Next-Listing  Need=16
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc101
+If $regionSelected = 'N' and $countySelected = 'N'
+ Next-Listing  Need=24
+ Graphic (4,1,717) Horz-Line 20 
+ Position (6,1)
+  Let $region_total_label='Region ' ||  $prev_stage_region || ' Total of Children without Case Planning Involvement:'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $region_total_label (24,1,61) Bold 
+  Let #regsum=#regsum
+ Print #regsum (24,328) Edit 99999999 Bold 
+   Position (+12,)
+ Next-Listing  Need=16
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+ Move 0 to #regsum
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_BeforeProc102
+If $countySelected = 'N'
+ Next-Listing  Need=19
+ Graphic (3,1,713) Horz-Line 15 
+ Position (4,1)
+                       Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &county_decode (19,1,62) Bold 
+   Position (+12,)
+ Next-Listing  Need=16
+End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryDECODE_AfterProc102
+If $countySelected = 'N'
+ Next-Listing  Need=22
+ Graphic (5,1,717) Horz-Line 15 
+ Position (6,1)
+  Let $county_total_label=$prev_stage_cnty || ' Total of Children without Case Planning Involvement:'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $county_total_label (22,2,62) Bold 
+  Let #cntysum=#cntysum
+ Print #cntysum (22,328) Edit 99999999 Bold 
+   Position (+12,)
+ Next-Listing  Need=16
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-If
+ Move 0 to #cntysum
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_BeforeProc103
+ Move 0 to #unitsum
+ Next-Listing  Need=18
+ Graphic (1,1,714) Horz-Line 10 
+ Position (2,1)
+ Graphic (1,1,714) Horz-Line 10 
+ Position (2,1)
+       If &county_decode = &Master_Query_CCOUNT_SUPERVISOR.DECODE
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &county_supervisor (18,308,23) Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit#:'  (18,1) Bold 
+ Print 'Supervisor:'  (18,65) Bold 
+              Print &Master_Query_UNIT_STAGE.ID_UNIT (18,449) Edit 9999999999999999na Foreground=(255,255,255)
+  Print &Master_Query_UNIT_STAGE.NBR_UNIT (18,35,4) Bold 
+  Print &supervisor (18,130,30) Bold 
+   Position (+12,)
+ Next-Listing  Need=16
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_UNIT_AfterProc103
+ Add #childcnt to #unitsum
+ Add #childcnt to #cntysum
+ Add #childcnt to #regsum
+ Add #childcnt to #statesum
+ Next-Listing  Need=18
+ Graphic (3,1,716) Horz-Line 5 
+ Position (3,1)
+  Let $unit_total_label='Unit Total of Children without Case Planning Involvement:'
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $unit_total_label (18,3,61) Bold 
+  Let #unitsum=#unitsum
+ Print #unitsum (17,328) Edit 99999999 Bold 
+   Position (+12,)
+ Next-Listing  Need=16
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Move 0 to #childcnt
+ Move 0 to #unitsum
+End-Procedure
+
+Begin-Procedure Master_QueryNM_PERSON_FULL_AfterProc104
+ Next-Listing  Need=3
+ Graphic (4,1,715) Horz-Line 5 
+ Position (4,1)
+   Position (+0,)
+ Next-Listing  Need=16
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_PERSON_AfterProc106
+ Let #childcnt = #childcnt + 1
+ Next-Listing  Need=15
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'rrrrrrrrrrr'  (15,5) Foreground=(255,255,255)
+   Position (+12,)
+ Next-Listing  Need=16
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=gender_lookup
+      Table=CSEX
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+   Load-Lookup
+      Name=prn_rel_lookup
+      Table=CRELVICT
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SI
+      Quiet
+
+End-Procedure
+
+Begin-Heading 36 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (16,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Cases Without Parent Involvement in Case Planning' (41,181,0) Bold 
+ Print-Image (5,4)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Print 'Foster Care' (59,317,11) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (16,647) edit 'MM/DD/YYYY'
+ Print 'Produced On: ' (16,578,0)
+ Let $region_county_header=$region_county_header
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $region_county_header (96,313,13) Bold 
+ Let $region_header=$region_header
+ Print $region_header (116,328,9) Bold 
+ If $unitSelected = 'N'
+    ! do nothing
+ Else
+ Let $nbr_unit_header='Unit: ' || $_nbr_unit
+ Print $nbr_unit_header (136,1,10) Bold 
+ End-If
+ Let $rptMonth=$dt_report
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $rptMonth (76,335,7) Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Case Manager' (160,1,0) Underline  Bold 
+ Print 'Relationship' (160,491,0) Underline  Bold 
+ Print 'Parent' (160,334,6) Underline  Bold 
+ Print 'Child Name' (160,191,0) Underline  Bold 
+ Print 'Stage Start Date' (160,608,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on= 
+ Print 'Stage Closed?' (160,674,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on= 
+ Print 'Gender' (160,452,0) Underline  Bold 
+ Print 'Case ID' (160,149,7) Underline  Bold 
+ Else   ! put a non combined page header
+ Print 'Case Manager' (13,1,0) Underline  Bold 
+ Print 'Relationship' (13,491,0) Underline  Bold 
+ Print 'Parent' (13,334,6) Underline  Bold 
+ Print 'Child Name' (13,191,0) Underline  Bold 
+ Print 'Stage Start Date' (13,608,10) Underline  Bold  Wrap 10 2 line-height=12 Keep-Top on= 
+ Print 'Stage Closed?' (13,674,7) Underline  Bold  Wrap 7 2 line-height=12 Keep-Top on= 
+ Print 'Gender' (13,452,0) Underline  Bold 
+ Print 'Case ID' (13,149,7) Underline  Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (16,662) '' ' of '
+ Last-Page (16,691) 
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

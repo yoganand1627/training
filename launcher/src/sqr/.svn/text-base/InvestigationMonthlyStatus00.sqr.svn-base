@@ -1,0 +1,806 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Nov 12 12:49:39 2008 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\INV Status\InvestigationMonthlyStatus00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+ Declare-Variable
+  Date $curr_date
+  Date $end_date
+ End-Declare
+
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+Begin-Select Loops=1
+DECODE &Init_Query_Init_Query_DECODE
+NM_PERSON_FULL &Init_Query_Init_Query_NM_PERSON_FULL
+NBR_UNIT &Init_Query_Init_Query_NBR_UNIT
+CD_COUNTY &Init_Query_Init_Query_CD_COUNTY
+From  CODES_TABLES, PERSON
+,      UNIT, UNIT_EMP_LINK
+      Where CODES_TABLES.CODE = UNIT.CD_COUNTY
+            And UNIT.ID_UNIT = UNIT_EMP_LINK.ID_UNIT
+            And UNIT_EMP_LINK.ID_PERSON = PERSON.ID_PERSON
+ And CODE_TYPE = 'CCOUNT'
+ And CD_UNIT_MEMBER_IN_OUT = 'IN'
+ And [$where_clause5301]
+End-Select
+ Alter-Report Heading-Size=144    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'This report displays all activities of a case manager, as primary or secondary, within the reporting month. This report can be used in conjunction with the Caseload Listing report to obtain accurate information about the case manger''s workload status. Note that this report includes closed investigations while Caseload Listing only displays active ones.' (30,5,120) Wrap 120 3 line-height=12 Keep-Top
+ Print 'Pending at End of the Month:' (103,5,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'Received in the Month:' (132,5,0) Bold 
+ Print 'Closed in the Month:' (233,5,0) Bold 
+ Print 'Led to Foster Care stages:' (413,5,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'The number of investigations received in the reporting month, grouped by primary and secondary assignment. This number includes both new and existing investigations transferred from another case manager. The investigations are further categorized by the allegation type and response type. One investigation can have multiple allegations in different types therefore the sum of investigation by allegation type can be greater than the number of investigations received in the month. However, investigation by response time is mutually exclusive; the sum of investigation by response time is equal to the number of investigations received in the month.' (132,124,90) Wrap 90 8 line-height=12 Keep-Top
+ Print 'The number of investigation active as of the last day of the reporting month, grouped by primary and secondary assignement.' (103,124,90) Wrap 90 2 line-height=12 Keep-Top
+ Print 'Pending at Beginning of the Month:' (75,5,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'The number of investigation active as of the first day of the reporting month, grouped by primary and secondary assignement.' (75,124,90) Wrap 90 2 line-height=12 Keep-Top
+ Print 'Placed in Foster Care:' (441,5,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'The number of foster care child stages opened in the reporting month. The associated investigation can be a new investigation in the reporting month or an existing one and its status can be open or closed.' (441,124,90) Wrap 90 3 line-height=12 Keep-Top
+ Print 'The number of investigations closed in the month. This count is re-stated with maltreatment finding and 45-day completion measure breakdown. The sum of investigation grouped by maltreatment finding equals the number of investigations closed in the month. The sum of investigation grouped by 45-day completion measure also equals the number of investigations closed in the month. Closed in the month that led to the opening of Ongoing stage is a stand-alone count and should be less than or equal to the number of investigations closed in the month.' (233,124,90) Wrap 90 7 line-height=12 Keep-Top
+ Print 'The number of investigations closed in the month that led to the opening of foster care stage(s).' (413,124,90) Wrap 90 3 line-height=12 Keep-Top
+ Print 'Assigned to another case manager:' (385,5,20) Bold  Wrap 20 2 line-height=12 Keep-Top
+ Print 'The response time is calculated as the date/time that all alleged victims have been contacted, in person, by the case manager. In order for a response time to be met, the last of the initial contacts with the alleged victims must be within the 24hr or 5-day timeframe as of the intake date. Also note that 24-hr is calculated as 24 hours while 5-day is calculated as 5 full weekdays.' (322,124,90) Wrap 90 7 line-height=12 Keep-Top
+ Print 'Repsonse Time:' (322,5,0) Bold 
+ Print 'The number of investigations transferred out of the reporting case manager''s workload during the reporting month.' (385,124,90) Wrap 90 2 line-height=12 Keep-Top
+ Print 'Key' (491,1,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'PR - Primary' (525,1,0)
+ Print 'SR - Secondary' (540,1,0)
+ Print 'Assignment Type' (509,1,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (704,491) '' ' of '
+ Last-Page (704,513) 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+Do Get_PersonId_Input
+
+ Position (1,1)
+ 
+ Do Get_Date_Input
+ Do Init_Variable
+ Do Get_Pending_Counts
+ Do Get_Received_Counts
+ Do Get_Closed_Counts
+ Do Get_Children_Counts
+ Do Master_Query
+End-Program
+
+Begin-Procedure Get_Date_Input
+! -----------------------------
+Let $today = datenow()
+! -----------------------------
+Input $dt_report 'Enter month and year (MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+End-Procedure
+
+Begin-Procedure Get_PersonId_Input
+! -----------------------------
+Input $_I5301_ID_PERSON 'Enter a value for ID_PERSON' MaxLen=16  Type=Number
+If IsNull($_I5301_ID_PERSON) or IsBlank($_I5301_ID_PERSON)
+  Show 'Input Error (7734):  No value was entered.  A value is required.'
+  Let #return-status = 7734
+  Stop
+End-If
+Let $brb_tmp = 'PERSON.ID_PERSON'
+Let $where_clause5301 = $brb_tmp  || ' = ' || $_I5301_ID_PERSON
+End-Procedure
+
+Begin-Procedure Init_Variable
+  ! Assign county code to program variable to be use thru out program
+  Let $county_code = '0'
+  If not IsNull(&Init_Query_Init_Query_CD_COUNTY) and not IsBlank(&Init_Query_Init_Query_CD_COUNTY) 
+    Move &Init_Query_Init_Query_CD_COUNTY to $county_code
+  End-If
+End-Procedure
+
+Begin-Procedure Get_Num_Of_Weekdays($start_date, $end_date, :#days_cnt)
+Let #nbr_bus_days= 0
+Move $start_date to $start_date_formatted 'mm/dd/yyyy'
+Move $end_date to $end_date_formatted 'mm/dd/yyyy'
+Let $_curr_date = strtodate($start_date_formatted, 'mm/dd/yyyy')
+Let $_end_date = strtodate($end_date_formatted, 'mm/dd/yyyy')
+While $_curr_date <= $_end_date
+ Let $day = datetostr($_curr_date, 'DY')
+ Evaluate $day
+      When = 'MON'
+      When = 'TUE'
+      When = 'WED'
+      When = 'THU'
+      When = 'FRI'
+        Add 1 to #nbr_bus_days
+      break
+      When-other
+      break
+
+ End-Evaluate
+Let $_curr_date = dateadd($_curr_date, 'day', 1)
+End-While
+Move #nbr_bus_days to #days_cnt
+End-Procedure
+
+Begin-Procedure Get_Pending_Counts
+! Number of investigations pending at the beginning of month
+Begin-Select
+COUNT (distinct stage.ID_STAGE) &pend_first_cnt   
+FROM  stage, stage_assign_history
+WHERE stage.CD_STAGE IN ('INV')
+  !AND stage.DT_STAGE_START <= TO_DATE($dt_report, 'MM/YYYY')
+  AND (stage.DT_STAGE_CLOSE >=TO_DATE($dt_report, 'MM/YYYY') OR stage.DT_STAGE_CLOSE IS NULL)  ! in case when stage already closed before the 1st but date unassigned not updated and carries over to this month; therfore should not be counted as pending
+  AND stage_assign_history.ID_STAGE = stage.id_stage    
+  AND stage_assign_history.ID_PERSON = [$_I5301_ID_PERSON]
+  AND stage_assign_history.CD_ROLE in ('PR')
+  AND stage_assign_history.DT_ASSGND < TO_DATE($dt_report, 'MM/YYYY')
+  AND ( stage_assign_history.DT_UNASSGND is null OR stage_assign_history.DT_UNASSGND >= TO_DATE($dt_report, 'MM/YYYY') )
+End-Select  
+
+! Number of investigations pending at the beginning of month as secondary assignment
+Begin-Select
+COUNT (distinct stage.ID_STAGE) &pend_first_se_cnt   
+FROM  stage, stage_assign_history
+WHERE stage.CD_STAGE IN ('INV')
+  AND (stage.DT_STAGE_CLOSE >=TO_DATE($dt_report, 'MM/YYYY') OR stage.DT_STAGE_CLOSE IS NULL)
+  AND stage_assign_history.ID_STAGE = stage.id_stage    
+  AND stage_assign_history.ID_PERSON = [$_I5301_ID_PERSON]
+  AND stage_assign_history.CD_ROLE in ('SE')
+  AND stage_assign_history.DT_ASSGND < TO_DATE($dt_report, 'MM/YYYY')
+  AND ( stage_assign_history.DT_UNASSGND is null OR stage_assign_history.DT_UNASSGND >= TO_DATE($dt_report, 'MM/YYYY') )
+End-Select 
+
+! Number of investigations pending at the end of month
+Begin-Select
+COUNT (distinct stage.ID_STAGE) &pend_last_cnt   
+FROM  stage, stage_assign_history
+WHERE stage.CD_STAGE IN ('INV')
+  AND stage.DT_STAGE_START < (LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1)
+  AND (stage.DT_STAGE_CLOSE >=(LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1) OR
+   stage.DT_STAGE_CLOSE IS NULL)   
+  AND stage_assign_history.ID_STAGE = stage.id_stage    
+  AND stage_assign_history.ID_PERSON = [$_I5301_ID_PERSON]
+  AND stage_assign_history.CD_ROLE in ('PR')
+  AND stage_assign_history.DT_ASSGND < (LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1)
+  AND ( stage_assign_history.DT_UNASSGND is null OR (stage_assign_history.DT_UNASSGND >= LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1)  )
+End-Select
+
+! Number of investigations pending at the end of month as secondary assignment
+Begin-Select
+COUNT (distinct stage.ID_STAGE) &pend_last_se_cnt   
+FROM  stage, stage_assign_history
+WHERE stage.CD_STAGE IN ('INV')
+  AND stage.DT_STAGE_START < (LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1)
+  AND (stage.DT_STAGE_CLOSE >=(LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1) OR
+   stage.DT_STAGE_CLOSE IS NULL)   
+  AND stage_assign_history.ID_STAGE = stage.id_stage    
+  AND stage_assign_history.ID_PERSON = [$_I5301_ID_PERSON]
+  AND stage_assign_history.CD_ROLE in ('SE')
+  AND stage_assign_history.DT_ASSGND < (LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1)
+  AND ( stage_assign_history.DT_UNASSGND is null OR (stage_assign_history.DT_UNASSGND >= LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1)  )
+End-Select
+End-Procedure
+
+! ***********************************************************************************
+! Get_Received_Counts
+! ***********************************************************************************
+Begin-Procedure Get_Received_Counts
+  Let #emo_cnt = 0
+  Let #phy_cnt = 0
+  Let #sex_cnt = 0
+  Let #neg_cnt = 0
+  Let #24_cnt = 0! Investigation received with 24Hrs response
+  Let #24_NM_cnt = 0! Investigation received with 24Hrd sesponse not mert
+  Let #5d_cnt = 0! Investiaggation reveceived with 5 -day response
+  Let #5d_NM_cnt = 0
+  Let #received_cnt= 0
+  Let #uns_cnt = 0  
+  Let #utd_cnt = 0
+  Let #ong_cnt = 0
+! Count variables for secondary assignment
+  Let #received_se_cnt = 0
+  Let #emo_se_cnt = 0
+  Let #phy_se_cnt = 0
+  Let #sex_se_cnt = 0
+  Let #neg_se_cnt = 0
+
+! Number of investigations received in the month
+Begin-Select
+!COUNT (distinct stage.ID_STAGE) &received_cnt  
+  Add 1 to #received_cnt
+distinct stage.ID_STAGE &received_id_stage
+  Do Get_Allegation_Type_Emotion(&received_id_stage, #emo_cnt) 
+  Do Get_Allegation_Type_Physical(&received_id_stage, #phy_cnt)
+  Do Get_Allegation_Type_Sexual(&received_id_stage, #sex_cnt) 
+  Do Get_Allegation_Type_Neglect(&received_id_stage, #neg_cnt)
+  Do Get_24Hrs_response(&received_id_stage)
+  Do Get_5d_response(&received_id_stage)
+FROM  stage, stage_assign_history
+WHERE stage.CD_STAGE IN ('INV') 
+  AND stage_assign_history.DT_ASSGND >= TO_DATE($dt_report, 'MM/YYYY')
+  AND stage_assign_history.DT_ASSGND < (LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1) 
+  AND stage_assign_history.ID_STAGE = stage.id_stage    
+  AND stage_assign_history.ID_PERSON = [$_I5301_ID_PERSON]
+  AND stage_assign_history.CD_ROLE in ('PR')
+End-Select
+
+! Retrieve secondary assignment for the reporting case manager
+Begin-Select 
+!count (distinct stage.id_stage) &received_se_cnt
+  Add 1 to #received_se_cnt
+distinct stage.id_stage &received_se_id_stage
+  Do Get_Allegation_Type_Emotion(&received_se_id_stage, #emo_se_cnt)
+  Do Get_Allegation_Type_Physical(&received_se_id_stage, #phy_se_cnt)
+  Do Get_Allegation_Type_Sexual(&received_se_id_stage, #sex_se_cnt) 
+  Do Get_Allegation_Type_Neglect(&received_se_id_stage, #neg_se_cnt)
+FROM  stage, stage_assign_history
+WHERE stage.CD_STAGE IN ('INV') 
+  AND stage_assign_history.DT_ASSGND >= TO_DATE($dt_report, 'MM/YYYY')
+  AND stage_assign_history.DT_ASSGND < (LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1) 
+  AND stage_assign_history.ID_STAGE = stage.id_stage    
+  AND stage_assign_history.ID_PERSON = [$_I5301_ID_PERSON]
+  AND stage_assign_history.CD_ROLE in ('SE')
+End-Select
+
+End-Procedure
+
+! ***********************************************************************************
+! Procedures that are called from Get_Received_Counts
+! ***********************************************************************************
+
+Begin-Procedure Get_Allegation_Type_Emotion(#inv_stage_id, :#ret_cnt)
+Begin-Select Distinct 
+ Let #ret_cnt = #ret_cnt + 1
+allegation.id_allegation_stage &allegation_stage_id
+from allegation
+where allegation.id_allegation_stage = #inv_stage_id
+and allegation.cd_alleg_type like 'E%'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_Allegation_Type_Physical(#inv_stage_id, :#ret_cnt)
+Begin-Select Distinct
+ Let #ret_cnt = #ret_cnt + 1
+allegation.id_allegation_stage &allegation_stage_id
+from allegation
+where allegation.id_allegation_stage = #inv_stage_id
+and allegation.cd_alleg_type like 'P%'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_Allegation_Type_Sexual(#inv_stage_id, :#ret_cnt)
+Begin-Select Distinct
+ Let #ret_cnt = #ret_cnt + 1
+allegation.id_allegation_stage &allegation_stage_id
+from allegation
+where allegation.id_allegation_stage = #inv_stage_id
+and allegation.cd_alleg_type like 'S%'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_Allegation_Type_Neglect(#inv_stage_id, :#ret_cnt)
+Begin-Select Distinct
+ Let #ret_cnt = #ret_cnt + 1
+allegation.id_allegation_stage &allegation_stage_id
+from allegation
+where allegation.id_allegation_stage = #inv_stage_id
+and allegation.cd_alleg_type like 'N%'
+End-Select 
+End-Procedure
+
+!Begin-Procedure Get_24Hrs_Response(#inv_stage_id)
+!Begin-Select Distinct
+! Let #_24_cnt = #_24_cnt + 1
+!stage_link.id_stage &inv24_stage_id
+! !Do Get_24Hrs_Response_NM(&inv24_stage_id)
+! Do Calc_Response_Effort_24(&inv24_stage_id)
+!from stage_link, stage intake_stage
+!where stage_link.id_stage = #inv_stage_id and stage_link.id_prior_stage = intake_stage.id_stage
+!and intake_stage.cd_stage_curr_priority in ('IM', '24')
+!End-Select 
+!End-Procedure
+
+!Begin-Procedure Get_5d_Response(#inv_stage_id)
+!Begin-Select Distinct
+! Let #_5d_cnt = #_5d_cnt + 1
+!stage_link.id_stage &inv5d_stage_id
+! !Do Get_5d_Response_NM(&inv5d_stage_id)
+! Do Calc_Response_Effort_5D(&inv5d_stage_id)
+!from stage_link, stage intake_stage
+!where stage_link.id_stage = #inv_stage_id and stage_link.id_prior_stage = intake_stage.id_stage
+!and intake_stage.cd_stage_curr_priority = '5D'
+!End-Select 
+!End-Procedure
+!
+! Query cps table so we can get INV progressed from either INT or DIV, and be able to anticipate other path in the future
+Begin-Procedure Get_24Hrs_Response(#inv_stage_id)
+Begin-Select Distinct
+ Let #_24_cnt = #_24_cnt + 1
+cps_invst_detail.id_cps_invst_stage       &inv24_stage_id
+cps_invst_detail.dt_cps_invst_dtl_intake  &inv24_intake_date
+ If (0=isnull(&inv24_intake_date))
+   Do Calc_Response_Effort_24(&inv24_stage_id, &inv24_intake_date)
+ End-If
+from cps_invst_detail, stage inv_stage
+where cps_invst_detail.id_cps_invst_stage = #inv_stage_id and cps_invst_detail.id_cps_invst_stage = inv_stage.id_stage
+and inv_stage.cd_stage_curr_priority in ('IM', '24')
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_5d_Response(#inv_stage_id)
+Begin-Select Distinct
+ Let #_5d_cnt = #_5d_cnt + 1
+cps_invst_detail.id_cps_invst_stage &inv5d_stage_id
+cps_invst_detail.dt_cps_invst_dtl_intake  &inv5d_intake_date
+  If (0=isnull(&inv5d_intake_date))
+    Do Calc_Response_Effort_5D(&inv5d_stage_id, &inv5d_intake_date)
+  End-If
+from cps_invst_detail, stage inv_stage
+where cps_invst_detail.id_cps_invst_stage = #inv_stage_id and cps_invst_detail.id_cps_invst_stage = inv_stage.id_stage
+and inv_stage.cd_stage_curr_priority = '5D'
+End-Select 
+End-Procedure
+
+Begin-Procedure Calc_Response_Effort_24(#inv_stage_id, $dt_intake_start)
+! Get latest dates from all children's first contact date. If a child does not have contact made, max date is given because it means not met 
+Begin-Select
+max(victim_contacts.vic_contact_date) &dt_max_contact_date_24
+from (
+    select stage_person_link.ID_STAGE, stage_person_link.ID_PERSON, 
+    NVL((select min(contact.DT_CONTACT_OCCURRED)
+    from  event_person_link, contact
+    where contact.cd_contact_method in ('ATF', 'UTF') 
+    and event_person_link.ID_EVENT = contact.ID_EVENT
+    and event_person_link.ID_PERSON = stage_person_link.ID_PERSON
+    and contact.ID_CASE = stage_person_link.ID_CASE
+    and (contact.IND_CONTACT_ATTEMPTED is null or contact.IND_CONTACT_ATTEMPTED <> 'Y')
+    ), TO_DATE('12/31/4712 00:00:00', 'MM/DD/YYYY HH24:MI:SS')) vic_contact_date 
+    from stage_person_link, stage
+    where stage_person_link.ID_STAGE = #inv_stage_id and 
+    !stage_person_link.CD_STAGE_PERS_ROLE IN ('VC', 'DB', 'DV', 'VP')
+    exists (select * 
+            from allegation
+            where allegation.ID_ALLEGATION_STAGE = stage_person_link.ID_STAGE 
+            and allegation.ID_VICTIM = stage_person_link.ID_PERSON 
+            )
+    and stage_person_link.ID_STAGE = stage.ID_STAGE
+    and stage.CD_STAGE = 'INV'
+    group by stage_person_link.ID_CASE, stage_person_link.ID_PERSON
+    ) victim_contacts
+End-Select
+! Get the intake start date (same as incoming_detail.dt_incoming_call)
+!Begin-Select
+!dt_stage_start &dt_intake_start
+!from stage int_stage, stage_link sl
+!where sl.id_stage = #inv_stage_id and sl.id_prior_stage = int_stage.id_stage 
+!and int_stage.cd_stage = 'INT'
+!End-Select
+! Calculate response: met, not met, in-progress
+Let #diff = 0
+Move $dt_intake_start to $dt_intake_start_formatted 'mm/dd/yyyy hh24:mi:ss'
+If ( (&dt_max_contact_date_24 = strtodate('12/31/4712 00:00:00', 'mm/dd/yyyy hh24:mi:ss')) )
+ Let #diff = datediff(datenow(), strtodate($dt_intake_start_formatted, 'mm/dd/yyyy hh24:mi:ss'), 'hour')
+ If ( #diff > 24 )
+   Add 1 to #_24_NM_cnt
+ End-If
+Else
+ Let #diff = datediff(&dt_max_contact_date_24, strtodate($dt_intake_start_formatted, 'mm/dd/yyyy hh24:mi:ss'), 'hour')
+ If ( #diff > 24 )
+   Add 1 to #_24_NM_cnt
+ End-If
+End-If 
+End-Procedure
+
+Begin-Procedure Calc_Response_Effort_5D(#inv_stage_id, $dt_intake_start)
+! Get latest dates from all children's first contact date
+Begin-Select
+max(victim_contacts.vic_contact_date) &dt_max_contact_date_5d
+from (
+    select stage_person_link.ID_STAGE, stage_person_link.ID_PERSON, 
+    NVL((select min(contact.DT_CONTACT_OCCURRED)
+    from  event_person_link, contact
+    where contact.cd_contact_method in ('ATF', 'UTF')
+    and event_person_link.ID_EVENT = contact.ID_EVENT
+    and event_person_link.ID_PERSON = stage_person_link.ID_PERSON
+    and contact.ID_CASE = stage_person_link.ID_CASE
+    and (contact.IND_CONTACT_ATTEMPTED is null or contact.IND_CONTACT_ATTEMPTED <> 'Y')
+    ), TO_DATE('12/31/4712 00:00:00', 'MM/DD/YYYY HH24:MI:SS')) vic_contact_date 
+    from stage_person_link, stage
+    where stage_person_link.ID_STAGE = #inv_stage_id and 
+    !stage_person_link.CD_STAGE_PERS_ROLE IN ('VC', 'DB', 'DV', 'VP')
+    exists (select * 
+            from allegation
+            where allegation.ID_ALLEGATION_STAGE = stage_person_link.ID_STAGE 
+            and allegation.ID_VICTIM = stage_person_link.ID_PERSON 
+            )
+    and stage_person_link.ID_STAGE = stage.ID_STAGE
+    and stage.CD_STAGE = 'INV'
+    group by stage_person_link.ID_CASE, stage_person_link.ID_PERSON
+    ) victim_contacts
+End-Select
+! Get the intake start date (same as incoming_detail.dt_incoming_call)
+!Begin-Select
+!dt_stage_start &dt_intake_start
+!from stage int_stage, stage_link sl
+!where sl.id_stage = #inv_stage_id and sl.id_prior_stage = int_stage.id_stage 
+!and int_stage.cd_stage = 'INT'
+!End-Select
+
+! Calculate response: met, not met, in-progress
+
+If ( (&dt_max_contact_date_5d = strtodate('12/31/4712', 'mm/dd/yyyy')) )
+ Do Get_Num_Of_Weekdays($dt_intake_start, $_today, #diff)
+!Let #diff = datediff(datenow(), &dt_intake_start, 'day')
+ If ( #diff > 5 )
+   Add 1 to #_5d_NM_cnt
+ Else
+   Add 1 to #_r5d_ip_cnt
+ End-If
+Else
+ Do Get_Num_Of_Weekdays($dt_intake_start, &dt_max_contact_date_5d, #diff)
+!Let #diff = datediff(&dt_max_contact_date_5d, &dt_intake_start, 'day')
+ If ( #diff > 5 )
+   Add 1 to #_5d_NM_cnt
+ Else
+   Add 1 to #_r5d_m_cnt
+ End-If
+End-If 
+End-Procedure
+
+! ***********************************************************************************
+! Get_Closed_Counts
+! Used stage_person_link in place of stage_assign_history because stage_assign_history does not always write 'HP' when unassigned
+! In this case we are interested in the worker that closed the stage (would be the last HP) so using stage_person_link is safe
+! ***********************************************************************************
+Begin-Procedure Get_Closed_Counts
+  Let #closed_cnt = 0
+  Let #comp_in_45d_cnt = 0
+  Let #comp_after_45d_cnt = 0
+! Number of investigations closed in the month
+Begin-Select Distinct
+ Add 1 to #closed_cnt
+stage.ID_STAGE &inv_closed_stage_id  
+ Do Get_Substantiated(&inv_closed_stage_id)
+ Do Get_UnSubstantiated(&inv_closed_stage_id)
+ Do Get_Undetermined(&inv_closed_stage_id)
+ Do Get_Ong(&inv_closed_stage_id)
+ Do Get_Completed_Per_45d(&inv_closed_stage_id)
+ !Do Get_Completed_In_45d(&inv_closed_stage_id)
+ !Do Get_Completed_After_45d(&inv_closed_stage_id)
+FROM  stage, stage_assign_history, stage_person_link
+WHERE stage.CD_STAGE = 'INV'
+  AND stage.DT_STAGE_CLOSE >= (TO_DATE($dt_report, 'MM/YYYY'))
+  AND stage.DT_STAGE_CLOSE < (LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1)    
+  AND stage_assign_history.ID_STAGE = stage.id_stage    
+  AND stage_assign_history.ID_PERSON = [$_I5301_ID_PERSON]
+  !AND stage_assign_history.CD_ROLE in ('HP') 
+  AND ( stage_assign_history.DT_UNASSGND is null OR stage_assign_history.DT_UNASSGND>= stage.DT_STAGE_CLOSE)
+  and stage_person_link.id_stage = stage.id_stage and stage_person_link.cd_stage_pers_role = 'HP'
+End-Select
+  
+
+! Number of investigations closed that led to foster care stages  (N/A)
+! changed to just how many investiagion led to foster care 1/28/08
+Begin-Select
+! used foster care family stage since there is 1 - 1 to inv stage while it is 1 - n (inv - fcc)
+COUNT (distinct inv_stage.ID_STAGE) &fcf_cnt
+FROM stage inv_stage, stage_link, stage fsu_stage, stage_assign_history
+WHERE inv_stage.ID_STAGE = stage_link.ID_PRIOR_STAGE
+AND stage_link.ID_STAGE = fsu_stage.ID_STAGE
+AND inv_stage.CD_STAGE IN ('INV')
+AND fsu_stage.CD_STAGE IN ('FSU')
+AND stage_assign_history.ID_PERSON = [$_I5301_ID_PERSON]
+AND stage_assign_history.CD_ROLE in ('HP', 'PR')
+AND stage_assign_history.ID_STAGE = inv_stage.id_stage  
+AND fsu_stage.DT_STAGE_START >= (TO_DATE($dt_report, 'MM/YYYY'))
+AND fsu_stage.DT_STAGE_START < (LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1)
+End-Select
+End-Procedure
+
+! ***********************************************************************************
+! Procedures that are called from Get_Closed_Counts
+! ***********************************************************************************
+Begin-Procedure Get_Ong(#inv_stage_id)
+Begin-Select Distinct 
+ Let #_ong_cnt = #_ong_cnt + 1
+stage_link.ID_PRIOR_STAGE &inv_to_ong_stage_id ! examine stage_link since it equates with inv_stage and we count how many inv stage led to opening of ong stage
+from stage_link, stage ong_stage
+where stage_link.ID_PRIOR_STAGE = #inv_stage_id AND stage_link.ID_STAGE = ong_stage.ID_STAGE
+AND ong_stage.CD_STAGE = 'FPR'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_Substantiated(#inv_stage_id)
+Begin-Select Distinct 
+ Let #_sub_cnt = #_sub_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+AND cps_invst_detail.CD_CPS_INVST_DTL_OVRLL_DISPTN = 'SUB'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_UnSubstantiated(#inv_stage_id)
+Begin-Select Distinct 
+ Let #_uns_cnt = #_uns_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+AND (cps_invst_detail.CD_CPS_INVST_DTL_OVRLL_DISPTN is null OR cps_invst_detail.CD_CPS_INVST_DTL_OVRLL_DISPTN = 'UNS')
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_Undetermined(#inv_stage_id)
+Begin-Select Distinct 
+ Let #_utd_cnt = #_utd_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+AND cps_invst_detail.CD_CPS_INVST_DTL_OVRLL_DISPTN = 'UTD'
+End-Select 
+End-Procedure
+
+Begin-Procedure Get_Completed_Per_45d(#inv_stage_id) ! to be called from closed_count query
+Begin-Select Distinct
+cps_invst_detail.ID_CPS_INVST_STAGE  &45d_stage_id
+(stage.DT_STAGE_CLOSE - cps_invst_detail.DT_CPS_INVST_DTL_INTAKE) &nbr_days_completed
+  Move &nbr_days_completed to #nbr_days_completed
+  If #nbr_days_completed > 45
+    Add 1 to #_comp_after_45d_cnt
+  Else
+    Add 1 to #_comp_in_45d_cnt
+  End-If
+from cps_invst_detail, stage
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+and cps_invst_detail.ID_CPS_INVST_STAGE = stage.ID_STAGE
+and cps_invst_detail.DT_CPS_INVST_DTL_INTAKE is not null
+
+End-Select
+End-Procedure
+!Begin-Procedure Get_Completed_In_45d(#inv_stage_id) ! to be called from closed_count query
+!Begin-Select Distinct 
+! Add 1 to #_comp_in_45d_cnt
+!inv_stage.ID_STAGE &in_45d_stage_id
+!from stage inv_stage, stage_link, stage intake_stage
+!where inv_stage.ID_STAGE = #inv_stage_id
+!  AND inv_stage.ID_STAGE = stage_link.ID_STAGE
+!  AND stage_link.ID_PRIOR_STAGE = intake_stage.ID_STAGE
+!  AND (inv_stage.DT_STAGE_CLOSE - intake_stage.DT_STAGE_START) <= 45
+!End-Select
+!End-Procedure
+
+!Begin-Procedure Get_Completed_After_45d(#inv_stage_id) ! to be called from closed_count query
+!Begin-Select Distinct 
+! Add 1 to #_comp_after_45d_cnt
+!inv_stage.ID_STAGE &after_45d_stage_id
+!from stage inv_stage, stage_link, stage intake_stage
+!where inv_stage.ID_STAGE = #inv_stage_id
+!  AND inv_stage.ID_STAGE = stage_link.ID_STAGE
+!  AND stage_link.ID_PRIOR_STAGE = intake_stage.ID_STAGE
+!  AND (inv_stage.DT_STAGE_CLOSE - intake_stage.DT_STAGE_START) > 45
+!End-Select
+!End-Procedure
+
+! ***********************************************************************************
+! Get_Children_Counts: children place in Foster care in this month
+! ***********************************************************************************
+Begin-Procedure Get_Children_Counts
+! Number of children placed in foster care
+Begin-Select
+COUNT(distinct SPL.ID_PERSON) &fc_cnt
+FROM stage inv_stage, stage_link, stage sub_stage, stage_assign_history, STAGE_PERSON_LINK SPL
+WHERE inv_stage.ID_STAGE = stage_link.ID_PRIOR_STAGE
+AND stage_link.ID_STAGE = sub_stage.ID_STAGE
+AND sub_stage.DT_STAGE_START >= (TO_DATE($dt_report, 'MM/YYYY'))
+AND sub_stage.DT_STAGE_START < (LAST_DAY(TO_DATE($dt_report, 'MM/YYYY'))+1)  
+AND inv_stage.CD_STAGE = 'INV'
+AND sub_stage.CD_STAGE = 'SUB'
+AND stage_assign_history.ID_STAGE = inv_stage.id_stage    
+  AND stage_assign_history.ID_PERSON = [$_I5301_ID_PERSON]
+  AND stage_assign_history.CD_ROLE in ('HP', 'PR')   
+  AND SPL.ID_STAGE = sub_stage.ID_STAGE AND SPL.CD_STAGE_PERS_ROLE = 'PC' 
+  AND ( stage_assign_history.DT_UNASSGND is null OR stage_assign_history.DT_UNASSGND >= sub_stage.DT_STAGE_START )
+
+End-Select
+End-Procedure 
+
+
+
+Begin-Procedure Master_Query
+ Move &pend_first_cnt to #pend_first_count
+ Move &pend_last_cnt to #pend_last_count 
+ Let #unassigned_count =  #pend_first_count + #received_cnt - #pend_last_count -  #closed_cnt
+ If #unassigned_count < 0
+  Let #unassigned_count = 0
+ End-If
+ Do CreateXML_ManifestFile
+Begin-Select
+(1) &dummy
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Number of Investigations' (22,99,0) Underline  Bold 
+ Print 'PR' (22,385,0) Underline  Bold 
+ Print 'SE' (22,438,0) Underline  Bold 
+ Print 'Pending at Beginning of the Month' (41,145,0)
+ Let #m_pend_first_cnt=&pend_first_cnt
+ Print #m_pend_first_cnt (41,378) Edit 9999
+ Let #m_pend_first_se_cnt=&pend_first_se_cnt
+ Print #m_pend_first_se_cnt (41,430) Edit 9999
+ Print 'Pending at End of the Month' (60,145,0)
+ Let #m_pend_last_cnt=&pend_last_cnt
+ Print #m_pend_last_cnt (60,378) Edit 9999
+ Let #m_pend_last_se_cnt=&pend_last_se_cnt
+ Print #m_pend_last_se_cnt (60,430) Edit 9999
+ Print 'Received in the Month' (78,145,0)
+ Let #m_received_cnt=#received_cnt
+ Print #m_received_cnt (78,378) Edit 9999
+ Let #m_received_se_cnt=#received_se_cnt
+ Print #m_received_se_cnt (78,430) Edit 9999
+ Print 'With Sexual Abuse' (95,190,0)
+ Let #m_sex_cnt=#sex_cnt
+ Print #m_sex_cnt (95,378) Edit 9999
+ Let #m_sex_se_cnt=#sex_se_cnt
+ Print #m_sex_se_cnt (95,430) Edit 9999
+ Print 'With Physical Abuse' (112,190,0)
+ Let #m_phy_cnt=#phy_cnt
+ Print #m_phy_cnt (112,378) Edit 9999
+ Let #m_phy_se_cnt=#phy_se_cnt
+ Print #m_phy_se_cnt (112,430) Edit 9999
+ Print 'With Emotional Abuse' (128,190,0)
+ Let #m_emo_cnt=#emo_cnt
+ Print #m_emo_cnt (129,378) Edit 9999
+ Let #m_emo_se_cnt=#emo_se_cnt
+ Print #m_emo_se_cnt (129,430) Edit 9999
+ Print 'With Neglect' (146,190,0)
+ Let #m_neg_cnt=#neg_cnt
+ Print #m_neg_cnt (146,378) Edit 9999
+ Let #m_neg_se_cnt=#neg_se_cnt
+ Print #m_neg_se_cnt (146,430) Edit 9999
+ Print 'Received with 24 Hrs Response' (169,145,0)
+ Let #m_24_cnt=#24_cnt
+ Print #m_24_cnt (169,378) Edit 9999
+ Print '# Not Met' (188,190,0)
+ Let #m_24_NM_cnt=#24_NM_cnt
+ Print #m_24_NM_cnt (188,378) Edit 9999
+ Print 'Received with 5-Day Response' (209,145,0)
+ Let #m_5d_cnt=#5d_cnt
+ Print #m_5d_cnt (209,378) Edit 9999
+ Print '# Not Met' (227,190,0)
+ Let #m_5d_NM_cnt=#5d_NM_cnt
+ Print #m_5d_NM_cnt (227,378) Edit 9999
+ Print 'Closed in the Month ' (250,145,0)
+ Let #m_closed_cnt=#closed_cnt
+ Print #m_closed_cnt (250,378) Edit 9999
+ Graphic (260,189,217) Horz-Line 10 
+ Print 'Substantiated' (276,190,0)
+ Let #m_sub_cnt=#sub_cnt
+ Print #m_sub_cnt (276,378) Edit 9999
+ Print 'Unsubstantiated' (293,190,0)
+ Let #m_uns_cnt=#uns_cnt
+ Print #m_uns_cnt (293,378) Edit 9999
+ Print 'Undetermined' (309,190,0)
+ Let #m_utd_cnt=#utd_cnt
+ Print #m_utd_cnt (309,378) Edit 9999
+ Graphic (319,189,217) Horz-Line 10 
+ Let #m_comp_in_45d_cnt=#comp_in_45d_cnt
+ Print #m_comp_in_45d_cnt (336,378) Edit 9999
+ Print 'Completed within 45 calendar days' (336,190,0)
+ Print 'Completed after 45 calendar days' (354,190,0)
+ Let #m_comp_after_45d_cnt=#comp_after_45d_cnt
+ Print #m_comp_after_45d_cnt (354,378) Edit 9999
+ Graphic (364,189,218) Horz-Line 10 
+ Print 'Led to Ongoing stages' (381,190,0)
+ Let #m_ong_cnt=#ong_cnt
+ Print #m_ong_cnt (381,378) Edit 9999
+ Print 'Assigned to another case manager' (405,145,0)
+ Let #m_unassigned_cnt=#unassigned_count
+ Print #m_unassigned_cnt (405,378) Edit 9999
+ Print 'Number of Cases' (428,98,0) Underline  Bold 
+ Print 'Led to Foster Care stages' (447,146,0)
+ Let #m_fcf_cnt=&fcf_cnt
+ Print #m_fcf_cnt (447,379) Edit 9999
+ Print 'Number of Children' (468,98,0) Underline  Bold 
+ Print 'Placed in Foster Care' (485,145,0)
+ Let #m_fc_cnt=&fc_cnt
+ Print #m_fc_cnt (485,378) Edit 9999
+ Next-Listing  Need=485
+From 
+ dual
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (14,184,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Investigation Monthly Status' (45,176,0) Bold 
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'Reporting Month: ' (98,8,0) Bold 
+ Print 'County: ' (115,8,0) Bold 
+ Let $rprtMonth=$dt_report
+ Print $rprtMonth (99,117,15)
+Print &Init_Query_Init_Query_DECODE (116,117,42)
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (14,409,0)
+ Print $current-date (14,472) edit 'MM/DD/YYYY'
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'Unit: ' (141,8,0) Bold 
+Print &Init_Query_Init_Query_NBR_UNIT (142,61,2)
+Print &Init_Query_Init_Query_NM_PERSON_FULL (142,208,25)
+ Print 'Case Manager: ' (141,110,0) Bold 
+ Else   ! put a non combined page header
+ Print 'Unit: ' (18,8,0) Bold 
+Print &Init_Query_Init_Query_NBR_UNIT (19,61,2)
+Print &Init_Query_Init_Query_NM_PERSON_FULL (19,208,25)
+ Print 'Case Manager: ' (18,110,0) Bold 
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Last-Page (13,515) 
+ Page-Number (13,493) '' ' of '
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

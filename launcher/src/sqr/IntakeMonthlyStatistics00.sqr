@@ -1,0 +1,1148 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Wed Nov 25 12:54:19 2009 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: D:\Documents and Settings\hong-van.t.vo\My Documents\Reports Layout\Intake\IntakeMonthlyStatistics00.sqr
+! Format  : Tabular
+! Username: CAPS
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Portrait
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Date $reportPer 
+END-DECLARE
+Declare-Variable
+ Date $curr_date
+ Date $end_date
+End-Declare
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=120    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Total Intakes Received:' (95,5,23) Bold 
+ Print 'The number of intakes received in the reporting month regardless of the intake''s status or type. This number does not include intakes reassigned to another region, county, or unit prior to the final disposition of the intake.' (95,128,90) Wrap 90 3 line-height=12 Keep-Top
+ Print 'Definitions' (11,1,0) Underline  Bold 
+ Print 'The number of intakes received in the reporting month that have not been closed as of the system date.' (647,128,90) Wrap 90 2 line-height=12 Keep-Top
+ Print 'Other Non-Incidents:' (544,5,20) Bold 
+ Print 'The number of intakes received during the reporting month that are Non-Incident Request of the following types: Adoption Services, Medical Resources, TANF Assessment/Sanction, Courtesy Interviews, and PAD Payments. ' (544,128,90) Wrap 90 3 line-height=12 Keep-Top
+ Print 'ICPC, DJJ:' (584,5,0) Bold 
+ Print 'The number of non-incidents ICPC or DJJ received during the reporting month.' (584,128,85) Wrap 85 3 line-height=12 Keep-Top
+ Print 'ScreenOuts, ScreenOuts & Referrals:' (444,5,23) Bold  Wrap 23 2 line-height=12 Keep-Top
+ Print 'The number of intakes received during the reporting month that are not Non-Incident Request and have Screen Out, or Screen Out & Referred disposition selected, respectively, on the Intake Action page.' (444,128,90) Wrap 90 3 line-height=12 Keep-Top
+ Print 'Information & Referrals:' (484,5,23) Bold  Wrap 23 2 line-height=12 Keep-Top
+ Print 'The number of intakes received during the reporting month that are Non-Incident Request of type Information & Referral, and do not have Disposition selected on the Intake Action page.' (484,128,95) Wrap 95 2 line-height=12 Keep-Top
+ Print 'Resource Development:' (255,5,25) Bold 
+ Print 'Diversion Total Assigned:' (376,5,23) Bold  Wrap 23 2 line-height=12 Keep-Top
+ Print 'Post Foster Care Payment Total Assigned:' (619,5,23) Bold  Wrap 23 2 line-height=12 Keep-Top
+ Print 'The number of non-incidents Post Foster Care Payment received during the reporting month.' (619,128,85) Wrap 85 2 line-height=12 Keep-Top
+ Print 'This is a statistical report of all intakes that were received in a specific month and their disposition distribution as of current. This report does not show progression on intakes that were transferred out before closure. This information is reported on the county that receives and finalizes transferred-in intakes. County and region are determined by the stage''s county and region. Before its submission for approval, an intake may not have stage''s county determined. In this case, unit''s county and region of the intake case manager is used.' (30,5,130) Wrap 130 5 line-height=12 Keep-Top
+ Print 'Intakes Pending: ' (647,5,23) Bold 
+ Print 'The response time is calculated as the date/time that all alleged victims have been contacted, in person, by the case manager. In order for a response time to be met, the last of the initial contacts with the alleged victims must be within the 24hr or 5-day timeframe as of the intake date. In-Progress indicates that all initial required contacts have not been made but the response time window has not expired. Notes, 24-hr is calculated as 24 hours while 5-day is calculated as 5 full weekdays. (Monday-Friday)' (175,128,90) Wrap 90 7 line-height=12 Keep-Top
+ Print 'Investigation Response Time:' (175,5,25) Bold  Wrap 25 2 line-height=12 Keep-Top
+ Print 'Investigation Total Assigned:' (135,5,25) Bold  Wrap 25 2 line-height=12 Keep-Top
+ Print 'The number of intakes received during the reporting month that were assigned for investigation. Note, this number does not account for diversion stages later progressed to investigation.' (135,128,90) Wrap 90 3 line-height=12 Keep-Top
+ Print 'The number of intakes received during the reporting month that were marked for diversion services.' (376,128,90) Wrap 90 2 line-height=12 Keep-Top
+ Print 'The number of intakes received during the reporting month that were assigned for Investigation and with special Response Time type Resource Development. This special Response Time does not follow the general Investigation Response Time calculation stated in the preceding section.' (255,128,90) Wrap 90 4 line-height=12 Keep-Top
+ Print 'Closed Investigations:' (307,5,0) Bold 
+ Print 'The number of investigations from the Investigation Total Assigned that were closed as of the system date. Maltreatment findings are grouped by overall risk finding for closed investigation only.' (307,128,90) Wrap 90 3 line-height=12 Keep-Top
+ Print 'Progressed to Investigation & Closed Investigations:' (403,5,23) Bold  Wrap 23 3 line-height=12 Keep-Top
+ Print 'The total number of diversion stages progressed to investigation, and the number of these investigations that are now closed. Maltreatment findings are grouped by overall risk finding for closed investigation only.' (403,128,90) Wrap 90 3 line-height=12 Keep-Top
+ Print 'The number of intakes that have been closed with the disposition Opened in Error and/or non-incidents that were opened in error and later closed by the case manager.' (514,128,90) Wrap 90 3 line-height=12 Keep-Top
+ Print 'Opened in Error: ' (514,5,0) Bold 
+ Print 'Keys' (678,1,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Maltreatment Code:' (692,1,0) Underline  Bold 
+ Print 'SUB - Substantiated' (707,1,0)
+ Print 'UNS - Unsubstantiated' (707,115,0)
+ Print 'UTD - Undetermined' (707,229,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'The number of short term emergency intakes received during the reporting month.' (602,128,90) Wrap 90 4 line-height=12 Keep-Top
+ Print 'Closed due to Merged:' (349,5,0) Bold 
+ Print 'The number of investigations closed due to case merge. See disclaimer for additional information.' (349,128,90) Wrap 90 2 line-height=12 Keep-Top
+ Print '$$$Disclaimer: Overall maltreatment and risk findings for Closed due to Merged stages are reported for the month in which the merged-to intake is initiated. Therefore, the sum of the findings break-down may not add up to the total closed investigation in this reporting month if the intake from the merged-to case is recorded in the past month. This sum, however, will not be less than the number of closed investigations not due to merged.' (717,1,120) Wrap 120 9 line-height=12 Keep-Top on=$
+ Last-Page (704,516) 
+ Page-Number (704,495) '' ' of '
+ Print 'Short Term Emergency:' (602,5,23) Bold  Wrap 23 2 line-height=12 Keep-Top
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=12   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do Get-Date-Input
+ Do Get-Region-Input
+ Do Get-County-Input
+ Do Make-Header
+ Do Get_IR_Count
+Do Get_Xfer_Out_Count
+ Position (1,1)
+ Do Master_Query_ALL
+ Do Get_Inv_24_Count
+ Do Get_Inv_5D_Count
+ Do Get_Res_Dev_Count
+ Do Get_INV_Disposition_Count
+ Do Get_Other_Non_Incident_Request_Count
+ Do Get_Open_In_Error_Count
+
+ Do Master_Query24
+ Do Master_Query5D
+ Do Master_Query_DIV
+ Do Master_Query_SCO
+ Do Master_Q_SCR_IR
+ Do Master_Query_ICP
+ Do Master_Query_DJJ
+ Do Master_Query_PFC
+ Do Master_Query_OPN
+End-Program
+
+Begin-Procedure Get-Date-Input
+! -----------------------------
+Input $dt_incoming_call 'Enter month and year (MM/YYYY)' MaxLen=19 Type=Date Format='MM/YYYY'
+Let $where_clause_date_lower = 'DT_INCOMING_CALL >= TO_DATE(' || '''' || $dt_incoming_call || '''' || ', ' || '''' || 'mm/yyyy' || '''' || ')'
+Let $where_clause_date_upper = 'DT_INCOMING_CALL < LAST_DAY(TO_DATE(' || '''' || $dt_incoming_call || '''' || ', ' || '''' || 'mm/yyyy' || '''' || ')) + 1'
+Let $where_clause_date = $where_clause_date_lower || ' AND ' || $where_clause_date_upper
+End-Procedure
+
+Begin-Procedure Get-Region-Input
+Input $_I101_CD_UNIT_REGION 'Enter a value for CD_UNIT_REGION' MaxLen=3  Type=Char
+Let $region_value = $_I101_CD_UNIT_REGION
+If (IsNull($_I101_CD_UNIT_REGION) or ISBlank($_I101_CD_UNIT_REGION) or $_I101_CD_UNIT_REGION = '0')
+  !Let $_I101_CD_UNIT_REGION= '097' ! Out of State
+  !Let $_I101_CD_UNIT_REGION = '''' || $_I101_CD_UNIT_REGION || ''''  
+  Let $is_region_selected = 'false'
+  Let $where_clause_region = ' 1 = 1 ' ! DUMMY 
+  Let $where_clause_region_xfer_out = ' 2 = 2 '
+  Let $where_clause_region_xferred = ' 3 = 3 '
+Else 
+  Let $is_region_selected = 'true'
+  Let $_CD_STAGE_REGION = '''' || $_I101_CD_UNIT_REGION || ''''
+  Let $_CD_UNIT_REGION = '''' || '0' || $_I101_CD_UNIT_REGION|| ''''
+  Let $where_clause_region = '(STAGE.CD_STAGE_REGION  = ' || $_CD_STAGE_REGION || ' OR (STAGE.CD_STAGE_REGION IS NULL AND CD_UNIT_REGION   = ' || $_CD_UNIT_REGION || '))'
+  Let $where_clause_region_xfer_out = 'CD_UNIT_REGION = ' || $_CD_UNIT_REGION
+  Let $where_clause_region_xferred = 'STAGE.CD_STAGE_REGION <> substr(UNIT.CD_UNIT_REGION,2)'
+End-If
+End-Procedure
+
+Begin-Procedure Get-County-Input
+Input $_I101_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Char
+Let $county_value = $_I101_CD_STAGE_CNTY
+If (IsNull($_I101_CD_STAGE_CNTY) or ISBlank($_I101_CD_STAGE_CNTY) or $_I101_CD_STAGE_CNTY = '0')
+  !Let $_I101_CD_STAGE_CNTY = '''' || $_I101_CD_STAGE_CNTY || ''''! format code string here any ay for Get-County_-Decode procedure
+  Let $is_county_selected = 'false'
+  Let $where_clause_county = ' 4 = 4 ' ! DUMMY 
+  Let $where_clause_county_xfer_out = '5 =  5 '
+  Let $where_clause_county_xferred = ' 6 = 6 '
+Else
+  If SubStr($_I101_CD_STAGE_CNTY, 1, 1) != ''''
+    Let $_I101_CD_STAGE_CNTY = '''' || $_I101_CD_STAGE_CNTY || ''''
+  End-If
+  Let $is_county_selected = 'true'
+  Let $where_clause_county = '(STAGE.CD_STAGE_CNTY  = ' || $_I101_CD_STAGE_CNTY || ' OR (STAGE.CD_STAGE_CNTY IS NULL AND CD_COUNTY   = ' || $_I101_CD_STAGE_CNTY || '))'
+  Let $where_clause_county_xfer_out = 'CD_COUNTY = ' || $_I101_CD_STAGE_CNTY! 
+  Let $where_clause_county_xferred = 'STAGE.CD_STAGE_CNTY <> UNIT.CD_COUNTY'
+End-If
+End-Procedure
+
+Begin-Procedure Get-County-Decode ! For get input procedures since Init query not executed at this time
+Begin-Select 
+DECODE &county_decode
+From  CODES_TABLES
+Where CODE_TYPE = 'CCOUNT'
+ And CODES_TABLES.CODE = [$_I101_CD_STAGE_CNTY]
+End-Select
+End-Procedure
+
+Begin-Procedure Make-Header
+
+If ($is_county_selected = 'true')
+ Do Get-County-Decode
+ Move &county_decode to $region_county_header
+! If $county_value= 'XXX' and $is_region_selected = 'true'
+!   Let $region_header = 'Region ' || $region_value
+!   Let $region_county_header = 'County ' || $region_county_header
+! End-If
+ ! If county selected is 'XXX' and no region specified, xferred in and out defined when stage and unit county is different
+ ! transferring from XXX of one county to XXX of another county does not count as xfer for this selection.
+ Let $where_clause_xferred = 'STAGE.CD_STAGE_CNTY <> UNIT.CD_COUNTY'
+
+ ! If county selected is 'XXX' and region specified, xferred in and out defined as either to non-XXX county or 
+ ! to a XXX county in another region
+ If $county_value= 'XXX' and $is_region_selected = 'true'
+     Let $region_header = 'Region ' || $region_value
+     Let $region_county_header = 'County ' || $region_county_header
+     Let $where_clause_xferred_out = '((STAGE.CD_STAGE_CNTY <> UNIT.CD_COUNTY and STAGE.CD_STAGE_CNTY <> ' || '''' || 'XXX' || '''' ||
+                                 ') or (STAGE.CD_STAGE_CNTY = ' || '''' || 'XXX' || '''' ||
+                                 ' and STAGE.CD_STAGE_REGION <> substr(UNIT.CD_UNIT_REGION,2)))'
+     Let $where_clause_xferred_in = '((STAGE.CD_STAGE_CNTY <> UNIT.CD_COUNTY and UNIT.CD_COUNTY <> ' || '''' || 'XXX' || '''' ||
+                                 ') or (UNIT.CD_COUNTY = ' || '''' || 'XXX' || '''' ||
+                                 ' and STAGE.CD_STAGE_REGION <> substr(UNIT.CD_UNIT_REGION,2)))'                                 
+     Let $where_clause_xferred = '((STAGE.CD_STAGE_CNTY <> UNIT.CD_COUNTY) or (STAGE.CD_STAGE_CNTY = UNIT.CD_COUNTY and STAGE.CD_STAGE_REGION <> substr(UNIT.CD_UNIT_REGION,2)))'
+ End-If
+ ! Fill spaces in front of the county name to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+ !Let $where_clause_xferred = 'STAGE.CD_STAGE_CNTY <> UNIT.CD_COUNTY'
+Else
+ If ($is_region_selected = 'true')
+  Let $region_county_header = '    Region '|| $region_value
+  Let $where_clause_xferred = 'STAGE.CD_STAGE_REGION <> substr(UNIT.CD_UNIT_REGION,2)'
+ Else
+   Let $region_county_header = '    Statewide'
+   Let $where_clause_xferred = ' 1 = 2 ' ! to force the count of xferred in and out be 0 since there is no xfer count at statewide level. 
+ End-If
+End-If
+ !Let $where_clause_xferred = $where_clause_region_xferred || ' and ' || $where_clause_county_xferred
+ Let $where_clause = $where_clause_region || ' and ' || $where_clause_county
+ Let $where_clause_xfer_out = $where_clause_county_xfer_out || ' and ' || $where_clause_region_xfer_out
+End-Procedure
+
+Begin-Procedure Get_Num_Of_Weekdays($start_date, $end_date, :#days_cnt)
+Let #nbr_bus_days= 0
+Move $start_date to $start_date_formatted 'mm/dd/yyyy'
+Move $end_date to $end_date_formatted 'mm/dd/yyyy'
+Let $_curr_date = strtodate($start_date_formatted, 'mm/dd/yyyy')
+Let $_end_date = strtodate($end_date_formatted, 'mm/dd/yyyy')
+While $_curr_date <= $_end_date
+ Let $day = datetostr($_curr_date, 'DY')
+ Evaluate $day
+      When = 'MON'
+      When = 'TUE'
+      When = 'WED'
+      When = 'THU'
+      When = 'FRI'
+        Add 1 to #nbr_bus_days
+      break
+      When-other
+      break
+
+ End-Evaluate
+Let $_curr_date = dateadd($_curr_date, 'day', 1)
+End-While
+Move #nbr_bus_days to #days_cnt
+End-Procedure 
+
+Begin-Procedure Get_IR_Count
+Begin-Select 
+(count( distinct INCOMING_DETAIL.ID_STAGE )) &ir_cnt_init
+FROM 
+    INCOMING_DETAIL, STAGE, EMPLOYEE, UNIT
+WHERE
+    INCOMING_DETAIL.ID_STAGE = STAGE.ID_STAGE(+) AND 
+    INCOMING_DETAIL.ID_INCOMING_WORKER = EMPLOYEE.ID_PERSON AND
+    EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT AND
+    CD_NON_RSDNT_REQ_TYPE = 'IR' AND 
+    INCOMING_DETAIL.DT_INCOMING_CALL  >=  to_date($dt_incoming_call, 'MM/YYYY') AND 
+    INCOMING_DETAIL.DT_INCOMING_CALL  <  last_day(to_date($dt_incoming_call, 'MM/YYYY'))+1 AND 
+    (CD_INCMG_STATUS = 'CLD' OR  STAGE.DT_STAGE_CLOSE is not null) AND INCOMING_DETAIL.CD_INCOMING_DISPOSITION is null AND
+!CD_INCMG_STATUS = 'CLD' AND 
+    [$where_clause]
+End-Select
+End-Procedure
+
+Begin-Procedure Get_Other_Non_Incident_Request_Count
+Begin-Select
+count(INCOMING_DETAIL.ID_STAGE) &ni_oth_cnt
+FROM INCOMING_DETAIL, STAGE, EMPLOYEE, UNIT
+WHERE
+    INCOMING_DETAIL.ID_STAGE = STAGE.ID_STAGE(+) AND ! Some non-incident intake if being save and close on Information page will not have stage record
+    INCOMING_DETAIL.ID_INCOMING_WORKER = EMPLOYEE.ID_PERSON AND
+    EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT AND
+    CD_NON_RSDNT_REQ_TYPE in ('PA', 'OT', 'VP', 'AS', 'MR', 'TA', 'CO')  AND 
+    (CD_INCOMING_DISPOSITION is null or CD_INCOMING_DISPOSITION = CD_NON_RSDNT_REQ_TYPE) and ! Note that disposition code is 3 char long while non-incident request type is 2 char long, so only do this when sure that they are same code both in length and value.
+    INCOMING_DETAIL.DT_INCOMING_CALL  >=  to_date($dt_incoming_call, 'MM/YYYY') AND 
+    INCOMING_DETAIL.DT_INCOMING_CALL  <  (last_day(to_date($dt_incoming_call, 'MM/YYYY'))+1) 
+    AND (DT_STAGE_CLOSE IS NOT NULL OR CD_INCMG_STATUS = 'CLD') AND 
+    [$where_clause] 
+End-Select
+End-Procedure 
+
+Begin-Procedure Get_Open_In_Error_Count
+Begin-Select
+count(INCOMING_DETAIL.ID_STAGE) &oie_cnt
+FROM INCOMING_DETAIL, STAGE, EMPLOYEE, UNIT
+WHERE
+    INCOMING_DETAIL.ID_STAGE = STAGE.ID_STAGE(+) AND ! Some non-incident intake if being save and close on Information page will not have stage record
+    INCOMING_DETAIL.ID_INCOMING_WORKER = EMPLOYEE.ID_PERSON AND
+    EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT AND
+    (CD_NON_RSDNT_REQ_TYPE = 'OE' or CD_INCOMING_DISPOSITION = 'OIE') and 
+    INCOMING_DETAIL.DT_INCOMING_CALL  >=  to_date($dt_incoming_call, 'MM/YYYY') AND 
+    INCOMING_DETAIL.DT_INCOMING_CALL  <  (last_day(to_date($dt_incoming_call, 'MM/YYYY'))+1) 
+    AND (DT_STAGE_CLOSE IS NOT NULL OR CD_INCMG_STATUS = 'CLD') AND 
+    [$where_clause] 
+End-Select
+End-Procedure 
+
+
+Begin-Procedure Master_Query_ALL
+! Transferred in count
+Begin-Select
+(count(  distinct INCOMING_DETAIL.ID_STAGE  )) &xfer_in_cnt
+From  INCOMING_DETAIL, STAGE
+,      EMPLOYEE, UNIT
+      Where INCOMING_DETAIL.ID_INCOMING_WORKER = EMPLOYEE.ID_PERSON
+            And EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+            And INCOMING_DETAIL.ID_STAGE = STAGE.ID_STAGE(+)
+ And INCOMING_DETAIL.DT_INCOMING_CALL  >=  to_date($dt_incoming_call, 'MM/YYYY')
+ And INCOMING_DETAIL.DT_INCOMING_CALL  <  (last_day(to_date($dt_incoming_call, 'MM/YYYY'))+1)
+ And [$where_clause]
+ and [$where_clause_xferred] ! general clause for transferred count for statewide, regional or county report
+ !and stage.CD_STAGE_CNTY <> unit.CD_COUNTY ! the owning county is not the county that records the intake
+End-Select
+
+ Do CreateXML_ManifestFile
+Begin-Select
+(count(  distinct INCOMING_DETAIL.ID_STAGE  )) &scn_cnt
+ Let #intake_recvd_tot=&scn_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+
+ Print #intake_recvd_tot (10,360) Edit 9999999999 Bold 
+ Print 'Total Intakes Received:' (11,109,0) Bold 
+ Let #xfer_in_cnt=&xfer_in_cnt
+ Print #xfer_in_cnt (30,360) Edit 9999999999
+ Print 'Transferred In:' (30,139,0) Bold 
+ Print 'New:' (46,139,0) Bold 
+ Let #intake_recvd_tot=&scn_cnt
+ Let #xfer_in_cnt=&xfer_in_cnt
+ Let #new_cnt=#intake_recvd_tot - #xfer_in_cnt
+ Print #new_cnt (46,360) Edit 9999999999
+ Let #xfer_out_cnt=&xfer_out_cnt
+ Print #xfer_out_cnt (68,360) Edit 9999999999 Bold 
+ Print 'Intakes Received and Transferred Out:' (68,109,40) Bold 
+ If #page-count > #pageNum
+  Let #pageNum = #page-count
+  Let $scn_cntFirst = &scn_cnt
+ End-If
+ Next-Listing  SkipLines=2 Need=70
+From  INCOMING_DETAIL, STAGE
+,      EMPLOYEE, UNIT
+      Where INCOMING_DETAIL.ID_INCOMING_WORKER = EMPLOYEE.ID_PERSON
+            And EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+            And INCOMING_DETAIL.ID_STAGE = STAGE.ID_STAGE(+)
+ And INCOMING_DETAIL.DT_INCOMING_CALL  >=  to_date($dt_incoming_call, 'MM/YYYY')
+ And INCOMING_DETAIL.DT_INCOMING_CALL  <  (last_day(to_date($dt_incoming_call, 'MM/YYYY'))+1)
+ And [$where_clause]
+End-Select
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+
+Begin-Procedure Get_Xfer_Out_Count
+Begin-Select
+count(distinct incoming_detail.ID_STAGE) &xfer_out_cnt
+from stage, incoming_detail, unit, employee
+where stage.ID_STAGE = incoming_detail.ID_STAGE 
+and incoming_detail.ID_INCOMING_WORKER = employee.ID_PERSON 
+and employee.ID_EMP_UNIT = unit.ID_UNIT
+AND [$where_clause_xfer_out]  
+and [$where_clause_xferred]
+And INCOMING_DETAIL.DT_INCOMING_CALL  >=  to_date($dt_incoming_call, 'MM/YYYY')
+And INCOMING_DETAIL.DT_INCOMING_CALL  <  (last_day(to_date($dt_incoming_call, 'MM/YYYY'))+1)
+End-Select
+End-Procedure
+
+Begin-Procedure Get_Res_Dev_Count
+ Let #res_dev_cnt= 0
+Begin-Select distinct
+ Add 1 to #res_dev_cnt
+sl.id_stage &inv_res_dev_stage_id
+from incoming_detail, stage_link sl, stage inv_stage, stage, employee, unit
+where incoming_detail.id_stage = stage.id_stage and incoming_detail.id_stage = sl.id_prior_stage 
+and inv_stage.id_stage = sl.id_stage and inv_stage.cd_stage = 'INV'
+and incoming_detail.cd_incoming_disposition = 'ACA' and inv_stage.cd_stage_curr_priority in ('RDV') and stage.dt_stage_close is not null
+and incoming_detail.dt_incoming_call >= to_date($dt_incoming_call, 'MM/YYYY') and incoming_detail.dt_incoming_call < (last_day(to_date($dt_incoming_call, 'MM/YYYY')) + 1)
+and [$where_clause]
+and incoming_detail.id_incoming_worker = employee.id_person and employee.id_emp_unit = unit.id_unit
+End-Select
+End-Procedure
+Begin-Procedure Get_Inv_24_Count
+ Let #im24_cnt= 0
+ Let #im24_m_cnt = 0
+ Let #im24_nm_cnt = 0
+ Let #im24_ip_cnt = 0
+Begin-Select distinct
+ Add 1 to #im24_cnt
+sl.id_stage &inv_24_stage_id
+incoming_detail.dt_incoming_call &int_coming_date
+ Do Calc_Response_Effort_24(&inv_24_stage_id, &int_coming_date)
+from incoming_detail, stage_link sl, stage inv_stage, stage, employee, unit
+where incoming_detail.id_stage = stage.id_stage and incoming_detail.id_stage = sl.id_prior_stage 
+and inv_stage.id_stage = sl.id_stage and inv_stage.cd_stage = 'INV'
+and incoming_detail.cd_incoming_disposition = 'ACA' and inv_stage.cd_stage_curr_priority in ('IM', '24') and stage.dt_stage_close is not null
+and incoming_detail.dt_incoming_call >= to_date($dt_incoming_call, 'MM/YYYY') and incoming_detail.dt_incoming_call < (last_day(to_date($dt_incoming_call, 'MM/YYYY')) + 1)
+and [$where_clause]
+and incoming_detail.id_incoming_worker = employee.id_person and employee.id_emp_unit = unit.id_unit
+End-Select
+End-Procedure
+Begin-Procedure Calc_Response_Effort_24(#inv_stage_id, $intake_start_date)
+! Get latest dates from all children's first contact date
+Begin-Select
+max(victim_contacts.vic_contact_date) &dt_max_contact_date_24
+from (
+    select stage_person_link.ID_STAGE, stage_person_link.ID_PERSON, 
+    NVL((select min(contact.DT_CONTACT_OCCURRED)
+    from  event_person_link, contact
+    where contact.cd_contact_method in ('ATF', 'UTF') 
+    and event_person_link.ID_EVENT = contact.ID_EVENT
+    and event_person_link.ID_PERSON = stage_person_link.ID_PERSON
+    and contact.ID_CASE = stage_person_link.ID_CASE
+    and (contact.IND_CONTACT_ATTEMPTED is null or contact.IND_CONTACT_ATTEMPTED <> 'Y')
+    ), TO_DATE('12/31/4712', 'MM/DD/YYYY')) vic_contact_date 
+    from stage_person_link, stage
+    where stage_person_link.ID_STAGE = #inv_stage_id and 
+    !stage_person_link.CD_STAGE_PERS_ROLE IN ('VC', 'DB', 'DV', 'VP')
+    exists (select * 
+            from allegation
+            where allegation.ID_ALLEGATION_STAGE = stage_person_link.ID_STAGE 
+            and allegation.ID_VICTIM = stage_person_link.ID_PERSON 
+            )
+    and stage_person_link.ID_STAGE = stage.ID_STAGE
+    and stage.CD_STAGE = 'INV'
+    group by stage_person_link.ID_CASE, stage_person_link.ID_PERSON
+    ) victim_contacts
+End-Select
+
+! Calculate response: met, not met, in-progress
+Move $intake_start_date to $intake_start_date_formatted 'mm/dd/yyyy hh24:mi:ss'
+Let #diff = 0
+
+! All initial contact have not been made
+If ( strtodate(datetostr(&dt_max_contact_date_24, 'mm/dd/yyyy'), 'mm/dd/yyyy') = strtodate('12/31/4712', 'mm/dd/yyyy') )
+
+ Let #diff = datediff(datenow(), strtodate($intake_start_date_formatted, 'mm/dd/yyyy hh24:mi:ss'), 'hour')
+ If ( #diff > 24 )
+   Add 1 to #_im24_nm_cnt
+ Else
+   Add 1 to #_im24_ip_cnt
+ End-If
+Else
+ Let #diff = datediff(&dt_max_contact_date_24, strtodate($intake_start_date_formatted, 'mm/dd/yyyy hh24:mi:ss'), 'hour')
+ If ( #diff > 24 )
+   Add 1 to #_im24_nm_cnt
+ Else
+   Add 1 to #_im24_m_cnt
+ End-If
+End-If 
+End-Procedure
+
+! Get numbers of Intake with 5D current priority
+Begin-Procedure Get_Inv_5D_Count
+ Let #r5d_cnt= 0
+ Let #r5d_m_cnt = 0
+ Let #r5d_nm_cnt = 0
+ Let #r5d_ip_cnt = 0
+Begin-Select distinct
+ Add 1 to #r5d_cnt
+sl.id_stage &inv_5d_stage_id
+incoming_detail.dt_incoming_call &dt_intake_start
+ Do Calc_Response_Effort_5D(&inv_5d_stage_id, &dt_intake_start)
+from incoming_detail, stage_link sl, stage inv_stage, stage, employee, unit
+where incoming_detail.id_stage = stage.id_stage and incoming_detail.id_stage = sl.id_prior_stage 
+and inv_stage.id_stage = sl.id_stage and inv_stage.cd_stage = 'INV'
+and incoming_detail.cd_incoming_disposition = 'ACA' and inv_stage.cd_stage_curr_priority in ('5D') and stage.dt_stage_close is not null
+and incoming_detail.dt_incoming_call >= to_date($dt_incoming_call, 'MM/YYYY') and incoming_detail.dt_incoming_call < (last_day(to_date($dt_incoming_call, 'MM/YYYY')) + 1)
+and [$where_clause]
+and incoming_detail.id_incoming_worker = employee.id_person and employee.id_emp_unit = unit.id_unit
+
+End-Select
+End-Procedure
+Begin-Procedure Calc_Response_Effort_5D(#inv_stage_id, $dt_intake_start)
+! Get latest dates from all children's first contact date
+Begin-Select
+max(victim_contacts.vic_contact_date) &dt_max_contact_date_5d
+from (
+    select stage_person_link.ID_STAGE, stage_person_link.ID_PERSON, 
+    NVL((select min(contact.DT_CONTACT_OCCURRED)
+    from  event_person_link, contact
+    where contact.cd_contact_method in ('ATF', 'UTF')
+    and event_person_link.ID_EVENT = contact.ID_EVENT
+    and event_person_link.ID_PERSON = stage_person_link.ID_PERSON
+    and contact.ID_CASE = stage_person_link.ID_CASE
+    and (contact.IND_CONTACT_ATTEMPTED is null or contact.IND_CONTACT_ATTEMPTED <> 'Y')
+    ), TO_DATE('12/31/4712', 'MM/DD/YYYY')) vic_contact_date 
+    from stage_person_link, stage
+    where stage_person_link.ID_STAGE = #inv_stage_id and 
+    !stage_person_link.CD_STAGE_PERS_ROLE IN ('VC', 'DB', 'DV', 'VP')
+    exists (select * 
+            from allegation
+            where allegation.ID_ALLEGATION_STAGE = stage_person_link.ID_STAGE 
+            and allegation.ID_VICTIM = stage_person_link.ID_PERSON 
+            )
+    and stage_person_link.ID_STAGE = stage.ID_STAGE
+    and stage.CD_STAGE = 'INV'
+    group by stage_person_link.ID_CASE, stage_person_link.ID_PERSON
+    ) victim_contacts
+End-Select
+
+! Calculate response: met, not met, in-progress
+! 5D is calculated as 5 full days so no need to format intake start date with time
+Let #diff = 0
+If ( strtodate(datetostr(&dt_max_contact_date_5d, 'mm/dd/yyyy'), 'mm/dd/yyyy') = strtodate('12/31/4712', 'mm/dd/yyyy') )
+ Let $today = datenow()
+ Do Get_Num_Of_Weekdays($dt_intake_start, $today, #diff)
+
+ If ( #diff > 5 )
+   Add 1 to #_r5d_nm_cnt
+ Else
+   Add 1 to #_r5d_ip_cnt
+ End-If
+Else
+ Do Get_Num_Of_Weekdays($dt_intake_start, &dt_max_contact_date_5d, #diff)
+ If ( #diff > 5 )
+   Add 1 to #_r5d_nm_cnt
+ Else
+   Add 1 to #_r5d_m_cnt
+ End-If
+End-If 
+End-Procedure
+! Get Disposition of closed Investigation as a result of this month Intake
+Begin-Procedure Get_INV_Disposition_Count
+ Let #inv_closed_cnt = 0
+ Let #sub_cnt = 0
+ Let #uns_cnt = 0
+ Let #utd_cnt = 0
+ Let #open_pla_sub_cnt = 0
+ Let #risk_controlled_sub_cnt = 0
+ Let #no_sig_risk_sub_cnt = 0
+ Let #no_ra_sub_cnt = 0
+ Let #open_serv_sub_cnt = 0
+ Let #oie_sub_cnt = 0
+ 
+ Let #open_pla_uns_cnt = 0
+ Let #risk_controlled_uns_cnt = 0
+ Let #no_sig_risk_uns_cnt = 0
+ Let #no_ra_uns_cnt = 0
+ Let #open_serv_uns_cnt = 0
+ Let #oie_uns_cnt = 0
+ 
+ Let #open_pla_utd_cnt = 0
+ Let #risk_controlled_utd_cnt = 0
+ Let #no_sig_risk_utd_cnt = 0
+ Let #no_ra_utd_cnt = 0
+ Let #open_serv_utd_cnt = 0
+ Let #oie_utd_cnt = 0
+
+ Let #inv_closed_merged_cnt = 0
+
+Begin-Select distinct
+ Add 1 to #inv_closed_cnt
+sl.id_stage &inv_stage_id
+inv_stage.txt_stage_closure_cmnts  &inv_stage_closure_cmnts
+ If rtrim(&inv_stage_closure_cmnts, ' ') = 'CLOSED TO MERGE'
+   Add 1 to #inv_closed_merged_cnt
+ Else 
+ Do Get_Disposition_Count(&inv_stage_id, 'SUB', #sub_cnt, #open_pla_sub_cnt, #risk_controlled_sub_cnt, #no_sig_risk_sub_cnt, #no_ra_sub_cnt, #open_serv_sub_cnt, #oie_sub_cnt)
+ Do Get_Disposition_Count(&inv_stage_id, 'UNS', #uns_cnt, #open_pla_uns_cnt, #risk_controlled_uns_cnt, #no_sig_risk_uns_cnt, #no_ra_uns_cnt, #open_serv_uns_cnt, #oie_uns_cnt)
+ Do Get_Disposition_Count(&inv_stage_id, 'UTD', #utd_cnt, #open_pla_utd_cnt, #risk_controlled_utd_cnt, #no_sig_risk_utd_cnt, #no_ra_utd_cnt, #open_serv_utd_cnt, #oie_utd_cnt)
+ End-If
+from incoming_detail inc, stage_link sl, stage inv_stage, stage, employee, unit
+where inc.id_stage = stage.id_stage and inc.id_stage = sl.id_prior_stage 
+and inv_stage.id_stage = sl.id_stage and inv_stage.cd_stage = 'INV'
+and inc.cd_incoming_disposition = 'ACA' and inv_stage.cd_stage_curr_priority in ('RDV', 'IM', '24', '5D') and stage.dt_stage_close is not null
+and inc.dt_incoming_call >= to_date($dt_incoming_call, 'MM/YYYY') and inc.dt_incoming_call < (last_day(to_date($dt_incoming_call, 'MM/YYYY')) + 1)
+and [$where_clause]
+and inc.id_incoming_worker = employee.id_person and employee.id_emp_unit = unit.id_unit
+and inv_stage.dt_stage_close is not null
+End-Select
+End-Procedure
+
+! Get Substantiated Investigation Counts
+Begin-Procedure Get_Disposition_Count(#inv_stage_id, $disposition, :#disposition_cnt, :#open_pla_disp_cnt, :#risk_controlled_disp_cnt, :#no_sig_risk_disp_cnt, :#no_ra_disp_cnt, :#open_serv_disp_cnt, :#oie_disp_cnt)
+Begin-Select Distinct 
+ Let #disposition_cnt = #disposition_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+cps_invst_detail.CD_CPS_INVST_DTL_OVRLL_DISPTN    &cps_invst_ovrll_disptn
+ Do Get_Risk_Finding_Count(&cps_invst_stage_id, #open_pla_disp_cnt, #risk_controlled_disp_cnt, #no_sig_risk_disp_cnt, #no_ra_disp_cnt, #open_serv_disp_cnt, #oie_disp_cnt)  
+! Code 01 is Open for Placement 
+ !Do Get_Risk_Finding_Count(&cps_invst_stage_id, '02', #_risk_controlled_sub_cnt)  
+ !Do Get_Risk_Finding_Count(&cps_invst_stage_id, '03', #_no_sig_risk_sub_cnt)
+ !Do Get_Risk_Finding_Count(&cps_invst_stage_id, '04', #_no_ra_sub_cnt)
+ !Do Get_Risk_Finding_Count(&cps_invst_stage_id, '05', #_open_serv_sub_cnt)
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+AND cps_invst_detail.CD_CPS_INVST_DTL_OVRLL_DISPTN = $disposition 
+!and (inv_stage.TXT_STAGE_CLOSURE_CMNTS is null or trim(inv_stage.TXT_STAGE_CLOSURE_CMNTS) <> 'CLOSED TO MERGE') 
+End-Select 
+End-Procedure
+!
+Begin-Procedure Get_Risk_Finding_Count(#inv_stage_id, :#open_pla_cnt, :#risk_controlled_cnt, :#no_sig_risk_cnt, :#no_ra_cnt, :#open_serv_cnt, :#oie_cnt)
+Begin-Select Distinct 
+ !Let #risk_finding_cnt = #risk_finding_cnt + 1
+cps_invst_detail.ID_CPS_INVST_STAGE &cps_invst_stage_id
+cps_invst_detail.CD_CNCLSN_RISK_FND &risk_find_cd
+ !Move &risk_find_cd to $risk_find_cd
+ Evaluate &risk_find_cd
+ When = '01'
+  Add 1 to #open_pla_cnt
+ Break
+ When = '02'
+  Add 1 to #risk_controlled_cnt
+  Break
+ When = '03'
+  Add 1 to #no_sig_risk_cnt
+  Break
+ When = '04'
+  Add 1 to #no_ra_cnt
+  Break
+ When = '05'
+  Add 1 to #open_serv_cnt
+  Break
+ When = '06'
+  Add 1 to #oie_cnt
+  Break
+ When-other 
+  Break 
+ End-Evaluate
+from cps_invst_detail
+where cps_invst_detail.ID_CPS_INVST_STAGE = #inv_stage_id
+!AND cps_invst_detail.CD_CNCLSN_RISK_FND = $risk_finding
+End-Select 
+End-Procedure
+
+
+Begin-Procedure Master_Query24
+Begin-Select Distinct
+(1) &dummy24
+ Graphic (7,90,379) Horz-Line 10 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Investigation' (26,231,0) Underline  Bold 
+ Print '24 Hrs Response Time:' (48,145,0) Bold 
+ Let #_im24_cnt=#im24_cnt
+ Print #_im24_cnt (48,360) Edit 9999999999
+ Let #_im24_m_cnt=#im24_m_cnt
+ Print #_im24_m_cnt (65,360) Edit 9999999999
+ Print '# Met' (65,182,7) Bold 
+ Let #_im24_nm_cnt=#im24_nm_cnt
+ Print #_im24_nm_cnt (79,360) Edit 9999999999
+ Print '# Not Met' (79,181,0) Bold 
+ Let #_im24_ip_cnt=#im24_ip_cnt
+ Print #_im24_ip_cnt (94,360) Edit 9999999999
+ Print '# In-Progress' (94,182,0) Bold 
+ Next-Listing  Need=94
+From 
+ dual
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Query5D
+! Query Logic in here is not used. The new logic is hard to put in GUI so did the new logic as manual code and kept this layout for displaying the new counts
+! Note the variables in here are not being called anywhere in the report
+Begin-Select Distinct
+(1) &DUMMY
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print '5-Day Response Time:' (19,144,0) Bold 
+ Let #_r5d_cnt=#r5d_cnt
+ Print #_r5d_cnt (19,360) Edit 9999999999
+ Print '# Met' (36,180,0) Bold 
+ Let #_r5d_m_cnt=#r5d_m_cnt
+ Print #_r5d_m_cnt (36,360) Edit 9999999999
+ Print '# Not Met' (51,180,0) Bold 
+ Let #_r5d_nm_cnt=#r5d_nm_cnt
+ Print #_r5d_nm_cnt (51,360) Edit 9999999999
+ Print '# In-Progress' (66,180,0) Bold 
+ Let #_r5d_ip_cnt=#r5d_ip_cnt
+ Print #_r5d_ip_cnt (66,360) Edit 9999999999
+ Print 'Resource Development:' (84,144,0) Bold 
+ Let #_res_dev_cnt=#res_dev_cnt
+ Print #_res_dev_cnt (84,360) Edit 9999999999
+ Print 'Total Assigned:' (105,144,0) Bold 
+ Let #_r5d_cnt=#r5d_cnt
+ Let #_im24_cnt=#im24_cnt
+ Let #_res_dev_cnt=#res_dev_cnt
+ Let #_inv_tot=#_r5d_cnt + #_im24_cnt + #_res_dev_cnt
+ Print #_inv_tot (105,360) Edit 9999999999 Bold 
+ Graphic (122,144,270) Horz-Line 10 
+ Let #_inv_closed_cnt=#inv_closed_cnt
+ Print #_inv_closed_cnt (141,360) Edit 9999999999
+ Print 'Closed Investigations:' (141,144,0) Bold 
+ If #inv_closed_merged_cnt <= 0
+    ! do nothing
+ Else
+ Let #_inv_closed_merged_cnt=#inv_closed_merged_cnt
+ Print #_inv_closed_merged_cnt (158,360) Edit 9999999999
+ End-If
+ If #inv_closed_merged_cnt <= 0
+    ! do nothing
+ Else
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Closed due to Merged:' (158,144,21) Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Maltreatment Code' (175,326,0) Underline  Bold 
+ Print 'SUB' (195,326,0) Underline  Bold 
+ Print 'UNS' (195,360,0) Underline  Bold 
+ Print 'UTD' (195,394,0) Underline  Bold 
+ Print 'Risk Finding' (195,144,0) Underline  Bold 
+ Print 'Risk Indicated - Open for Services' (221,144,0) Bold 
+ Let #_open_serv_sub_cnt=#open_serv_sub_cnt
+ Print #_open_serv_sub_cnt (221,324) Edit 9999
+ Let #_open_serv_uns_cnt=#open_serv_uns_cnt
+ Print #_open_serv_uns_cnt (221,360) Edit 9999
+ Let #_open_serv_utd_cnt=#open_serv_utd_cnt
+ Print #_open_serv_utd_cnt (221,393) Edit 9999
+ Let #_open_pla_sub_cnt=#open_pla_sub_cnt
+ Print #_open_pla_sub_cnt (239,324) Edit 9999
+ Print 'Risk Indicated - Open for Placement' (239,144,0) Bold 
+ Let #_open_pla_uns_cnt=#open_pla_uns_cnt
+ Print #_open_pla_uns_cnt (239,360) Edit 9999
+ Let #_open_pla_utd_cnt=#open_pla_utd_cnt
+ Print #_open_pla_utd_cnt (239,393) Edit 9999
+ Print 'Risk Controlled' (258,144,0) Bold 
+ Let #_risk_controlled_sub_cnt=#risk_controlled_sub_cnt
+ Print #_risk_controlled_sub_cnt (258,324) Edit 9999
+ Let #_risk_controlled_uns_cnt=#risk_controlled_uns_cnt
+ Print #_risk_controlled_uns_cnt (258,360) Edit 9999
+ Let #_risk_controlled_utd_cnt=#risk_controlled_utd_cnt
+ Print #_risk_controlled_utd_cnt (258,393) Edit 9999
+ Print 'No Significant Risk Factors' (276,144,0) Bold 
+ Let #_no_sig_risk_sub_cnt=#no_sig_risk_sub_cnt
+ Print #_no_sig_risk_sub_cnt (276,324) Edit 9999
+ Let #_no_sig_risk_uns_cnt=#no_sig_risk_uns_cnt
+ Print #_no_sig_risk_uns_cnt (276,360) Edit 9999
+ Let #_no_sig_risk_utd_cnt=#no_sig_risk_utd_cnt
+ Print #_no_sig_risk_utd_cnt (276,393) Edit 9999
+ Print 'Risk Assessemnt N/A' (295,144,0) Bold 
+ Let #_no_ra_sub_cnt=#no_ra_sub_cnt
+ Print #_no_ra_sub_cnt (295,324) Edit 9999
+ Let #_no_ra_uns_cnt=#no_ra_uns_cnt
+ Print #_no_ra_uns_cnt (295,360) Edit 9999
+ Let #_no_ra_utd_cnt=#no_ra_utd_cnt
+ Print #_no_ra_utd_cnt (295,393) Edit 9999
+ Print 'Opened in Error' (313,144,0) Bold 
+ Let #_oie_sub_cnt=#oie_sub_cnt
+ Print #_oie_sub_cnt (313,324) Edit 9999
+ Let #_oie_uns_cnt=#oie_uns_cnt
+ Print #_oie_uns_cnt (313,360) Edit 9999
+ Let #_oie_utd_cnt=#oie_utd_cnt
+ Print #_oie_utd_cnt (313,393) Edit 9999
+ Graphic (320,323,95) Horz-Line 10 
+ Let #_sub_cnt=#sub_cnt
+ Print #_sub_cnt (340,324) Edit 9999
+ Let #_uns_cnt=#uns_cnt
+ Print #_uns_cnt (340,360) Edit 9999
+ Let #_utd_cnt=#utd_cnt
+ Print #_utd_cnt (340,393) Edit 9999
+ Next-Listing  Need=340
+From 
+ DUAL
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Query_DIV
+ Let #inv_closed_cnt = 0
+ Let #sub_cnt = 0
+ Let #uns_cnt = 0
+ Let #utd_cnt = 0
+ Let #open_pla_sub_cnt = 0
+ Let #risk_controlled_sub_cnt = 0
+ Let #no_sig_risk_sub_cnt = 0
+ Let #no_ra_sub_cnt = 0
+ Let #open_serv_sub_cnt = 0
+ Let #oie_sub_cnt = 0
+ 
+ Let #open_pla_uns_cnt = 0
+ Let #risk_controlled_uns_cnt = 0
+ Let #no_sig_risk_uns_cnt = 0
+ Let #no_ra_uns_cnt = 0
+ Let #open_serv_uns_cnt = 0
+ Let #oie_uns_cnt = 0
+ 
+ Let #open_pla_utd_cnt = 0
+ Let #risk_controlled_utd_cnt = 0
+ Let #no_sig_risk_utd_cnt = 0
+ Let #no_ra_utd_cnt = 0
+ Let #open_serv_utd_cnt = 0
+ Let #oie_utd_cnt = 0
+
+ Let #inv_div_closed_merged_cnt = 0
+! Get number of DIV progressed to INV and how many INV were closed
+Begin-Select distinct 
+ Add 1 to #inv_div_cnt
+inv_stage.id_stage              &inv_div_stage_id 
+inv_stage.dt_stage_close        &dt_inv_close
+inv_stage.txt_stage_closure_cmnts  &inv_div_stage_closure_cmnts
+ If (0=isnull(&dt_inv_close))
+   Add 1 to #inv_closed_cnt
+   !inv_stage.txt_stage_closure_cmnts  &inv_stage_closure_cmnts
+   If rtrim(&inv_div_stage_closure_cmnts, ' ') = 'CLOSED TO MERGE'
+     Add 1 to #inv_div_closed_merged_cnt
+   Else
+   Do Get_Disposition_Count(&inv_div_stage_id, 'SUB', #sub_cnt, #open_pla_sub_cnt, #risk_controlled_sub_cnt, #no_sig_risk_sub_cnt, #no_ra_sub_cnt, #open_serv_sub_cnt, #oie_sub_cnt)
+   Do Get_Disposition_Count(&inv_div_stage_id, 'UNS', #uns_cnt, #open_pla_uns_cnt, #risk_controlled_uns_cnt, #no_sig_risk_uns_cnt, #no_ra_uns_cnt, #open_serv_uns_cnt, #oie_uns_cnt)
+   Do Get_Disposition_Count(&inv_div_stage_id, 'UTD', #utd_cnt, #open_pla_utd_cnt, #risk_controlled_utd_cnt, #no_sig_risk_utd_cnt, #no_ra_utd_cnt, #open_serv_utd_cnt, #oie_utd_cnt)
+   End-If
+ End-If
+from INCOMING_DETAIL, STAGE, stage div_stage, stage_link sl_intake, stage inv_stage, stage_link sl_div,
+EMPLOYEE, UNIT
+Where INCOMING_DETAIL.ID_STAGE = STAGE.ID_STAGE
+And INCOMING_DETAIL.ID_INCOMING_WORKER = EMPLOYEE.ID_PERSON
+And EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+And STAGE.DT_STAGE_CLOSE IS NOT NULL 
+And INCOMING_DETAIL.DT_INCOMING_CALL  >=  to_date($dt_incoming_call, 'MM/YYYY')
+And INCOMING_DETAIL.DT_INCOMING_CALL  <  (last_day(to_date($dt_incoming_call, 'MM/YYYY'))+1)
+And [$where_clause]
+and stage.id_stage = sl_intake.id_prior_stage and div_stage.id_stage = sl_intake.id_stage and div_stage.cd_stage = 'DIV'
+and div_stage.id_stage = sl_div.id_prior_stage and inv_stage.id_stage = sl_div.id_stage and inv_stage.cd_stage = 'INV'
+End-Select
+
+! Get the number of DIV progressed from Intake opened in this month
+Begin-Select
+(count( distinct STAGE.ID_STAGE )) &div_cnt
+ Graphic (4,90,379) Horz-Line 10 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Diversion' (20,248,0) Underline  Bold 
+ Print 'Total Assigned:' (38,144,0) Bold 
+ Print &div_cnt (38,361) Edit 9999999999na Bold 
+ Graphic (52,147,270) Horz-Line 10 
+ Print 'Progressed to Investigation:' (72,144,0) Bold 
+ Let #_inv_div_cnt=#inv_div_cnt
+ Print #_inv_div_cnt (72,361) Edit 9999999999
+ Print 'Closed Investigations:' (88,144,0) Bold 
+ Let #_inv_closed_cnt=#inv_closed_cnt
+ Print #_inv_closed_cnt (89,361) Edit 9999999999
+ If #inv_div_closed_merged_cnt <= 0
+    ! do nothing
+ Else
+ Print 'Closed due to Merged:' (104,144,21) Bold 
+ End-If
+ If #inv_div_closed_merged_cnt <= 0
+    ! do nothing
+ Else
+ Let #_inv_div_stage_merged_cnt=#inv_div_stage_merged_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print #_inv_div_stage_merged_cnt (104,361) Edit 9999999999
+ End-If
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Maltreatment Code' (119,328,0) Underline  Bold 
+ Print 'SUB' (140,328,0) Underline  Bold 
+ Print 'UNS' (140,361,0) Underline  Bold 
+ Print 'UTD' (140,395,0) Underline  Bold 
+ Print 'Risk Finding' (140,144,0) Underline  Bold 
+ Print 'Risk Indicated - Open for Services' (162,144,0) Bold 
+ Let #_open_serv_sub_cnt=#open_serv_sub_cnt
+ Print #_open_serv_sub_cnt (162,328) Edit 9999
+ Let #_open_serv_uns_cnt=#open_serv_uns_cnt
+ Print #_open_serv_uns_cnt (162,361) Edit 9999
+ Let #_open_serv_utd_cnt=#open_serv_utd_cnt
+ Print #_open_serv_utd_cnt (162,394) Edit 9999
+ Print 'Risk Indicated - Open for Placement' (181,144,0) Bold 
+ Let #_open_pla_sub_cnt=#open_pla_sub_cnt
+ Print #_open_pla_sub_cnt (181,328) Edit 9999
+ Let #_open_pla_uns_cnt=#open_pla_uns_cnt
+ Print #_open_pla_uns_cnt (181,361) Edit 9999
+ Let #_open_pla_utd_cnt=#open_pla_utd_cnt
+ Print #_open_pla_utd_cnt (181,394) Edit 9999
+ Print 'Risk Controlled' (200,144,0) Bold 
+ Let #_risk_controlled_sub_cnt=#risk_controlled_sub_cnt
+ Print #_risk_controlled_sub_cnt (200,328) Edit 9999
+ Let #_risk_controlled_uns_cnt=#risk_controlled_uns_cnt
+ Print #_risk_controlled_uns_cnt (200,361) Edit 9999
+ Let #_risk_controlled_utd_cnt=#risk_controlled_utd_cnt
+ Print #_risk_controlled_utd_cnt (200,394) Edit 9999
+ Print 'No Significant Risk Factors' (219,144,0) Bold 
+ Let #_no_sig_risk_sub_cnt=#no_sig_risk_sub_cnt
+ Print #_no_sig_risk_sub_cnt (219,328) Edit 9999
+ Let #_no_sig_risk_uns_cnt=#no_sig_risk_uns_cnt
+ Print #_no_sig_risk_uns_cnt (219,361) Edit 9999
+ Let #_no_sig_risk_utd_cnt=#no_sig_risk_utd_cnt
+ Print #_no_sig_risk_utd_cnt (219,394) Edit 9999
+ Print 'Risk Assessemnt N/A' (238,144,0) Bold 
+ Let #_no_ra_sub_cnt=#no_ra_sub_cnt
+ Print #_no_ra_sub_cnt (238,328) Edit 9999
+ Let #_no_ra_uns_cnt=#no_ra_uns_cnt
+ Print #_no_ra_uns_cnt (238,361) Edit 9999
+ Let #_no_ra_utd_cnt=#no_ra_utd_cnt
+ Print #_no_ra_utd_cnt (238,394) Edit 9999
+ Print 'Opened in Error' (257,144,0) Bold 
+ Let #_oie_utd_cnt=#oie_utd_cnt
+ Print #_oie_utd_cnt (257,394) Edit 9999
+ Let #_oie_sub_cnt=#oie_sub_cnt
+ Print #_oie_sub_cnt (257,328) Edit 9999
+ Let #_oie_uns_cnt=#oie_uns_cnt
+ Print #_oie_uns_cnt (257,361) Edit 9999
+ Graphic (266,326,95) Horz-Line 10 
+ Print ' ' (284,347,0)
+ Let #_sub_cnt=#sub_cnt
+ Print #_sub_cnt (286,328) Edit 9999
+ Let #_uns_cnt=#uns_cnt
+ Print #_uns_cnt (286,361) Edit 9999
+ Let #_utd_cnt=#utd_cnt
+ Print #_utd_cnt (286,394) Edit 9999
+ Next-Listing  Need=286
+From  INCOMING_DETAIL, STAGE
+,      EMPLOYEE, UNIT
+      Where INCOMING_DETAIL.ID_STAGE = STAGE.ID_STAGE
+            And INCOMING_DETAIL.ID_INCOMING_WORKER = EMPLOYEE.ID_PERSON
+            And EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+ And CD_INCOMING_DISPOSITION = 'DIV'
+ And (DT_STAGE_CLOSE IS NOT NULL  AND  STAGE.DT_STAGE_CLOSE  <> TO_DATE('12/31/4712 00:00:00', 'MM/DD/YYYY HH24:MI:SS'))
+ And INCOMING_DETAIL.DT_INCOMING_CALL  >=  to_date($dt_incoming_call, 'MM/YYYY')
+ And INCOMING_DETAIL.DT_INCOMING_CALL  <  (last_day(to_date($dt_incoming_call, 'MM/YYYY'))+1)
+ And [$where_clause]
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Query_SCO
+Begin-Select
+(count( distinct STAGE.ID_STAGE )) &sco_cnt
+ Graphic (11,90,379) Horz-Line 10 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'ScreenOuts / Information & Referrals /' (29,181,0) Underline  Bold 
+ Print 'Opened in Error and Others' (43,205,0) Underline  Bold 
+ Print &sco_cnt (71,360) Edit 9999999999na
+ Print 'ScreenOuts:' (71,145,0) Bold 
+ Next-Listing  Need=71
+From  INCOMING_DETAIL, STAGE
+,      EMPLOYEE, UNIT
+      Where INCOMING_DETAIL.ID_STAGE = STAGE.ID_STAGE
+            And INCOMING_DETAIL.ID_INCOMING_WORKER = EMPLOYEE.ID_PERSON
+            And EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+ And CD_INCOMING_DISPOSITION = 'SCO'
+ And (INCOMING_DETAIL.DT_INCOMING_CALL  >= to_date($dt_incoming_call, 'MM/YYYY') AND  INCOMING_DETAIL.DT_INCOMING_CALL  < (last_day(to_date
+    ($dt_incoming_call, 'MM/YYYY'))+1))
+ And (STAGE.DT_STAGE_CLOSE  IS NOT NULL  AND  STAGE.DT_STAGE_CLOSE  <> TO_DATE('12/31/4712 00:00:00', 'MM/DD/YYYY HH24:MI:SS'))
+ And [$where_clause]
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Q_SCR_IR
+Begin-Select
+(count( distinct STAGE.ID_STAGE )) &scr_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &scr_cnt (15,361) Edit 9999999999na
+ Print 'ScreenOut & Referrals:' (15,145,0) Bold 
+ Let #_ir_cnt=&ir_cnt_init
+ Print #_ir_cnt (31,361) Edit 9999999999
+ Print 'Information & Referrals:' (31,145,0) Bold 
+ Print 'Opened in Error' (47,145,0) Bold 
+ Let #_oie_cnt=&oie_cnt
+ Print #_oie_cnt (47,361) Edit 9999999999
+ Print 'Other Non-Incidents:' (64,145,0) Bold 
+ Let #_ni_oth_cnt=&ni_oth_cnt
+ Print #_ni_oth_cnt (64,361) Edit 9999999999
+ Print 'Total Assigned:' (86,145,0) Bold 
+ Let #_oie_cnt=&oie_cnt
+ Let #_sir_tot_init=&sco_cnt + &scr_cnt +  &ir_cnt_init + &ni_oth_cnt + #_oie_cnt
+ Print #_sir_tot_init (86,361) Edit 9999999999 Bold 
+ Next-Listing  Need=86
+From  INCOMING_DETAIL, STAGE
+,      EMPLOYEE, UNIT
+      Where INCOMING_DETAIL.ID_STAGE = STAGE.ID_STAGE
+            And INCOMING_DETAIL.ID_INCOMING_WORKER = EMPLOYEE.ID_PERSON
+            And EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+ And CD_INCOMING_DISPOSITION = 'SCR'
+ And (DT_STAGE_CLOSE IS NOT NULL  AND  STAGE.DT_STAGE_CLOSE  <> TO_DATE('12/31/4712 00:00:00', 'MM/DD/YYYY HH24:MI:SS'))
+ And INCOMING_DETAIL.DT_INCOMING_CALL  >=  to_date($dt_incoming_call, 'MM/YYYY')
+ And INCOMING_DETAIL.DT_INCOMING_CALL  <  (last_day(to_date($dt_incoming_call, 'MM/YYYY'))+1)
+ And [$where_clause]
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Query_ICP
+Begin-Select
+(count( distinct STAGE.ID_STAGE )) &fc_cnt
+ Graphic (9,91,375) Horz-Line 10 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Foster Care' (25,242,0) Underline  Bold 
+ Print 'ICPC:' (42,144,0) Bold 
+ Print &fc_cnt (42,361) Edit 9999999999na
+ Next-Listing  Need=42
+From  INCOMING_DETAIL, STAGE
+,      EMPLOYEE, UNIT
+      Where INCOMING_DETAIL.ID_STAGE = STAGE.ID_STAGE
+            And INCOMING_DETAIL.ID_INCOMING_WORKER = EMPLOYEE.ID_PERSON
+            And EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+ And CD_NON_RSDNT_REQ_TYPE = 'IC'
+ And INCOMING_DETAIL.DT_INCOMING_CALL  >=  to_date($dt_incoming_call, 'MM/YYYY')
+ And INCOMING_DETAIL.DT_INCOMING_CALL  <  (last_day(to_date($dt_incoming_call, 'MM/YYYY'))+1)
+ And (DT_STAGE_CLOSE IS NOT NULL  AND  STAGE.DT_STAGE_CLOSE  <> TO_DATE('12/31/4712 00:00:00', 'MM/DD/YYYY HH24:MI:SS'))
+ And [$where_clause]
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Query_DJJ
+Begin-Select
+(count( distinct STAGE.ID_STAGE )) &djj_cnt
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &djj_cnt (14,361) Edit 9999999999na
+ Print 'DJJ:' (14,145,0) Bold 
+ Let #_ste_cnt=&ste_cnt
+ Print #_ste_cnt (31,361) Edit 9999999999
+ Print 'Short Term Emergency:' (31,145,0) Bold 
+ Let #_fc_tot=&fc_cnt + &djj_cnt + &ste_cnt
+ Print #_fc_tot (54,361) Edit 9999999999 Bold 
+ Print 'Total Assigned:' (54,145,0) Bold 
+ Next-Listing  Need=54
+From  INCOMING_DETAIL, STAGE
+,      EMPLOYEE, UNIT
+      Where INCOMING_DETAIL.ID_STAGE = STAGE.ID_STAGE
+            And INCOMING_DETAIL.ID_INCOMING_WORKER = EMPLOYEE.ID_PERSON
+            And EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+ And CD_NON_RSDNT_REQ_TYPE = 'NI'
+ And (DT_STAGE_CLOSE IS NOT NULL  AND  STAGE.DT_STAGE_CLOSE  <> TO_DATE('12/31/4712 00:00:00', 'MM/DD/YYYY HH24:MI:SS'))
+ And INCOMING_DETAIL.DT_INCOMING_CALL  >=  to_date($dt_incoming_call, 'MM/YYYY')
+ And INCOMING_DETAIL.DT_INCOMING_CALL  <  (last_day(to_date($dt_incoming_call, 'MM/YYYY'))+1)
+ And [$where_clause]
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Query_STE
+Begin-Select
+(count( distinct STAGE.ID_STAGE )) &ste_cnt
+From  INCOMING_DETAIL, INCMG_DETERM_FACTORS
+,      STAGE
+      Where INCOMING_DETAIL.ID_STAGE = INCMG_DETERM_FACTORS.ID_INCMG_DETERM_STAGE
+            And INCMG_DETERM_FACTORS.ID_INCMG_DETERM_STAGE = STAGE.ID_STAGE
+ And DT_STAGE_CLOSE IS NOT NULL  
+ And CD_STAGE_SCROUT_REASON = 'NMA'
+ And CD_INCMG_DETERM = 'OECC'
+ And CD_INCOMING_DISPOSITION IN ('SCR','SCO')
+ And INCOMING_DETAIL.DT_INCOMING_CALL  >=  to_date($dt_incoming_call, 'MM/YYYY')
+ And INCOMING_DETAIL.DT_INCOMING_CALL  <  (last_day(to_date($dt_incoming_call, 'MM/YYYY'))+1)
+ And [$where_clause]
+End-Select
+End-Procedure
+
+Begin-Procedure Master_Query_PFC
+Begin-Select
+(count( distinct STAGE.ID_STAGE )) &pfc_cnt
+ Graphic (11,90,379) Horz-Line 10 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Post Foster Care Payment' (31,209,0) Underline  Bold 
+ Print 'Total Assigned:' (53,144,0) Bold 
+ Print &pfc_cnt (53,360) Edit 9999999999na Bold 
+ Next-Listing  Need=53
+From  INCOMING_DETAIL, STAGE
+,      EMPLOYEE, UNIT
+      Where INCOMING_DETAIL.ID_STAGE = STAGE.ID_STAGE
+            And INCOMING_DETAIL.ID_INCOMING_WORKER = EMPLOYEE.ID_PERSON
+            And EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+ And CD_NON_RSDNT_REQ_TYPE = 'PF'
+ And DT_STAGE_CLOSE IS NOT NULL 
+ And IND_STAGE_CLOSE = 'Y'
+ And INCOMING_DETAIL.DT_INCOMING_CALL >= to_date($dt_incoming_call, 'MM/YYYY')
+ And INCOMING_DETAIL.DT_INCOMING_CALL < (last_day(to_date($dt_incoming_call, 'MM/YYYY'))+1)
+ And [$where_clause]
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure Master_Query_OPN
+Begin-Select
+(count( distinct  INCOMING_DETAIL.ID_STAGE )) &pending_cnt
+ Graphic (11,90,379) Horz-Line 10 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Total Intakes Pending:' (34,109,0) Bold 
+ Print &pending_cnt (34,360) Edit 9999999999na Bold 
+ Next-Listing  Need=34
+From  INCOMING_DETAIL, STAGE
+,      EMPLOYEE, UNIT
+      Where INCOMING_DETAIL.ID_INCOMING_WORKER = EMPLOYEE.ID_PERSON
+            And EMPLOYEE.ID_EMP_UNIT = UNIT.ID_UNIT
+            And INCOMING_DETAIL.ID_STAGE = STAGE.ID_STAGE(+)
+ And INCOMING_DETAIL.DT_INCOMING_CALL >= TO_DATE($dt_incoming_call, 'MM/YYYY')
+ And INCOMING_DETAIL.DT_INCOMING_CALL < (LAST_DAY(TO_DATE($dt_incoming_call, 'MM/YYYY'))+1)
+ And (CD_INCMG_STATUS = 'OPN' Or (DT_STAGE_CLOSE IS NULL 
+ And (CD_INCMG_STATUS IS NULL  Or CD_INCMG_STATUS <> 'CLD')))
+ And [$where_clause]
+End-Select
+ Next-Listing
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Heading 12 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Division of Family and Children Services' (10,184,0)
+ Print $current-date (10,473) edit 'MM/DD/YYYY'
+ Print-Image (1,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Let $report_period=$dt_incoming_call
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print $report_period (92,115,15)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (10,408,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'Intake Monthly Statistics' (44,186,0) Bold 
+ Alter-Printer Font=4 Point-Size=12    ! [SQR.INI] 4=Arial,proportional
+ Print 'Reporting Month:' (92,7,0) Bold 
+ Let $region_header=$region_header
+ Print $region_header (76,238,9) Bold 
+ Let $region_county_header=$region_county_header
+ Print $region_county_header (59,223,13) Bold 
+ Alter-Printer Font=4 Point-Size=2    ! [SQR.INI] 4=Arial,proportional
+ Print '   ' (115,1,0) Bold 
+ Else   ! put a non combined page header
+ Print '   ' (4,1,0) Bold 
+ End-If
+ Alter-Printer Font=4 Point-Size=10
+End-Procedure
+Begin-Footing 36 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (23,494) '' ' of '
+ Last-Page (23,516) 
+ Alter-Printer Font=4 Point-Size=10
+ Alter-Printer Font=4 Point-Size=10
+End-Footing
+

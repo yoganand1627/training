@@ -1,0 +1,739 @@
+!*****************************************************************************
+!  CALL LOG LIST REPORT                                                      *
+!*****************************************************************************  
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM NAME:         cin12o00.sqr                                         *
+!                                                                            *
+! PROGRAM LOCATION:     /caps/users/mccleabg/work/sqr                        *
+!                                                                            *
+!                                                                            *
+! DATE:                 10/30/95                                             *
+!                                                                            *
+! PROGRAMMER NAME:      Brad McCleary                                        *
+!                                                                            *
+! PROGRAM DESCRIPTION:  The Contact Log List Report uses criteria entered    *
+!                       in the Call Log window and produces a report of      * 
+!                       calls that meet that criteria.                       *  
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! PROGRAM MODIFICATION SECTION                                               *
+! ----------------------------                                               *
+!                                                                            *
+!   DATE     PROGRAMMER                       MODIFICATION                   *
+! --------   ----------   -------------------------------------------------  *
+! 10/30/95   B. McCleary  Initial Programming                                *
+! 02/07/96   B. McCleary  SIR 3123 - Allow for I&R and SPC rows that have no *
+!                         stages to be classified and counted correctly.     *
+! 12/16/96   K. Cys       ENH - Added code for Name Person Full enhancement. *
+!*****************************************************************************
+
+!*****************************************************************************
+!                                                                            *
+! REPORT PROCESSING SECTION                                                  *
+!                                                                            *
+!       This procedure defines the beginning and end of the report proc-     *
+!       essing. Housekeeping initializes all report values, Processing       *
+!       processes the body of the report, and Wrap-Up prints the end of re-  *
+!       port message and other wrap up functions.                            *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-REPORT
+
+    do HOUSEKEEPING
+
+    do PROCESS-REPORT        
+
+    do WRAP-UP
+
+END-REPORT
+
+!*****************************************************************************
+!  SETUP-SECTION                                                             *
+!                                                                            *
+!       This section sets up common parameters including page size and       *
+!       printer as well as input parameters                                  *
+!                                                                            *
+!*****************************************************************************
+BEGIN-SETUP
+
+    #ifdef ORACLE                       !compiler directive
+        ask dbname 'Database Name'
+        use {dbname}
+    #endif
+
+    #INCLUDE 'setup02b.sqc'             ! control codes for Portrait 
+                                        ! On Demand Reports              
+
+    ask CD_STAGE_CLASSIFICATION                 
+    ask ID_STAGE                                
+    ask ADDR_INCOMING_CALLER_CITY
+    ask CD_STAGE_CNTY
+    ask CD_INCMG_STATUS
+    ask CD_STAGE_CURR_PRIORITY
+    ask CD_STAGE_REGION
+    ask NBR_INCMG_UNIT
+    ask SCR_DT_RANGE_FROM
+    ask SCR_TIME_FROM
+    ask SCR_DT_RANGE_TO
+    ask SCR_TIME_TO
+                                    
+    
+END-SETUP
+
+!*****************************************************************************
+!                                                                            *
+! HEADER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include the report title, date, time, page number, report id, and    *
+!       column headers. XXX lines are reserved to print the heading at the   *
+!       top of each page. This includes blank lines. A common setup header   *
+!       has been created called XXXXXXXXXXXXXXXXXXX for landscape or portrait*
+!       reports.                                                             *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-HEADING 2 
+
+  print 'CALL LOG LIST REPORT'                          (1) center
+
+END-HEADING
+
+!*****************************************************************************
+!                                                                            *
+! FOOTER                                                                     *
+!                                                                            *
+!       These commands will be processed every time SQR writes a page. They  *
+!       include a footer that must be in place in all pages of some reports  *
+!                                                                            *
+!*****************************************************************************
+
+BEGIN-FOOTING 2
+
+  #INCLUDE 'footer04.sqc'       ! Include file with footer information
+                                ! specific to portrait on demand report
+
+END-FOOTING
+
+!****************************************************************************
+!                                                                           *
+!   HOUSEKEEPING                                                            *
+!                                                                           *
+!       Set environment variables, initialize report id, initialize title   *
+!       id, initialize date and time, initialize variables, and define      *
+!       constants                                                           *
+!                                                                           *
+!       CALLED BY: BEGIN-REPORT                                             *
+!       CALLS:     NONE                                                     * 
+!****************************************************************************
+
+BEGIN-PROCEDURE HOUSEKEEPING
+
+   #INCLUDE 'setenv.sqc'       !Set printer environment
+
+    move '{CD_STAGE_CLASSIFICATION}'      to $input_class                 
+    move '{ID_STAGE}'                     to #input_id_stage    
+    move '{ADDR_INCOMING_CALLER_CITY}'    to $input_city
+    move '{CD_STAGE_CNTY}'                to $input_county
+    move '{CD_INCMG_STATUS}'              to $input_status
+    move '{CD_STAGE_CURR_PRIORITY}'       to $input_priority
+    move '{CD_STAGE_REGION}'              to $input_region
+    move '{NBR_INCMG_UNIT}'               to $input_unit
+    move '{SCR_DT_RANGE_FROM}'            to $input_dt_from
+    move '{SCR_TIME_FROM}'                to $input_time_from
+    move '{SCR_DT_RANGE_TO}'              to $input_dt_to
+    move '{SCR_TIME_TO}'                  to $input_time_to
+   
+    let $input_class =     ltrim($input_class , ' ')                 
+    let $input_city =      ltrim($input_city , ' ')
+    let $input_county =    ltrim($input_county , ' ')
+    let $input_status =    ltrim($input_status , ' ')
+    let $input_priority =  ltrim($input_priority , ' ')
+    let $input_region =    ltrim($input_region , ' ')
+    let $input_unit =      ltrim($input_unit , ' ')
+    let $input_dt_from =   ltrim($input_dt_from , ' ')
+    let $input_time_from = ltrim($input_time_from , ' ')
+    let $input_dt_to =     ltrim($input_dt_to , ' ')
+    let $input_time_to =   ltrim($input_time_to , ' ')
+
+if $input_dt_from = ''                     !SIR 2783  Formats blank
+  move '01/01/0001' to $input_dt_from      !times and dates
+end-if
+
+if $input_time_from = ''
+  move '12:00 AM' to $input_time_from
+end-if
+
+if $input_dt_to = ''
+  move '12/31/4712' to $input_dt_to
+end-if
+
+if $input_time_to = ''
+  move '11:59 PM' to $input_time_to
+end-if
+
+END-PROCEDURE HOUSEKEEPING
+
+!****************************************************************************
+!                                                                           *
+!   PROCESS-REPORT                                                          *
+!                                                                           *
+!      This procedure includes the main processing logic of the report.     *
+!                                                                           *
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : GET-WHERE-CLAUSE, GET-CALLER-INFO                      *
+!****************************************************************************
+
+BEGIN-PROCEDURE PROCESS-REPORT 
+   
+    do GET-WHERE-CLAUSE
+    do GET-CALLER-INFO 
+
+END-PROCEDURE PROCESS-REPORT                   
+
+!****************************************************************************
+!                                                                           *
+!   GET-WHERE-CLAUSE                                                        *
+!                                                                           *
+!       This procedure concatenates the where clause according to the       *
+!       number of inputs received.  It also concatenates the date and time  *
+!       so the incoming call date can be compared to the date from and to   *
+!       parameters.                                                         *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-WHERE-CLAUSE
+
+        let $conc_from = $input_dt_from || ' ' ||$input_time_from
+        let $conc_to   = $input_dt_to   || ' ' ||$input_time_to
+
+let $where_clause = ' I.ID_STAGE = S.ID_STAGE(+) ' !***ENH***
+let $where_clause = $where_clause||' AND CSUFFIX2A.CODE(+)  = P.CD_PERSON_SUFFIX '
+let $where_clause = $where_clause||' AND CSUFFIX2B.CODE(+)  = I.CD_INCOMING_CALLER_SUFFIX '
+let $where_clause = $where_clause||' AND CCOUNT.CODE(+)   = I.CD_INCOMING_CALLER_COUNTY '
+let $where_clause = $where_clause||' AND CCOUNT1.CODE(+)  = S.CD_STAGE_CNTY' 
+let $where_clause = $where_clause||' AND CINCMGST.CODE(+) = I.CD_INCMG_STATUS'
+let $where_clause = $where_clause||' AND CCLASS.CODE(+)   = S.CD_STAGE_CLASSIFICATION'
+let $where_clause = $where_clause||' AND CSPECREQ.CODE(+) = I.CD_INCOMING_DISPOSITION'
+let $where_clause = $where_clause||' AND CINRTYPE.CODE(+) = I.CD_INCOMING_DISPOSITION'
+let $where_clause = $where_clause||' AND CABALTYP.CODE(+) = I.CD_INCMG_ALLEG_TYPE'
+let $where_clause = $where_clause||' AND CPRIORTY.CODE(+) = S.CD_STAGE_CURR_PRIORITY'
+
+!SIR 3123  -  Add incoming detail dispositions to the where clause if the row
+!             has no stage by using an OR statement.  This way, the condition
+!             passes as long as the row has a stage (class) OR a corresponding 
+!             disposition in incoming detail.
+
+if rtrim($input_class,'') = 'SPC'
+    let $where_clause = $where_clause || ' AND (S.CD_STAGE_CLASSIFICATION = ''' || $input_class || ''''    
+    let $where_clause = $where_clause || ' OR  I.CD_INCOMING_DISPOSITION IN ' || '(''CAD'', ''CCO'', ''CDC'', ''CIC'', ''COS'', ''CPB'', ''NEX'', ''NIP'', ''NLA'', ''NPS'', ''NRC'', ''NST'', ''XXX''))' 
+else     
+if rtrim($input_class,'') = 'I&R'
+    let $where_clause = $where_clause || ' AND (S.CD_STAGE_CLASSIFICATION = ''' || $input_class || ''''    
+    let $where_clause = $where_clause || ' OR  I.CD_INCOMING_DISPOSITION IN ' || '(''01'', ''02'', ''03'', ''04'', ''05'', ''06'', ''07'', ''08'', ''09'', ''10'', ''11'', ''12'', ''13'', ''14'', ''XX''))'    
+else     
+if rtrim($input_class,'') <> ''
+    let $where_clause = $where_clause || ' AND S.CD_STAGE_CLASSIFICATION = ''' || $input_class || ''''    
+end-if
+end-if
+end-if
+
+if #input_id_stage <> 0
+    let $where_id_stage = to_char(#input_id_stage)
+    let $where_clause = $where_clause || ' AND I.ID_STAGE = ' || $where_id_stage
+end-if
+
+if rtrim($input_city,'') <> ''
+    let $where_clause = $where_clause || ' AND I.ADDR_INCOMING_CALLER_CITY = ''' || $input_city || ''''    
+end-if
+  
+if rtrim($input_county,'') <> ''
+    let $where_clause = $where_clause || ' AND I.CD_INCOMING_CALLER_COUNTY = ''' || $input_county || ''''    
+end-if
+
+if rtrim($input_status,'') <> ''
+    let $where_clause = $where_clause || ' AND I.CD_INCMG_STATUS = ''' || $input_status || ''''    
+end-if
+ 
+if rtrim($input_priority,'') <> ''
+    let $where_clause = $where_clause || ' AND S.CD_STAGE_CURR_PRIORITY = ''' || $input_priority || ''''    
+end-if
+
+if rtrim($input_region,'') <> ''
+    let $where_clause = $where_clause || ' AND I.CD_INCMG_REGION = ''' || $input_region || ''''
+end-if
+
+if rtrim($input_unit,'') <> ''
+    let $where_clause = $where_clause || ' AND I.NBR_INCMG_UNIT = ''' || $input_unit || ''''
+end-if
+ 
+if $conc_from <> ''
+    let $where_clause = $where_clause || ' AND I.DT_INCOMING_CALL >= to_date(''' || $conc_from || '''' || ', ' || '''MM/DD/YYYY HH:MI AM'')'
+end-if
+
+if $conc_to <> ''
+    let $where_clause = $where_clause || ' AND I.DT_INCOMING_CALL <= to_date(''' || $conc_to || '''' || ', ' || '''MM/DD/YYYY HH:MI AM'')'
+end-if
+
+END-PROCEDURE GET-WHERE-CLAUSE
+
+!****************************************************************************
+!                                                                           *
+!   GET-CALLER-INFO                                                         *
+!                                                                           *
+!       This procedure will get all of the base caller information that     *
+!       is to be printed.  It also makes the report new-page and resets the *
+!       counters if the worker name changes.                                *
+!                                                                           * 
+!       CALLED BY  : PROCESS REPORT                                         *
+!       CALLS      : PRINT-CALLER-INFO, PRINT-TOTALS                        *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-CALLER-INFO
+
+    move 0      to #count0             ! initialize the counter
+    move 0      to #count1             ! initialize the counter
+    move 0      to #count2             ! initialize the counter
+    move 0      to #count3             ! initialize the counter
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+I.ID_INCOMING_WORKER
+    move &I.ID_INCOMING_WORKER              to #id_worker
+
+P.NM_PERSON_FIRST                           !***ENH***
+    move &P.NM_PERSON_FIRST                 to $worker_first
+    
+P.NM_PERSON_MIDDLE
+    move &P.NM_PERSON_MIDDLE                to $worker_middle
+    
+P.NM_PERSON_LAST
+    move &P.NM_PERSON_LAST                  to $worker_last
+    
+CSUFFIX2A.decode
+    move &CSUFFIX2A.decode                  to $worker_suffix            
+    
+to_char (I.DT_INCOMING_CALL, 'MM/DD/YYYY HH:MI AM') &date1
+    move &date1                             to $call_date_time
+
+    let $call_date = substr($call_date_time, 1, 10)
+    let $call_time = substr($call_date_time, 12, 8)    
+                                        
+I.ID_STAGE                                        
+    move &I.ID_STAGE                        to #caller_id
+    
+I.NM_INCOMING_CALLER_FIRST                  !***ENH***
+    move &I.NM_INCOMING_CALLER_FIRST        to $caller_first
+    
+I.NM_INCOMING_CALLER_MIDDLE
+    move &I.NM_INCOMING_CALLER_MIDDLE       to $caller_middle
+    
+I.NM_INCOMING_CALLER_LAST
+    move &I.NM_INCOMING_CALLER_LAST         to $caller_last
+    
+CSUFFIX2B.DECODE
+    move &CSUFFIX2B.DECODE                  to $caller_suffix
+
+I.NM_INCMG_REGARDING_FIRST||' '||I.NM_INCMG_REGARDING_LAST &re_name
+    move &re_name                           to $re_name
+    
+I.ADDR_INCOMING_CALLER_CITY
+    move &I.ADDR_INCOMING_CALLER_CITY       to $caller_city
+
+CCOUNT.DECODE &DEC1
+    move &DEC1                              to $caller_county
+    
+CINCMGST.DECODE
+    move &CINCMGST.DECODE                   to $status
+
+S.CD_STAGE_CLASSIFICATION
+    move &S.CD_STAGE_CLASSIFICATION         to $class
+
+CCLASS.DECODE
+    move &CCLASS.DECODE                     to $class_dec      
+    
+I.CD_INCOMING_PROGRAM_TYPE                                !SIR 3037 - Prints  
+    move &I.CD_INCOMING_PROGRAM_TYPE        to $spec_type !code from inc_dtl  
+                                                          !when class = SPC else
+S.CD_STAGE_PROGRAM                                        !prints stage code
+    move &S.CD_STAGE_PROGRAM                to $prog_type   
+
+CSPECREQ.DECODE
+    move &CSPECREQ.DECODE                   to $req_type
+    
+CINRTYPE.DECODE
+    move &CINRTYPE.DECODE                   to $i_r_type
+
+CABALTYP.DECODE
+    move &CABALTYP.DECODE                   to $allegation
+    
+CPRIORTY.DECODE
+    move &CPRIORTY.DECODE                   to $priority
+
+CCOUNT1.DECODE &DEC2
+    move &DEC2                              to $case_county
+
+!SIR 3123 - If there is no stage and thus no classification to determine which
+!           print statement to call in PRINT-CALLER-INFO, this will call a 
+!           procedure that gets the disposition for the incoming detail stage. 
+!           This disposition corresponds to a certain stage classification and
+!           thus we can give the class and class decodes the appropriate value.
+!           This assures that an I&R or SPC row with no stage will still be
+!           counted and printed correctly.
+
+  if $class = ''
+    do GET-DISPOSITION
+      
+      if  ($disposition = 'CAD'  
+        or $disposition = 'CCO'  
+        or $disposition = 'CDC'  
+        or $disposition = 'CIC'  
+        or $disposition = 'COS'  
+        or $disposition = 'CPB'  
+        or $disposition = 'NEX'  
+        or $disposition = 'NIP'  
+        or $disposition = 'NLA'  
+        or $disposition = 'NPS'  
+        or $disposition = 'NRC'  
+        or $disposition = 'NST'  
+        or $disposition = 'XXX')  
+      move 'SPC'                to $class
+          move 'Special Request'        to $class_dec
+      else
+      if  ($disposition = '01'   
+        or $disposition = '02'   
+        or $disposition = '03'   
+        or $disposition = '04'   
+        or $disposition = '05'   
+        or $disposition = '06'   
+        or $disposition = '07'   
+        or $disposition = '08'   
+        or $disposition = '09'   
+        or $disposition = '10'   
+        or $disposition = '11'   
+        or $disposition = '12'   
+        or $disposition = '13'   
+        or $disposition = '14'   
+        or $disposition = 'XX' )  
+      move 'I&R'                to $class
+      move 'I & R'                      to $class_dec
+      end-if      
+      end-if      
+  end-if
+  
+    let #count0 = #count0 + 1
+    
+    if $worker_suffix <> ''  !***ENH***
+       let $worker_suff = ', ' || $worker_suffix
+    end-if
+    if $worker_middle = ''
+       let $worker = $worker_first || ' ' || $worker_last || $worker_suff
+    else
+       let $worker = $worker_first || ' ' || $worker_middle || ' ' || $worker_last || $worker_suff
+    end-if          
+
+    if #count0 = 1
+      do PRINT-CALLER-INFO
+    else
+    if $worker <> $last_worker
+      do PRINT-TOTALS
+      NEW-PAGE
+      move 0               to #count1
+      move 0               to #count2
+      move 0               to #count3
+      do PRINT-CALLER-INFO
+    else
+      do PRINT-CALLER-INFO
+    end-if
+    end-if
+
+    move $worker to $last_worker
+    
+    move '' to $worker_suff  !***ENH***
+                                                       
+FROM    INCOMING_DETAIL     I,
+        PERSON              P,
+        STAGE               S,
+        CSUFFIX2            CSUFFIX2A,!***ENH***
+        CSUFFIX2            CSUFFIX2B,
+        CCOUNT              CCOUNT,
+        CCOUNT              CCOUNT1,
+        CINCMGST            CINCMGST,
+        CCLASS              CCLASS,
+        CSPECREQ            CSPECREQ,
+        CINRTYPE            CINRTYPE,
+        CABALTYP            CABALTYP,
+        CPRIORTY            CPRIORTY
+        
+WHERE   I.ID_INCOMING_WORKER = P.ID_PERSON 
+AND     [$where_clause]
+
+ORDER BY P.NM_PERSON_FULL, I.DT_INCOMING_CALL    !better order SIR 3108
+
+END-SELECT    
+
+      do PRINT-TOTALS
+
+END-PROCEDURE GET-CALLER-INFO
+
+!****************************************************************************
+!                                                                           *
+!   GET-DISPOSITION                                                         * 
+!                                                                           *
+!      Retrieves the disposition for special requests and info & referral   * 
+!      when the stage does not exist.                                       *
+!                                                                           * 
+!       CALLED BY  : PROCESS-REPORT                                         *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE GET-DISPOSITION
+
+BEGIN-SELECT ON-ERROR=SqlErrorHandle
+
+CD_INCOMING_DISPOSITION
+    move &CD_INCOMING_DISPOSITION                   to $disposition
+
+FROM    INCOMING_DETAIL
+
+WHERE   ID_STAGE = #caller_id
+
+END-SELECT
+
+END-PROCEDURE GET-DISPOSITION
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-CALLER-INFO                                                       *
+!                                                                           *
+!       This procedure prints the caller information and determines which   *
+!       print procedure to call according to the stage classification.      *
+!                                                                           * 
+!       CALLED BY  : GET-CALLER-INFO                                        *
+!       CALLS      : PRINT-I&R, PRINT-SPC, PRINT-OTHER                      *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-CALLER-INFO 
+
+next-listing need = 9
+
+print 'CALL DATE: '                         (+1,1)
+print $call_date                            (+0,15)
+print 'CALL TIME: '                         (+0,27)
+print $call_time                            (+0,38)
+print 'CALL ID: '                           (+0,53)
+print #caller_id                            (+0,62) edit 8888888888888888
+print 'WORKER: '                            (+1,1)
+print $worker                               (+0,15)
+print 'CALLER: '                            (+1,1)
+if $caller_suffix <> ''  !***ENH***
+   let $caller_name_suff = ', ' || $caller_suffix
+end-if
+if $caller_middle = ''
+   let $caller_name = $caller_first || ' ' || $caller_last || $caller_name_suff
+else
+   let $caller_name = $caller_first || ' ' || $caller_middle || ' ' || $caller_last || $caller_name_suff
+end-if          
+print $caller_name                          (+0,15)
+move '' to $caller_name_suff  !***ENH***
+print 'IN RE NAME: '                        (+1,1)
+print $re_name                              (+0,15)
+print 'CALLER CITY: '                       (+1,1)  !SIR 3037 - change ; to :
+print $caller_city                          (+0,15)
+print 'CALLER COUNTY: '                     (+0,37)
+print $caller_county                        (+0,53)
+print 'STATUS: '                            (+1,1)
+print $status                               (+0,15)
+print 'CLASSIFICATION: '                    (+0,37)
+print $class_dec                            (+0,53)
+
+  if $class = 'I&R'
+    do PRINT-I&R
+  else   
+  if $class = 'SPC'
+    do PRINT-SPC
+  else
+    do PRINT-OTHER
+  end-if
+  end-if
+
+END-PROCEDURE PRINT-CALLER-INFO 
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-I&R                                                               *
+!                                                                           *
+!       This procedure prints the i&r type field if the stage classification*
+!       is I&R.                                                             *
+!                                                                           * 
+!       CALLED BY  : PRINT-CALLER-INFO                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-I&R
+
+let #count1 = #count1 + 1
+
+print 'I & R TYPE: '                        (+1,1)
+print $i_r_type                             (+0,15)  wrap 63 2
+
+END-PROCEDURE PRINT-I&R
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-SPC                                                               *
+!                                                                           *
+!       This procedure prints the program and request type field if the     *
+!       stage classification is SPC.                                        *
+!                                                                           * 
+!       CALLED BY  : PRINT-CALLER-INFO                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-SPC
+
+let #count2 = #count2 + 1
+
+print 'PROGRAM: '                           (+1,1)
+print $prog_type                            (+0,15)
+print 'REQUEST TYPE: '                      (+0,37)
+print $req_type                             (+0,53)
+
+END-PROCEDURE PRINT-SPC
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-OTHER                                                             *
+!                                                                           *
+!       This procedure prints the allegation, priority, program, and case   *
+!       county fields if the stage classification is neither I&R nor SPC.   *
+!                                                                           * 
+!       CALLED BY  : PRINT-CALLER-INFO                                      *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-OTHER
+
+let #count3 = #count3 + 1
+
+print 'ALLEGATION: '                        (+1,1)
+print $allegation                           (+0,15)
+print 'PRIORITY: '                          (+0,53)
+print $priority                             (+0,63)
+print 'PROGRAM: '                           (+0,66)
+print $prog_type                            (+0,75)
+print 'CASE COUNTY: '               (+1,1)
+print $case_county                          (+0,15)
+
+END-PROCEDURE PRINT-OTHER
+
+!****************************************************************************
+!                                                                           *
+!   PRINT-TOTALS                                                            *
+!                                                                           *
+!       This procedure prints the total count for each stage class for the  *
+!       respective worker.  It also determines the overall sum.             *
+!                                                                           * 
+!       CALLED BY  : GET-CALLER-INFO                                        *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE PRINT-TOTALS
+
+next-listing need = 6
+
+print 'TOTALS FOR '                         (+2,1)
+print $last_worker                          (+0,19)
+print 'INFO & REFERRAL: '                   (+1,1)
+print #count1                               (+0,19) edit 9999999
+print 'SPECIAL REQUEST: '                   (+1,1)
+print #count2                               (+0,19) edit 9999999
+print 'INTAKE: '                            (+1,1)
+print #count3                               (+0,19) edit 9999999
+print 'TOTAL: '                             (+1,1)
+
+let #total = #count1 + #count2 + #count3
+                              
+print #total                                (+0,19) edit 9999999 
+
+      let #tot_ir = #tot_ir + #count1
+      let #tot_sr = #tot_sr + #count2
+      let #tot_in = #tot_in + #count3
+
+END-PROCEDURE PRINT-TOTALS
+
+!****************************************************************************
+!                                                                           *
+!   WRAP-UP                                                                 *
+!                                                                           *
+!       This procedure prints the messages for the end of the report as well*
+!       as over all totals.                                                 *
+!                                                                           * 
+!       CALLED BY  : BEGIN-REPORT                                           *
+!       CALLS      : NONE                                                   *
+!****************************************************************************
+
+BEGIN-PROCEDURE WRAP-UP
+
+   NEW-PAGE
+
+print 'TOTALS: '                (+1,1)
+print 'INFO & REFERRAL: '           (+1,1)
+print #tot_ir                   (+0,19) edit 9999999
+print 'SPECIAL REQUEST: '           (+1,1)
+print #tot_sr                   (+0,19) edit 9999999
+print 'INTAKE: '                (+1,1)
+print #tot_in                   (+0,19) edit 9999999
+
+let #final_total = #tot_ir + #tot_sr + #tot_in
+
+print 'TOTAL: '                 (+1,1)
+print #final_total              (+0,19) edit 9999999
+
+   NEW-PAGE
+
+END-PROCEDURE WRAP-UP
+
+
+!***********************************************************************
+!                                                                      *
+! SqlErrorHandle                                                       *
+!                                                                      *
+!      This section handles formatting of messages for SQL errors.     *
+!      When an SQL error is encounterd, the program will write to      *   
+!      the log file, program processing does not stop for SQL errors.  *
+!                                                                      *
+!  CALLS:  None                                                        *
+!                                                                      *
+!***********************************************************************
+
+BEGIN-PROCEDURE SqlErrorHandle 
+
+  print 'SQL error - Processing Terminated'               (+1,2)
+  print $error                                            (+1,2)
+  print 'SQL Error: '                                     (+0)
+  print $sql-error                                        (+0)
+  print $error                                            (+1,2)
+  print 'SQL Status: '                                    (+0)
+  print #sql-status                                       (+0)
+
+!  STOP
+
+END-PROCEDURE SqlErrorHandle
+
+
+!****************************************************************************
+!                                                                           *
+!                                INCLUDE SECTION                            *
+!                                                                           *
+!   Include all files that contain common modules or procedures that        *
+!   will be used in the report                                              *
+!****************************************************************************
+#INCLUDE 'cfpstamp.sqc'

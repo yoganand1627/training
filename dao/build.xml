@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="dao" default="all" basedir=".">
+  <!-- Project-specific overrides. -->
+  <property file="build.properties"/>
+
+  <!-- Common properties. -->
+  <import file="../build-common.xml"/>
+
+  <path id="dao.build.path">
+    <pathelement location="${core.exploded}"/>
+    <dirset refid="hibernate.exploded.dirset"/>
+    <dirset refid="structs.exploded.dirset"/>
+    <fileset refid="xmlstructs.exploded.dirset"/>
+    <fileset refid="lib.fileset"/>
+    <fileset refid="lib.oracle.fileset"/>
+    <fileset refid="lib.commons-logging.fileset"/>
+    <fileset refid="lib.j2ee.fileset"/>
+  </path>
+
+  <target name="clean" description="Removes files used to build the DAO layer.">
+    <!-- Do not delete the whole dao/build directory becuase IDEs use it.. -->
+    <delete failonerror="false">
+      <fileset dir="${dao.build}" includes="*"/>
+    </delete>
+    <delete dir="${dao.build.test}"/>
+    <delete dir="${dao.exploded}"/>
+    <delete file="${dao.jar}" failonerror="false"/>
+  </target>
+
+  <target name="clean.all" depends="clean" description="Removes all build artifacts.">
+    <delete dir="${dao.build}"/>
+  </target>
+
+  <target name="prepare" depends="common-prepare" description="Prepares for generation of structs classes">
+    <mkdir dir="${dao.build}"/>
+    <mkdir dir="${dao.build.test}"/>
+    <mkdir dir="${dao.build.test.classes}"/>
+    <mkdir dir="${dao.exploded}"/>
+    <!-- Define this here because directories must exist. -->
+    <path id="dao.test.path">
+      <!-- Add configuration directory. -->
+      <pathelement location="${test}"/>
+      <pathelement location="${dao.test.conf}"/>
+      <pathelement location="${dao.build.test.classes}"/>
+      <!-- Put the original conf files before the build files because the originals have default-lazy-init set to false. -->
+      <pathelement location="${dao.src.conf}"/>
+      <pathelement location="${dao.exploded}"/>
+      <pathelement location="${core.exploded}"/>
+      <pathelement location="${core.build.test.classes}"/>
+      <path refid="base.test.libs"/>
+      <!-- No structs because the DAO's being tested are not allowed to depend on them. -->
+      <dirset refid="hibernate.exploded.dirset"/>
+      <fileset refid="lib.fileset"/>
+      <fileset refid="lib.oracle.fileset"/>
+      <fileset refid="lib.commons-logging.fileset"/>
+      <fileset refid="lib.j2ee.fileset"/>
+    </path>
+  </target>
+
+  <target name="compile" depends="prepare" description="Compiles the dao classes.">
+    <javac source="1.5" target="1.5" debug="${build.debug}" srcdir="${dao.src.java}" destdir="${dao.exploded}"
+           classpathref="dao.build.path" memoryMaximumSize="128M" fork="true">
+      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation,unchecked"/>
+      <include name="**/*.java"/>
+    </javac>
+    <javac source="1.5" target="1.5" debug="${build.debug}"
+           srcdir="${dao.test.java}" destdir="${dao.build.test.classes}">
+      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter" value="-warn:deprecation,unchecked"/>
+      <classpath>
+        <pathelement location="${dao.exploded}"/>
+        <path refid="dao.build.path"/>
+        <fileset refid="lib.test.fileset"/>
+      </classpath>
+      <include name="**/*.java"/>
+    </javac>
+  </target>
+
+  <target name="package.exploded" depends="compile"
+          description="Copies compiled classes to the exploded ear directory.">
+    <copy todir="${dao.exploded}" preservelastmodified="true">
+      <fileset dir="${dao.src.conf}"/>
+      <filterchain>
+        <replacestring from="default-lazy-init=&quot;false&quot;"
+                       to="default-lazy-init=&quot;${development.mode}&quot;"/>
+      </filterchain>
+    </copy>
+  </target>
+
+  <target name="package.ear" depends="compile" description="Jars classes to the ear directory.">
+    <jar basedir="${dao.exploded}" destfile="${build.ear}/dao.jar"/>
+  </target>
+
+  <target name="test.spring" depends="compile" description="Tests the Spring configuration.">
+    <junit dir="${dao.build}" printsummary="false" haltonfailure="${junit.haltonfailure}" fork="true"
+           haltonerror="true">
+      <jvmarg value="-Xmx512m"/>
+      <jvmarg value="-Djava.util.logging.config.file=${test}/logging.properties"/>
+      <classpath refid="dao.test.path"/>
+      <formatter type="xml" usefile="true"/>
+      <formatter type="plain" usefile="false"/>
+      <test name="gov.georgia.dhr.dfcs.sacwis.dao.SpringDaoConfigurationTest" haltonerror="true" haltonfailure="true"
+            todir="${build.junit-reports}"/>
+    </junit>
+  </target>
+
+  <target name="test.hql" depends="ant-tasks, compile" description="Tests the Spring configuration.">
+    <!-- Use a custom runner for better error reporting. -->
+    <junit dir="${dao.build}" printsummary="false" haltonfailure="false" fork="true" haltonerror="false">
+      <jvmarg value="-Xmx512m"/>
+      <jvmarg value="-Djava.util.logging.config.file=${test}/logging.properties"/>
+      <classpath refid="dao.test.path"/>
+      <formatter type="xml" usefile="true"/>
+      <formatter type="plain" usefile="false"/>
+      <batchtest todir="${build.junit-reports}">
+        <fileset dir="${dao.test.java}" includes="gov/georgia/dhr/dfcs/sacwis/dao/HQLTranslationTest.java"/>
+      </batchtest>
+    </junit>
+  </target>
+
+  <target name="test.fast" depends="test.spring" description="Runs only tests that can be executed quickly."/>
+
+  <target name="test.all" depends="compile" description="Copies generated jar to build dir.">
+    <junit dir="${dao.build}" printsummary="true" haltonfailure="false" fork="true" forkmode="perBatch">
+      <jvmarg value="-Xmx512m"/>
+      <jvmarg value="-Djava.util.logging.config.file=${test}/logging.properties"/>
+      <classpath refid="dao.test.path"/>
+      <formatter type="xml" usefile="true"/>
+      <formatter type="plain" usefile="false"/>
+      <batchtest todir="${build.junit-reports}">
+        <fileset dir="${dao.test.java}" includes="gov/georgia/dhr/dfcs/sacwis/dao/SpringDaoConfigurationTest.java"/>
+      </batchtest>
+      <batchtest todir="${build.junit-reports}">
+        <fileset dir="${dao.test.java}" includes="gov/georgia/dhr/dfcs/sacwis/dao/HQLTranslationTest.java"/>
+      </batchtest>
+      <batchtest todir="${build.junit-reports}">
+        <fileset dir="${dao.test.java}" includes="gov/georgia/dhr/dfcs/sacwis/dao/BaseDAOTest.java"/>
+        <fileset dir="${dao.test.java}">
+          <include name="**/*Test.java"/>
+          <exclude name="gov/georgia/dhr/dfcs/sacwis/dao/SpringDaoConfigurationTest.java"/>
+          <exclude name="gov/georgia/dhr/dfcs/sacwis/dao/HQLTranslationTest.java"/>
+          <exclude name="gov/georgia/dhr/dfcs/sacwis/dao/BaseDAOTest.java"/>
+        </fileset>
+      </batchtest>
+    </junit>
+  </target>
+
+  <target name="update" depends="package.exploded" description="Incremental build for development."/>
+
+  <target name="all" depends="clean,package.exploded,test.fast"
+          description="Cleans, builds, runs basic tests and packages to the exploded ear directory."/>
+
+  <target name="dist" depends="all,package.ear, test.hql"
+          description="Cleans, builds, runs basic tests and packages to the ear directory."/>
+</project>

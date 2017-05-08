@@ -1,0 +1,452 @@
+!---------------------------------------------------------------------------------------------------------
+! Generated on Tue Jan 31 11:12:06 2012 by Hyperion SQR Developer 8.5.0.0.0.302
+! Filename: C:\Documents and Settings\tabailey\My Documents\Shines Reports\Reports 2012\5.1 Release\Statewide Reports\CPS Intake Log\CPSIntakeLog00.sqr
+! Format  : Tabular
+! Username: TBAILEY
+!---------------------------------------------------------------------------------------------------------
+
+Begin-Setup
+ Declare-Layout Default
+  Orientation = Landscape
+  Paper-Size = (Letter)
+  Top-Margin    = 0.500 
+  Bottom-Margin = 0.500 
+  Left-Margin   = 0.500 
+  Right-Margin  = 0.500 
+  Line-Height = 1
+  Char-Width  = 1
+ End-Declare
+ Declare-Procedure
+  Before-Report = BRB_Report_Before
+  After-Report = BRB_Report_After
+  After-Page = BRB_After_Page
+ End-Declare
+DECLARE-VARIABLE
+ Text $StartDt 
+ Text $EndDt 
+END-DECLARE
+End-Setup
+
+Begin-Procedure BRB_Report_Before
+ Alter-Report Heading-Size=180    ! combined report header - page header data
+ Next-Listing
+End-Procedure
+
+Begin-Procedure BRB_Report_After
+ Alter-Report Heading=None Footing=None
+ New-Page
+ Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Definitions' (15,1,0) Underline  Bold 
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Disp: Disposition' (131,1,0) Underline  Bold 
+ Print 'RT: Response Time' (131,185,0) Underline  Bold 
+ Print 'ACA: Accept & Assign' (148,1,0)
+ Print 'DIV: Diversion' (164,1,0)
+ Print 'SCO: Screen Out' (244,1,0)
+ Print 'SCR: Screen Out & Refferred' (260,1,0)
+ Print '24: 24 Hours' (148,185,13)
+ Print '5D: 5Days' (165,185,0)
+ Print 'IM: Immediate 24 Hrs.' (182,185,0)
+ Print 'RDV: Resource Development' (200,185,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'The date on which notification was generated for Law Enforcement.' (88,55,0)
+ Alter-Printer Font=4 Point-Size=8    ! [SQR.INI] 4=Arial,proportional
+ Print 'Non Incd Type: Non Incident Request Type' (131,364,0) Underline  Bold 
+ Print 'AS: Adoption Serivces' (147,364,0)
+ Print 'IC: ICPC' (160,364,0)
+ Print 'IR: Information and Refferal' (174,364,0)
+ Print 'JC: Juvenile Court' (189,364,0)
+ Print 'MR: Medical Resources' (204,364,0)
+ Print 'NI: Non-incident DJJ Case' (219,364,0)
+ Print 'OT: OTI' (234,364,0)
+ Print 'PA: PAD Payments' (248,364,0)
+ Print 'PF: PFC Payments' (263,364,0)
+ Print 'TA: TANF Assessment/Sanction' (278,364,0)
+ Print 'VP: Voluntary Placement' (294,364,0)
+ Print 'IC: ICPC' (180,1,0)
+ Print 'PF: PFC Payments' (228,1,0)
+ Print 'PA: PAD Payments' (212,1,0)
+ Print 'NI: Non-incident DJJ Case' (196,1,0)
+ Print 'Case ID is not assigned due to the associated intake has not been submitted to supervisor for approval, or it is a non-incident request and has been closed without further investigation or approval from supervisor.' (314,21,114) Wrap 114 2 line-height=10 Keep-Top
+ Print 'Case ID' (298,1,0) Underline  Bold 
+ Print 'n/a: ' (314,1,0)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'LE Date:' (88,10,0) Bold 
+ Print 'Keys' (114,1,0) Underline  Bold 
+ Print 'This report displays all the intakes received in a specified reporting period. The reporting county is determined by the county of the stage, not the unit county of the intake case manager who recorded the Intake.' (31,7,199) Wrap 199 2 line-height=12 Keep-Top on=  
+ Print 'Before an intake is submitted for approval, it may not have stage''s county determined. In this case, unit county of the intake case manager is used.' (64,49,0)
+ Print 'Note:-' (64,10,0) Bold 
+   Print-Direct printer=html '%%ResetBorder'
+ Alter-Report Heading=Default
+              Footing=Default
+ Next-Listing
+End-Procedure
+
+! Supports a special heading on the first page, which combines the report
+! header and the default page header into a single header only for that page,
+! changing it back to the default page header for subsequent pages.
+Begin-Procedure BRB_After_Page
+ If #page-count <= 1
+   Alter-Report Heading-Size=24   ! Revert to non-page-1 header size.
+ End-If
+End-Procedure
+
+Begin-Program
+ Do LoadLookupTables
+Do Get-Input-Date
+Do Optional-Parameters
+
+ Position (1,1)
+ Do Master_Query
+ Do DisplayResult
+End-Program
+
+!-------------------------------------
+Begin-Procedure Optional-Parameters
+! Get Region Optional Parameter
+Input $_I201_CD_STAGE_REGION 'Enter a value for CD_STAGE_REGION' MaxLen=2  Type=Char
+If IsNull($_I201_CD_STAGE_REGION) or IsBlank($_I201_CD_STAGE_REGION) or ($_I201_CD_STAGE_REGION = '0') 
+  Let $_where_clause_region = 'CD_STAGE_REGION is not null'
+  Let $regionSelected = 'N'
+Else
+  Let $_where_clause_region = 'CD_STAGE_REGION= ' || '''' ||  $_I201_CD_STAGE_REGION || ''''
+  Let $regionSelected = 'Y'
+End-If
+!----------------------------------
+! Get county Optional Parameter
+Input $_I101_CD_STAGE_CNTY 'Enter a value for CD_STAGE_CNTY' MaxLen=3  Type=Text
+If IsNull($_I101_CD_STAGE_CNTY) or IsBlank($_I101_CD_STAGE_CNTY) or ($_I101_CD_STAGE_CNTY = '0')
+  Let $_where_clause_county = 'STAGE.CD_STAGE_CNTY is not null'
+  Let $countySelected = 'N'
+Else
+ Let $_where_clause_county = 'CD_STAGE_CNTY= ' || '''' || $_I101_CD_STAGE_CNTY || ''''
+ Let $countySelected = 'Y'
+End-If
+
+Let $_where_clause_region_county = $_where_clause_region || ' and ' || $_where_clause_county 
+Do Make_Header
+End-Procedure
+
+!--------------------------------------------
+! Creates region county label for page header
+Begin-Procedure Make_Header
+Let $region_header =''
+If $countySelected = 'Y'
+  Let $county_code_string = '''' || $_I101_CD_STAGE_CNTY || ''''
+Begin-Select
+decode &county_decode_header
+ Move &county_decode_header to $region_county_header
+from ccount
+where code = [$county_code_string]
+End-Select
+  If $_I101_CD_COUNTY = 'XXX' and $regionSelected = 'Y'
+    Let $region_county_header = 'County ' || $region_county_header
+    Let $region_header = 'Region ' || $_I201_CD_STAGE_REGION
+  End-If
+Else 
+ If $regionSelected = 'Y'
+  Let $region_county_header = 'Region ' || $_I201_CD_STAGE_REGION
+ Else
+  Let $region_county_header = 'Statewide' 
+ End-If
+End-If
+ ! Fill spaces in front of the county name/region number/statewide to make it centered on page
+ ! Currently the longest county name in GA is 13
+ Let #cnty_name_len = length($region_county_header)
+ Let #spaces = (13 - #cnty_name_len) ! No need to divide by 2 b/c space is non-character and observation shows that compiler won't make it bold, therefore taking about half of the pixels needed
+ Let #counter = 0
+ While #counter < #spaces
+   Let $region_county_header = ' ' || $region_county_header 
+   Let #counter = #counter + 1
+ End-while
+End-Procedure
+
+
+Begin-Procedure Get-Input-Date
+Input $StartDt 'Enter Start Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+Input $EndDt 'Enter End Date (MM/DD/YYYY)' MaxLen=19 Type=Date Format='MM/DD/YYYY'
+End-Procedure
+
+
+Begin-Procedure Master_Query
+ Do CreateXML_ManifestFile
+ Move 0 To #1ROW_COUNT
+Begin-Select
+(case when  INTAKE_ALLEGATION00.CD_ALLEGED_MAL_CODE is null then '-No Maltreatment Alleged-' else  INTAKE_ALLEGATION00.CD_ALLEGED_MAL_CODE end) &malcodeNil
+INCOMING_DETAIL00.DT_INCOMING_CALL &Date
+NM_STAGE &Case_Name
+INCOMING_DETAIL00.CD_INCOMING_DISPOSITION &Disposition
+CD_STAGE_CURR_PRIORITY &Response_Time
+INCOMING_DETAIL00.NM_INCMG_WORKER_NAME &Received_By
+(SELECT  DECODE  FROM  CAPS.INCOMING_DETAIL INCOMING_DETAIL_1,  CAPS.CSRCRPTR WHERE INCOMING_DETAIL_1.CD_INCMG_CALLER_INT = CAPS.CSRCRPTR.CODE
+ AND  INCOMING_DETAIL_1.ID_STAGE = INCOMING_DETAIL00.ID_STAGE) &Master_Query_RepType
+(SELECT  (min( EVENT_1.DT_EVENT_OCCURRED ))  FROM  CAPS.EVENT EVENT_1,  CAPS.INCOMING_DETAIL INCOMING_DETAIL_1 WHERE EVENT_1.ID_EVENT_STAGE = INCOMING_DETAIL_1.ID_STAGE
+ AND  EVENT_1.CD_EVENT_TYPE = 'NOT' AND  EVENT_1.ID_EVENT_STAGE = INCOMING_DETAIL00.ID_STAGE) &Master_Query_LawEnfrc
+(SELECT  CaseManager.NM_PERSON_FULL  FROM  CAPS.PERSON CaseManager,  CAPS.STAGE_LINK STAGE_LINK00,  CAPS.STAGE_PERSON_LINK WHERE STAGE_LINK00.ID_STAGE = CAPS.STAGE_PERSON_LINK.ID_STAGE
+  AND  CAPS.STAGE_PERSON_LINK.ID_PERSON = CaseManager.ID_PERSON
+ AND  STAGE_PERSON_LINK.CD_STAGE_PERS_ROLE  IN ('PR','HP') AND  STAGE_LINK00.ID_PRIOR_STAGE = INCOMING_DETAIL00.ID_STAGE) &Master_Query_CaseMgrrAssgnd
+CAPS.STAGE.ID_CASE &Master_Query_CAPS.STAGE.ID_CASE
+INTAKE_ALLEGATION00.CD_ALLEGED_MAL_CODE &Master_Query_INTAKE_ALLEGATION00.CD_ALLEGED_MAL_CODE
+INCOMING_DETAIL00.CD_NON_RSDNT_REQ_TYPE &Master_Query_INCOMING_DETAIL00.CD_NON_RSDNT_REQ_TYPE
+DECODE &Master_Query_DECODE
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+CD_STAGE_REGION &Master_Query_CD_STAGE_REGION () On-Break Set=1 Level=1 Print=Never Before=Master_QueryCD_STAGE_REGION_BeforeProc101 After=Master_QueryCD_STAGE_REGION_AfterProc101
+CD_STAGE_CNTY &Master_Query_CD_STAGE_CNTY () On-Break Set=1 Level=2 Print=Never Before=Master_QueryCD_STAGE_CNTY_BeforeProc102 After=Master_QueryCD_STAGE_CNTY_AfterProc102
+INCOMING_DETAIL00.ID_STAGE &Call_ID () On-Break Set=1 Level=3 Print=Never Before=Master_QueryID_STAGE_BeforeProc103 After=Master_QueryID_STAGE_AfterProc103
+ Print &malcodeNil (16,14,46)
+ Lookup Maltype &malcodeNil $MalNil
+ Print $MalNil (16,57,59)
+ Add 1 To #1ROW_COUNT
+ Add 1 To #101ROW_COUNT
+ Add 1 To #102ROW_COUNT
+ Next-Listing  Need=16
+From  CAPS.INCOMING_DETAIL INCOMING_DETAIL00, CAPS.INTAKE_ALLEGATION INTAKE_ALLEGATION00
+,      CAPS.STAGE, CAPS.EMPLOYEE, CAPS.UNIT
+,      CAPS.CCOUNT
+      Where CAPS.EMPLOYEE.ID_EMP_UNIT = CAPS.UNIT.ID_UNIT
+            And INCOMING_DETAIL00.ID_INCOMING_WORKER = CAPS.EMPLOYEE.ID_PERSON
+            And CAPS.STAGE.CD_STAGE_CNTY = CAPS.CCOUNT.CODE
+ And (INCOMING_DETAIL00.DT_INCOMING_CALL >= to_date($StartDt,'MM/DD/YYYY')
+ And INCOMING_DETAIL00.DT_INCOMING_CALL < to_date($EndDt,'MM/DD/YYYY')+1)
+ And [$_where_clause_region_county]
+ And INCOMING_DETAIL00.ID_STAGE = CAPS.STAGE.ID_STAGE(+)
+ And INCOMING_DETAIL00.ID_STAGE = INTAKE_ALLEGATION00.ID_ALLEGATION_STAGE(+)
+Group By CD_STAGE_REGION
+,      CD_STAGE_CNTY
+,      INCOMING_DETAIL00.ID_STAGE
+,      INCOMING_DETAIL00.DT_INCOMING_CALL
+,      NM_STAGE
+,      INCOMING_DETAIL00.CD_INCOMING_DISPOSITION
+,      CD_STAGE_CURR_PRIORITY
+,      INCOMING_DETAIL00.NM_INCMG_WORKER_NAME
+,      CAPS.STAGE.ID_CASE
+,      INTAKE_ALLEGATION00.CD_ALLEGED_MAL_CODE
+,      INCOMING_DETAIL00.CD_NON_RSDNT_REQ_TYPE
+,      DECODE
+Order By CD_STAGE_REGION
+,      DECODE
+,      INCOMING_DETAIL00.DT_INCOMING_CALL
+,      NM_STAGE
+End-Select
+ Next-Listing
+ Next-Listing  Need=20
+ If #1ROW_COUNT > 0
+ Graphic (2,2,715) Horz-Line 20 
+ Position (4,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+  Print 'Report Total:'  (20,5) Bold 
+ let #total = #1ROW_COUNT
+  Print #total (20,69) Bold  Edit 999999na
+ End-If
+ Next-Listing
+!  Place the closing tag(s) into the XML file
+   Write 1 from '<output>'
+   Write 1 from '</output>'
+   Close 1
+End-Procedure
+!Display no data message on page header
+Begin-procedure DisplayResult
+if #1ROW_COUNT = 0
+ Let $textdisp = 'No results matching the report parameter are available'
+end-if
+Move $textdisp to $outText
+end-procedure
+
+
+Begin-Procedure Master_QueryID_STAGE_BeforeProc103
+ Next-Listing  Need=39
+                Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_RepType (20,263,14) Wrap 14 2 line-height=12 Keep-Top on= 
+  Print &Master_Query_LawEnfrc (20,446) Edit MM/DD/YYYY
+  Print &Master_Query_CaseMgrrAssgnd (20,612,19)
+ Print 'Maltreatment Type'  (39,12) Underline  Bold 
+  Print &Call_ID (20,1) Edit 999999999na
+  Print &Case_Name (20,112,16)
+  Print &Master_Query_CAPS.STAGE.ID_CASE (20,207) Edit 9999999999na
+  Print &Disposition (20,340,3)
+  Print &Date (20,52) Edit MM/DD/YYYY
+  Print &Response_Time (20,374,3)
+  Print &Received_By (20,503,19)
+  Print &Master_Query_INCOMING_DETAIL00.CD_NON_RSDNT_REQ_TYPE (20,405,6)
+   Position (+12,)
+ Next-Listing  Need=16
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryID_STAGE_AfterProc103
+ Next-Listing  Need=5
+ Graphic (6,1,715) Horz-Line 10 
+ Position (7,1)
+   Position (+0,)
+ Next-Listing  Need=16
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_BeforeProc101
+If $regionSelected = 'Y' or $countySelected = 'Y' 
+    ! do nothing
+ Else
+
+ Next-Listing  Need=27
+ Graphic (8,1,715) Horz-Line 20 
+ Position (10,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_CD_STAGE_REGION (27,43,2) Bold 
+ Print 'Region:'  (27,1) Bold 
+   Position (+12,)
+ Next-Listing  Need=16
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_REGION_AfterProc101
+
+If $regionSelected = 'Y' or $countySelected = 'Y' 
+    ! do nothing
+ Else
+
+ Next-Listing  Need=21
+ Graphic (2,2,715) Horz-Line 15 
+ Position (3,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Region Total:'  (21,5) Bold 
+ let #RegionTotal = #101ROW_COUNT
+ Print #RegionTotal (21,69) Bold  Edit 999999na
+   Position (+12,)
+ Move 0 To #101ROW_COUNT
+ Next-Listing  Need=16
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_BeforeProc102
+
+If $countySelected = 'Y' 
+    ! do nothing
+ Else
+
+ Next-Listing  Need=20
+ Graphic (1,2,715) Horz-Line 15 
+ Position (2,1)
+  Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print &Master_Query_DECODE (20,2,30) Bold 
+   Position (+12,)
+ Next-Listing  Need=16
+end-if
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+End-Procedure
+
+Begin-Procedure Master_QueryCD_STAGE_CNTY_AfterProc102
+
+If $countySelected = 'Y' 
+    ! do nothing
+ Else
+
+ Next-Listing  Need=17
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'County Total:'  (17,5) Bold 
+ let #CountyTotal = #102ROW_COUNT
+ Print #CountyTotal (17,68) Bold  Edit 999999na
+   Position (+12,)
+ Move 0 To #102ROW_COUNT
+ Next-Listing  Need=16
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+end-if
+End-Procedure
+
+Begin-Procedure CreateXML_ManifestFile
+! Open the XML file.
+ Let $_XML_Var='SQROutput.xml'
+ Open $_XML_Var as 1 for-writing record=32767:vary
+! Place the elements of the DTD.
+ Let $preamble = '<?xml version="1.0" encoding="ISO-8859-1"?>'
+ Write 1 from $preamble
+End-Procedure
+
+Begin-Procedure LoadLookupTables
+   Load-Lookup
+      Name=County
+      Table=CAPS.CCOUNT
+      Key=CODE
+      Return_Value=DECODE
+      Rows=65535
+      Extent=65535
+      Sort=SC
+      Quiet
+
+   Load-Lookup
+      Name=Maltype
+      Table=CAPS.CODES_TABLES
+      Key=CODE
+      Return_Value=DECODE where=CODE_TYPE='CMALCODE'
+      Rows=65535
+      Extent=65535
+      Sort=SC
+      Quiet
+
+End-Procedure
+
+Begin-Heading 24 
+ do HeadingProcedure
+End-Heading
+
+Begin-Procedure HeadingProcedure
+ If #page-count <= 1
+  Position (1,1)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print $current-date (13,653) edit 'MM/DD/YYYY'
+ Print 'Division of Family and Children Services' (13,274,0)
+ Alter-Printer Font=4 Point-Size=14    ! [SQR.INI] 4=Arial,proportional
+ Print 'CPS Intake Log' (57,297,0) Bold 
+ Print-Image (3,1)
+	Type=bmp-file
+	Source='SHINES.bmp'
+	Image-size=(102,73)
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Print 'Produced On:' (13,586,0)
+ Print 'Start Date:' (78,224,0) Bold 
+ Let $StartDt=$StartDt
+ Print $StartDt (78,280,11) Bold 
+ Print 'End Date:' (77,367,0) Bold 
+ Let $EndDt=$EndDt
+ Print $EndDt (77,419,11) Bold 
+ Let $region_county_header=$region_county_header
+ Print $region_county_header (96,312,15) Bold 
+ Let $region_header=$region_header
+ Print $region_header (112,300,20) Bold 
+ Let $outText=$outText
+ Print $outText (133,238,55) Bold 
+ Print 'Date' (171,52,4) Underline  Bold 
+ Print 'Case Name' (171,112,0) Underline  Bold 
+ Print 'Disp' (171,338,0) Underline  Bold 
+ Print 'RT' (171,374,4) Underline  Bold  Wrap 4 4 line-height=12 Keep-Top on= 
+ Print 'Received By' (171,503,0) Underline  Bold 
+ Print 'Case ID' (170,207,0) Underline  Bold 
+ Print 'Reporter Type' (171,263,12) Underline  Bold  Wrap 12 2 line-height=12 Keep-Top on=  
+ Print 'LE Date' (171,446,12) Underline  Bold  Wrap 12 2 line-height=12 Keep-Top on=   
+ Print 'Assigned To' (171,612,0) Underline  Bold 
+ Print 'Call ID' (171,4,8) Underline  Bold 
+ Print 'Non Incd Type' (171,398,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top on=  
+ Else   ! put a non combined page header
+ Print 'Date' (12,52,4) Underline  Bold 
+ Print 'Case Name' (12,112,0) Underline  Bold 
+ Print 'Disp' (12,338,0) Underline  Bold 
+ Print 'RT' (12,374,4) Underline  Bold  Wrap 4 4 line-height=12 Keep-Top on= 
+ Print 'Received By' (12,503,0) Underline  Bold 
+ Print 'Case ID' (11,207,0) Underline  Bold 
+ Print 'Reporter Type' (12,263,12) Underline  Bold  Wrap 12 2 line-height=12 Keep-Top on=  
+ Print 'LE Date' (12,446,12) Underline  Bold  Wrap 12 2 line-height=12 Keep-Top on=   
+ Print 'Assigned To' (12,612,0) Underline  Bold 
+ Print 'Call ID' (12,4,8) Underline  Bold 
+ Print 'Non Incd Type' (12,398,8) Underline  Bold  Wrap 8 2 line-height=12 Keep-Top on=  
+ End-If
+ Alter-Printer Font=901 Point-Size=10
+End-Procedure
+Begin-Footing 24 
+ Alter-Printer Font=4 Point-Size=10    ! [SQR.INI] 4=Arial,proportional
+ Page-Number (20,668) '' ' of '
+ Last-Page (20,697) 
+ Alter-Printer Font=901 Point-Size=10
+End-Footing
+

@@ -1,0 +1,136 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE grnds-web-app SYSTEM "grnds-web-app.dtd">
+
+<grnds-web-app>
+  <servlet mapping="login">
+    <conversations>
+      <conversation>
+        <conversation-name>Login</conversation-name>
+        <conversation-class>gov.georgia.dhr.dfcs.sacwis.web.common.LoginConversation</conversation-class>
+        <commands>
+          <command>
+            <default-command/>
+            <activity type="method">display_xa</activity>
+            <presentation type="class" screen="LOGIN_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+          <command-name>displayLogin</command-name>
+          <activity type="method">display_xa</activity>
+            <presentation type="class" screen="LOGIN_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayChangePassword</command-name>
+            <presentation type="class" screen="CHANGE_PASSWORD_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>displayVendorStaffDetail</command-name>
+            <presentation type="class" screen="REGISTRATION_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>  
+          <command>
+            <command-name>displayResetPassword</command-name>
+            <presentation type="class" screen="RESET_PASSWORD_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>      
+          
+          <!--          
+          <command>
+            <command-name>saveVendorStaffDetail</command-name>
+            <presentation type="class" screen="LOGIN_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          -->   
+          <command>
+            <command-name>saveVendorStaffDetail</command-name>
+            <activity type="method">saveVendorStaffDetail_xa</activity>
+            <presentation branch="login" type="class" screen="REGISTRATION_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        
+          <command>
+            <command-name>train</command-name>
+            <presentation type="class" screen="TRAIN_LOGIN_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>logout</command-name>
+            <activity type="method">logout_xa</activity>
+            <presentation type="class" screen="LOGIN_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>test</command-name>
+            <activity type="method">processLogin_xa</activity>
+            <presentation branch="login" type="class" screen="LOGIN_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+          <command>
+            <command-name>changePassword</command-name>
+            <activity type="method">processChangePassword_xa</activity>
+            <presentation type="class" screen="CHANGE_PASSWORD_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="login_page" type="url">/login/Login/displayLogin</presentation>
+          </command>          
+            <command>
+            <command-name>validateResetPassword</command-name>
+            <activity type="method">validateResetPassword_xa</activity>
+            <presentation type="class" screen="RESET_PASSWORD_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>    
+                   <!--
+                    <command>
+                      <command-name>securityManager</command-name>
+                      <activity type="method">securityManager_xa</activity>
+                      <presentation type="class" screen="TEST_LOGIN">
+                        gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+                      </presentation>
+                      <presentation branch="error" type="class" screen="LOGIN_PAGE">
+                        gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+                      </presentation>
+                    </command>
+                    <command>
+                      <command-name>lobby</command-name>
+                      <presentation type="class" screen="TEST_LOGIN">
+                        gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+                      </presentation>
+                      <presentation branch="error" type="class" screen="LOGIN_PAGE">
+                        gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+                      </presentation>
+                    </command>
+          -->
+          <command>
+            <command-name>navigation</command-name>
+            <presentation type="class" screen="TEST_NAVIGATION">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+            <presentation branch="error" type="class" screen="LOGIN_PAGE">
+              gov.georgia.dhr.dfcs.sacwis.web.core.decorator.DecoratedPresentation
+            </presentation>
+          </command>
+        </commands>
+      </conversation>
+    </conversations>
+  </servlet>
+
+  <error-handling>
+    <domain>sacwis</domain>
+    <logger>grnds.syslog</logger>
+  </error-handling>
+
+</grnds-web-app>
